@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+@theme {
+  --color-boutique-bg: #f7f3ef;
+  --color-boutique-paper: #fdfcfa;
+  --color-boutique-ink: #2c2825;
+  --color-boutique-muted: #6f6862;
+  --color-boutique-accent: #8b7355;
+  --color-boutique-line: #e8e0d8;
+  --color-boutique-warm: #f0ebe6;
+  --shadow-boutique: 0 22px 50px -12px rgb(44 40 37 / 0.08);
+  --shadow-boutique-sm: 0 12px 28px -8px rgb(44 40 37 / 0.06);
+}
+
+:root {
+  --background: #f7f3ef;
+  --foreground: #2c2825;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--background);
+  color: var(--foreground);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.font-heading {
+  font-family: var(--font-playfair), ui-serif, Georgia, "Times New Roman", serif;
+}
