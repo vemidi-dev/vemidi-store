@@ -28,7 +28,7 @@ export default function HomePage() {
             </div>
             <div className="flex flex-wrap gap-4">
               <Link
-                href="/products"
+                href="/shop"
                 className="rounded-full bg-boutique-ink px-8 py-3.5 text-sm font-semibold tracking-wide text-boutique-paper transition hover:bg-boutique-accent"
               >
                 Разгледай продуктите
@@ -101,7 +101,7 @@ export default function HomePage() {
           </div>
           <div className="mt-12 text-center">
             <Link
-              href="/products"
+              href="/shop"
               className="inline-flex items-center gap-2 text-sm font-medium text-boutique-accent underline-offset-8 transition hover:text-boutique-ink hover:underline"
             >
               Към целия каталог

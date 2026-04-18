@@ -5,9 +5,9 @@ export default function CartPage() {
   return (
     <div>
       <PageHero
-        eyebrow="Cart"
-        title="Your cart"
-        description="Items are stored in this browser (localStorage) until you connect checkout to Supabase orders."
+        eyebrow="Количка"
+        title="Твоята количка"
+        description="Прегледай избраните продукти, количествата и персонализацията преди да продължиш към поръчка."
       />
       <CartPanel />
     </div>

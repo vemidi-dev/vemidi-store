@@ -1,52 +1,101 @@
+import type { ProductColorField } from "@/lib/product-colors";
+
+export type ProductImage = {
+  src: string;
+  alt: string;
+};
+
 export type Product = {
   slug: string;
   title: string;
   description: string;
-  /** Price in EUR for demo display */
+  /** Price in EUR (€). */
   price: number;
   tag?: string;
-  imageSrc: string;
-  imageAlt: string;
+  images: ProductImage[];
+  /** When true, customer can enter up to 50 characters before adding to cart. */
+  customizable?: boolean;
+  /** Optional color configuration grouped by material/type. */
+  colorFields?: ProductColorField[];
 };
 
 export const products: Product[] = [
   {
     slug: "engraved-vows-panel",
-    title: "Engraved vows panel",
-    description: "Solid walnut panel with your ceremony text, ready to hang.",
+    title: "Панел с гравирани обети",
+    description:
+      "Орехов панел с текст от церемонията, готов за окачване. Повърхността е обработена на ръка; гравирането следва вашия текст с внимание към типографията и интервалите.",
     price: 89,
-    tag: "Bestseller",
-    imageSrc:
-      "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=900&q=80",
-    imageAlt: "Delicate wedding stationery and paper goods on a soft surface",
+    tag: "Хит",
+    customizable: true,
+    images: [
+      {
+        src: "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=900&q=80",
+        alt: "Деликатна сватбена хартия и аксесоари",
+      },
+      {
+        src: "https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?auto=format&fit=crop&w=900&q=80",
+        alt: "Близък план на дървена текстура и нежен светлина",
+      },
+      {
+        src: "https://images.unsplash.com/photo-1522673602040-be62fb37a668?auto=format&fit=crop&w=900&q=80",
+        alt: "Елегантни покани и печат в топли тонове",
+      },
+    ],
   },
   {
     slug: "table-number-set",
-    title: "Laser-cut table numbers (1–12)",
-    description: "Minimal acrylic numbers with a warm matte finish.",
+    title: "Номера на маси (1–12), лазерно изрязани",
+    description:
+      "Минималистични акрилни номера с топъл матов финиш. Комплектът включва стойки за стабилно поставяне върху масата.",
     price: 64,
-    imageSrc:
-      "https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&w=900&q=80",
-    imageAlt: "Elegant wedding reception table setting with florals",
+    images: [
+      {
+        src: "https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&w=900&q=80",
+        alt: "Елегантна сватбена маса с цветя",
+      },
+      {
+        src: "https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?auto=format&fit=crop&w=900&q=80",
+        alt: "Подредени маси на тържество с декорация",
+      },
+    ],
   },
   {
     slug: "custom-monogram-sign",
-    title: "Custom monogram welcome sign",
-    description: "Large entrance sign with initials and event date.",
+    title: "Персонализирана табела с монограм",
+    description:
+      "Голяма входна табела с инициали и дата на събитието. Подходяща за приемна, градина или зала — изработка по вашите размери и шрифт.",
     price: 120,
-    tag: "Custom",
-    imageSrc:
-      "https://images.unsplash.com/photo-1464366400600-71623869495a?auto=format&fit=crop&w=900&q=80",
-    imageAlt: "Outdoor wedding ceremony arch with natural light",
+    tag: "По поръчка",
+    customizable: true,
+    images: [
+      {
+        src: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=900&q=80",
+        alt: "Сватбени халки и нежни цветя",
+      },
+      {
+        src: "https://images.unsplash.com/photo-1523438885200-e635ba2c371e?auto=format&fit=crop&w=900&q=80",
+        alt: "Детайл от сватбена украса и монограм",
+      },
+    ],
   },
   {
     slug: "gift-box-bundle",
-    title: "Anniversary gift box bundle",
-    description: "Keepsake box, two coasters, and a small engraved card.",
+    title: "Подаръчен комплект за юбилей",
+    description:
+      "Кутия за спомен, два подложки и малка гравирана картичка. Идеален подарък с лично послание.",
     price: 48,
-    imageSrc:
-      "https://images.unsplash.com/photo-1549465220-6a40e0a128f9?auto=format&fit=crop&w=900&q=80",
-    imageAlt: "Thoughtfully wrapped gift boxes with ribbon",
+    customizable: true,
+    images: [
+      {
+        src: "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?auto=format&fit=crop&w=900&q=80",
+        alt: "Празнична украса и свещи",
+      },
+      {
+        src: "https://images.unsplash.com/photo-1513885535751-8b9238be3456?auto=format&fit=crop&w=900&q=80",
+        alt: "Опакован подарък с панделка",
+      },
+    ],
   },
 ];
 

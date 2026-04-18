@@ -18,7 +18,7 @@ export const shopCategories: ShopCategory[] = [
     slug: "bebe-krushtene",
     title: "Бебе и кръщене",
     imageSrc:
-      "https://images.unsplash.com/photo-1515488042361-ee00e0ddd7e4?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=800&q=80",
     imageAlt: "Мека детска стая с неутрални тонове и уют",
   },
   {
@@ -39,7 +39,7 @@ export const shopCategories: ShopCategory[] = [
     slug: "personalizirani",
     title: "Персонализирани подаръци",
     imageSrc:
-      "https://images.unsplash.com/photo-1549465220-6a40e0a128f9?auto=format&fit=crop&w=800&q=80",
-    imageAlt: "Внимателно опаковани подаръци с панделка",
+      "https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=800&q=80",
+    imageAlt: "Нежни цветя и топла светлина",
   },
 ];
