@@ -3,38 +3,11 @@ import Link from "next/link";
 import CategoryShowcaseCard from "@/components/category/category-showcase-card";
 import { PageContainer } from "@/components/layout/page-container";
 import { PageHero } from "@/components/ui/page-hero";
-import type { ShopCategory } from "@/lib/shop-categories";
-import { createClient } from "@/lib/supabase/server";
-
-type DbCategory = {
-  id: string;
-  name: string;
-  slug: string;
-};
-
-function toShowcaseCategory(category: DbCategory): ShopCategory {
-  return {
-    slug: category.slug,
-    title: category.name,
-    imageSrc: "https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=800&q=80",
-    imageAlt: `${category.name} - категория продукти`,
-  };
-}
+import { toShowcaseCategory } from "@/lib/storefront/mappers";
+import { getStorefrontCategories } from "@/lib/storefront/repository";
 
 export default async function CategoriesPage() {
-  let categories: ShopCategory[] = [];
-  const supabase = await createClient();
-
-  if (supabase) {
-    const { data, error } = await supabase
-      .from("categories")
-      .select("id,name,slug")
-      .order("name", { ascending: true });
-
-    if (!error && data) {
-      categories = (data as DbCategory[]).map(toShowcaseCategory);
-    }
-  }
+  const categories = (await getStorefrontCategories()).map(toShowcaseCategory);
 
   return (
     <div>

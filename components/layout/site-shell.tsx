@@ -9,11 +9,14 @@ type SiteShellProps = {
 
 function HeaderFallback() {
   return (
-    <header className="sticky top-0 z-50 border-b border-boutique-line/70 bg-[#F7F3EF]/95">
-      <div className="mx-auto flex h-[4.25rem] max-w-6xl items-center px-5 sm:px-8 md:h-[4.75rem]">
-        <div className="h-6 w-40 animate-pulse rounded bg-boutique-line/60" aria-hidden />
-      </div>
-    </header>
+    <div className="sticky top-0 z-50">
+      <div className="h-9 border-b border-white/10 bg-boutique-sage/90" aria-hidden />
+      <header className="border-b border-boutique-line/70 bg-boutique-bg/95">
+        <div className="mx-auto flex h-[4.25rem] max-w-6xl items-center px-5 sm:px-8 md:h-[4.75rem]">
+          <div className="h-6 w-40 animate-pulse rounded bg-boutique-line/60" aria-hidden />
+        </div>
+      </header>
+    </div>
   );
 }
 

@@ -9,6 +9,8 @@ export type Product = {
   slug: string;
   title: string;
   description: string;
+  additionalInfo?: string | null;
+  fulfillmentNote?: string | null;
   /** Price in EUR (€). */
   price: number;
   tag?: string;

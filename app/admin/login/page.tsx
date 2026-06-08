@@ -54,12 +54,20 @@ export default async function AdminLoginPage({ searchParams }: AdminLoginPagePro
             </button>
           </form>
 
-          <Link
-            href="/"
-            className="mt-5 inline-flex text-xs font-semibold uppercase tracking-wider text-boutique-muted transition hover:text-boutique-ink"
-          >
-            Към магазина
-          </Link>
+          <div className="mt-5 flex flex-wrap justify-between gap-3">
+            <Link
+              href="/"
+              className="text-xs font-semibold uppercase tracking-wider text-boutique-muted transition hover:text-boutique-ink"
+            >
+              Към магазина
+            </Link>
+            <Link
+              href="/admin/reset-password"
+              className="text-xs font-semibold uppercase tracking-wider text-boutique-muted transition hover:text-boutique-ink"
+            >
+              Забравена парола
+            </Link>
+          </div>
         </div>
       </PageContainer>
     </section>

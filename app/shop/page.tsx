@@ -3,36 +3,15 @@ import Link from "next/link";
 
 import { ProductCard } from "@/components/product/product-card";
 import { PageContainer } from "@/components/layout/page-container";
-import type { Product } from "@/lib/catalog";
-import { createClient } from "@/lib/supabase/server";
+import { getStorefrontCatalog } from "@/lib/storefront/repository";
 
 type ShopPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
-type Category = {
-  id: string;
-  name: string;
-  slug: string;
-};
-
 type FilterValue = {
   id: string;
   label: string;
-};
-
-type DbProduct = {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  image_url: string | null;
-  is_customizable: boolean;
-};
-
-type DbRelation = {
-  product_id: string;
-  category_id: string;
 };
 
 function firstValue(value: string | string[] | undefined): string {
@@ -71,24 +50,6 @@ function getPriceBucket(price: number): FilterValue["id"] {
   return "over-100";
 }
 
-function toProduct(row: DbProduct): Product {
-  return {
-    slug: row.id,
-    title: row.name,
-    description: row.description,
-    price: Number(row.price),
-    customizable: row.is_customizable,
-    images: [
-      {
-        src:
-          row.image_url ??
-          "https://images.unsplash.com/photo-1511988617509-a57c8a288659?auto=format&fit=crop&w=1200&q=80",
-        alt: row.name,
-      },
-    ],
-  };
-}
-
 export default async function ShopPage({ searchParams }: ShopPageProps) {
   const params = await searchParams;
   const query = firstValue(params.q).trim();
@@ -97,35 +58,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
   const activeSort = firstValue(params.sort) || "featured";
   const personalizationOnly = firstValue(params.personalization) === "only";
 
-  let categories: Category[] = [];
-  let products: Product[] = [];
-  const categoryIdsByProductId = new Map<string, string[]>();
-  const categoryById = new Map<string, Category>();
-
-  const supabase = await createClient();
-  if (supabase) {
-    const [{ data: productsData }, { data: categoriesData }, { data: relationsData }] = await Promise.all([
-      supabase
-        .from("products")
-        .select("id,name,description,price,image_url,is_customizable,created_at")
-        .order("created_at", { ascending: false }),
-      supabase.from("categories").select("id,name,slug").order("name", { ascending: true }),
-      supabase.from("product_categories").select("product_id,category_id"),
-    ]);
-
-    categories = (categoriesData ?? []) as Category[];
-    products = ((productsData ?? []) as DbProduct[]).map(toProduct);
-
-    categories.forEach((category) => {
-      categoryById.set(category.id, category);
-    });
-
-    ((relationsData ?? []) as DbRelation[]).forEach((relation) => {
-      const existing = categoryIdsByProductId.get(relation.product_id) ?? [];
-      existing.push(relation.category_id);
-      categoryIdsByProductId.set(relation.product_id, existing);
-    });
-  }
+  const { categories, products } = await getStorefrontCatalog();
 
   const categoryFilters: FilterValue[] = categories.map((category) => ({
     id: category.slug,
@@ -145,13 +78,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
     personalization: personalizationOnly ? "only" : "",
   };
 
-  const allItems = products.map((product, index) => {
-    const categoryIds = categoryIdsByProductId.get(product.slug) ?? [];
-    const categorySlugs = categoryIds
-      .map((categoryId) => categoryById.get(categoryId)?.slug)
-      .filter((slug): slug is string => Boolean(slug));
-    return { ...product, index, categorySlugs };
-  });
+  const allItems = products.map((product, index) => ({ ...product, index }));
   const featured = allItems.slice(0, 3);
 
   let filtered = allItems.filter((product) => {

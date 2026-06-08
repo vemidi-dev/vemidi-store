@@ -1,20 +1,25 @@
 @import "tailwindcss";
 
 @theme {
-  --color-boutique-bg: #f7f3ef;
+  /* Warm cream + sage + ochre — earthy storefront (Etsy / Wix template vibe) */
+  --color-boutique-bg: #f4f1eb;
   --color-boutique-paper: #fdfcfa;
-  --color-boutique-ink: #2c2825;
-  --color-boutique-muted: #6f6862;
-  --color-boutique-accent: #8b7355;
-  --color-boutique-line: #e8e0d8;
-  --color-boutique-warm: #f0ebe6;
+  --color-boutique-ink: #2a2824;
+  --color-boutique-muted: #5e5a54;
+  --color-boutique-accent: #b8926a;
+  --color-boutique-line: #e4ddd4;
+  --color-boutique-warm: #ebe4db;
+  --color-boutique-sage: #8a9a86;
+  --color-boutique-sage-deep: #4d5c4a;
+  --color-boutique-on-sage: #f3efe6;
+  --color-boutique-ochre: #c9a66b;
   --shadow-boutique: 0 22px 50px -12px rgb(44 40 37 / 0.08);
   --shadow-boutique-sm: 0 12px 28px -8px rgb(44 40 37 / 0.06);
 }
 
 :root {
-  --background: #f7f3ef;
-  --foreground: #2c2825;
+  --background: #f4f1eb;
+  --foreground: #2a2824;
 }
 
 * {

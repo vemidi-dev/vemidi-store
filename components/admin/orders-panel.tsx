@@ -1,0 +1,169 @@
+import { updateOrderStatus } from "@/app/admin/order-actions";
+import {
+  formatOrderDate,
+  formatOrderPrice,
+  getOrderStatusLabel,
+  orderStatusLabels,
+  orderStatuses,
+  type OrderRow,
+} from "@/lib/admin/orders";
+
+import { adminFieldClass, adminPanelClass } from "./styles";
+
+type OrdersPanelProps = {
+  orders: OrderRow[];
+  status: string;
+  search: string;
+  error: { message: string } | null;
+};
+
+function valueOrDash(value: string | null) {
+  return value?.trim() || "—";
+}
+
+function OrderDetails({ order }: { order: OrderRow }) {
+  const details = [
+    ["Имейл", valueOrDash(order.customer_email)],
+    ["Продукт", valueOrDash(order.kit_name || order.product_name)],
+    ["Размер", valueOrDash(order.kit_size)],
+    ["Оцветяване", valueOrDash(order.coloring)],
+    ["Персонализация", order.personalization ? valueOrDash(order.child_name) : "Не"],
+    ["Куриер", valueOrDash(order.courier)],
+    ["Доставка", valueOrDash(order.delivery_type)],
+    ["Град", valueOrDash(order.city)],
+    ["Офис", valueOrDash(order.office_name)],
+    ["Адрес на офис", valueOrDash(order.office_address)],
+    ["Адрес / детайли", valueOrDash(order.delivery_details)],
+    ["Плащане", valueOrDash(order.payment_method)],
+    ["Бележка", valueOrDash(order.note)],
+  ];
+
+  return (
+    <dl className="mt-5 grid gap-3 border-t border-boutique-line pt-5 text-sm sm:grid-cols-2">
+      {details.map(([label, value]) => (
+        <div key={label}>
+          <dt className="text-xs font-semibold uppercase tracking-wider text-boutique-muted">
+            {label}
+          </dt>
+          <dd className="mt-1 break-words text-boutique-ink">{value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+export function OrdersPanel({ orders, status, search, error }: OrdersPanelProps) {
+  return (
+    <div className="space-y-5">
+      <section className={adminPanelClass}>
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h2 className="font-heading text-2xl text-boutique-ink">Поръчки</h2>
+            <p className="mt-2 text-sm text-boutique-muted">
+              Поръчките от лендинг страницата се зареждат от общата Supabase база.
+            </p>
+          </div>
+
+          <form className="grid w-full gap-3 sm:grid-cols-[180px_1fr_auto] lg:w-auto">
+            <input type="hidden" name="tab" value="orders" />
+            <label className="text-sm font-medium text-boutique-ink">
+              Статус
+              <select name="status" defaultValue={status} className={adminFieldClass}>
+                <option value="">Всички</option>
+                {orderStatuses.map((value) => (
+                  <option key={value} value={value}>
+                    {orderStatusLabels[value]}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="text-sm font-medium text-boutique-ink">
+              Търсене
+              <input
+                name="q"
+                type="search"
+                defaultValue={search}
+                placeholder="Име, телефон, имейл"
+                className={adminFieldClass}
+              />
+            </label>
+            <button
+              type="submit"
+              className="rounded-full bg-boutique-ink px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-boutique-paper"
+            >
+              Филтрирай
+            </button>
+          </form>
+        </div>
+      </section>
+
+      {error ? (
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          Поръчките не могат да се заредят: {error.message}. Изпълнете SQL миграцията за достъп до
+          поръчки.
+        </div>
+      ) : null}
+
+      {!error && orders.length === 0 ? (
+        <div className={adminPanelClass}>Няма поръчки, които отговарят на филтрите.</div>
+      ) : null}
+
+      {orders.map((order) => (
+        <article key={order.id} className={adminPanelClass}>
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-boutique-muted">
+                {formatOrderDate(order.created_at)}
+              </p>
+              <h3 className="mt-2 font-heading text-xl text-boutique-ink">
+                {order.customer_name}
+              </h3>
+              <p className="mt-1 text-sm text-boutique-muted">
+                {order.customer_phone} · {valueOrDash(order.kit_name || order.product_name)}
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="font-semibold text-boutique-ink">
+                {formatOrderPrice(order.total_price, order.currency)}
+              </p>
+              <p className="mt-1 text-sm text-boutique-muted">
+                {getOrderStatusLabel(order.status)}
+              </p>
+            </div>
+          </div>
+
+          <details className="mt-5">
+            <summary className="cursor-pointer text-sm font-semibold text-boutique-accent">
+              Покажи детайли
+            </summary>
+            <OrderDetails order={order} />
+          </details>
+
+          <form action={updateOrderStatus} className="mt-5 flex flex-wrap items-end gap-3">
+            <input type="hidden" name="id" value={order.id} />
+            <label className="min-w-52 text-sm font-medium text-boutique-ink">
+              Промени статус
+              <select
+                name="status"
+                defaultValue={order.status || "new"}
+                className={adminFieldClass}
+              >
+                {orderStatuses.map((value) => (
+                  <option key={value} value={value}>
+                    {orderStatusLabels[value]}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button
+              type="submit"
+              className="rounded-full border border-boutique-line px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-boutique-ink"
+            >
+              Запази
+            </button>
+          </form>
+        </article>
+      ))}
+    </div>
+  );
+}

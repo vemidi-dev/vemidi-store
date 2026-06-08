@@ -1,126 +1,43 @@
 "use server";
 
-import { randomUUID } from "crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import {
+  getAdminTab,
+  getCategoryIds,
+  getFile,
+  getOptionalString,
+  getPrice,
+  getString,
+  isChecked,
+  makeCreateProductDraft,
+  normalizeSlug,
+  parseSelectLimit,
+} from "@/lib/admin/form-data";
+import {
+  createProductAtomic,
+  deleteProductAtomic,
+  getProductMutationErrorMessage,
+  updateProductAtomic,
+} from "@/lib/admin/product-rpc";
+import {
+  deleteProductImage,
+  getProductImagePath,
+  uploadProductImage,
+  type UploadedProductImage,
+} from "@/lib/admin/storage";
+import type {
+  AdminTab,
+  ColorGroupRow,
+  ColorOptionRow,
+  ParsedColorField,
+} from "@/lib/admin/types";
 import { checkIsAdmin } from "@/lib/supabase/admin-auth";
 import { createClient } from "@/lib/supabase/server";
 
 const ADMIN_PATH = "/admin";
 const ADMIN_LOGIN_PATH = "/admin/login";
-const IMAGE_BUCKET = "product-images";
-type AdminTab = "products" | "categories";
-
-function getString(formData: FormData, key: string) {
-  return String(formData.get(key) ?? "").trim();
-}
-
-function getOptionalString(formData: FormData, key: string) {
-  const value = getString(formData, key);
-  return value || null;
-}
-
-function getPrice(formData: FormData) {
-  const raw = getString(formData, "price");
-  const parsed = Number(raw);
-  if (!Number.isFinite(parsed) || parsed < 0) {
-    return null;
-  }
-  return parsed;
-}
-
-function toChecked(formData: FormData, key: string) {
-  return formData.get(key) === "on";
-}
-
-function getFile(formData: FormData, key: string): File | null {
-  const value = formData.get(key);
-  if (!(value instanceof File) || value.size === 0) {
-    return null;
-  }
-  return value;
-}
-
-function getCategoryIds(formData: FormData) {
-  return Array.from(
-    new Set(
-      formData
-        .getAll("category_ids")
-        .map((value) => String(value ?? "").trim())
-        .filter(Boolean),
-    ),
-  );
-}
-
-type ColorGroupRow = {
-  id: string;
-  label: string;
-};
-
-type ColorOptionRow = {
-  id: string;
-  group_id: string;
-  is_active: boolean;
-};
-
-type ParsedColorField = {
-  label: string;
-  groupId: string;
-  minSelect: number;
-  maxSelect: number;
-  optionIds: string[];
-  sortOrder: number;
-};
-
-type CreateProductDraft = {
-  name: string;
-  description: string;
-  additional_info: string;
-  fulfillment_note: string;
-  price: string;
-  is_customizable: boolean;
-  category_ids: string[];
-  color_fields: Array<{
-    label: string;
-    group_id: string;
-    min_select: string;
-    max_select: string;
-    option_ids: string;
-  }>;
-};
-
-function getFileExtension(fileName: string) {
-  const ext = fileName.split(".").pop()?.toLowerCase() ?? "";
-  if (!ext || !/^[a-z0-9]+$/.test(ext)) {
-    return "bin";
-  }
-  return ext;
-}
-
-function normalizeSlug(raw: string) {
-  return raw.trim().toLowerCase();
-}
-
-function normalizeTab(raw: string): AdminTab {
-  return raw === "categories" ? "categories" : "products";
-}
-
-function getTabFromForm(formData: FormData, fallback: AdminTab): AdminTab {
-  const raw = getString(formData, "tab");
-  return raw ? normalizeTab(raw) : fallback;
-}
-
-function parseSelectLimit(value: string, fallback: number) {
-  if (!value) {
-    return fallback;
-  }
-  const parsed = Number(value);
-  if (!Number.isInteger(parsed) || parsed < 0) {
-    return null;
-  }
-  return parsed;
-}
 
 function redirectWith(
   kind: "success" | "error",
@@ -135,53 +52,30 @@ function redirectWith(
   redirect(`${ADMIN_PATH}?${params.toString()}`);
 }
 
-function makeCreateProductDraft(formData: FormData) {
-  const labels = formData.getAll("color_field_label[]").map((value) => String(value ?? "").trim());
-  const groupIds = formData.getAll("color_field_group_id[]").map((value) => String(value ?? "").trim());
-  const mins = formData.getAll("color_field_min_select[]").map((value) => String(value ?? "").trim());
-  const maxes = formData.getAll("color_field_max_select[]").map((value) => String(value ?? "").trim());
-  const optionIds = formData.getAll("color_field_option_ids[]").map((value) => String(value ?? "").trim());
-
-  const longestLength = Math.max(labels.length, groupIds.length, mins.length, maxes.length, optionIds.length);
-  const colorFields = Array.from({ length: longestLength }, (_, index) => ({
-    label: labels[index] ?? "",
-    group_id: groupIds[index] ?? "",
-    min_select: mins[index] ?? "",
-    max_select: maxes[index] ?? "",
-    option_ids: optionIds[index] ?? "",
-  })).filter((field) => field.label || field.group_id || field.option_ids);
-
-  const draft: CreateProductDraft = {
-    name: getString(formData, "name"),
-    description: getString(formData, "description"),
-    additional_info: getString(formData, "additional_info"),
-    fulfillment_note: getString(formData, "fulfillment_note"),
-    price: getString(formData, "price"),
-    is_customizable: toChecked(formData, "is_customizable"),
-    category_ids: getCategoryIds(formData),
-    color_fields: colorFields,
-  };
-
-  return JSON.stringify(draft);
+function revalidateProductPaths(productId?: string) {
+  revalidatePath(ADMIN_PATH);
+  revalidatePath("/");
+  revalidatePath("/shop");
+  revalidatePath("/products");
+  revalidatePath("/categories");
+  if (productId) {
+    revalidatePath(`/products/${productId}`);
+  }
 }
 
-async function uploadProductImage(supabase: NonNullable<Awaited<ReturnType<typeof createClient>>>, file: File) {
-  const ext = getFileExtension(file.name);
-  const path = `products/${Date.now()}-${randomUUID()}.${ext}`;
-
-  const { error: uploadError } = await supabase.storage
-    .from(IMAGE_BUCKET)
-    .upload(path, file, { contentType: file.type || undefined, upsert: false });
-
-  if (uploadError) {
-    throw new Error(uploadError.message);
+async function deleteImageBestEffort(
+  supabase: NonNullable<Awaited<ReturnType<typeof createClient>>>,
+  path: string | null,
+) {
+  if (!path) {
+    return;
   }
 
-  const {
-    data: { publicUrl },
-  } = supabase.storage.from(IMAGE_BUCKET).getPublicUrl(path);
-
-  return publicUrl;
+  try {
+    await deleteProductImage(supabase, path);
+  } catch {
+    // Database state is authoritative; stale storage objects can be cleaned up later.
+  }
 }
 
 async function parseProductColorFields(
@@ -284,63 +178,6 @@ async function parseProductColorFields(
   return { fields: parsedFields, error: null };
 }
 
-async function saveProductColorFields(
-  supabase: NonNullable<Awaited<ReturnType<typeof createClient>>>,
-  productId: string,
-  fields: ParsedColorField[],
-) {
-  const { data: existingFields } = await supabase
-    .from("product_color_fields")
-    .select("id")
-    .eq("product_id", productId);
-
-  const existingFieldIds = (existingFields ?? []).map((field) => field.id);
-  if (existingFieldIds.length > 0) {
-    await supabase.from("product_color_field_options").delete().in("field_id", existingFieldIds);
-  }
-  await supabase.from("product_color_fields").delete().eq("product_id", productId);
-
-  if (fields.length === 0) {
-    return;
-  }
-
-  const { data: insertedFields, error: fieldsError } = await supabase
-    .from("product_color_fields")
-    .insert(
-      fields.map((field) => ({
-        product_id: productId,
-        group_id: field.groupId,
-        label: field.label,
-        min_select: field.minSelect,
-        max_select: field.maxSelect,
-        sort_order: field.sortOrder,
-        enabled: true,
-      })),
-    )
-    .select("id");
-
-  if (fieldsError || !insertedFields) {
-    throw new Error(`Грешка при запис на цветови полета: ${fieldsError?.message ?? "непозната грешка"}`);
-  }
-
-  const optionRows = insertedFields.flatMap((insertedField, index) =>
-    fields[index].optionIds.map((optionId) => ({
-      field_id: insertedField.id,
-      color_option_id: optionId,
-    })),
-  );
-
-  if (optionRows.length === 0) {
-    return;
-  }
-
-  const { error: optionError } = await supabase.from("product_color_field_options").insert(optionRows);
-  if (optionError) {
-    throw new Error(`Грешка при запис на цветови опции: ${optionError.message}`);
-  }
-}
-
-
 async function getAuthorizedClient() {
   const supabase = await createClient();
   if (!supabase) {
@@ -371,14 +208,14 @@ async function getAuthorizedClient() {
 
 export async function createProduct(formData: FormData) {
   const supabase = await getAuthorizedClient();
-  const activeTab = getTabFromForm(formData, "products");
+  const activeTab = getAdminTab(formData, "products");
   const draft = makeCreateProductDraft(formData);
 
   const name = getString(formData, "name");
   const description = getString(formData, "description");
   const additionalInfo = getOptionalString(formData, "additional_info");
   const fulfillmentNote = getOptionalString(formData, "fulfillment_note");
-  const isCustomizable = toChecked(formData, "is_customizable");
+  const isCustomizable = isChecked(formData, "is_customizable");
   const imageFile = getFile(formData, "image_file");
   const price = getPrice(formData);
   const categoryIds = getCategoryIds(formData);
@@ -399,66 +236,45 @@ export async function createProduct(formData: FormData) {
     redirectWith("error", colorFieldsError, activeTab, draft);
   }
 
-  let imageUrl: string | null = null;
+  let uploadedImage: UploadedProductImage | null = null;
   if (imageFile) {
     try {
-      imageUrl = await uploadProductImage(supabase, imageFile);
+      uploadedImage = await uploadProductImage(supabase, imageFile);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Неуспешно качване на изображението.";
       redirectWith("error", `Грешка при качване на изображение: ${message}`, activeTab, draft);
     }
   }
 
-  const { data: insertedProduct, error } = await supabase
-    .from("products")
-    .insert({
-      name,
-      description,
-      additional_info: additionalInfo,
-      fulfillment_note: fulfillmentNote,
-      price,
-      image_url: imageUrl,
-      is_customizable: isCustomizable,
-    })
-    .select("id")
-    .single();
+  const { data: productId, error: mutationError } = await createProductAtomic(supabase, {
+    name,
+    description,
+    additionalInfo,
+    fulfillmentNote,
+    price,
+    imageUrl: uploadedImage?.url ?? null,
+    isCustomizable,
+    categoryIds,
+    colorFields,
+  });
 
-  if (error || !insertedProduct) {
+  if (mutationError || !productId) {
+    await deleteImageBestEffort(supabase, uploadedImage?.path ?? null);
     redirectWith(
       "error",
-      `Грешка при добавяне: ${error?.message ?? "неуспешна операция"}`,
+      getProductMutationErrorMessage(mutationError),
       activeTab,
       draft,
     );
   }
 
-  const { error: categoriesError } = await supabase.from("product_categories").insert(
-    categoryIds.map((categoryId) => ({
-      product_id: insertedProduct.id,
-      category_id: categoryId,
-    })),
-  );
-
-  if (categoriesError) {
-    await supabase.from("products").delete().eq("id", insertedProduct.id);
-    redirectWith("error", `Грешка при добавяне на категории: ${categoriesError.message}`, activeTab, draft);
-  }
-
-  try {
-    await saveProductColorFields(supabase, insertedProduct.id, colorFields);
-  } catch (error) {
-    await supabase.from("products").delete().eq("id", insertedProduct.id);
-    const message = error instanceof Error ? error.message : "Грешка при запис на цветови правила.";
-    redirectWith("error", message, activeTab, draft);
-  }
-
-  revalidatePath(ADMIN_PATH);
+  revalidateProductPaths(String(productId));
   redirectWith("success", "Продуктът е добавен.", activeTab);
 }
 
 export async function updateProduct(formData: FormData) {
   const supabase = await getAuthorizedClient();
-  const activeTab = getTabFromForm(formData, "products");
+  const activeTab = getAdminTab(formData, "products");
 
   const id = getString(formData, "id");
   const name = getString(formData, "name");
@@ -468,7 +284,7 @@ export async function updateProduct(formData: FormData) {
   const existingImageUrl = getString(formData, "existing_image_url") || null;
   const imageFile = getFile(formData, "image_file");
   const categoryIds = getCategoryIds(formData);
-  const isCustomizable = toChecked(formData, "is_customizable");
+  const isCustomizable = isChecked(formData, "is_customizable");
   const price = getPrice(formData);
   const { fields: colorFields, error: colorFieldsError } = await parseProductColorFields(
     supabase,
@@ -482,104 +298,80 @@ export async function updateProduct(formData: FormData) {
     redirectWith("error", colorFieldsError, activeTab);
   }
 
+  let uploadedImage: UploadedProductImage | null = null;
   let imageUrl = existingImageUrl;
   if (imageFile) {
     try {
-      imageUrl = await uploadProductImage(supabase, imageFile);
+      uploadedImage = await uploadProductImage(supabase, imageFile);
+      imageUrl = uploadedImage.url;
     } catch (error) {
       const message = error instanceof Error ? error.message : "Неуспешно качване на изображението.";
       redirectWith("error", `Грешка при качване на изображение: ${message}`, activeTab);
     }
   }
 
-  const { error } = await supabase
-    .from("products")
-    .update({
+  const { data: previousImageUrl, error: mutationError } = await updateProductAtomic(
+    supabase,
+    id,
+    {
       name,
       description,
-      additional_info: additionalInfo,
-      fulfillment_note: fulfillmentNote,
+      additionalInfo,
+      fulfillmentNote,
       price,
-      image_url: imageUrl || null,
-      is_customizable: isCustomizable,
-    })
-    .eq("id", id);
-
-  if (error) {
-    redirectWith("error", `Грешка при редакция: ${error.message}`, activeTab);
-  }
-
-  const { error: deleteCategoriesError } = await supabase
-    .from("product_categories")
-    .delete()
-    .eq("product_id", id);
-
-  if (deleteCategoriesError) {
-    redirectWith("error", `Грешка при обновяване на категориите: ${deleteCategoriesError.message}`, activeTab);
-  }
-
-  const { error: categoriesError } = await supabase.from("product_categories").insert(
-    categoryIds.map((categoryId) => ({
-      product_id: id,
-      category_id: categoryId,
-    })),
+      imageUrl,
+      isCustomizable,
+      categoryIds,
+      colorFields,
+    },
   );
 
-  if (categoriesError) {
-    redirectWith("error", `Грешка при запис на категориите: ${categoriesError.message}`, activeTab);
+  if (mutationError) {
+    await deleteImageBestEffort(supabase, uploadedImage?.path ?? null);
+    redirectWith(
+      "error",
+      getProductMutationErrorMessage(mutationError),
+      activeTab,
+    );
   }
 
-  try {
-    await saveProductColorFields(supabase, id, colorFields);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Грешка при запис на цветови правила.";
-    redirectWith("error", message, activeTab);
+  if (uploadedImage && typeof previousImageUrl === "string" && previousImageUrl !== imageUrl) {
+    await deleteImageBestEffort(supabase, getProductImagePath(previousImageUrl));
   }
 
-  revalidatePath(ADMIN_PATH);
+  revalidateProductPaths(id);
   redirectWith("success", "Продуктът е обновен.", activeTab);
 }
 
 export async function deleteProduct(formData: FormData) {
   const supabase = await getAuthorizedClient();
-  const activeTab = getTabFromForm(formData, "products");
+  const activeTab = getAdminTab(formData, "products");
   const id = getString(formData, "id");
 
   if (!id) {
     redirectWith("error", "Липсва id за изтриване.", activeTab);
   }
 
-  const { error: relationError } = await supabase
-    .from("product_categories")
-    .delete()
-    .eq("product_id", id);
-  if (relationError) {
-    redirectWith("error", `Грешка при изтриване на категории: ${relationError.message}`, activeTab);
+  const { data: imageUrl, error: mutationError } = await deleteProductAtomic(supabase, id);
+  if (mutationError) {
+    redirectWith(
+      "error",
+      getProductMutationErrorMessage(mutationError),
+      activeTab,
+    );
   }
 
-  const { data: existingFields } = await supabase
-    .from("product_color_fields")
-    .select("id")
-    .eq("product_id", id);
-  const fieldIds = (existingFields ?? []).map((field) => field.id);
-  if (fieldIds.length > 0) {
-    await supabase.from("product_color_field_options").delete().in("field_id", fieldIds);
-  }
-  await supabase.from("product_color_fields").delete().eq("product_id", id);
-
-  const { error } = await supabase.from("products").delete().eq("id", id);
-
-  if (error) {
-    redirectWith("error", `Грешка при изтриване: ${error.message}`, activeTab);
-  }
-
-  revalidatePath(ADMIN_PATH);
+  await deleteImageBestEffort(
+    supabase,
+    getProductImagePath(typeof imageUrl === "string" ? imageUrl : null),
+  );
+  revalidateProductPaths(id);
   redirectWith("success", "Продуктът е изтрит.", activeTab);
 }
 
 export async function createCategory(formData: FormData) {
   const supabase = await getAuthorizedClient();
-  const activeTab = getTabFromForm(formData, "categories");
+  const activeTab = getAdminTab(formData, "categories");
   const name = getString(formData, "name");
   const slug = normalizeSlug(getString(formData, "slug"));
 
@@ -598,7 +390,7 @@ export async function createCategory(formData: FormData) {
 
 export async function updateCategory(formData: FormData) {
   const supabase = await getAuthorizedClient();
-  const activeTab = getTabFromForm(formData, "categories");
+  const activeTab = getAdminTab(formData, "categories");
   const id = getString(formData, "id");
   const name = getString(formData, "name");
   const slug = normalizeSlug(getString(formData, "slug"));
@@ -618,7 +410,7 @@ export async function updateCategory(formData: FormData) {
 
 export async function deleteCategory(formData: FormData) {
   const supabase = await getAuthorizedClient();
-  const activeTab = getTabFromForm(formData, "categories");
+  const activeTab = getAdminTab(formData, "categories");
   const id = getString(formData, "id");
 
   if (!id) {

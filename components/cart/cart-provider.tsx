@@ -12,6 +12,12 @@ import {
 
 import type { Product } from "@/lib/catalog";
 import { makeCartLineId } from "@/lib/cart-line-id";
+import {
+  getCartTotals,
+  normalizeCartQuantity,
+  normalizePersonalization,
+  parseStoredCart,
+} from "@/lib/cart-storage";
 import { CART_STORAGE_KEY, type CartLine } from "@/lib/cart-types";
 import type { SelectedProductColor } from "@/lib/product-colors";
 
@@ -37,87 +43,7 @@ function readStoredLines(): CartLine[] {
     return [];
   }
 
-  try {
-    const raw = window.localStorage.getItem(CART_STORAGE_KEY);
-    if (!raw) {
-      return [];
-    }
-
-    const parsed = JSON.parse(raw) as unknown;
-    if (!Array.isArray(parsed)) {
-      return [];
-    }
-
-    const out: CartLine[] = [];
-
-    for (const row of parsed) {
-      if (typeof row !== "object" || row === null) {
-        continue;
-      }
-
-      const r = row as Record<string, unknown>;
-      const slug = r.slug;
-      const title = r.title;
-      const price = r.price;
-      const quantity = r.quantity;
-
-      if (typeof slug !== "string" || typeof title !== "string") {
-        continue;
-      }
-      if (typeof price !== "number" || typeof quantity !== "number") {
-        continue;
-      }
-
-      const personalization =
-        typeof r.personalization === "string" ? r.personalization : undefined;
-      const selectedColors = Array.isArray(r.selectedColors)
-        ? (r.selectedColors.filter((item): item is SelectedProductColor => {
-            if (typeof item !== "object" || item === null) {
-              return false;
-            }
-            const i = item as Record<string, unknown>;
-            const baseValid =
-              typeof i.groupId === "string" &&
-              typeof i.groupKey === "string" &&
-              typeof i.groupLabel === "string" &&
-              typeof i.optionId === "string" &&
-              typeof i.optionName === "string" &&
-              (typeof i.optionHex === "string" || i.optionHex === null);
-
-            if (!baseValid) {
-              return false;
-            }
-
-            if (typeof i.fieldId === "string" && typeof i.fieldLabel === "string") {
-              return true;
-            }
-
-            // Backward compatibility: older cart entries had no field info.
-            i.fieldId = `${i.groupId}`;
-            i.fieldLabel = `${i.groupLabel}`;
-            return true;
-          }) as SelectedProductColor[])
-        : undefined;
-      const lineId =
-        typeof r.lineId === "string"
-          ? r.lineId
-          : makeCartLineId(slug, personalization, selectedColors);
-
-      out.push({
-        lineId,
-        slug,
-        title,
-        price,
-        quantity,
-        personalization,
-        selectedColors,
-      });
-    }
-
-    return out;
-  } catch {
-    return [];
-  }
+  return parseStoredCart(window.localStorage.getItem(CART_STORAGE_KEY));
 }
 
 export function CartProvider({ children }: { children: ReactNode }) {
@@ -139,16 +65,22 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const addProduct = useCallback(
     (product: Product, quantity = 1, personalization?: string, selectedColors?: SelectedProductColor[]) => {
-      const lineId = makeCartLineId(product.slug, personalization, selectedColors);
-      const trimmed = personalization?.trim();
-      const storedPersonalization = trimmed ? trimmed.slice(0, 50) : undefined;
+      const normalizedQuantity = normalizeCartQuantity(quantity);
+      if (normalizedQuantity === 0 || !Number.isFinite(product.price) || product.price < 0) {
+        return;
+      }
+
+      const storedPersonalization = normalizePersonalization(personalization);
       const storedColors = selectedColors?.length ? selectedColors : undefined;
+      const lineId = makeCartLineId(product.slug, storedPersonalization, storedColors);
 
       setLines((prev) => {
         const existing = prev.find((l) => l.lineId === lineId);
         if (existing) {
           return prev.map((l) =>
-            l.lineId === lineId ? { ...l, quantity: l.quantity + quantity } : l,
+            l.lineId === lineId
+              ? { ...l, quantity: normalizeCartQuantity(l.quantity + normalizedQuantity) }
+              : l,
           );
         }
 
@@ -159,7 +91,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
             slug: product.slug,
             title: product.title,
             price: product.price,
-            quantity,
+            quantity: normalizedQuantity,
             personalization: storedPersonalization,
             selectedColors: storedColors,
           },
@@ -170,7 +102,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   );
 
   const setQuantity = useCallback((lineId: string, quantity: number) => {
-    const next = Math.max(0, Math.floor(quantity));
+    const next = normalizeCartQuantity(quantity);
     setLines((prev) => {
       if (next === 0) {
         return prev.filter((l) => l.lineId !== lineId);
@@ -187,8 +119,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const clear = useCallback(() => setLines([]), []);
 
   const value = useMemo<CartContextValue>(() => {
-    const itemCount = lines.reduce((sum, l) => sum + l.quantity, 0);
-    const subtotal = lines.reduce((sum, l) => sum + l.price * l.quantity, 0);
+    const { itemCount, subtotal } = getCartTotals(lines);
 
     return {
       lines,
