@@ -11,7 +11,7 @@ export function CartPanel() {
 
   if (lines.length === 0) {
     return (
-      <section className="pb-20 pt-4">
+      <section className="pb-24 pt-8">
         <PageContainer>
           <div className="rounded-2xl border border-boutique-line bg-boutique-paper px-8 py-16 text-center shadow-boutique-sm">
             <p className="font-heading text-2xl text-boutique-ink">Количката е празна</p>
@@ -19,7 +19,7 @@ export function CartPanel() {
               Разгледайте магазина и добавете нещо специално.
             </p>
             <Link
-              href="/products"
+              href="/shop"
               className="mt-8 inline-flex rounded-full bg-boutique-ink px-8 py-3.5 text-sm font-semibold tracking-wide text-boutique-paper transition hover:bg-boutique-accent"
             >
               Към продуктите
@@ -31,7 +31,7 @@ export function CartPanel() {
   }
 
   return (
-    <section className="pb-20 pt-4">
+    <section className="pb-24 pt-8">
       <PageContainer>
         <ul className="divide-y divide-boutique-line/90 overflow-hidden rounded-2xl border border-boutique-line bg-boutique-paper shadow-boutique">
           {lines.map((line) => (
@@ -93,13 +93,19 @@ export function CartPanel() {
           ))}
         </ul>
 
-        <div className="mt-10 flex flex-col items-end gap-5 border-t border-boutique-line/80 pt-8">
-          <p className="font-heading text-2xl text-boutique-ink">
-            Обща сума: {formatEur(subtotal)}
-          </p>
+        <div className="mt-10 rounded-2xl border border-boutique-line bg-boutique-paper p-6 shadow-boutique-sm sm:flex sm:items-center sm:justify-between sm:gap-6 md:p-8">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-boutique-muted">
+              Междинна сума
+            </p>
+            <p className="mt-2 font-heading text-3xl text-boutique-ink">{formatEur(subtotal)}</p>
+            <p className="mt-2 text-xs text-boutique-muted">
+              Доставката се уточнява при финализиране на поръчката.
+            </p>
+          </div>
           <Link
             href="/checkout"
-            className="rounded-full bg-boutique-ink px-8 py-3.5 text-sm font-semibold tracking-wide text-boutique-paper transition hover:bg-boutique-accent"
+            className="mt-6 inline-flex rounded-full bg-boutique-ink px-8 py-3.5 text-sm font-semibold tracking-wide text-boutique-paper transition hover:bg-boutique-accent sm:mt-0"
           >
             Продължи към поръчка
           </Link>

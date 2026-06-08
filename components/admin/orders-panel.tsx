@@ -3,6 +3,7 @@ import {
   formatOrderDate,
   formatOrderPrice,
   getOrderStatusLabel,
+  getPaymentMethodLabel,
   orderStatusLabels,
   orderStatuses,
   type OrderRow,
@@ -21,6 +22,89 @@ function valueOrDash(value: string | null) {
   return value?.trim() || "—";
 }
 
+type StoreOrderItem = {
+  name: string;
+  unitPrice: number | null;
+  quantity: number;
+  personalization: string | null;
+  selectedColors: Array<{
+    fieldLabel?: string;
+    optionName?: string;
+  }>;
+};
+
+function getStoreOrderItems(order: OrderRow): StoreOrderItem[] {
+  const items = order.raw_payload?.order?.items;
+  if (!Array.isArray(items)) {
+    return [];
+  }
+
+  return items.flatMap((value) => {
+    if (!value || typeof value !== "object") {
+      return [];
+    }
+
+    const item = value as Record<string, unknown>;
+    if (typeof item.name !== "string" || typeof item.quantity !== "number") {
+      return [];
+    }
+
+    return [{
+      name: item.name,
+      unitPrice: typeof item.unitPrice === "number" ? item.unitPrice : null,
+      quantity: item.quantity,
+      personalization:
+        typeof item.personalization === "string" ? item.personalization : null,
+      selectedColors: Array.isArray(item.selectedColors)
+        ? item.selectedColors.filter(
+            (color): color is StoreOrderItem["selectedColors"][number] =>
+              Boolean(color) && typeof color === "object",
+          )
+        : [],
+    }];
+  });
+}
+
+function StoreOrderItems({ order }: { order: OrderRow }) {
+  const items = getStoreOrderItems(order);
+  if (items.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="mt-5 border-t border-boutique-line pt-5">
+      <h4 className="text-xs font-semibold uppercase tracking-wider text-boutique-muted">
+        Артикули от магазина
+      </h4>
+      <div className="mt-3 space-y-3">
+        {items.map((item, index) => (
+          <div
+            key={`${item.name}-${index}`}
+            className="rounded-xl bg-boutique-bg p-4 text-sm"
+          >
+            <div className="flex flex-wrap justify-between gap-3">
+              <p className="font-semibold text-boutique-ink">{item.name}</p>
+              <p className="text-boutique-ink">
+                {item.quantity} × {formatOrderPrice(item.unitPrice, order.currency)}
+              </p>
+            </div>
+            {item.personalization ? (
+              <p className="mt-2 text-boutique-muted">
+                Персонализация: {item.personalization}
+              </p>
+            ) : null}
+            {item.selectedColors.map((color, colorIndex) => (
+              <p key={colorIndex} className="mt-1 text-boutique-muted">
+                {color.fieldLabel || "Цвят"}: {color.optionName || "—"}
+              </p>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function OrderDetails({ order }: { order: OrderRow }) {
   const details = [
     ["Имейл", valueOrDash(order.customer_email)],
@@ -34,21 +118,24 @@ function OrderDetails({ order }: { order: OrderRow }) {
     ["Офис", valueOrDash(order.office_name)],
     ["Адрес на офис", valueOrDash(order.office_address)],
     ["Адрес / детайли", valueOrDash(order.delivery_details)],
-    ["Плащане", valueOrDash(order.payment_method)],
+    ["Плащане", getPaymentMethodLabel(order.payment_method)],
     ["Бележка", valueOrDash(order.note)],
   ];
 
   return (
-    <dl className="mt-5 grid gap-3 border-t border-boutique-line pt-5 text-sm sm:grid-cols-2">
-      {details.map(([label, value]) => (
-        <div key={label}>
-          <dt className="text-xs font-semibold uppercase tracking-wider text-boutique-muted">
-            {label}
-          </dt>
-          <dd className="mt-1 break-words text-boutique-ink">{value}</dd>
-        </div>
-      ))}
-    </dl>
+    <>
+      <StoreOrderItems order={order} />
+      <dl className="mt-5 grid gap-3 border-t border-boutique-line pt-5 text-sm sm:grid-cols-2">
+        {details.map(([label, value]) => (
+          <div key={label}>
+            <dt className="text-xs font-semibold uppercase tracking-wider text-boutique-muted">
+              {label}
+            </dt>
+            <dd className="mt-1 break-words text-boutique-ink">{value}</dd>
+          </div>
+        ))}
+      </dl>
+    </>
   );
 }
 

@@ -59,7 +59,7 @@
 
 - [x] Define shared database row types and domain mappers under `lib/storefront`.
 - [x] Add repository functions for listing products, category relations, categories, and product details.
-- [ ] Choose one canonical catalog route; redirect or intentionally differentiate the other route.
+- [x] Choose one canonical catalog route; redirect or intentionally differentiate the other route.
 - [x] Move fallback product/category image behavior behind the storefront boundary.
 - [ ] Standardize loading, empty, and error states.
 
@@ -82,16 +82,16 @@
 ### Phase 5: Build a real checkout
 
 - [ ] Define order, order-line, address, fulfillment, and payment-status tables.
-- [ ] Re-read products and prices on the server before creating an order.
+- [x] Re-read products and prices on the server before creating an order.
 - [ ] Store prices as integer minor units or an explicitly constrained decimal representation.
 - [ ] Add inventory/availability rules if products become stock-limited.
 - [ ] Add idempotency and payment-provider integration.
-- [ ] Clear the cart only after confirmed order creation.
+- [x] Clear the cart only after confirmed order creation.
 
 ### Phase 6: UX and production readiness
 
-- [ ] Replace placeholder contact and social configuration.
-- [ ] Normalize storefront language and terminology.
+- [x] Replace placeholder contact and social configuration.
+- [x] Normalize storefront language and terminology.
 - [ ] Audit keyboard navigation, focus states, labels, contrast, and reduced-motion behavior.
 - [ ] Add metadata, Open Graph images, structured product data, sitemap, and robots configuration.
 - [ ] Add error monitoring, privacy-safe analytics, and operational logging.

@@ -1,20 +1,23 @@
 export const siteConfig = {
-  name: "LumaForge Gifts",
+  name: "VeMiDi crafts",
   description:
-    "Personalized laser-cut and engraved gifts crafted for weddings, milestones, and thoughtful everyday moments.",
-  footerLinks: [
-    { href: "/products", label: "Shop Collection" },
-    { href: "/checkout", label: "Checkout" },
-    { href: "/login", label: "Sign In" },
+    "Ръчно изработени и персонализирани подаръци за специални поводи, дома и хората, които обичате.",
+  navigation: [
+    { href: "/", label: "Начало" },
+    { href: "/shop", label: "Магазин" },
+    { href: "/categories", label: "Категории" },
   ],
-  /** Utility bar: replace labels/hrefs with your real contact details and profile URLs. */
+  footerLinks: [
+    { href: "/shop", label: "Всички продукти" },
+    { href: "/categories", label: "Категории" },
+    { href: "/cart", label: "Количка" },
+  ],
   topBar: {
-    email: { label: "info@vemidi.bg", href: "mailto:info@vemidi.bg" },
-    phone: { label: "+359 888 000 000", href: "tel:+359888000000" },
+    message: "Ръчно изработено с внимание към всеки детайл",
+    secondary: "Персонализация и изработка по поръчка",
     social: {
-      instagram: "https://www.instagram.com/",
-      facebook: "https://www.facebook.com/",
-      /** Optional: set to a full URL to show a Pinterest icon, or leave empty to hide. */
+      instagram: "",
+      facebook: "",
       pinterest: "",
     },
   },

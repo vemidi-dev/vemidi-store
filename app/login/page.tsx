@@ -24,7 +24,7 @@ export default function LoginPage() {
           </p>
           <div className="mt-7 flex flex-wrap justify-center gap-3">
             <Link
-              href="/products"
+              href="/shop"
               className="rounded-full bg-boutique-ink px-6 py-3 text-xs font-semibold uppercase tracking-wider text-boutique-paper transition hover:bg-boutique-accent"
             >
               Към продуктите

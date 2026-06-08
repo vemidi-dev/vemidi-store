@@ -4,6 +4,7 @@ import Link from "next/link";
 import { NavCartLink } from "@/components/layout/nav-cart-link";
 import { PageContainer } from "@/components/layout/page-container";
 import { TopBar } from "@/components/layout/top-bar";
+import { siteConfig } from "@/config/site";
 
 const navLinkClass =
   "relative text-[0.9375rem] font-medium text-boutique-muted transition-colors duration-200 after:pointer-events-none after:absolute after:-bottom-1 after:left-0 after:h-px after:w-full after:origin-left after:scale-x-0 after:bg-boutique-accent after:transition-transform after:duration-300 hover:text-boutique-ink hover:after:scale-x-100";
@@ -40,21 +41,13 @@ export async function Header() {
 
           <nav aria-label="Основна навигация" className="hidden flex-1 justify-center md:flex">
             <ul className="flex items-center gap-10 lg:gap-12">
-              <li>
-                <Link href="/" className={navLinkClass}>
-                  Начало
-                </Link>
-              </li>
-              <li>
-                <Link href="/shop" className={navLinkClass}>
-                  Магазин
-                </Link>
-              </li>
-              <li>
-                <Link href="/categories" className={navLinkClass}>
-                  Категории
-                </Link>
-              </li>
+              {siteConfig.navigation.map((item) => (
+                <li key={item.href}>
+                  <Link href={item.href} className={navLinkClass}>
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
               <li>
                 <NavCartLink />
               </li>
@@ -63,10 +56,10 @@ export async function Header() {
 
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             <Link
-              href="/checkout"
+              href="/shop"
               className="rounded-full border border-boutique-sage-deep/25 bg-boutique-sage-deep px-4 py-2 text-xs font-medium text-boutique-on-sage transition-colors duration-200 hover:bg-boutique-ochre hover:text-boutique-ink"
             >
-              Поръчка
+              Разгледай
             </Link>
           </div>
         </div>
@@ -77,21 +70,13 @@ export async function Header() {
         className="border-t border-boutique-line/50 bg-boutique-bg px-5 py-3.5 md:hidden"
       >
         <ul className="mx-auto flex max-w-6xl flex-wrap justify-center gap-x-8 gap-y-3">
-          <li>
-            <Link href="/" className={navLinkClass}>
-              Начало
-            </Link>
-          </li>
-          <li>
-            <Link href="/shop" className={navLinkClass}>
-              Магазин
-            </Link>
-          </li>
-          <li>
-            <Link href="/categories" className={navLinkClass}>
-              Категории
-            </Link>
-          </li>
+          {siteConfig.navigation.map((item) => (
+            <li key={item.href}>
+              <Link href={item.href} className={navLinkClass}>
+                {item.label}
+              </Link>
+            </li>
+          ))}
           <li>
             <NavCartLink />
           </li>

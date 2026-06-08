@@ -1,8 +1,8 @@
-import Image from "next/image";
 import Link from "next/link";
 
 import { ProductCard } from "@/components/product/product-card";
 import { PageContainer } from "@/components/layout/page-container";
+import { MediaPlaceholder } from "@/components/ui/media-placeholder";
 import { getStorefrontCatalog } from "@/lib/storefront/repository";
 
 type ShopPageProps = {
@@ -122,7 +122,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
         <PageContainer className="grid items-center gap-10 py-14 md:grid-cols-[1.08fr_0.92fr] md:py-20">
           <div className="space-y-7">
             <p className="text-[0.7rem] font-semibold uppercase tracking-[0.28em] text-boutique-accent">
-              Gift Shop
+              Магазин
             </p>
             <h1 className="font-heading text-4xl leading-tight tracking-tight text-boutique-ink sm:text-5xl">
               Магазин за подаръци, които пазят спомени
@@ -160,19 +160,15 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
 
           <div className="overflow-hidden rounded-2xl border border-boutique-line bg-boutique-bg shadow-boutique-sm">
             <div className="relative aspect-[4/3]">
-              <Image
-                src="https://images.unsplash.com/photo-1511988617509-a57c8a288659?auto=format&fit=crop&w=1200&q=80"
-                alt="Опакован ръчно изработен подарък с панделка"
-                fill
-                sizes="(max-width: 768px) 100vw, 45vw"
-                className="object-cover"
-              />
+              <MediaPlaceholder label="Снимка за магазина" dark />
               <div className="absolute inset-0 bg-gradient-to-t from-boutique-ink/70 via-boutique-ink/25 to-transparent" />
               <div className="absolute inset-x-0 bottom-0 p-6">
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-boutique-paper/80">
-                  Gift Builder
+                  Персонализация
                 </p>
-                <h2 className="mt-2 font-heading text-3xl text-boutique-paper">Create your gift</h2>
+                <h2 className="mt-2 font-heading text-3xl text-boutique-paper">
+                  Създайте личен подарък
+                </h2>
                 <p className="mt-2 max-w-sm text-sm leading-relaxed text-boutique-paper/90">
                   Създай персонален подарък с име, дата или кратко послание.
                 </p>
@@ -212,7 +208,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-[0.7rem] font-semibold uppercase tracking-[0.28em] text-boutique-accent">
-                Featured
+                Подбрани
               </p>
               <h2 className="font-heading mt-3 text-3xl text-boutique-ink">Избрани продукти</h2>
             </div>
@@ -240,7 +236,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <p className="text-[0.7rem] font-semibold uppercase tracking-[0.28em] text-boutique-accent">
-                Product Grid
+                Каталог
               </p>
               <h2 className="font-heading mt-3 text-3xl text-boutique-ink">Всички продукти</h2>
             </div>

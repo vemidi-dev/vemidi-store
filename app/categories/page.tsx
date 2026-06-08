@@ -27,7 +27,7 @@ export default async function CategoriesPage() {
             <p className="mt-10 text-center text-sm text-boutique-muted">Все още няма категории.</p>
           ) : null}
           <p className="mt-12 text-center text-sm text-boutique-muted">
-            <Link href="/products" className="font-medium text-boutique-accent underline-offset-4 hover:underline">
+            <Link href="/shop" className="font-medium text-boutique-accent underline-offset-4 hover:underline">
               Към магазина
             </Link>
           </p>

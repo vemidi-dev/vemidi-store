@@ -38,21 +38,11 @@ export function TopBar() {
       <PageContainer>
         <div className="flex flex-col gap-2 py-2 text-[0.7rem] font-medium tracking-wide sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:py-2.5 sm:text-xs">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 sm:gap-x-6">
-            <Link
-              href={topBar.email.href}
-              className="underline-offset-2 transition hover:text-white hover:underline"
-            >
-              {topBar.email.label}
-            </Link>
+            <span>{topBar.message}</span>
             <span className="hidden text-boutique-on-sage/40 sm:inline" aria-hidden>
               |
             </span>
-            <Link
-              href={topBar.phone.href}
-              className="underline-offset-2 transition hover:text-white hover:underline"
-            >
-              {topBar.phone.label}
-            </Link>
+            <span className="hidden sm:inline">{topBar.secondary}</span>
           </div>
 
           <div className="flex items-center gap-1 sm:justify-end">

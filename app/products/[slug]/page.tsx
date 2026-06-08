@@ -24,7 +24,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
       <section className="border-b border-boutique-line/90 bg-boutique-paper">
         <PageContainer className="py-14 md:py-20 lg:py-24">
           <Link
-            href="/products"
+            href="/shop"
             className="inline-block text-xs font-semibold uppercase tracking-[0.22em] text-boutique-muted transition hover:text-boutique-accent"
           >
             ← Назад към магазина

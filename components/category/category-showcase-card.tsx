@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import type { ShopCategory } from "@/lib/shop-categories";
+import { MediaPlaceholder } from "@/components/ui/media-placeholder";
 
 type CategoryShowcaseCardProps = {
   category: ShopCategory;
@@ -10,7 +11,7 @@ type CategoryShowcaseCardProps = {
 };
 
 export default function CategoryShowcaseCard({ category, compact = false }: CategoryShowcaseCardProps) {
-  const href = `/products?category=${encodeURIComponent(category.slug)}`;
+  const href = `/shop?category=${encodeURIComponent(category.slug)}#product-grid`;
 
   const frame = compact
     ? "rounded-xl hover:-translate-y-0.5"
@@ -31,13 +32,17 @@ export default function CategoryShowcaseCard({ category, compact = false }: Cate
       className={`group relative block overflow-hidden border border-boutique-line/90 bg-boutique-paper shadow-boutique-sm transition duration-500 ease-out hover:border-boutique-accent/25 hover:shadow-boutique focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-boutique-accent ${frame}`}
     >
       <div className={`relative overflow-hidden ${aspect}`}>
-        <Image
-          src={category.imageSrc}
-          alt={category.imageAlt}
-          fill
-          sizes={sizes}
-          className="object-cover transition duration-700 ease-out group-hover:scale-[1.04]"
-        />
+        {category.imageSrc ? (
+          <Image
+            src={category.imageSrc}
+            alt={category.imageAlt}
+            fill
+            sizes={sizes}
+            className="object-cover transition duration-700 ease-out group-hover:scale-[1.04]"
+          />
+        ) : (
+          <MediaPlaceholder label="Снимка на категорията" dark />
+        )}
         <div
           className="pointer-events-none absolute inset-0 bg-gradient-to-t from-boutique-ink/80 via-boutique-ink/25 to-transparent opacity-90 transition-opacity duration-500 group-hover:opacity-100"
           aria-hidden

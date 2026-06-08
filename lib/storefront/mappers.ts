@@ -3,10 +3,10 @@ import type { ShopCategory } from "@/lib/shop-categories";
 import type { StorefrontCategory } from "@/lib/storefront/types";
 
 export const DEFAULT_PRODUCT_IMAGE =
-  "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=900&q=80";
+  "";
 
 export const DEFAULT_CATEGORY_IMAGE =
-  "https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=800&q=80";
+  "";
 
 export type ProductRow = {
   id: string;

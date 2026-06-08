@@ -24,49 +24,48 @@ export default async function AccountPage() {
     <section className="pb-24 pt-8 md:pt-12">
       <PageContainer>
         <p className="text-[0.7rem] font-semibold uppercase tracking-[0.28em] text-boutique-accent">
-          Account
+          Профил
         </p>
         <h1 className="font-heading mt-4 text-4xl tracking-tight text-boutique-ink sm:text-5xl">
-          Welcome back
+          Добре дошли
         </h1>
         <p className="mt-5 max-w-2xl text-base leading-relaxed text-boutique-muted">
-          Signed in as <span className="font-medium text-boutique-ink">{user.email}</span>.
+          Влезли сте като <span className="font-medium text-boutique-ink">{user.email}</span>.
         </p>
 
         <div className="mt-12 grid gap-8 md:grid-cols-2">
           <article className="rounded-2xl border border-boutique-line bg-boutique-paper p-8 shadow-boutique-sm">
-            <h2 className="font-heading text-xl text-boutique-ink">Orders & checkout</h2>
+            <h2 className="font-heading text-xl text-boutique-ink">Поръчки и плащане</h2>
             <p className="mt-3 text-sm leading-relaxed text-boutique-muted">
-              Your studio account is ready for saved addresses, order history, and a smoother
-              repeat experience.
+              Профилът е подготвен за бъдеща история на поръчките и запазени адреси.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
                 href="/checkout"
                 className="rounded-full bg-boutique-ink px-6 py-3 text-xs font-semibold uppercase tracking-wider text-boutique-paper transition hover:bg-boutique-accent"
               >
-                Checkout
+                Към поръчката
               </Link>
               <Link
-                href="/products"
+                href="/shop"
                 className="rounded-full border border-boutique-line px-6 py-3 text-xs font-semibold uppercase tracking-wider text-boutique-ink transition hover:border-boutique-accent/40"
               >
-                Shop
+                Магазин
               </Link>
             </div>
           </article>
 
           <article className="rounded-2xl border border-boutique-line bg-boutique-paper p-8 shadow-boutique-sm">
-            <h2 className="font-heading text-xl text-boutique-ink">Session</h2>
+            <h2 className="font-heading text-xl text-boutique-ink">Сесия</h2>
             <p className="mt-3 text-sm leading-relaxed text-boutique-muted">
-              Sign out when you are finished browsing our atelier.
+              Излезте от профила, когато приключите.
             </p>
             <form action={signOut} className="mt-8">
               <button
                 type="submit"
                 className="rounded-full border border-boutique-line px-6 py-3 text-xs font-semibold uppercase tracking-wider text-boutique-ink transition hover:border-boutique-accent/40"
               >
-                Sign out
+                Изход
               </button>
             </form>
           </article>

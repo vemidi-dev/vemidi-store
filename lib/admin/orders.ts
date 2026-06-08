@@ -44,6 +44,12 @@ export type OrderRow = {
   office_address: string | null;
   payment_method: string | null;
   note: string | null;
+  raw_payload: {
+    source?: string;
+    order?: {
+      items?: unknown[];
+    };
+  } | null;
 };
 
 export type OrdersResult = {
@@ -85,6 +91,10 @@ export function formatOrderPrice(amount: number | null, currency: string | null)
     style: "currency",
     currency: currency || "EUR",
   }).format(Number(amount));
+}
+
+export function getPaymentMethodLabel(value: string | null) {
+  return value === "cash_on_delivery" ? "Наложен платеж" : value || "—";
 }
 
 export async function loadOrders(

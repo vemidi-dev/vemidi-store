@@ -2,17 +2,21 @@ import Link from "next/link";
 
 import CategoryShowcaseCard from "@/components/category/category-showcase-card";
 import { HomeHero } from "@/components/home/home-hero";
+import { HomeAtelier, HomeBenefits, HomeProcess } from "@/components/home/home-story";
 import { PageContainer } from "@/components/layout/page-container";
 import { ProductCard } from "@/components/product/product-card";
-import { products } from "@/lib/catalog";
-import { shopCategories } from "@/lib/shop-categories";
+import { toShowcaseCategory } from "@/lib/storefront/mappers";
+import { getStorefrontCatalog } from "@/lib/storefront/repository";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const { categories, products } = await getStorefrontCatalog();
   const featured = products.slice(0, 3);
+  const featuredCategories = categories.slice(0, 6).map(toShowcaseCategory);
 
   return (
     <div>
       <HomeHero />
+      <HomeBenefits />
 
       <section className="border-b border-boutique-line bg-boutique-bg py-16 md:py-20">
         <PageContainer>
@@ -28,13 +32,30 @@ export default function HomePage() {
               изделия.
             </p>
           </div>
-          <div className="mt-14 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-            {shopCategories.map((category) => (
+          <div className="mt-14 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {featuredCategories.map((category) => (
               <CategoryShowcaseCard key={category.slug} category={category} />
             ))}
           </div>
+          {featuredCategories.length === 0 ? (
+            <p className="mt-10 text-center text-sm text-boutique-muted">
+              Категориите ще се покажат тук след добавянето им в магазина.
+            </p>
+          ) : null}
+          {categories.length > featuredCategories.length ? (
+            <div className="mt-10 text-center">
+              <Link
+                href="/categories"
+                className="text-sm font-semibold text-boutique-accent underline-offset-4 hover:underline"
+              >
+                Виж всички категории
+              </Link>
+            </div>
+          ) : null}
         </PageContainer>
       </section>
+
+      <HomeProcess />
 
       <section className="py-16 md:py-20">
         <PageContainer>
@@ -55,6 +76,11 @@ export default function HomePage() {
               <ProductCard key={product.slug} product={product} />
             ))}
           </div>
+          {featured.length === 0 ? (
+            <p className="mt-10 text-center text-sm text-boutique-muted">
+              Все още няма публикувани продукти.
+            </p>
+          ) : null}
           <div className="mt-12 text-center">
             <Link
               href="/shop"
@@ -66,6 +92,8 @@ export default function HomePage() {
           </div>
         </PageContainer>
       </section>
+
+      <HomeAtelier />
     </div>
   );
 }

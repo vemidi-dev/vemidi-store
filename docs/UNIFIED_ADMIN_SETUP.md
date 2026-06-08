@@ -18,6 +18,10 @@ The script keeps `orders` private and allows only users listed in `public.admin_
 - read orders;
 - update the `status` column.
 
+Run `supabase/store_checkout_orders.sql` to enable checkout submissions from the store. It exposes
+only the dedicated order function to visitors; direct anonymous inserts and reads of `orders` remain
+blocked.
+
 ## 2. Supabase Auth URLs
 
 In Supabase, open **Authentication > URL Configuration**.
@@ -49,5 +53,7 @@ Keep the existing `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 3. Confirm that the email returns to `/admin/update-password` in the store.
 4. Open **Поръчки** and change the status of one existing order.
 5. Confirm the same status is visible in Supabase.
+6. Add a store product to the cart and submit a cash-on-delivery order.
+7. Confirm that the new order and all its item details appear in the store admin panel.
 
 Only after these checks should the landing page's old `/admin` route be redirected or removed.
