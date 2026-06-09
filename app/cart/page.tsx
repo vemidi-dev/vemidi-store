@@ -1,5 +1,12 @@
+import type { Metadata } from "next";
+
 import { CartPanel } from "@/components/cart/cart-panel";
 import { PageHero } from "@/components/ui/page-hero";
+
+export const metadata: Metadata = {
+  title: "Количка",
+  robots: { index: false, follow: false },
+};
 
 export default function CartPage() {
   return (

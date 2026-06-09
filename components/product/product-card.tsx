@@ -75,6 +75,7 @@ export function ProductCard({ product }: ProductCardProps) {
           ) : (
             <button
               type="button"
+              aria-live="polite"
               onClick={() => {
                 addProduct(product, 1);
                 setAdded(true);

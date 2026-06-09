@@ -19,8 +19,9 @@ The script keeps `orders` private and allows only users listed in `public.admin_
 - update the `status` column.
 
 Run `supabase/store_checkout_orders.sql` to enable checkout submissions from the store. It exposes
-only the dedicated order function to visitors; direct anonymous inserts and reads of `orders` remain
-blocked.
+the dedicated order function only to the server-side service role. Direct anonymous function calls,
+inserts, and reads of `orders` remain blocked. Repeated submissions with the same idempotency key
+return the original order instead of creating a duplicate.
 
 ## 2. Supabase Auth URLs
 
@@ -42,9 +43,23 @@ In the store's Vercel project, set:
 
 ```text
 NEXT_PUBLIC_SITE_URL=https://store.example.com
+SUPABASE_SECRET_KEY=your-secret-key
 ```
 
 Keep the existing `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+
+Find or create a server secret under **Project Settings > API Keys > Secret keys**. New keys use
+the `sb_secret_...` format. A legacy `service_role` key also works through the
+`SUPABASE_SERVICE_ROLE_KEY` environment variable, but the new secret key is preferred. Treat either
+value as a secret:
+
+- add it only to Vercel Environment Variables and local `.env.local`;
+- never prefix it with `NEXT_PUBLIC_`;
+- never paste it into browser code, screenshots, commits, or public logs.
+
+For an existing deployment, add `SUPABASE_SECRET_KEY` to Vercel first and redeploy. Then run
+the latest `supabase/store_checkout_orders.sql`. This order avoids checkout downtime while the
+public RPC permission is being removed.
 
 ## 4. Verification
 
@@ -55,5 +70,6 @@ Keep the existing `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 5. Confirm the same status is visible in Supabase.
 6. Add a store product to the cart and submit a cash-on-delivery order.
 7. Confirm that the new order and all its item details appear in the store admin panel.
+8. Submit the same checkout request twice and confirm that only one order is stored.
 
 Only after these checks should the landing page's old `/admin` route be redirected or removed.

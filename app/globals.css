@@ -41,6 +41,26 @@ a {
   text-decoration: none;
 }
 
+:where(button, input, select, textarea, summary, a):focus-visible {
+  outline: 2px solid var(--color-boutique-accent);
+  outline-offset: 3px;
+}
+
 .font-heading {
   font-family: var(--font-playfair), ui-serif, Georgia, "Times New Roman", serif;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }

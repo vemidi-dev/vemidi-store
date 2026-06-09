@@ -76,6 +76,8 @@ export function CartPanel() {
                   <input
                     type="number"
                     min={1}
+                    max={99}
+                    aria-label={`Количество за ${line.title}`}
                     value={line.quantity}
                     onChange={(e) => setQuantity(line.lineId, Number(e.target.value))}
                     className="w-20 rounded-lg border border-boutique-line bg-boutique-bg px-3 py-2 text-sm text-boutique-ink outline-none transition focus:border-boutique-accent/50"
@@ -83,6 +85,7 @@ export function CartPanel() {
                 </label>
                 <button
                   type="button"
+                  aria-label={`Премахни ${line.title} от количката`}
                   onClick={() => removeLine(line.lineId)}
                   className="text-xs font-semibold uppercase tracking-wider text-boutique-accent underline-offset-4 transition hover:text-boutique-ink hover:underline"
                 >

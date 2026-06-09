@@ -1,4 +1,51 @@
-export type AdminTab = "products" | "categories" | "orders";
+export type AdminTab = "products" | "categories" | "orders" | "blog" | "events";
+
+export type BlogPostRow = {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string;
+  content: string;
+  image_url: string | null;
+  category: string | null;
+  author: string | null;
+  read_minutes: number | null;
+  is_featured: boolean;
+  is_popular: boolean;
+  is_published: boolean;
+  published_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type EventRow = {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string;
+  content: string;
+  image_url: string | null;
+  event_type: string | null;
+  audience: string | null;
+  format: string | null;
+  price: number | null;
+  capacity: number | null;
+  available_spots: number | null;
+  age_group: string | null;
+  address: string | null;
+  duration_minutes: number | null;
+  includes_text: string | null;
+  materials_text: string | null;
+  host_name: string | null;
+  cancellation_policy: string | null;
+  registration_url: string | null;
+  location: string | null;
+  starts_at: string | null;
+  ends_at: string | null;
+  is_published: boolean;
+  created_at: string;
+  updated_at: string;
+};
 
 export type ProductRow = {
   id: string;

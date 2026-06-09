@@ -13,7 +13,7 @@
 - Next.js 15 App Router, React 19, TypeScript in strict mode, Tailwind CSS 4.
 - Supabase provides authentication, products, categories, product-color rules, and image storage.
 - The cart is client-side and persisted in `localStorage`.
-- Checkout is currently a placeholder and does not create an order.
+- Checkout creates cash-on-delivery orders through a price-validating Supabase RPC.
 - The repository has active, uncommitted layout and home-page redesign work. Refactors must not revert or overwrite it.
 
 ## Audit Findings
@@ -39,7 +39,7 @@
 
 ### P2: UX, accessibility, and operations
 
-- The new top bar contains placeholder contact details and generic social links that should not ship unchanged.
+- Social links remain hidden until real profile URLs are configured.
 - External social links are rendered through `next/link`; plain anchors are clearer for non-application URLs.
 - Storefront loading, empty, and database-error states are inconsistent.
 - No documented environment setup, migration order, deployment checklist, or rollback procedure exists.
@@ -61,7 +61,7 @@
 - [x] Add repository functions for listing products, category relations, categories, and product details.
 - [x] Choose one canonical catalog route; redirect or intentionally differentiate the other route.
 - [x] Move fallback product/category image behavior behind the storefront boundary.
-- [ ] Standardize loading, empty, and error states.
+- [x] Standardize loading, empty, and error states.
 
 ### Phase 3: Split the admin surface
 
@@ -85,15 +85,16 @@
 - [x] Re-read products and prices on the server before creating an order.
 - [ ] Store prices as integer minor units or an explicitly constrained decimal representation.
 - [ ] Add inventory/availability rules if products become stock-limited.
-- [ ] Add idempotency and payment-provider integration.
+- [x] Add idempotency for checkout order creation.
+- [x] Keep payment limited to cash on delivery; no payment-provider integration is currently planned.
 - [x] Clear the cart only after confirmed order creation.
 
 ### Phase 6: UX and production readiness
 
-- [x] Replace placeholder contact and social configuration.
+- [ ] Replace placeholder contact, legal, and social configuration with final business details.
 - [x] Normalize storefront language and terminology.
-- [ ] Audit keyboard navigation, focus states, labels, contrast, and reduced-motion behavior.
-- [ ] Add metadata, Open Graph images, structured product data, sitemap, and robots configuration.
+- [x] Audit keyboard navigation, focus states, labels, contrast, and reduced-motion behavior.
+- [x] Add metadata, structured product data, sitemap, and robots configuration.
 - [ ] Add error monitoring, privacy-safe analytics, and operational logging.
 - [ ] Document environment variables, migration order, release checks, and rollback steps.
 

@@ -7,7 +7,7 @@ import { TopBar } from "@/components/layout/top-bar";
 import { siteConfig } from "@/config/site";
 
 const navLinkClass =
-  "relative text-[0.9375rem] font-medium text-boutique-muted transition-colors duration-200 after:pointer-events-none after:absolute after:-bottom-1 after:left-0 after:h-px after:w-full after:origin-left after:scale-x-0 after:bg-boutique-accent after:transition-transform after:duration-300 hover:text-boutique-ink hover:after:scale-x-100";
+  "relative rounded-sm text-[0.9375rem] font-medium text-boutique-muted transition-colors duration-200 after:pointer-events-none after:absolute after:-bottom-1 after:left-0 after:h-px after:w-full after:origin-left after:scale-x-0 after:bg-boutique-accent after:transition-transform after:duration-300 hover:text-boutique-ink hover:after:scale-x-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-boutique-accent";
 
 export async function Header() {
   return (
@@ -39,8 +39,8 @@ export async function Header() {
             </span>
           </Link>
 
-          <nav aria-label="Основна навигация" className="hidden flex-1 justify-center md:flex">
-            <ul className="flex items-center gap-10 lg:gap-12">
+          <nav aria-label="Основна навигация" className="hidden flex-1 justify-center xl:flex">
+            <ul className="flex items-center gap-5">
               {siteConfig.navigation.map((item) => (
                 <li key={item.href}>
                   <Link href={item.href} className={navLinkClass}>
@@ -57,7 +57,7 @@ export async function Header() {
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             <Link
               href="/shop"
-              className="rounded-full border border-boutique-sage-deep/25 bg-boutique-sage-deep px-4 py-2 text-xs font-medium text-boutique-on-sage transition-colors duration-200 hover:bg-boutique-ochre hover:text-boutique-ink"
+              className="rounded-full border border-boutique-sage-deep/25 bg-boutique-sage-deep px-4 py-2 text-xs font-medium text-boutique-on-sage transition-colors duration-200 hover:bg-boutique-ochre hover:text-boutique-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-boutique-accent"
             >
               Разгледай
             </Link>
@@ -67,9 +67,9 @@ export async function Header() {
 
       <nav
         aria-label="Мобилна навигация"
-        className="border-t border-boutique-line/50 bg-boutique-bg px-5 py-3.5 md:hidden"
+        className="border-t border-boutique-line/50 bg-boutique-bg px-5 py-3.5 xl:hidden"
       >
-        <ul className="mx-auto flex max-w-6xl flex-wrap justify-center gap-x-8 gap-y-3">
+        <ul className="mx-auto flex max-w-6xl flex-wrap justify-center gap-x-6 gap-y-3">
           {siteConfig.navigation.map((item) => (
             <li key={item.href}>
               <Link href={item.href} className={navLinkClass}>

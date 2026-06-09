@@ -2,16 +2,27 @@ import Link from "next/link";
 
 import CategoryShowcaseCard from "@/components/category/category-showcase-card";
 import { HomeHero } from "@/components/home/home-hero";
+import { HomeBlog, HomeEvents } from "@/components/home/home-content-sections";
 import { HomeAtelier, HomeBenefits, HomeProcess } from "@/components/home/home-story";
 import { PageContainer } from "@/components/layout/page-container";
 import { ProductCard } from "@/components/product/product-card";
+import { getPublishedBlogPosts, getPublishedEvents } from "@/lib/content/repository";
 import { toShowcaseCategory } from "@/lib/storefront/mappers";
 import { getStorefrontCatalog } from "@/lib/storefront/repository";
 
 export default async function HomePage() {
-  const { categories, products } = await getStorefrontCatalog();
+  const [{ categories, products }, blogPosts, events] = await Promise.all([
+    getStorefrontCatalog(),
+    getPublishedBlogPosts(),
+    getPublishedEvents(),
+  ]);
   const featured = products.slice(0, 3);
   const featuredCategories = categories.slice(0, 6).map(toShowcaseCategory);
+  const latestPosts = blogPosts.slice(0, 3);
+  const now = Date.now();
+  const upcomingEvents = events
+    .filter((event) => !event.starts_at || new Date(event.starts_at).getTime() >= now)
+    .slice(0, 3);
 
   return (
     <div>
@@ -93,6 +104,8 @@ export default async function HomePage() {
         </PageContainer>
       </section>
 
+      <HomeEvents events={upcomingEvents} />
+      <HomeBlog posts={latestPosts} />
       <HomeAtelier />
     </div>
   );

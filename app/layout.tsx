@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { CartProvider } from "@/components/cart/cart-provider";
 import { SiteShell } from "@/components/layout/site-shell";
 import { siteConfig } from "@/config/site";
+import { getSiteUrl } from "@/lib/site-url";
 
 import "./globals.css";
 
@@ -21,11 +22,40 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: getSiteUrl(),
   title: {
-    default: siteConfig.name,
+    default: `${siteConfig.name} | Персонализирани подаръци`,
     template: `%s | ${siteConfig.name}`,
   },
   description: siteConfig.description,
+  applicationName: siteConfig.name,
+  category: "Ръчно изработени подаръци",
+  keywords: [
+    "персонализирани подаръци",
+    "ръчно изработени подаръци",
+    "подаръци по поръчка",
+    "VeMiDi crafts",
+  ],
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    type: "website",
+    locale: "bg_BG",
+    url: "/",
+    siteName: siteConfig.name,
+    title: `${siteConfig.name} | Персонализирани подаръци`,
+    description: siteConfig.description,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${siteConfig.name} | Персонализирани подаръци`,
+    description: siteConfig.description,
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 type RootLayoutProps = {

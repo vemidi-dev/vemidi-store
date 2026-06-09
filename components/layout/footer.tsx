@@ -29,6 +29,18 @@ export function Footer() {
                 {item.label}
               </Link>
             ))}
+            <Link
+              href="/blog"
+              className="text-sm text-boutique-on-sage/90 transition hover:text-boutique-on-sage"
+            >
+              Блог
+            </Link>
+            <Link
+              href="/events"
+              className="text-sm text-boutique-on-sage/90 transition hover:text-boutique-on-sage"
+            >
+              Събития
+            </Link>
           </div>
         </div>
 
@@ -45,6 +57,17 @@ export function Footer() {
           >
             Към количката
           </Link>
+          <div className="flex flex-col gap-2 pt-2 text-sm">
+            <Link href="/delivery" className="text-boutique-on-sage/80 hover:text-boutique-paper">
+              Доставка и плащане
+            </Link>
+            <Link href="/terms" className="text-boutique-on-sage/80 hover:text-boutique-paper">
+              Условия за поръчка
+            </Link>
+            <Link href="/privacy" className="text-boutique-on-sage/80 hover:text-boutique-paper">
+              Поверителност
+            </Link>
+          </div>
         </div>
       </PageContainer>
 

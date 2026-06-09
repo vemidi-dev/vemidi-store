@@ -24,7 +24,7 @@ export function AdminHeader({ activeTab }: { activeTab: AdminTab }) {
 
       <nav
         aria-label="Админ секции"
-        className="inline-flex rounded-full border border-boutique-line bg-boutique-paper p-1"
+        className="flex w-full flex-wrap gap-1 rounded-2xl border border-boutique-line bg-boutique-paper p-1 sm:w-fit sm:rounded-full"
       >
         <a
           href={makeAdminTabHref("products")}
@@ -55,6 +55,26 @@ export function AdminHeader({ activeTab }: { activeTab: AdminTab }) {
           }`}
         >
           Поръчки
+        </a>
+        <a
+          href={makeAdminTabHref("blog")}
+          className={`rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-wider transition ${
+            activeTab === "blog"
+              ? "bg-boutique-ink text-boutique-paper"
+              : "text-boutique-ink hover:bg-boutique-bg"
+          }`}
+        >
+          Блог
+        </a>
+        <a
+          href={makeAdminTabHref("events")}
+          className={`rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-wider transition ${
+            activeTab === "events"
+              ? "bg-boutique-ink text-boutique-paper"
+              : "text-boutique-ink hover:bg-boutique-bg"
+          }`}
+        >
+          Събития
         </a>
       </nav>
     </>

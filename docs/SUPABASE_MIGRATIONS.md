@@ -10,6 +10,7 @@ Apply the SQL files in this order for a new environment:
 6. `supabase/atomic_product_admin_functions.sql`
 7. `supabase/admin_orders_access.sql`
 8. `supabase/store_checkout_orders.sql`
+9. `supabase/blog_and_events.sql`
 
 For an existing environment, apply only migrations that have not already been run. The orders
 access migration depends on `admin_auth.sql` and the landing page's `public.orders` table.
@@ -21,12 +22,27 @@ column. Anonymous visitors and regular authenticated users remain blocked by RLS
 Run `store_checkout_orders.sql` after the shared `public.orders` table and the product color tables
 exist. It adds the `create_store_order` RPC used by the storefront checkout. The function:
 
+- can be executed only with the server-side Supabase service role;
+- requires an idempotency key and returns the existing order for repeated requests;
 - accepts only cash-on-delivery orders;
 - reloads product names and prices from `public.products`;
 - validates quantities, personalization, and allowed color selections;
 - calculates the total in Postgres;
 - stores the itemized order in `orders.raw_payload`;
 - keeps the existing landing-page order format compatible with the unified admin panel.
+
+Before applying the latest checkout migration to an existing deployment, add
+`SUPABASE_SECRET_KEY` to the local and Vercel environments and redeploy the application. A legacy
+`SUPABASE_SERVICE_ROLE_KEY` is also supported, but the new `sb_secret_...` key is preferred.
+After that, rerun the complete `store_checkout_orders.sql` file. It removes the older anonymous
+four-argument function and installs the protected five-argument version.
+
+Run `blog_and_events.sql` to add public blog posts and events with admin-only create, update, and
+delete access. Published rows are readable by visitors; drafts remain visible only to administrators.
+Images use the existing `product-images` bucket under separate `blog/` and `events/` folders.
+The migration also creates the private newsletter subscriber table and the public subscription RPC.
+It is safe to run the complete file again when upgrading an existing Blog/Events installation because
+the additional columns and tables use idempotent statements.
 
 If storefront tables return `permission denied` or an empty result despite containing rows, run
 `supabase/restore_storefront_read_grants.sql`. It restores both PostgreSQL grants and RLS SELECT

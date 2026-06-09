@@ -1,10 +1,18 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 
 import CategoryShowcaseCard from "@/components/category/category-showcase-card";
 import { PageContainer } from "@/components/layout/page-container";
 import { PageHero } from "@/components/ui/page-hero";
 import { toShowcaseCategory } from "@/lib/storefront/mappers";
 import { getStorefrontCategories } from "@/lib/storefront/repository";
+
+export const metadata: Metadata = {
+  title: "Категории",
+  description:
+    "Открийте подаръци по повод и категория в каталога на VeMiDi crafts.",
+  alternates: { canonical: "/categories" },
+};
 
 export default async function CategoriesPage() {
   const categories = (await getStorefrontCategories()).map(toShowcaseCategory);

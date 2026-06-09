@@ -12,7 +12,12 @@ export function firstValue(value: string | string[] | undefined) {
 }
 
 export function normalizeAdminTab(value: string): AdminTab {
-  if (value === "categories" || value === "orders") {
+  if (
+    value === "categories" ||
+    value === "orders" ||
+    value === "blog" ||
+    value === "events"
+  ) {
     return value;
   }
   return "products";

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
 
 import {
@@ -37,6 +37,7 @@ function SubmitOrderButton() {
 export function CheckoutPanel() {
   const { lines, subtotal, clear } = useCart();
   const [state, formAction] = useActionState(createStoreOrder, initialState);
+  const [idempotencyKey] = useState(() => crypto.randomUUID());
 
   useEffect(() => {
     if (state.ok) {
@@ -109,6 +110,7 @@ export function CheckoutPanel() {
             name="cart_items"
             value={JSON.stringify(lines)}
           />
+          <input type="hidden" name="idempotency_key" value={idempotencyKey} />
           <input
             name="website"
             tabIndex={-1}
@@ -223,7 +225,15 @@ export function CheckoutPanel() {
                 />
                 <span>
                   Съгласен/на съм данните ми да бъдат използвани за обработване и
-                  доставка на тази поръчка.
+                  доставка на тази поръчка съгласно{" "}
+                  <Link
+                    href="/privacy"
+                    target="_blank"
+                    className="font-semibold text-boutique-accent underline underline-offset-2"
+                  >
+                    информацията за поверителност
+                  </Link>
+                  .
                 </span>
               </label>
             </section>

@@ -6,6 +6,7 @@ import { CategoryManagementPanel } from "@/components/admin/category-management-
 import { ProductCreatePanel } from "@/components/admin/product-create-panel";
 import { ProductListPanel } from "@/components/admin/product-list-panel";
 import { OrdersPanel } from "@/components/admin/orders-panel";
+import { ContentManagementPanel } from "@/components/admin/content-management-panel";
 import { PageContainer } from "@/components/layout/page-container";
 import { loadAdminData } from "@/lib/admin/data";
 import {
@@ -91,6 +92,49 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               search={orderSearch}
               error={ordersResult.error}
             />
+          </div>
+        </PageContainer>
+      </section>
+    );
+  }
+
+  if (activeTab === "blog" || activeTab === "events") {
+    const table = activeTab === "blog" ? "blog_posts" : "events";
+    const orderColumn = activeTab === "blog" ? "created_at" : "starts_at";
+    const result = await supabase
+      .from(table)
+      .select("*")
+      .order(orderColumn, { ascending: false, nullsFirst: false });
+
+    return (
+      <section className="pb-24 pt-10">
+        <PageContainer>
+          <div className="mx-auto max-w-6xl space-y-8">
+            <AdminHeader activeTab={activeTab} />
+            {success || error ? (
+              <div
+                className={`rounded-xl border px-4 py-3 text-sm ${
+                  error
+                    ? "border-red-200 bg-red-50 text-red-700"
+                    : "border-emerald-200 bg-emerald-50 text-emerald-700"
+                }`}
+              >
+                {error || success}
+              </div>
+            ) : null}
+            {activeTab === "blog" ? (
+              <ContentManagementPanel
+                kind="blog"
+                items={(result.data ?? []) as import("@/lib/admin/types").BlogPostRow[]}
+                error={result.error}
+              />
+            ) : (
+              <ContentManagementPanel
+                kind="events"
+                items={(result.data ?? []) as import("@/lib/admin/types").EventRow[]}
+                error={result.error}
+              />
+            )}
           </div>
         </PageContainer>
       </section>

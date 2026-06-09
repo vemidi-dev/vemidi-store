@@ -56,7 +56,13 @@ export function normalizeSlug(raw: string) {
 
 export function getAdminTab(formData: FormData, fallback: AdminTab): AdminTab {
   const raw = getString(formData, "tab");
-  return raw === "categories" ? "categories" : raw === "products" ? "products" : fallback;
+  return raw === "categories" ||
+    raw === "products" ||
+    raw === "orders" ||
+    raw === "blog" ||
+    raw === "events"
+    ? raw
+    : fallback;
 }
 
 export function parseSelectLimit(value: string, fallback: number) {

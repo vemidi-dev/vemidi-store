@@ -27,10 +27,18 @@ function HeaderFallback() {
 export function SiteShell({ children }: SiteShellProps) {
   return (
     <div className="flex min-h-screen flex-col">
+      <a
+        href="#main-content"
+        className="fixed left-4 top-4 z-[100] -translate-y-24 rounded-lg bg-boutique-ink px-4 py-3 text-sm font-semibold text-boutique-paper shadow-boutique transition focus:translate-y-0"
+      >
+        Към основното съдържание
+      </a>
       <Suspense fallback={<HeaderFallback />}>
         <Header />
       </Suspense>
-      <main className="flex-1">{children}</main>
+      <main id="main-content" tabIndex={-1} className="flex-1 outline-none">
+        {children}
+      </main>
       <Footer />
     </div>
   );

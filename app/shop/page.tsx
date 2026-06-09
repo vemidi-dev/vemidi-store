@@ -1,9 +1,17 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 
 import { ProductCard } from "@/components/product/product-card";
 import { PageContainer } from "@/components/layout/page-container";
 import { MediaPlaceholder } from "@/components/ui/media-placeholder";
 import { getStorefrontCatalog } from "@/lib/storefront/repository";
+
+export const metadata: Metadata = {
+  title: "Продукти",
+  description:
+    "Разгледайте ръчно изработени и персонализирани подаръци от VeMiDi crafts.",
+  alternates: { canonical: "/shop" },
+};
 
 type ShopPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;

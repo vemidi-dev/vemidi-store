@@ -1,0 +1,327 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+
+import { getFile, getOptionalString, getString, isChecked, normalizeSlug } from "@/lib/admin/form-data";
+import {
+  deleteProductImage,
+  getProductImagePath,
+  uploadAdminImage,
+} from "@/lib/admin/storage";
+import type { AdminTab } from "@/lib/admin/types";
+import { checkIsAdmin } from "@/lib/supabase/admin-auth";
+import { createClient } from "@/lib/supabase/server";
+
+type ContentKind = "blog" | "events";
+type PreviousContentRow = {
+  image_url: string | null;
+  slug: string;
+  published_at?: string | null;
+};
+
+const config = {
+  blog: {
+    table: "blog_posts",
+    folder: "blog" as const,
+    publicPath: "/blog",
+    singular: "Публикацията",
+  },
+  events: {
+    table: "events",
+    folder: "events" as const,
+    publicPath: "/events",
+    singular: "Събитието",
+  },
+};
+
+function isValidSlug(value: string) {
+  return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value);
+}
+
+function redirectWith(kind: "success" | "error", message: string, tab: AdminTab): never {
+  const params = new URLSearchParams({ tab, [kind]: message });
+  redirect(`/admin?${params.toString()}`);
+}
+
+async function getAuthorizedClient(tab: AdminTab) {
+  const supabase = await createClient();
+  if (!supabase) {
+    redirectWith("error", "Supabase не е конфигуриран.", tab);
+  }
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    redirect(`/admin/login?message=${encodeURIComponent("Моля, влезте като администратор.")}`);
+  }
+
+  const { isAdmin, error } = await checkIsAdmin(supabase, user.id);
+  if (error || !isAdmin) {
+    redirect(`/admin/login?message=${encodeURIComponent("Профилът няма админ права.")}`);
+  }
+
+  return supabase;
+}
+
+function parseDateTime(value: string) {
+  if (!value) {
+    return null;
+  }
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
+}
+
+function parseOptionalNumber(formData: FormData, key: string, integer = false) {
+  const rawValue = getString(formData, key);
+  if (!rawValue) return null;
+
+  const value = Number(rawValue);
+  if (!Number.isFinite(value) || value < 0) return null;
+
+  return integer ? Math.floor(value) : value;
+}
+
+function revalidateContent(kind: ContentKind, slug?: string) {
+  revalidatePath("/admin");
+  revalidatePath(config[kind].publicPath);
+  revalidatePath("/sitemap.xml");
+  if (slug) {
+    revalidatePath(`${config[kind].publicPath}/${slug}`);
+  }
+}
+
+async function createContent(formData: FormData, kind: ContentKind) {
+  const tab: AdminTab = kind;
+  const supabase = await getAuthorizedClient(tab);
+  const title = getString(formData, "title");
+  const slug = normalizeSlug(getString(formData, "slug"));
+  const excerpt = getString(formData, "excerpt");
+  const content = getString(formData, "content");
+  const imageFile = getFile(formData, "image_file");
+  const isPublished = isChecked(formData, "is_published");
+
+  if (!title || !slug || !excerpt || !content || !isValidSlug(slug)) {
+    redirectWith(
+      "error",
+      "Попълнете всички полета. Slug трябва да съдържа само малки латински букви, цифри и тирета.",
+      tab,
+    );
+  }
+
+  const row: Record<string, unknown> = {
+    title,
+    slug,
+    excerpt,
+    content,
+    is_published: isPublished,
+    updated_at: new Date().toISOString(),
+  };
+
+  if (kind === "blog") {
+    row.category = getOptionalString(formData, "category");
+    row.author = getOptionalString(formData, "author") ?? "VeMiDi crafts";
+    row.read_minutes = parseOptionalNumber(formData, "read_minutes", true);
+    row.is_featured = isChecked(formData, "is_featured");
+    row.is_popular = isChecked(formData, "is_popular");
+    row.published_at = isPublished ? new Date().toISOString() : null;
+  } else {
+    const startsAt = parseDateTime(getString(formData, "starts_at"));
+    const endsAt = parseDateTime(getString(formData, "ends_at"));
+    if (startsAt === undefined || endsAt === undefined) {
+      redirectWith("error", "Датата или часът на събитието не е валиден.", tab);
+    }
+    row.location = getOptionalString(formData, "location");
+    row.event_type = getOptionalString(formData, "event_type");
+    row.audience = getOptionalString(formData, "audience");
+    row.format = getOptionalString(formData, "format") ?? "in_person";
+    row.price = parseOptionalNumber(formData, "price");
+    row.capacity = parseOptionalNumber(formData, "capacity", true);
+    row.available_spots = parseOptionalNumber(formData, "available_spots", true);
+    row.age_group = getOptionalString(formData, "age_group");
+    row.address = getOptionalString(formData, "address");
+    row.duration_minutes = parseOptionalNumber(formData, "duration_minutes", true);
+    row.includes_text = getOptionalString(formData, "includes_text");
+    row.materials_text = getOptionalString(formData, "materials_text");
+    row.host_name = getOptionalString(formData, "host_name");
+    row.cancellation_policy = getOptionalString(formData, "cancellation_policy");
+    row.registration_url = getOptionalString(formData, "registration_url");
+    row.starts_at = startsAt;
+    row.ends_at = endsAt;
+  }
+
+  let uploaded: Awaited<ReturnType<typeof uploadAdminImage>> | null = null;
+  if (imageFile) {
+    try {
+      uploaded = await uploadAdminImage(supabase, imageFile, config[kind].folder);
+      row.image_url = uploaded.url;
+    } catch (error) {
+      redirectWith(
+        "error",
+        `Снимката не беше качена: ${error instanceof Error ? error.message : "неизвестна грешка"}`,
+        tab,
+      );
+    }
+  }
+
+  const { error } = await supabase.from(config[kind].table).insert(row);
+  if (error) {
+    if (uploaded) {
+      await deleteProductImage(supabase, uploaded.path).catch(() => undefined);
+    }
+    redirectWith("error", `Съдържанието не беше добавено: ${error.message}`, tab);
+  }
+
+  revalidateContent(kind, slug);
+  redirectWith("success", `${config[kind].singular} е добавено успешно.`, tab);
+}
+
+async function updateContent(formData: FormData, kind: ContentKind) {
+  const tab: AdminTab = kind;
+  const supabase = await getAuthorizedClient(tab);
+  const id = getString(formData, "id");
+  const title = getString(formData, "title");
+  const slug = normalizeSlug(getString(formData, "slug"));
+  const excerpt = getString(formData, "excerpt");
+  const content = getString(formData, "content");
+  const existingImageUrl = getOptionalString(formData, "existing_image_url");
+  const imageFile = getFile(formData, "image_file");
+  const isPublished = isChecked(formData, "is_published");
+
+  if (!id || !title || !slug || !excerpt || !content || !isValidSlug(slug)) {
+    redirectWith(
+      "error",
+      "Данните не са валидни. Slug трябва да съдържа само малки латински букви, цифри и тирета.",
+      tab,
+    );
+  }
+
+  const { data: previous } = await supabase
+    .from(config[kind].table)
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  const previousRow = previous as PreviousContentRow | null;
+
+  const row: Record<string, unknown> = {
+    title,
+    slug,
+    excerpt,
+    content,
+    image_url: existingImageUrl,
+    is_published: isPublished,
+    updated_at: new Date().toISOString(),
+  };
+
+  if (kind === "blog") {
+    row.category = getOptionalString(formData, "category");
+    row.author = getOptionalString(formData, "author") ?? "VeMiDi crafts";
+    row.read_minutes = parseOptionalNumber(formData, "read_minutes", true);
+    row.is_featured = isChecked(formData, "is_featured");
+    row.is_popular = isChecked(formData, "is_popular");
+    row.published_at = isPublished
+      ? (previousRow?.published_at ?? new Date().toISOString())
+      : null;
+  } else {
+    const startsAt = parseDateTime(getString(formData, "starts_at"));
+    const endsAt = parseDateTime(getString(formData, "ends_at"));
+    if (startsAt === undefined || endsAt === undefined) {
+      redirectWith("error", "Датата или часът на събитието не е валиден.", tab);
+    }
+    row.location = getOptionalString(formData, "location");
+    row.event_type = getOptionalString(formData, "event_type");
+    row.audience = getOptionalString(formData, "audience");
+    row.format = getOptionalString(formData, "format") ?? "in_person";
+    row.price = parseOptionalNumber(formData, "price");
+    row.capacity = parseOptionalNumber(formData, "capacity", true);
+    row.available_spots = parseOptionalNumber(formData, "available_spots", true);
+    row.age_group = getOptionalString(formData, "age_group");
+    row.address = getOptionalString(formData, "address");
+    row.duration_minutes = parseOptionalNumber(formData, "duration_minutes", true);
+    row.includes_text = getOptionalString(formData, "includes_text");
+    row.materials_text = getOptionalString(formData, "materials_text");
+    row.host_name = getOptionalString(formData, "host_name");
+    row.cancellation_policy = getOptionalString(formData, "cancellation_policy");
+    row.registration_url = getOptionalString(formData, "registration_url");
+    row.starts_at = startsAt;
+    row.ends_at = endsAt;
+  }
+
+  let uploaded: Awaited<ReturnType<typeof uploadAdminImage>> | null = null;
+  if (imageFile) {
+    try {
+      uploaded = await uploadAdminImage(supabase, imageFile, config[kind].folder);
+      row.image_url = uploaded.url;
+    } catch (error) {
+      redirectWith(
+        "error",
+        `Снимката не беше качена: ${error instanceof Error ? error.message : "неизвестна грешка"}`,
+        tab,
+      );
+    }
+  }
+
+  const { error } = await supabase.from(config[kind].table).update(row).eq("id", id);
+  if (error) {
+    if (uploaded) {
+      await deleteProductImage(supabase, uploaded.path).catch(() => undefined);
+    }
+    redirectWith("error", `Промените не бяха запазени: ${error.message}`, tab);
+  }
+
+  if (uploaded && previousRow?.image_url && previousRow.image_url !== uploaded.url) {
+    const oldPath = getProductImagePath(previousRow.image_url);
+    if (oldPath) {
+      await deleteProductImage(supabase, oldPath).catch(() => undefined);
+    }
+  }
+
+  revalidateContent(kind, previousRow?.slug);
+  revalidateContent(kind, slug);
+  redirectWith("success", `${config[kind].singular} е обновено успешно.`, tab);
+}
+
+async function deleteContent(formData: FormData, kind: ContentKind) {
+  const tab: AdminTab = kind;
+  const supabase = await getAuthorizedClient(tab);
+  const id = getString(formData, "id");
+  if (!id) {
+    redirectWith("error", "Липсва съдържание за изтриване.", tab);
+  }
+
+  const { data: previous } = await supabase
+    .from(config[kind].table)
+    .select("image_url,slug")
+    .eq("id", id)
+    .maybeSingle();
+  const { error } = await supabase.from(config[kind].table).delete().eq("id", id);
+  if (error) {
+    redirectWith("error", `Съдържанието не беше изтрито: ${error.message}`, tab);
+  }
+
+  const imagePath = getProductImagePath(previous?.image_url);
+  if (imagePath) {
+    await deleteProductImage(supabase, imagePath).catch(() => undefined);
+  }
+
+  revalidateContent(kind, String(previous?.slug ?? ""));
+  redirectWith("success", `${config[kind].singular} е изтрито.`, tab);
+}
+
+export async function createBlogPost(formData: FormData) {
+  return createContent(formData, "blog");
+}
+export async function updateBlogPost(formData: FormData) {
+  return updateContent(formData, "blog");
+}
+export async function deleteBlogPost(formData: FormData) {
+  return deleteContent(formData, "blog");
+}
+export async function createEvent(formData: FormData) {
+  return createContent(formData, "events");
+}
+export async function updateEvent(formData: FormData) {
+  return updateContent(formData, "events");
+}
+export async function deleteEvent(formData: FormData) {
+  return deleteContent(formData, "events");
+}

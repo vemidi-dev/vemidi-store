@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
-import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 
 export type CheckoutActionState = {
   ok: boolean;
@@ -36,6 +36,8 @@ const checkoutErrorMessages: Record<string, string> = {
   product_not_customizable: "Избран продукт не поддържа персонализация.",
   invalid_color_count: "Изберете необходимия брой цветове за продукта.",
   invalid_color_selection: "Някой от избраните цветове вече не е наличен.",
+  invalid_idempotency_key: "Заявката за поръчка е невалидна. Презаредете страницата и опитайте отново.",
+  order_request_in_progress: "Поръчката вече се обработва. Изчакайте момент и опитайте отново.",
 };
 
 function text(formData: FormData, name: string, maxLength: number) {
@@ -79,9 +81,17 @@ export async function createStoreOrder(
     return { ok: false, message: "Количката е празна или данните са невалидни." };
   }
 
-  const supabase = await createClient();
+  const idempotencyKey = text(formData, "idempotency_key", 36);
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(idempotencyKey)) {
+    return { ok: false, message: checkoutErrorMessages.invalid_idempotency_key };
+  }
+
+  const supabase = createServiceClient();
   if (!supabase) {
-    return { ok: false, message: "Магазинът временно не може да приема поръчки." };
+    return {
+      ok: false,
+      message: "Магазинът временно не може да приема поръчки. Липсва защитената сървърна настройка.",
+    };
   }
 
   const customer = {
@@ -110,6 +120,7 @@ export async function createStoreOrder(
     p_delivery: delivery,
     p_items: rpcItems,
     p_note: text(formData, "note", 1000) || null,
+    p_idempotency_key: idempotencyKey,
   });
 
   if (error) {

@@ -1,11 +1,25 @@
 -- Create storefront orders in the shared public.orders table.
 -- Prices and product names are always loaded from public.products.
+-- Only the server-side service role may execute this function.
+
+create table if not exists public.store_order_requests (
+  idempotency_key uuid primary key,
+  order_id uuid unique,
+  created_at timestamptz not null default now()
+);
+
+alter table public.store_order_requests enable row level security;
+revoke all on table public.store_order_requests from anon, authenticated;
+
+-- Remove the older public four-argument overload before installing the protected version.
+drop function if exists public.create_store_order(jsonb, jsonb, jsonb, text);
 
 create or replace function public.create_store_order(
   p_customer jsonb,
   p_delivery jsonb,
   p_items jsonb,
-  p_note text default null
+  p_note text,
+  p_idempotency_key uuid
 )
 returns uuid
 language plpgsql
@@ -29,6 +43,7 @@ declare
   v_product_names text[] := array[]::text[];
   v_total numeric(10, 2) := 0;
   v_order_id uuid;
+  v_request_reserved boolean := false;
   v_customer_name text := trim(coalesce(p_customer ->> 'name', ''));
   v_customer_phone text := regexp_replace(coalesce(p_customer ->> 'phone', ''), '\s+', '', 'g');
   v_customer_email text := nullif(trim(coalesce(p_customer ->> 'email', '')), '');
@@ -38,6 +53,28 @@ declare
   v_office_or_postcode text := trim(coalesce(p_delivery ->> 'officeOrPostcode', ''));
   v_delivery_details text := trim(coalesce(p_delivery ->> 'details', ''));
 begin
+  if p_idempotency_key is null then
+    raise exception 'invalid_idempotency_key' using errcode = '22023';
+  end if;
+
+  insert into public.store_order_requests (idempotency_key)
+  values (p_idempotency_key)
+  on conflict (idempotency_key) do nothing
+  returning true into v_request_reserved;
+
+  if not coalesce(v_request_reserved, false) then
+    select order_id
+      into v_order_id
+      from public.store_order_requests
+      where idempotency_key = p_idempotency_key;
+
+    if v_order_id is not null then
+      return v_order_id;
+    end if;
+
+    raise exception 'order_request_in_progress' using errcode = '40001';
+  end if;
+
   if char_length(v_customer_name) < 2 or char_length(v_customer_name) > 120 then
     raise exception 'invalid_customer_name' using errcode = '22023';
   end if;
@@ -261,16 +298,22 @@ begin
         'items', v_items,
         'totalPrice', v_total,
         'currency', 'EUR',
-        'paymentMethod', 'cash_on_delivery'
+        'paymentMethod', 'cash_on_delivery',
+        'idempotencyKey', p_idempotency_key
       )
     )
   )
   returning id into v_order_id;
 
+  update public.store_order_requests
+  set order_id = v_order_id
+  where idempotency_key = p_idempotency_key;
+
   return v_order_id;
 end;
 $$;
 
-revoke all on function public.create_store_order(jsonb, jsonb, jsonb, text) from public;
-grant execute on function public.create_store_order(jsonb, jsonb, jsonb, text) to anon;
-grant execute on function public.create_store_order(jsonb, jsonb, jsonb, text) to authenticated;
+revoke all on function public.create_store_order(jsonb, jsonb, jsonb, text, uuid) from public;
+revoke all on function public.create_store_order(jsonb, jsonb, jsonb, text, uuid) from anon;
+revoke all on function public.create_store_order(jsonb, jsonb, jsonb, text, uuid) from authenticated;
+grant execute on function public.create_store_order(jsonb, jsonb, jsonb, text, uuid) to service_role;

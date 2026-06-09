@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { ProductDetailAddToCart } from "@/components/product/product-detail-add-to-cart";
@@ -6,10 +7,45 @@ import { ProductDetailGallery } from "@/components/product/product-detail-galler
 import { PageContainer } from "@/components/layout/page-container";
 import { formatEur } from "@/lib/format-eur";
 import { getStorefrontProduct } from "@/lib/storefront/repository";
+import { getSiteUrl } from "@/lib/site-url";
 
 type ProductPageProps = {
   params: Promise<{ slug: string }>;
 };
+
+export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const product = await getStorefrontProduct(slug);
+
+  if (!product) {
+    return {
+      title: "Продуктът не е намерен",
+      robots: { index: false, follow: false },
+    };
+  }
+
+  const description = product.description.slice(0, 160);
+  const image = product.images.find((item) => item.src)?.src;
+
+  return {
+    title: product.title,
+    description,
+    alternates: { canonical: `/products/${slug}` },
+    openGraph: {
+      type: "website",
+      title: product.title,
+      description,
+      url: `/products/${slug}`,
+      images: image ? [{ url: image, alt: product.title }] : undefined,
+    },
+    twitter: {
+      card: image ? "summary_large_image" : "summary",
+      title: product.title,
+      description,
+      images: image ? [image] : undefined,
+    },
+  };
+}
 
 export default async function ProductDetailPage({ params }: ProductPageProps) {
   const { slug } = await params;
@@ -19,8 +55,37 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
     notFound();
   }
 
+  const productUrl = new URL(`/products/${slug}`, getSiteUrl()).toString();
+  const productImage = product.images.find((item) => item.src)?.src;
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.title,
+    description: product.description,
+    image: productImage ? [productImage] : undefined,
+    url: productUrl,
+    brand: {
+      "@type": "Brand",
+      name: "VeMiDi crafts",
+    },
+    offers: {
+      "@type": "Offer",
+      priceCurrency: "EUR",
+      price: product.price.toFixed(2),
+      url: productUrl,
+      availability: "https://schema.org/PreOrder",
+      itemCondition: "https://schema.org/NewCondition",
+    },
+  };
+
   return (
     <div className="min-h-screen bg-boutique-bg">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(structuredData).replace(/</g, "\\u003c"),
+        }}
+      />
       <section className="border-b border-boutique-line/90 bg-boutique-paper">
         <PageContainer className="py-14 md:py-20 lg:py-24">
           <Link
