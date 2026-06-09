@@ -6,7 +6,7 @@ import { siteConfig } from "@/config/site";
 export function Footer() {
   return (
     <footer className="mt-auto border-t border-boutique-sage-deep/30 bg-boutique-sage-deep text-boutique-on-sage">
-      <PageContainer className="grid gap-12 py-14 md:grid-cols-[1.4fr_0.8fr_0.8fr] md:py-16">
+      <PageContainer className="grid gap-10 py-14 sm:grid-cols-2 lg:grid-cols-[1.3fr_0.7fr_0.9fr_0.9fr] md:py-16">
         <div className="space-y-4">
           <p className="font-heading text-2xl text-boutique-paper">{siteConfig.name}</p>
           <p className="max-w-md text-sm leading-relaxed text-boutique-on-sage/85">
@@ -21,52 +21,37 @@ export function Footer() {
           </p>
           <div className="flex flex-col gap-3">
             {siteConfig.footerLinks.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="text-sm text-boutique-on-sage/90 transition hover:text-boutique-on-sage"
-              >
+              <Link key={item.href} href={item.href} className="text-sm text-boutique-on-sage/90 transition hover:text-boutique-on-sage">
                 {item.label}
               </Link>
             ))}
-            <Link
-              href="/blog"
-              className="text-sm text-boutique-on-sage/90 transition hover:text-boutique-on-sage"
-            >
-              Блог
-            </Link>
-            <Link
-              href="/events"
-              className="text-sm text-boutique-on-sage/90 transition hover:text-boutique-on-sage"
-            >
-              Събития
-            </Link>
+            <Link href="/blog" className="text-sm text-boutique-on-sage/90 transition hover:text-boutique-on-sage">Блог</Link>
+            <Link href="/events" className="text-sm text-boutique-on-sage/90 transition hover:text-boutique-on-sage">Събития</Link>
           </div>
         </div>
 
         <div className="space-y-4">
           <p className="text-[0.7rem] font-semibold uppercase tracking-[0.25em] text-boutique-on-sage/55">
-            Поръчка
+            Информация
           </p>
-          <p className="text-sm leading-relaxed text-boutique-on-sage/85">
-            Изберете продукт, добавете желаната персонализация и го поставете в количката.
+          <div className="flex flex-col gap-3">
+            {siteConfig.informationLinks.map((item) => (
+              <Link key={item.href} href={item.href} className="text-sm text-boutique-on-sage/90 transition hover:text-boutique-on-sage">
+                {item.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <p className="text-[0.7rem] font-semibold uppercase tracking-[0.25em] text-boutique-on-sage/55">
+            Контакти
           </p>
-          <Link
-            href="/cart"
-            className="inline-flex text-sm font-semibold text-boutique-paper underline-offset-4 hover:underline"
-          >
-            Към количката
-          </Link>
-          <div className="flex flex-col gap-2 pt-2 text-sm">
-            <Link href="/delivery" className="text-boutique-on-sage/80 hover:text-boutique-paper">
-              Доставка и плащане
-            </Link>
-            <Link href="/terms" className="text-boutique-on-sage/80 hover:text-boutique-paper">
-              Условия за поръчка
-            </Link>
-            <Link href="/privacy" className="text-boutique-on-sage/80 hover:text-boutique-paper">
-              Поверителност
-            </Link>
+          <div className="space-y-2 text-sm leading-relaxed text-boutique-on-sage/85">
+            <p>{siteConfig.business.legalName}</p>
+            <a className="block hover:text-boutique-paper" href={`mailto:${siteConfig.business.email}`}>{siteConfig.business.email}</a>
+            <a className="block hover:text-boutique-paper" href={`tel:${siteConfig.business.phoneHref}`}>{siteConfig.business.phoneDisplay}</a>
+            <p>{siteConfig.business.address}</p>
           </div>
         </div>
       </PageContainer>

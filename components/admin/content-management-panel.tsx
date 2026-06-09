@@ -33,7 +33,9 @@ export function ContentManagementPanel(props: ContentManagementPanelProps) {
   const updateAction = isBlog ? updateBlogPost : updateEvent;
   const deleteAction = isBlog ? deleteBlogPost : deleteEvent;
   const singular = isBlog ? "публикация" : "събитие";
-  const productCategories = props.kind === "blog" ? props.categories : [];
+  const productCategories = props.kind === "blog"
+    ? props.categories.filter((category) => category.category_type === "product")
+    : [];
   const blogCategories = props.kind === "blog"
     ? [...new Set(props.items.map((item) => item.category).filter(Boolean))] as string[]
     : [];
@@ -221,6 +223,11 @@ export function ContentManagementPanel(props: ContentManagementPanelProps) {
           <div className="mt-6 space-y-5">
             {props.items.map((item) => {
               const event = isBlog ? null : (item as EventRow);
+              const blogPost = isBlog ? (item as BlogPostRow) : null;
+              const currentCtaCategoryIsMissing = Boolean(
+                blogPost?.cta_category_id &&
+                !productCategories.some((category) => category.id === blogPost.cta_category_id),
+              );
               return (
                 <article key={item.id} className="rounded-xl border border-boutique-line bg-boutique-bg p-5">
                   <div className="flex flex-wrap items-start justify-between gap-4">
@@ -281,10 +288,20 @@ export function ContentManagementPanel(props: ContentManagementPanelProps) {
                             Линкът да води към
                             <select name="cta_category_id" defaultValue={(item as BlogPostRow).cta_category_id ?? ""} className={adminFieldClass}>
                               <option value="">Без линк към категория</option>
+                              {currentCtaCategoryIsMissing && blogPost?.cta_category_id ? (
+                                <option value={blogPost.cta_category_id}>
+                                  Текущата категория (провери типа ѝ)
+                                </option>
+                              ) : null}
                               {productCategories.map((category) => (
                                 <option key={category.id} value={category.id}>{category.name}</option>
                               ))}
                             </select>
+                            {currentCtaCategoryIsMissing ? (
+                              <p className="mt-2 text-xs text-amber-700">
+                                Категорията на стария линк не е в списъка с продуктови категории. Може да я запазите временно или да изберете друга.
+                              </p>
+                            ) : null}
                           </label>
                         </>
                       ) : event ? (

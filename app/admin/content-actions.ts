@@ -39,6 +39,72 @@ function isValidSlug(value: string) {
   return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value);
 }
 
+function validateContentFields({
+  kind,
+  title,
+  slug,
+  excerpt,
+  content,
+  isPublished,
+  tab,
+}: {
+  kind: ContentKind;
+  title: string;
+  slug: string;
+  excerpt: string;
+  content: string;
+  isPublished: boolean;
+  tab: AdminTab;
+}) {
+  if (!title) {
+    redirectWith("error", "Добавете заглавие.", tab);
+  }
+  if (!slug || !isValidSlug(slug)) {
+    redirectWith(
+      "error",
+      "Slug трябва да съдържа само малки латински букви, цифри и тирета.",
+      tab,
+    );
+  }
+  if (kind === "events" || isPublished) {
+    if (!excerpt) {
+      redirectWith(
+        "error",
+        kind === "blog"
+          ? "За публикуване добавете кратко описание на статията."
+          : "Добавете кратко описание на събитието.",
+        tab,
+      );
+    }
+    if (!content) {
+      redirectWith(
+        "error",
+        kind === "blog"
+          ? "За публикуване добавете пълния текст на статията."
+          : "Добавете пълния текст на събитието.",
+        tab,
+      );
+    }
+  }
+}
+
+function getBlogCta(formData: FormData, tab: AdminTab) {
+  const ctaLinkLabel = getOptionalString(formData, "cta_link_label");
+  const ctaCategoryId = getOptionalString(formData, "cta_category_id");
+
+  if (Boolean(ctaLinkLabel) !== Boolean(ctaCategoryId)) {
+    redirectWith(
+      "error",
+      ctaLinkLabel
+        ? "Изберете категория за линка под статията или изтрийте името на линка."
+        : "Добавете име на линка под статията или изберете „Без линк към категория“.",
+      tab,
+    );
+  }
+
+  return { ctaLinkLabel, ctaCategoryId };
+}
+
 function redirectWith(kind: "success" | "error", message: string, tab: AdminTab): never {
   const params = new URLSearchParams({ tab, [kind]: message });
   redirect(`/admin?${params.toString()}`);
@@ -128,18 +194,7 @@ async function createContent(formData: FormData, kind: ContentKind) {
     ? getString(formData, "submit_intent") === "publish"
     : isChecked(formData, "is_published");
 
-  if (
-    !title ||
-    !slug ||
-    !isValidSlug(slug) ||
-    ((kind === "events" || isPublished) && (!excerpt || !content))
-  ) {
-    redirectWith(
-      "error",
-      "Попълнете всички полета. Slug трябва да съдържа само малки латински букви, цифри и тирета.",
-      tab,
-    );
-  }
+  validateContentFields({ kind, title, slug, excerpt, content, isPublished, tab });
 
   const row: Record<string, unknown> = {
     title,
@@ -151,15 +206,7 @@ async function createContent(formData: FormData, kind: ContentKind) {
   };
 
   if (kind === "blog") {
-    const ctaLinkLabel = getOptionalString(formData, "cta_link_label");
-    const ctaCategoryId = getOptionalString(formData, "cta_category_id");
-    if (Boolean(ctaLinkLabel) !== Boolean(ctaCategoryId)) {
-      redirectWith(
-        "error",
-        "За линка под статията попълнете едновременно име на линка и продуктова категория.",
-        tab,
-      );
-    }
+    const { ctaLinkLabel, ctaCategoryId } = getBlogCta(formData, tab);
     row.category = getOptionalString(formData, "category");
     row.author = getOptionalString(formData, "author") ?? "VeMiDi crafts";
     row.read_minutes = parseOptionalNumber(formData, "read_minutes", true);
@@ -234,19 +281,10 @@ async function updateContent(formData: FormData, kind: ContentKind) {
     ? getString(formData, "submit_intent") === "publish"
     : isChecked(formData, "is_published");
 
-  if (
-    !id ||
-    !title ||
-    !slug ||
-    !isValidSlug(slug) ||
-    ((kind === "events" || isPublished) && (!excerpt || !content))
-  ) {
-    redirectWith(
-      "error",
-      "Данните не са валидни. Slug трябва да съдържа само малки латински букви, цифри и тирета.",
-      tab,
-    );
+  if (!id) {
+    redirectWith("error", "Липсва съдържание за редактиране.", tab);
   }
+  validateContentFields({ kind, title, slug, excerpt, content, isPublished, tab });
 
   const { data: previous } = await supabase
     .from(config[kind].table)
@@ -266,15 +304,7 @@ async function updateContent(formData: FormData, kind: ContentKind) {
   };
 
   if (kind === "blog") {
-    const ctaLinkLabel = getOptionalString(formData, "cta_link_label");
-    const ctaCategoryId = getOptionalString(formData, "cta_category_id");
-    if (Boolean(ctaLinkLabel) !== Boolean(ctaCategoryId)) {
-      redirectWith(
-        "error",
-        "За линка под статията попълнете едновременно име на линка и продуктова категория.",
-        tab,
-      );
-    }
+    const { ctaLinkLabel, ctaCategoryId } = getBlogCta(formData, tab);
     row.category = getOptionalString(formData, "category");
     row.author = getOptionalString(formData, "author") ?? "VeMiDi crafts";
     row.read_minutes = parseOptionalNumber(formData, "read_minutes", true);

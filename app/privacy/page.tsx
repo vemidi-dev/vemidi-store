@@ -1,52 +1,43 @@
 import type { Metadata } from "next";
 
-import {
-  InformationPage,
-  InformationSection,
-} from "@/components/legal/information-page";
+import { InformationPage, InformationSection } from "@/components/legal/information-page";
+import { siteConfig } from "@/config/site";
 
 export const metadata: Metadata = {
-  title: "Поверителност",
-  description: "Как VeMiDi crafts използва данните, предоставени при изпращане на поръчка.",
+  title: "Политика за поверителност",
+  description: "Как VeMiDi crafts събира, използва и съхранява лични данни.",
   alternates: { canonical: "/privacy" },
 };
 
 export default function PrivacyPage() {
+  const { business } = siteConfig;
   return (
-    <InformationPage
-      eyebrow="Лични данни"
-      title="Поверителност"
-      description="Използваме само информацията, необходима за обработване и доставка на поръчката."
-    >
+    <InformationPage eyebrow="Лични данни" title="Политика за поверителност" description="Използваме само информацията, необходима за поръчки, записвания и комуникация.">
+      <p className="text-xs uppercase tracking-wider">Последна актуализация: 28 май 2026 г.</p>
+      <InformationSection title="Администратор на данните">
+        <p><strong>{business.legalName}</strong>, {business.address}</p>
+        <p>Контакт: <a href={`mailto:${business.email}`}>{business.email}</a>, <a href={`tel:${business.phoneHref}`}>{business.phoneDisplay}</a></p>
+      </InformationSection>
       <InformationSection title="Какви данни получаваме">
-        <p>
-          При поръчка получаваме име, телефон, по желание имейл, населено място,
-          адрес или офис на куриер и предоставените от вас бележки.
-        </p>
+        <ul className="list-disc space-y-1 pl-5">
+          <li>име, телефон и предоставен имейл;</li>
+          <li>населено място, адрес или офис и избран куриер;</li>
+          <li>данни и бележки за поръчка или персонализация;</li>
+          <li>данни, изпратени при записване за събитие или абонамент.</li>
+        </ul>
       </InformationSection>
-
       <InformationSection title="За какво ги използваме">
-        <p>
-          Данните се използват за потвърждение, изработка, доставка и обслужване на
-          поръчката. Не ги използваме за плащане с карта и не продаваме лични данни.
-        </p>
+        <p>За обработване, изработка, потвърждение и доставка на поръчки, управление на записвания, отговор на запитвания и изпълнение на законови задължения.</p>
       </InformationSection>
-
-      <InformationSection title="С кого се споделят">
-        <p>
-          Данни за получателя се предоставят на избрания куриер само доколкото са
-          необходими за извършване на доставката. Техническите доставчици на сайта
-          обработват информацията според предоставяните от тях услуги.
-        </p>
+      <InformationSection title="Съхранение и достъп">
+        <p>Данните за магазина се съхраняват в инфраструктурата на Supabase и са достъпни само за нуждите на магазина. На куриер се предоставят единствено данните, необходими за доставката.</p>
       </InformationSection>
-
-      <InformationSection title="Вашите въпроси">
-        <p>
-          Можете да поискате информация, корекция или изтриване на предоставени
-          данни чрез обичайния канал, по който комуникирате с VeMiDi crafts.
-          Данните за контакт и търговеца трябва да бъдат публикувани преди
-          окончателното пускане на основния домейн.
-        </p>
+      <InformationSection title="Срок за съхранение">
+        <p>Информацията се пази за срок, необходим за изпълнение на поръчката, рекламации, счетоводни и други законови задължения.</p>
+      </InformationSection>
+      <InformationSection title="Вашите права">
+        <p>Можете да поискате достъп, корекция, ограничаване, изтриване или преносимост на данните и да възразите срещу обработването им в предвидените от закона случаи.</p>
+        <p>Изпратете искането си на <a href={`mailto:${business.email}`}>{business.email}</a>.</p>
       </InformationSection>
     </InformationPage>
   );
