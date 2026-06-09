@@ -11,7 +11,8 @@ type CategoryShowcaseCardProps = {
 };
 
 export default function CategoryShowcaseCard({ category, compact = false }: CategoryShowcaseCardProps) {
-  const href = `/shop?category=${encodeURIComponent(category.slug)}#product-grid`;
+  const filterName = category.categoryType === "occasion" ? "occasion" : "product";
+  const href = `/shop?${filterName}=${encodeURIComponent(category.slug)}#product-grid`;
 
   const frame = compact
     ? "rounded-xl hover:-translate-y-0.5"

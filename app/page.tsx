@@ -17,7 +17,10 @@ export default async function HomePage() {
     getPublishedEvents(),
   ]);
   const featured = products.slice(0, 3);
-  const featuredCategories = categories.slice(0, 6).map(toShowcaseCategory);
+  const occasionCategories = categories.filter(
+    (category) => category.category_type === "occasion",
+  );
+  const featuredCategories = occasionCategories.slice(0, 6).map(toShowcaseCategory);
   const latestPosts = blogPosts.slice(0, 3);
   const now = Date.now();
   const upcomingEvents = events
@@ -53,13 +56,13 @@ export default async function HomePage() {
               Категориите ще се покажат тук след добавянето им в магазина.
             </p>
           ) : null}
-          {categories.length > featuredCategories.length ? (
+          {occasionCategories.length > featuredCategories.length ? (
             <div className="mt-10 text-center">
               <Link
-                href="/categories"
+                href="/occasions"
                 className="text-sm font-semibold text-boutique-accent underline-offset-4 hover:underline"
               >
-                Виж всички категории
+                Виж всички поводи
               </Link>
             </div>
           ) : null}

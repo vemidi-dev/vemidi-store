@@ -83,7 +83,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
             Разгледайте подбраните предложения от категория „{ctaCategory.name}“.
           </p>
           <Link
-            href={`/shop?category=${encodeURIComponent(ctaCategory.slug)}`}
+            href={`/shop?product=${encodeURIComponent(ctaCategory.slug)}#product-grid`}
             className="mt-5 inline-flex rounded-full bg-boutique-ink px-7 py-3 text-sm font-semibold text-boutique-paper transition hover:bg-boutique-accent"
           >
             {post.cta_link_label}

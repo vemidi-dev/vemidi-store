@@ -41,6 +41,7 @@ export function toShowcaseCategory(category: StorefrontCategory): ShopCategory {
   return {
     slug: category.slug,
     title: category.name,
+    categoryType: category.category_type,
     imageSrc: DEFAULT_CATEGORY_IMAGE,
     imageAlt: `${category.name} - категория продукти`,
   };

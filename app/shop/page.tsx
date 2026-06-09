@@ -61,17 +61,36 @@ function getPriceBucket(price: number): FilterValue["id"] {
 export default async function ShopPage({ searchParams }: ShopPageProps) {
   const params = await searchParams;
   const query = firstValue(params.q).trim();
-  const activeCategory = firstValue(params.category);
+  const legacyCategory = firstValue(params.category);
+  const requestedProductCategory = firstValue(params.product);
+  const requestedOccasion = firstValue(params.occasion);
   const activePrice = firstValue(params.price);
   const activeSort = firstValue(params.sort) || "featured";
   const personalizationOnly = firstValue(params.personalization) === "only";
 
   const { categories, products } = await getStorefrontCatalog();
 
-  const categoryFilters: FilterValue[] = categories.map((category) => ({
+  const productCategoryFilters: FilterValue[] = categories
+    .filter((category) => category.category_type === "product")
+    .map((category) => ({
+      id: category.slug,
+      label: category.name,
+    }));
+  const occasionFilters: FilterValue[] = categories
+    .filter((category) => category.category_type === "occasion")
+    .map((category) => ({
     id: category.slug,
     label: category.name,
   }));
+  const legacyCategoryType = categories.find(
+    (category) => category.slug === legacyCategory,
+  )?.category_type;
+  const activeProductCategory =
+    requestedProductCategory ||
+    (legacyCategoryType === "product" ? legacyCategory : "");
+  const activeOccasion =
+    requestedOccasion ||
+    (legacyCategoryType === "occasion" ? legacyCategory : "");
   const priceFilters: FilterValue[] = [
     { id: "under-60", label: "До 60 EUR" },
     { id: "60-100", label: "60-100 EUR" },
@@ -80,7 +99,8 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
 
   const state = {
     q: query,
-    category: activeCategory,
+    product: activeProductCategory,
+    occasion: activeOccasion,
     price: activePrice,
     sort: activeSort,
     personalization: personalizationOnly ? "only" : "",
@@ -92,11 +112,16 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
   let filtered = allItems.filter((product) => {
     const text = `${product.title} ${product.description}`.toLowerCase();
     const matchesQuery = query ? text.includes(query.toLowerCase()) : true;
-    const matchesCategory = activeCategory ? product.categorySlugs.includes(activeCategory) : true;
+    const matchesProductCategory = activeProductCategory
+      ? product.categorySlugs.includes(activeProductCategory)
+      : true;
+    const matchesOccasion = activeOccasion
+      ? product.categorySlugs.includes(activeOccasion)
+      : true;
     const matchesPersonalization = personalizationOnly ? Boolean(product.customizable) : true;
     const matchesPrice = activePrice ? getPriceBucket(product.price) === activePrice : true;
 
-    return matchesQuery && matchesCategory && matchesPersonalization && matchesPrice;
+    return matchesQuery && matchesProductCategory && matchesOccasion && matchesPersonalization && matchesPrice;
   });
 
   filtered = [...filtered].sort((a, b) => {
@@ -116,8 +141,11 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
   });
 
   const activeChips = [
-    activeCategory
-      ? `Категория: ${categoryFilters.find((item) => item.id === activeCategory)?.label ?? activeCategory}`
+    activeProductCategory
+      ? `Вид продукт: ${productCategoryFilters.find((item) => item.id === activeProductCategory)?.label ?? activeProductCategory}`
+      : "",
+    activeOccasion
+      ? `Повод: ${occasionFilters.find((item) => item.id === activeOccasion)?.label ?? activeOccasion}`
       : "",
     activePrice ? `Цена: ${priceFilters.find((item) => item.id === activePrice)?.label ?? activePrice}` : "",
     personalizationOnly ? "Само с персонализация" : "",
@@ -136,10 +164,15 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
               Магазин за подаръци, които пазят спомени
             </h1>
             <p className="max-w-2xl text-base leading-relaxed text-boutique-muted">
-              Разгледайте реалните продукти, добавени в ателието, и филтрирайте по категория и
-              персонализация.
+              Разгледайте реалните продукти, добавени в ателието, и комбинирайте филтрите по вид,
+              повод и персонализация.
             </p>
             <form className="flex flex-col gap-3 rounded-2xl border border-boutique-line/80 bg-white p-4 shadow-boutique-sm sm:flex-row">
+              <input type="hidden" name="product" value={activeProductCategory} />
+              <input type="hidden" name="occasion" value={activeOccasion} />
+              <input type="hidden" name="price" value={activePrice} />
+              <input type="hidden" name="sort" value={activeSort} />
+              {personalizationOnly ? <input type="hidden" name="personalization" value="only" /> : null}
               <input
                 name="q"
                 defaultValue={query}
@@ -253,18 +286,34 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
             </p>
           </div>
 
-          <form className="mt-8 grid gap-3 rounded-2xl border border-boutique-line bg-boutique-paper p-5 md:grid-cols-5">
+          <form className="mt-8 grid gap-3 rounded-2xl border border-boutique-line bg-boutique-paper p-5 md:grid-cols-6">
             <input type="hidden" name="q" value={query} />
 
             <label className="text-xs font-semibold uppercase tracking-[0.14em] text-boutique-muted">
-              Категория
+              Вид продукт
               <select
-                name="category"
-                defaultValue={activeCategory}
+                name="product"
+                defaultValue={activeProductCategory}
                 className="mt-2 w-full rounded-lg border border-boutique-line bg-white px-3 py-2 text-sm text-boutique-ink"
               >
                 <option value="">Всички</option>
-                {categoryFilters.map((item) => (
+                {productCategoryFilters.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="text-xs font-semibold uppercase tracking-[0.14em] text-boutique-muted">
+              Повод
+              <select
+                name="occasion"
+                defaultValue={activeOccasion}
+                className="mt-2 w-full rounded-lg border border-boutique-line bg-white px-3 py-2 text-sm text-boutique-ink"
+              >
+                <option value="">Всички поводи</option>
+                {occasionFilters.map((item) => (
                   <option key={item.id} value={item.id}>
                     {item.label}
                   </option>
