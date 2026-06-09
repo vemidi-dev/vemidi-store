@@ -2,6 +2,8 @@ import { updateOrderStatus } from "@/app/admin/order-actions";
 import {
   formatOrderDate,
   formatOrderPrice,
+  getOrderSource,
+  getOrderSourceLabel,
   getOrderStatusLabel,
   getPaymentMethodLabel,
   orderStatusLabels,
@@ -15,6 +17,7 @@ type OrdersPanelProps = {
   orders: OrderRow[];
   status: string;
   search: string;
+  source: string;
   error: { message: string } | null;
 };
 
@@ -89,7 +92,7 @@ function StoreOrderItems({ order }: { order: OrderRow }) {
               </p>
             </div>
             {item.personalization ? (
-              <p className="mt-2 text-boutique-muted">
+              <p className="mt-2 whitespace-pre-line text-boutique-muted">
                 Персонализация: {item.personalization}
               </p>
             ) : null}
@@ -139,7 +142,7 @@ function OrderDetails({ order }: { order: OrderRow }) {
   );
 }
 
-export function OrdersPanel({ orders, status, search, error }: OrdersPanelProps) {
+export function OrdersPanel({ orders, status, search, source, error }: OrdersPanelProps) {
   return (
     <div className="space-y-5">
       <section className={adminPanelClass}>
@@ -147,11 +150,11 @@ export function OrdersPanel({ orders, status, search, error }: OrdersPanelProps)
           <div>
             <h2 className="font-heading text-2xl text-boutique-ink">Поръчки</h2>
             <p className="mt-2 text-sm text-boutique-muted">
-              Поръчките от лендинг страницата се зареждат от общата Supabase база.
+              Поръчките от магазина и лендинг страницата се зареждат от общата Supabase база.
             </p>
           </div>
 
-          <form className="grid w-full gap-3 sm:grid-cols-[180px_1fr_auto] lg:w-auto">
+          <form className="grid w-full gap-3 sm:grid-cols-2 lg:w-auto lg:grid-cols-[170px_180px_1fr_auto]">
             <input type="hidden" name="tab" value="orders" />
             <label className="text-sm font-medium text-boutique-ink">
               Статус
@@ -162,6 +165,14 @@ export function OrdersPanel({ orders, status, search, error }: OrdersPanelProps)
                     {orderStatusLabels[value]}
                   </option>
                 ))}
+              </select>
+            </label>
+            <label className="text-sm font-medium text-boutique-ink">
+              Източник
+              <select name="source" defaultValue={source} className={adminFieldClass}>
+                <option value="">Всички</option>
+                <option value="store">Онлайн магазин</option>
+                <option value="landing">Лендинг страница</option>
               </select>
             </label>
             <label className="text-sm font-medium text-boutique-ink">
@@ -199,9 +210,20 @@ export function OrdersPanel({ orders, status, search, error }: OrdersPanelProps)
         <article key={order.id} className={adminPanelClass}>
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-boutique-muted">
-                {formatOrderDate(order.created_at)}
-              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="text-xs font-semibold uppercase tracking-wider text-boutique-muted">
+                  {formatOrderDate(order.created_at)}
+                </p>
+                <span
+                  className={`rounded-full px-2.5 py-1 text-[0.65rem] font-semibold uppercase tracking-wider ${
+                    getOrderSource(order) === "store"
+                      ? "bg-boutique-sage-deep text-boutique-on-sage"
+                      : "border border-boutique-accent/30 bg-boutique-warm text-boutique-ink"
+                  }`}
+                >
+                  {getOrderSourceLabel(order)}
+                </span>
+              </div>
               <h3 className="mt-2 font-heading text-xl text-boutique-ink">
                 {order.customer_name}
               </h3>

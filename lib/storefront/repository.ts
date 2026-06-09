@@ -2,6 +2,10 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Product } from "@/lib/catalog";
 import type { ProductColorField } from "@/lib/product-colors";
+import type {
+  ProductPersonalizationField,
+  WishTemplate,
+} from "@/lib/product-personalization";
 import { toProduct, type ProductRow } from "@/lib/storefront/mappers";
 import type {
   StorefrontCatalog,
@@ -217,6 +221,66 @@ export async function getStorefrontProduct(productId: string): Promise<Product |
   }
 
   const product = toProduct(data as ProductRow);
-  product.colorFields = await getProductColorFields(supabase, productId);
+  const [colorFields, personalizationResult, categoryResult, wishesResult, linksResult] =
+    await Promise.all([
+      getProductColorFields(supabase, productId),
+      supabase
+        .from("product_personalization_fields")
+        .select("id,label,field_key,field_type,placeholder,max_length,is_required,allows_wish_templates,sort_order")
+        .eq("product_id", productId)
+        .order("sort_order"),
+      supabase.from("product_categories").select("category_id").eq("product_id", productId),
+      supabase
+        .from("wish_templates")
+        .select("id,title,body,sort_order")
+        .eq("is_active", true)
+        .order("sort_order"),
+      supabase.from("wish_template_occasions").select("wish_template_id,category_id"),
+    ]);
+
+  product.colorFields = colorFields;
+  product.personalizationFields = (personalizationResult.data ?? []).map(
+    (field): ProductPersonalizationField => ({
+      id: String(field.id),
+      label: String(field.label),
+      key: String(field.field_key),
+      type: field.field_type as ProductPersonalizationField["type"],
+      placeholder: field.placeholder ? String(field.placeholder) : null,
+      maxLength: Number(field.max_length) || 100,
+      required: Boolean(field.is_required),
+      allowsWishTemplates: Boolean(field.allows_wish_templates),
+    }),
+  );
+
+  const productCategoryIds = new Set(
+    (categoryResult.data ?? []).map((row) => String(row.category_id)),
+  );
+  const categorySlugById = new Map(
+    (
+      await supabase
+        .from("categories")
+        .select("id,slug")
+        .eq("category_type", "occasion")
+    ).data?.map((row) => [String(row.id), String(row.slug)]) ?? [],
+  );
+  const occasionsByWish = new Map<string, string[]>();
+  (linksResult.data ?? []).forEach((link) => {
+    if (!productCategoryIds.has(String(link.category_id))) return;
+    const slug = categorySlugById.get(String(link.category_id));
+    if (!slug) return;
+    const slugs = occasionsByWish.get(String(link.wish_template_id)) ?? [];
+    slugs.push(slug);
+    occasionsByWish.set(String(link.wish_template_id), slugs);
+  });
+  product.wishTemplates = (wishesResult.data ?? [])
+    .filter((wish) => occasionsByWish.has(String(wish.id)))
+    .map(
+      (wish): WishTemplate => ({
+        id: String(wish.id),
+        title: String(wish.title),
+        body: String(wish.body),
+        occasionSlugs: occasionsByWish.get(String(wish.id)) ?? [],
+      }),
+    );
   return product;
 }

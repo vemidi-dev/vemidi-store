@@ -10,6 +10,7 @@ export const orderStatuses = [
 ] as const;
 
 export type OrderStatus = (typeof orderStatuses)[number];
+export type OrderSource = "store" | "landing";
 
 export const orderStatusLabels: Record<OrderStatus, string> = {
   new: "Нова",
@@ -97,10 +98,19 @@ export function getPaymentMethodLabel(value: string | null) {
   return value === "cash_on_delivery" ? "Наложен платеж" : value || "—";
 }
 
+export function getOrderSource(order: OrderRow): OrderSource {
+  return order.raw_payload?.source === "vemidi-store" ? "store" : "landing";
+}
+
+export function getOrderSourceLabel(order: OrderRow) {
+  return getOrderSource(order) === "store" ? "Онлайн магазин" : "Лендинг страница";
+}
+
 export async function loadOrders(
   supabase: SupabaseClient,
   status: string,
   search: string,
+  source: string,
 ): Promise<OrdersResult> {
   let query = supabase.from("orders").select("*").order("created_at", { ascending: false });
 
@@ -111,12 +121,15 @@ export async function loadOrders(
   const { data, error } = await query;
   const term = search.trim().toLocaleLowerCase("bg");
   const orders = ((data ?? []) as OrderRow[]).filter((order) => {
-    if (!term) {
-      return true;
+    if ((source === "store" || source === "landing") && getOrderSource(order) !== source) {
+      return false;
     }
 
-    return [order.customer_name, order.customer_phone, order.customer_email, order.child_name]
-      .some((value) => String(value ?? "").toLocaleLowerCase("bg").includes(term));
+    return (
+      !term ||
+      [order.customer_name, order.customer_phone, order.customer_email, order.child_name]
+        .some((value) => String(value ?? "").toLocaleLowerCase("bg").includes(term))
+    );
   });
 
   return { orders, error };

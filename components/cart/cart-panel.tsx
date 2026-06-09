@@ -42,7 +42,7 @@ export function CartPanel() {
               <div className="max-w-xl space-y-2">
                 <p className="font-heading text-lg text-boutique-ink">{line.title}</p>
                 {line.personalization ? (
-                  <p className="text-sm text-boutique-muted">
+                  <p className="whitespace-pre-line text-sm text-boutique-muted">
                     <span className="font-medium text-boutique-ink/80">Персонализация: </span>
                     «{line.personalization}»
                   </p>

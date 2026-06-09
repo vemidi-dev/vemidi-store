@@ -1,67 +1,84 @@
+import Image from "next/image";
 import Link from "next/link";
-
-import { PageContainer } from "@/components/layout/page-container";
-import { MediaPlaceholder } from "@/components/ui/media-placeholder";
 
 export function HomeHero() {
   return (
-    <section className="relative overflow-hidden border-b border-boutique-line bg-boutique-paper">
-      <div
-        className="pointer-events-none absolute -right-40 -top-40 h-[34rem] w-[34rem] rounded-full bg-boutique-sage/10 blur-3xl"
-        aria-hidden
-      />
-      <PageContainer className="relative grid items-center gap-12 py-14 md:py-20 lg:grid-cols-[0.92fr_1.08fr] lg:gap-20 lg:py-24">
-        <div className="order-2 space-y-8 lg:order-1">
-          <div className="space-y-6">
-            <p className="text-[0.7rem] font-semibold uppercase tracking-[0.3em] text-boutique-sage-deep">
-              Ръчна изработка · Личен подарък
+    <section className="overflow-hidden border-b border-boutique-line bg-boutique-paper">
+      <div className="grid lg:grid-cols-[0.9fr_1.1fr]">
+        <div className="order-2 flex items-center bg-[linear-gradient(135deg,#fdfcfa_0%,#ebe4db_100%)] lg:order-1">
+          <div className="w-full px-6 py-12 sm:px-10 lg:ml-auto lg:max-w-[36rem] lg:px-12 lg:py-16">
+            <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-boutique-rose-deep">
+              ♡ Персонализирани подаръци със сърце
             </p>
-            <h1 className="font-heading text-[2.6rem] leading-[1.05] tracking-tight text-boutique-ink sm:text-5xl lg:text-6xl">
-              Подаръци, които носят лично послание
+            <h1 className="mt-5 font-heading text-[2.8rem] leading-[0.98] tracking-tight text-boutique-ink sm:text-6xl">
+              Подаръци,
+              <span className="block">които носят</span>
+              <span className="mt-2 block text-[0.82em] italic text-boutique-rose-deep">
+                лично послание
+              </span>
             </h1>
-            <p className="max-w-xl text-base leading-relaxed text-boutique-muted sm:text-lg">
-              Създаваме персонализирани изделия, декорации и творчески комплекти за хората и
-              моментите, които заслужават да останат в спомените.
+            <p className="mt-6 max-w-xl text-sm leading-7 text-boutique-muted sm:text-base">
+              Ръчно изработени подаръци, декорации и творчески комплекти за специални моменти
+              и любими хора.
             </p>
-          </div>
 
-          <div className="flex flex-wrap gap-3">
-            <Link
-              href="/shop"
-              className="inline-flex min-h-12 items-center justify-center rounded-full bg-boutique-ink px-8 py-3 text-sm font-semibold text-boutique-paper transition hover:bg-boutique-accent"
-            >
-              Разгледай магазина
-            </Link>
-            <Link
-              href="/categories"
-              className="inline-flex min-h-12 items-center justify-center rounded-full border border-boutique-line bg-boutique-bg px-8 py-3 text-sm font-semibold text-boutique-ink transition hover:border-boutique-accent/50"
-            >
-              Избери категория
-            </Link>
-          </div>
-
-          <div className="grid max-w-xl grid-cols-3 gap-3 border-t border-boutique-line pt-6 text-center sm:text-left">
-            {[
-              ["01", "Избор"],
-              ["02", "Персонализация"],
-              ["03", "Изработка"],
-            ].map(([number, label]) => (
-              <div key={number}>
-                <p className="font-heading text-xl text-boutique-accent">{number}</p>
-                <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-boutique-muted">
-                  {label}
-                </p>
-              </div>
-            ))}
+            <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {quickPaths.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="group min-h-28 rounded-xl border border-boutique-rose/25 bg-white/70 p-4 text-center shadow-boutique-sm transition hover:-translate-y-1 hover:border-boutique-rose-deep/40 hover:bg-white"
+                >
+                  <span className="mx-auto grid h-9 w-9 place-items-center rounded-full bg-boutique-blush text-lg text-boutique-rose-deep">
+                    {item.icon}
+                  </span>
+                  <span className="mt-3 block text-xs font-semibold leading-snug text-boutique-ink">
+                    {item.title}
+                  </span>
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
 
-        <div className="order-1 lg:order-2">
-          <div className="relative aspect-[4/3] overflow-hidden rounded-[2rem] border border-boutique-line shadow-boutique">
-            <MediaPlaceholder label="Основна снимка за началната страница" />
-          </div>
+        <div className="relative order-1 min-h-[22rem] overflow-hidden lg:order-2 lg:min-h-[38rem]">
+          <Image
+            src="/assets/home-hero.webp"
+            alt="Персонализиран дървен подарък за кръщене"
+            fill
+            priority
+            sizes="(max-width: 1024px) 100vw, 55vw"
+            className="object-cover"
+          />
         </div>
-      </PageContainer>
+      </div>
     </section>
   );
+}
+
+const quickPaths = [
+  {
+    href: "/occasions",
+    icon: "♡",
+    title: "Търся подарък за повод",
+  },
+  {
+    href: "/categories",
+    icon: "◇",
+    title: "Изберете продукт",
+  },
+  {
+    href: "/shop?personalization=only#product-grid",
+    icon: "✎",
+    title: "Искам персонализиран подарък",
+  },
+  {
+    href: "/events",
+    icon: "✦",
+    title: "Творчески събития",
+  },
+];
+
+export function HomeQuickPaths() {
+  return null;
 }

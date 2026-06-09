@@ -214,7 +214,7 @@ begin
     end if;
 
     v_personalization := nullif(trim(coalesce(v_item ->> 'personalization', '')), '');
-    if char_length(coalesce(v_personalization, '')) > 50 then
+    if char_length(coalesce(v_personalization, '')) > 1000 then
       raise exception 'personalization_too_long' using errcode = '22023';
     end if;
 

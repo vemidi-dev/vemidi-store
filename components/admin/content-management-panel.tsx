@@ -3,6 +3,8 @@ import {
   createEvent,
   deleteBlogPost,
   deleteEvent,
+  publishBlogPost,
+  saveBlogPostDraft,
   updateBlogPost,
   updateEvent,
 } from "@/app/admin/content-actions";
@@ -363,10 +365,18 @@ export function ContentManagementPanel(props: ContentManagementPanelProps) {
                       <div className="md:col-span-2">
                         {isBlog ? (
                           <div className="flex flex-wrap gap-3">
-                            <button name="submit_intent" value="draft" type="submit" className="rounded-full border border-boutique-line px-6 py-3 text-xs font-semibold uppercase tracking-wider text-boutique-ink hover:border-boutique-accent">
+                            <button
+                              formAction={saveBlogPostDraft}
+                              type="submit"
+                              className="rounded-full border border-boutique-line px-6 py-3 text-xs font-semibold uppercase tracking-wider text-boutique-ink hover:border-boutique-accent"
+                            >
                               {item.is_published ? "Премести в чернови" : "Запази черновата"}
                             </button>
-                            <button name="submit_intent" value="publish" type="submit" className="rounded-full bg-boutique-ink px-6 py-3 text-xs font-semibold uppercase tracking-wider text-boutique-paper hover:bg-boutique-accent">
+                            <button
+                              formAction={publishBlogPost}
+                              type="submit"
+                              className="rounded-full bg-boutique-ink px-6 py-3 text-xs font-semibold uppercase tracking-wider text-boutique-paper hover:bg-boutique-accent"
+                            >
                               {item.is_published ? "Запази публикуваните промени" : "Публикувай"}
                             </button>
                           </div>

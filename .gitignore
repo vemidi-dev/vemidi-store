@@ -1,6 +1,5 @@
 node_modules
-.next
-.next-dev
+.next*
 out
 .env*.local
 *.tsbuildinfo

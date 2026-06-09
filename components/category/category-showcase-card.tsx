@@ -8,11 +8,70 @@ type CategoryShowcaseCardProps = {
   category: ShopCategory;
   /** По-малки карти за страницата с всички категории */
   compact?: boolean;
+  presentation?: "default" | "occasion" | "product";
 };
 
-export default function CategoryShowcaseCard({ category, compact = false }: CategoryShowcaseCardProps) {
+export default function CategoryShowcaseCard({
+  category,
+  compact = false,
+  presentation = "default",
+}: CategoryShowcaseCardProps) {
   const filterName = category.categoryType === "occasion" ? "occasion" : "product";
   const href = `/shop?${filterName}=${encodeURIComponent(category.slug)}#product-grid`;
+
+  if (presentation === "product") {
+    return (
+      <Link
+        href={href}
+        className="group block text-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-boutique-rose-deep"
+      >
+        <div className="relative mx-auto aspect-square w-full max-w-32 overflow-hidden rounded-full border-2 border-boutique-rose/35 bg-boutique-paper p-1 transition group-hover:-translate-y-1 group-hover:border-boutique-rose-deep/50">
+          <div className="relative h-full w-full overflow-hidden rounded-full">
+            {category.imageSrc ? (
+              <Image
+                src={category.imageSrc}
+                alt={category.imageAlt}
+                fill
+                sizes="128px"
+                className="object-cover transition duration-500 group-hover:scale-105"
+              />
+            ) : (
+              <MediaPlaceholder label="Снимка" />
+            )}
+          </div>
+        </div>
+        <p className="mx-auto mt-4 max-w-32 font-heading text-sm leading-snug text-boutique-ink transition group-hover:text-boutique-rose-deep sm:text-base">
+          {category.title}
+        </p>
+      </Link>
+    );
+  }
+
+  if (presentation === "occasion") {
+    return (
+      <Link
+        href={href}
+        className="group block overflow-hidden rounded-xl border border-boutique-rose/20 bg-boutique-paper shadow-boutique-sm transition hover:-translate-y-1 hover:border-boutique-rose-deep/35 hover:shadow-boutique"
+      >
+        <div className="relative aspect-[4/3] overflow-hidden">
+          {category.imageSrc ? (
+            <Image
+              src={category.imageSrc}
+              alt={category.imageAlt}
+              fill
+              sizes="(max-width: 768px) 50vw, 16vw"
+              className="object-cover transition duration-500 group-hover:scale-105"
+            />
+          ) : (
+            <MediaPlaceholder label="Снимка за повод" />
+          )}
+        </div>
+        <p className="border-t border-boutique-rose/15 px-3 py-3 text-center font-heading text-base text-boutique-ink">
+          {category.title}
+        </p>
+      </Link>
+    );
+  }
 
   const frame = compact
     ? "rounded-xl hover:-translate-y-0.5"

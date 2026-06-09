@@ -13,6 +13,10 @@
   --color-boutique-sage-deep: #4d5c4a;
   --color-boutique-on-sage: #f3efe6;
   --color-boutique-ochre: #c9a66b;
+  /* Supporting tokens used by the new home layout, mapped to the VeMiDi palette. */
+  --color-boutique-blush: #ebe4db;
+  --color-boutique-rose: #8a9a86;
+  --color-boutique-rose-deep: #4d5c4a;
   --shadow-boutique: 0 22px 50px -12px rgb(44 40 37 / 0.08);
   --shadow-boutique-sm: 0 12px 28px -8px rgb(44 40 37 / 0.06);
 }

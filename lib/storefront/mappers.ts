@@ -8,6 +8,21 @@ export const DEFAULT_PRODUCT_IMAGE =
 export const DEFAULT_CATEGORY_IMAGE =
   "";
 
+const CATEGORY_IMAGES: Record<string, string> = {
+  bebe: "/assets/occasion-krashtene.webp",
+  krashtene: "/assets/occasion-krashtene.webp",
+  svatba: "/assets/occasion-svatba.webp",
+  rd: "/assets/occasion-rozhden-den.webp",
+  "rozhden-den": "/assets/occasion-rozhden-den.webp",
+  jubilej: "/assets/occasion-yubiley.webp",
+  yubiley: "/assets/occasion-yubiley.webp",
+  abiturient: "/assets/occasion-abiturientski-bal.webp",
+  "abiturientski-bal": "/assets/occasion-abiturientski-bal.webp",
+  "za-uchitel": "/assets/occasion-za-uchiteli.webp",
+  "za-uchiteli": "/assets/occasion-za-uchiteli.webp",
+  "tvorcheski-komplekti": "/assets/tvorcheski-komplekti.webp",
+};
+
 export type ProductRow = {
   id: string;
   name: string;
@@ -42,7 +57,7 @@ export function toShowcaseCategory(category: StorefrontCategory): ShopCategory {
     slug: category.slug,
     title: category.name,
     categoryType: category.category_type,
-    imageSrc: DEFAULT_CATEGORY_IMAGE,
+    imageSrc: CATEGORY_IMAGES[category.slug] ?? DEFAULT_CATEGORY_IMAGE,
     imageAlt: `${category.name} - категория продукти`,
   };
 }

@@ -132,10 +132,42 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
 
               <ProductDetailAddToCart product={product} />
 
-              <p className="mt-14 max-w-lg text-sm leading-relaxed text-boutique-muted md:mt-16">
-                {product.fulfillmentNote ??
-                  "Изпращане от ателието за 5-10 работни дни. При персонализация ще потвърдим текста по имейл преди изработка."}
-              </p>
+              <div className="mt-14 grid gap-3 md:mt-16">
+                <article className="rounded-2xl border border-boutique-line bg-boutique-bg p-5">
+                  <h2 className="font-heading text-xl text-boutique-ink">
+                    Изработка и срок
+                  </h2>
+                  <p className="mt-2 text-sm leading-relaxed text-boutique-muted">
+                    {product.fulfillmentNote ??
+                      "Изпращане от ателието за 5-10 работни дни. При персонализация ще потвърдим текста преди изработка."}
+                  </p>
+                </article>
+                <article className="rounded-2xl border border-boutique-line bg-boutique-bg p-5">
+                  <h2 className="font-heading text-xl text-boutique-ink">
+                    Ръчно изработен продукт
+                  </h2>
+                  <p className="mt-2 text-sm leading-relaxed text-boutique-muted">
+                    Всеки продукт се изработва индивидуално. Възможни са малки разлики в
+                    цветовете, текстурата и разположението на детайлите, които правят изделието
+                    уникално.
+                  </p>
+                </article>
+                <article className="rounded-2xl border border-boutique-line bg-boutique-bg p-5">
+                  <h2 className="font-heading text-xl text-boutique-ink">
+                    Имате въпрос преди поръчка?
+                  </h2>
+                  <p className="mt-2 text-sm leading-relaxed text-boutique-muted">
+                    Пишете ни за възможностите за персонализация, цветовете или срока за
+                    конкретен повод.
+                  </p>
+                  <Link
+                    href="/contact"
+                    className="mt-4 inline-flex text-sm font-semibold text-boutique-accent underline-offset-4 hover:underline"
+                  >
+                    Свържете се с нас
+                  </Link>
+                </article>
+              </div>
             </div>
           </div>
         </PageContainer>

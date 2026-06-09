@@ -1,4 +1,30 @@
-export type AdminTab = "products" | "categories" | "orders" | "blog" | "events";
+export type AdminTab = "products" | "categories" | "orders" | "blog" | "events" | "wishes";
+
+export type WishTemplateRow = {
+  id: string;
+  title: string;
+  body: string;
+  is_active: boolean;
+  sort_order: number;
+};
+
+export type WishTemplateOccasionRow = {
+  wish_template_id: string;
+  category_id: string;
+};
+
+export type ProductPersonalizationFieldRow = {
+  id: string;
+  product_id: string;
+  label: string;
+  field_key: string;
+  field_type: "text" | "textarea" | "date";
+  placeholder: string | null;
+  max_length: number;
+  is_required: boolean;
+  allows_wish_templates: boolean;
+  sort_order: number;
+};
 
 export type BlogPostRow = {
   id: string;

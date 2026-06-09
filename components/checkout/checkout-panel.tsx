@@ -255,7 +255,7 @@ export function CheckoutPanel() {
                       <p className="font-medium text-boutique-ink">{line.title}</p>
                       <p className="mt-1 text-boutique-muted">Количество: {line.quantity}</p>
                       {line.personalization ? (
-                        <p className="mt-1 text-xs text-boutique-muted">
+                        <p className="mt-1 whitespace-pre-line text-xs text-boutique-muted">
                           Персонализация: {line.personalization}
                         </p>
                       ) : null}

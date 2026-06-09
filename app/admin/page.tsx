@@ -8,6 +8,7 @@ import { ProductListPanel } from "@/components/admin/product-list-panel";
 import { OrdersPanel } from "@/components/admin/orders-panel";
 import { ContentManagementPanel } from "@/components/admin/content-management-panel";
 import { EventRegistrationsPanel } from "@/components/admin/event-registrations-panel";
+import { WishManagementPanel } from "@/components/admin/wish-management-panel";
 import { PageContainer } from "@/components/layout/page-container";
 import { loadAdminData } from "@/lib/admin/data";
 import {
@@ -35,6 +36,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   const activeTab = normalizeAdminTab(firstValue(params.tab));
   const orderStatus = firstValue(params.status);
   const orderSearch = firstValue(params.q);
+  const orderSource = firstValue(params.source);
 
   const supabase = await createClient();
   if (!supabase) {
@@ -68,8 +70,39 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     redirectToAdminLogin("Този профил няма админ права.");
   }
 
+  if (activeTab === "wishes") {
+    const [products, categories, wishes, links, fields] = await Promise.all([
+      supabase.from("products").select("*").order("name"),
+      supabase.from("categories").select("id,name,slug,category_type").eq("category_type", "occasion").order("name"),
+      supabase.from("wish_templates").select("id,title,body,is_active,sort_order").order("sort_order"),
+      supabase.from("wish_template_occasions").select("wish_template_id,category_id"),
+      supabase.from("product_personalization_fields").select("*").order("product_id").order("sort_order"),
+    ]);
+    return (
+      <section className="pb-24 pt-10">
+        <PageContainer>
+          <div className="mx-auto max-w-6xl space-y-8">
+            <AdminHeader activeTab={activeTab} />
+            {success || error ? (
+              <div className={`rounded-xl border px-4 py-3 text-sm ${error ? "border-red-200 bg-red-50 text-red-700" : "border-emerald-200 bg-emerald-50 text-emerald-700"}`}>
+                {error || success}
+              </div>
+            ) : null}
+            <WishManagementPanel
+              products={(products.data ?? []) as import("@/lib/admin/types").ProductRow[]}
+              occasions={(categories.data ?? []) as import("@/lib/admin/types").CategoryRow[]}
+              wishes={(wishes.data ?? []) as import("@/lib/admin/types").WishTemplateRow[]}
+              links={(links.data ?? []) as import("@/lib/admin/types").WishTemplateOccasionRow[]}
+              fields={(fields.data ?? []) as import("@/lib/admin/types").ProductPersonalizationFieldRow[]}
+            />
+          </div>
+        </PageContainer>
+      </section>
+    );
+  }
+
   if (activeTab === "orders") {
-    const ordersResult = await loadOrders(supabase, orderStatus, orderSearch);
+    const ordersResult = await loadOrders(supabase, orderStatus, orderSearch, orderSource);
 
     return (
       <section className="pb-24 pt-10">
@@ -91,6 +124,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               orders={ordersResult.orders}
               status={orderStatus}
               search={orderSearch}
+              source={orderSource}
               error={ordersResult.error}
             />
           </div>

@@ -1,4 +1,5 @@
 import type { ProductColorField } from "@/lib/product-colors";
+import type { ProductPersonalizationField, WishTemplate } from "@/lib/product-personalization";
 
 export type ProductImage = {
   src: string;
@@ -19,4 +20,6 @@ export type Product = {
   customizable?: boolean;
   /** Optional color configuration grouped by material/type. */
   colorFields?: ProductColorField[];
+  personalizationFields?: ProductPersonalizationField[];
+  wishTemplates?: WishTemplate[];
 };

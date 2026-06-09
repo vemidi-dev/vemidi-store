@@ -23,7 +23,7 @@ const supabaseRemotePattern = getSupabaseRemotePattern();
 const nextConfig: NextConfig = {
   // Keep the dev server isolated from `next build`; otherwise a build can replace
   // the server-action manifest while a local development session is running.
-  distDir: process.env.NODE_ENV === "development" ? ".next-dev" : ".next",
+  distDir: process.env.NODE_ENV === "development" ? ".next-local" : ".next",
   experimental: {
     serverActions: {
       bodySizeLimit: "10mb",

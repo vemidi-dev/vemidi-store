@@ -267,7 +267,11 @@ async function createContent(formData: FormData, kind: ContentKind) {
   redirectWith("success", `${config[kind].singular} е добавено успешно.`, tab);
 }
 
-async function updateContent(formData: FormData, kind: ContentKind) {
+async function updateContent(
+  formData: FormData,
+  kind: ContentKind,
+  forcedPublicationState?: boolean,
+) {
   const tab: AdminTab = kind;
   const supabase = await getAuthorizedClient(tab);
   const id = getString(formData, "id");
@@ -278,7 +282,7 @@ async function updateContent(formData: FormData, kind: ContentKind) {
   const existingImageUrl = getOptionalString(formData, "existing_image_url");
   const imageFile = getFile(formData, "image_file");
   const isPublished = kind === "blog"
-    ? getString(formData, "submit_intent") === "publish"
+    ? forcedPublicationState ?? getString(formData, "submit_intent") === "publish"
     : isChecked(formData, "is_published");
 
   if (!id) {
@@ -407,6 +411,12 @@ export async function createBlogPost(formData: FormData) {
 }
 export async function updateBlogPost(formData: FormData) {
   return updateContent(formData, "blog");
+}
+export async function saveBlogPostDraft(formData: FormData) {
+  return updateContent(formData, "blog", false);
+}
+export async function publishBlogPost(formData: FormData) {
+  return updateContent(formData, "blog", true);
 }
 export async function deleteBlogPost(formData: FormData) {
   return deleteContent(formData, "blog");

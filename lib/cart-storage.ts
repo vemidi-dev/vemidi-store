@@ -3,7 +3,7 @@ import type { CartLine } from "@/lib/cart-types";
 import type { SelectedProductColor } from "@/lib/product-colors";
 
 export const MAX_CART_QUANTITY = 99;
-export const PERSONALIZATION_MAX_LENGTH = 50;
+export const PERSONALIZATION_MAX_LENGTH = 1000;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;

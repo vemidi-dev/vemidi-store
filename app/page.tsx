@@ -2,25 +2,27 @@ import Link from "next/link";
 
 import CategoryShowcaseCard from "@/components/category/category-showcase-card";
 import { HomeHero } from "@/components/home/home-hero";
-import { HomeBlog, HomeEvents } from "@/components/home/home-content-sections";
+import { HomeContentGrid } from "@/components/home/home-content-sections";
 import { HomeAtelier, HomeBenefits, HomeProcess } from "@/components/home/home-story";
 import { PageContainer } from "@/components/layout/page-container";
-import { ProductCard } from "@/components/product/product-card";
 import { getPublishedBlogPosts, getPublishedEvents } from "@/lib/content/repository";
 import { toShowcaseCategory } from "@/lib/storefront/mappers";
 import { getStorefrontCatalog } from "@/lib/storefront/repository";
 
 export default async function HomePage() {
-  const [{ categories, products }, blogPosts, events] = await Promise.all([
+  const [{ categories }, blogPosts, events] = await Promise.all([
     getStorefrontCatalog(),
     getPublishedBlogPosts(),
     getPublishedEvents(),
   ]);
-  const featured = products.slice(0, 3);
   const occasionCategories = categories.filter(
     (category) => category.category_type === "occasion",
   );
-  const featuredCategories = occasionCategories.slice(0, 6).map(toShowcaseCategory);
+  const productCategories = categories.filter(
+    (category) => category.category_type === "product",
+  );
+  const featuredProductCategories = productCategories.slice(0, 8).map(toShowcaseCategory);
+  const featuredOccasionCategories = occasionCategories.slice(0, 6).map(toShowcaseCategory);
   const latestPosts = blogPosts.slice(0, 3);
   const now = Date.now();
   const upcomingEvents = events
@@ -32,84 +34,77 @@ export default async function HomePage() {
       <HomeHero />
       <HomeBenefits />
 
-      <section className="border-b border-boutique-line bg-boutique-bg py-16 md:py-20">
+      <section className="border-b border-boutique-line bg-white py-14 md:py-16">
         <PageContainer>
-          <div className="mx-auto max-w-2xl text-center">
-            <p className="text-[0.7rem] font-semibold uppercase tracking-[0.28em] text-boutique-accent">
-              Категории
-            </p>
-            <h2 className="font-heading mt-4 text-3xl text-boutique-ink sm:text-4xl">
-              Изберете повод — ние се грижим за детайла
+          <div className="text-center">
+            <h2 className="font-heading text-3xl text-boutique-ink">
+              Пазарувай по повод <span className="text-boutique-rose-deep">♡</span>
             </h2>
-            <p className="mx-auto mt-4 max-w-lg text-sm leading-relaxed text-boutique-muted">
-              Всяка категория води към магазина с филтър, за да откриете по-бързо подходящите
-              изделия.
-            </p>
           </div>
-          <div className="mt-14 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {featuredCategories.map((category) => (
-              <CategoryShowcaseCard key={category.slug} category={category} />
+          <div className="mt-9 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-[repeat(6,minmax(0,1fr))_7rem]">
+            {featuredOccasionCategories.map((category) => (
+              <CategoryShowcaseCard
+                key={category.slug}
+                category={category}
+                presentation="occasion"
+              />
             ))}
-          </div>
-          {featuredCategories.length === 0 ? (
-            <p className="mt-10 text-center text-sm text-boutique-muted">
-              Категориите ще се покажат тук след добавянето им в магазина.
-            </p>
-          ) : null}
-          {occasionCategories.length > featuredCategories.length ? (
-            <div className="mt-10 text-center">
-              <Link
-                href="/occasions"
-                className="text-sm font-semibold text-boutique-accent underline-offset-4 hover:underline"
-              >
+            <Link
+              href="/occasions"
+              aria-label="Виж всички поводи"
+              className="group col-span-2 flex min-h-32 flex-col items-center justify-center rounded-xl border border-boutique-sage/30 bg-boutique-warm/55 px-4 text-center transition hover:-translate-y-1 hover:border-boutique-sage-deep/45 hover:bg-boutique-warm sm:col-span-1"
+            >
+              <span className="grid h-14 w-14 place-items-center rounded-full bg-boutique-sage-deep text-2xl text-boutique-on-sage shadow-boutique-sm transition group-hover:bg-boutique-accent">
+                <span aria-hidden>→</span>
+              </span>
+              <span className="mt-4 text-xs font-semibold leading-snug text-boutique-ink">
                 Виж всички поводи
-              </Link>
-            </div>
+              </span>
+            </Link>
+          </div>
+          {featuredOccasionCategories.length === 0 ? (
+            <p className="mt-10 text-center text-sm text-boutique-muted">
+              Категориите за поводи ще се покажат тук след добавянето им.
+            </p>
           ) : null}
         </PageContainer>
       </section>
 
-      <HomeProcess />
-
-      <section className="py-16 md:py-20">
+      <section className="border-b border-boutique-line bg-boutique-paper py-14 md:py-16">
         <PageContainer>
           <div className="text-center">
-            <p className="text-[0.7rem] font-semibold uppercase tracking-[0.28em] text-boutique-accent">
-              Избрани произведения
-            </p>
-            <h2 className="font-heading mt-4 text-3xl text-boutique-ink sm:text-4xl">
-              Подбрано като в бутикова витрина
+            <h2 className="font-heading text-3xl text-boutique-ink">
+              Пазарувай по вид продукт <span className="text-boutique-rose-deep">♡</span>
             </h2>
-            <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-boutique-muted">
-              Всяка вещ е представена с внимание към детайла — материали, текстура и усещане за
-              малка, независима ателиерна линия.
-            </p>
           </div>
-          <div className="mt-14 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            {featured.map((product) => (
-              <ProductCard key={product.slug} product={product} />
+          <div className="mt-10 grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-4 lg:grid-cols-8">
+            {featuredProductCategories.map((category) => (
+              <CategoryShowcaseCard
+                key={category.slug}
+                category={category}
+                presentation="product"
+              />
             ))}
           </div>
-          {featured.length === 0 ? (
+          {featuredProductCategories.length === 0 ? (
             <p className="mt-10 text-center text-sm text-boutique-muted">
-              Все още няма публикувани продукти.
+              Категориите за продукти ще се покажат тук след добавянето им.
             </p>
           ) : null}
-          <div className="mt-12 text-center">
+          <div className="mt-10 text-center">
             <Link
-              href="/shop"
-              className="inline-flex items-center gap-2 text-sm font-medium text-boutique-accent underline-offset-8 transition hover:text-boutique-ink hover:underline"
+              href="/categories"
+              className="inline-flex rounded-lg bg-boutique-rose-deep px-6 py-3 text-sm font-semibold text-white transition hover:bg-boutique-ink"
             >
-              Към целия каталог
-              <span aria-hidden>→</span>
+              Виж всички продукти
             </Link>
           </div>
         </PageContainer>
       </section>
 
-      <HomeEvents events={upcomingEvents} />
-      <HomeBlog posts={latestPosts} />
+      <HomeProcess />
       <HomeAtelier />
+      <HomeContentGrid posts={latestPosts} events={upcomingEvents} />
     </div>
   );
 }
