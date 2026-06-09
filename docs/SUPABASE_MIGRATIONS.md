@@ -40,6 +40,7 @@ exist. It adds the `create_store_order` RPC used by the storefront checkout. The
 - accepts only cash-on-delivery orders;
 - reloads product names and prices from `public.products`;
 - validates quantities, personalization, and allowed color selections;
+- stores each personalization field structurally in the order payload while keeping a readable summary;
 - calculates the total in Postgres;
 - stores the itemized order in `orders.raw_payload`;
 - keeps the existing landing-page order format compatible with the unified admin panel.

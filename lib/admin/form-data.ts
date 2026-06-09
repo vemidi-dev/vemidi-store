@@ -1,4 +1,5 @@
 import type { AdminTab } from "@/lib/admin/types";
+import { adminFormFields } from "@/lib/admin/form-fields";
 
 type CreateProductDraftPayload = {
   name: string;
@@ -26,7 +27,7 @@ export function getOptionalString(formData: FormData, key: string) {
 }
 
 export function getPrice(formData: FormData) {
-  const parsed = Number(getString(formData, "price"));
+  const parsed = Number(getString(formData, adminFormFields.product.price));
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
 }
 
@@ -43,7 +44,7 @@ export function getCategoryIds(formData: FormData) {
   return Array.from(
     new Set(
       formData
-        .getAll("category_ids")
+        .getAll(adminFormFields.product.categoryIds)
         .map((value) => String(value ?? "").trim())
         .filter(Boolean),
     ),
@@ -55,12 +56,14 @@ export function normalizeSlug(raw: string) {
 }
 
 export function getAdminTab(formData: FormData, fallback: AdminTab): AdminTab {
-  const raw = getString(formData, "tab");
+  const raw = getString(formData, adminFormFields.common.tab);
   return raw === "categories" ||
     raw === "products" ||
     raw === "orders" ||
     raw === "blog" ||
-    raw === "events"
+    raw === "events" ||
+    raw === "wishes" ||
+    raw === "subscribers"
     ? raw
     : fallback;
 }
@@ -76,19 +79,19 @@ export function parseSelectLimit(value: string, fallback: number) {
 
 export function makeCreateProductDraft(formData: FormData) {
   const labels = formData
-    .getAll("color_field_label[]")
+    .getAll(adminFormFields.colorField.labels)
     .map((value) => String(value ?? "").trim());
   const groupIds = formData
-    .getAll("color_field_group_id[]")
+    .getAll(adminFormFields.colorField.groupIds)
     .map((value) => String(value ?? "").trim());
   const mins = formData
-    .getAll("color_field_min_select[]")
+    .getAll(adminFormFields.colorField.minSelects)
     .map((value) => String(value ?? "").trim());
   const maxes = formData
-    .getAll("color_field_max_select[]")
+    .getAll(adminFormFields.colorField.maxSelects)
     .map((value) => String(value ?? "").trim());
   const optionIds = formData
-    .getAll("color_field_option_ids[]")
+    .getAll(adminFormFields.colorField.optionIds)
     .map((value) => String(value ?? "").trim());
 
   const longestLength = Math.max(
@@ -107,12 +110,12 @@ export function makeCreateProductDraft(formData: FormData) {
   })).filter((field) => field.label || field.group_id || field.option_ids);
 
   const draft: CreateProductDraftPayload = {
-    name: getString(formData, "name"),
-    description: getString(formData, "description"),
-    additional_info: getString(formData, "additional_info"),
-    fulfillment_note: getString(formData, "fulfillment_note"),
-    price: getString(formData, "price"),
-    is_customizable: isChecked(formData, "is_customizable"),
+    name: getString(formData, adminFormFields.product.name),
+    description: getString(formData, adminFormFields.product.description),
+    additional_info: getString(formData, adminFormFields.product.additionalInfo),
+    fulfillment_note: getString(formData, adminFormFields.product.fulfillmentNote),
+    price: getString(formData, adminFormFields.product.price),
+    is_customizable: isChecked(formData, adminFormFields.product.isCustomizable),
     category_ids: getCategoryIds(formData),
     color_fields: colorFields,
   };

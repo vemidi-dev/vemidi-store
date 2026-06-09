@@ -15,6 +15,7 @@ import {
   normalizeSlug,
   parseSelectLimit,
 } from "@/lib/admin/form-data";
+import { adminFormFields } from "@/lib/admin/form-fields";
 import {
   createProductAtomic,
   deleteProductAtomic,
@@ -103,14 +104,14 @@ async function parseProductColorFields(
     validOptionIdsByGroup.set(option.group_id, set);
   });
 
-  const labels = formData.getAll("color_field_label[]").map((value) => String(value ?? "").trim());
+  const labels = formData.getAll(adminFormFields.colorField.labels).map((value) => String(value ?? "").trim());
   const formGroupIds = formData
-    .getAll("color_field_group_id[]")
+    .getAll(adminFormFields.colorField.groupIds)
     .map((value) => String(value ?? "").trim());
-  const mins = formData.getAll("color_field_min_select[]").map((value) => String(value ?? "").trim());
-  const maxes = formData.getAll("color_field_max_select[]").map((value) => String(value ?? "").trim());
+  const mins = formData.getAll(adminFormFields.colorField.minSelects).map((value) => String(value ?? "").trim());
+  const maxes = formData.getAll(adminFormFields.colorField.maxSelects).map((value) => String(value ?? "").trim());
   const optionCsvs = formData
-    .getAll("color_field_option_ids[]")
+    .getAll(adminFormFields.colorField.optionIds)
     .map((value) => String(value ?? "").trim());
 
   const parsedFields: ParsedColorField[] = [];
@@ -211,12 +212,12 @@ export async function createProduct(formData: FormData) {
   const activeTab = getAdminTab(formData, "products");
   const draft = makeCreateProductDraft(formData);
 
-  const name = getString(formData, "name");
-  const description = getString(formData, "description");
-  const additionalInfo = getOptionalString(formData, "additional_info");
-  const fulfillmentNote = getOptionalString(formData, "fulfillment_note");
-  const isCustomizable = isChecked(formData, "is_customizable");
-  const imageFile = getFile(formData, "image_file");
+  const name = getString(formData, adminFormFields.product.name);
+  const description = getString(formData, adminFormFields.product.description);
+  const additionalInfo = getOptionalString(formData, adminFormFields.product.additionalInfo);
+  const fulfillmentNote = getOptionalString(formData, adminFormFields.product.fulfillmentNote);
+  const isCustomizable = isChecked(formData, adminFormFields.product.isCustomizable);
+  const imageFile = getFile(formData, adminFormFields.product.imageFile);
   const price = getPrice(formData);
   const categoryIds = getCategoryIds(formData);
   const { fields: colorFields, error: colorFieldsError } = await parseProductColorFields(
@@ -276,15 +277,15 @@ export async function updateProduct(formData: FormData) {
   const supabase = await getAuthorizedClient();
   const activeTab = getAdminTab(formData, "products");
 
-  const id = getString(formData, "id");
-  const name = getString(formData, "name");
-  const description = getString(formData, "description");
-  const additionalInfo = getOptionalString(formData, "additional_info");
-  const fulfillmentNote = getOptionalString(formData, "fulfillment_note");
-  const existingImageUrl = getString(formData, "existing_image_url") || null;
-  const imageFile = getFile(formData, "image_file");
+  const id = getString(formData, adminFormFields.common.id);
+  const name = getString(formData, adminFormFields.product.name);
+  const description = getString(formData, adminFormFields.product.description);
+  const additionalInfo = getOptionalString(formData, adminFormFields.product.additionalInfo);
+  const fulfillmentNote = getOptionalString(formData, adminFormFields.product.fulfillmentNote);
+  const existingImageUrl = getString(formData, adminFormFields.product.existingImageUrl) || null;
+  const imageFile = getFile(formData, adminFormFields.product.imageFile);
   const categoryIds = getCategoryIds(formData);
-  const isCustomizable = isChecked(formData, "is_customizable");
+  const isCustomizable = isChecked(formData, adminFormFields.product.isCustomizable);
   const price = getPrice(formData);
   const { fields: colorFields, error: colorFieldsError } = await parseProductColorFields(
     supabase,
@@ -346,7 +347,7 @@ export async function updateProduct(formData: FormData) {
 export async function deleteProduct(formData: FormData) {
   const supabase = await getAuthorizedClient();
   const activeTab = getAdminTab(formData, "products");
-  const id = getString(formData, "id");
+  const id = getString(formData, adminFormFields.common.id);
 
   if (!id) {
     redirectWith("error", "Липсва id за изтриване.", activeTab);
@@ -372,9 +373,9 @@ export async function deleteProduct(formData: FormData) {
 export async function createCategory(formData: FormData) {
   const supabase = await getAuthorizedClient();
   const activeTab = getAdminTab(formData, "categories");
-  const name = getString(formData, "name");
-  const slug = normalizeSlug(getString(formData, "slug"));
-  const categoryType = getString(formData, "category_type");
+  const name = getString(formData, adminFormFields.category.name);
+  const slug = normalizeSlug(getString(formData, adminFormFields.category.slug));
+  const categoryType = getString(formData, adminFormFields.category.type);
 
   if (!name || !slug || !["product", "occasion"].includes(categoryType)) {
     redirectWith("error", "Попълнете име и slug за категорията.", activeTab);
@@ -397,10 +398,10 @@ export async function createCategory(formData: FormData) {
 export async function updateCategory(formData: FormData) {
   const supabase = await getAuthorizedClient();
   const activeTab = getAdminTab(formData, "categories");
-  const id = getString(formData, "id");
-  const name = getString(formData, "name");
-  const slug = normalizeSlug(getString(formData, "slug"));
-  const categoryType = getString(formData, "category_type");
+  const id = getString(formData, adminFormFields.common.id);
+  const name = getString(formData, adminFormFields.category.name);
+  const slug = normalizeSlug(getString(formData, adminFormFields.category.slug));
+  const categoryType = getString(formData, adminFormFields.category.type);
 
   if (!id || !name || !slug || !["product", "occasion"].includes(categoryType)) {
     redirectWith("error", "Невалидни данни за категория.", activeTab);
@@ -424,7 +425,7 @@ export async function updateCategory(formData: FormData) {
 export async function deleteCategory(formData: FormData) {
   const supabase = await getAuthorizedClient();
   const activeTab = getAdminTab(formData, "categories");
-  const id = getString(formData, "id");
+  const id = getString(formData, adminFormFields.common.id);
 
   if (!id) {
     redirectWith("error", "Липсва категория за изтриване.", activeTab);

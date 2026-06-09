@@ -42,6 +42,39 @@ test("makeCartLineId is stable for the same personalization and options", () => 
   assert.notEqual(first, makeCartLineId("gift-box", "За Мария", [blue]));
 });
 
+test("makeCartLineId uses structured personalization values when available", () => {
+  const first = makeCartLineId("gift-box", "legacy summary", [blue], [
+    {
+      fieldId: "date",
+      fieldKey: "date",
+      label: "Дата",
+      value: "2026-06-09",
+    },
+    {
+      fieldId: "name",
+      fieldKey: "name",
+      label: "Име",
+      value: "Мария",
+    },
+  ]);
+  const second = makeCartLineId("gift-box", "different summary", [blue], [
+    {
+      fieldId: "name",
+      fieldKey: "name",
+      label: "Име",
+      value: "Мария",
+    },
+    {
+      fieldId: "date",
+      fieldKey: "date",
+      label: "Дата",
+      value: "2026-06-09",
+    },
+  ]);
+
+  assert.equal(first, second);
+});
+
 test("normalizeCartQuantity rejects invalid values and applies cart limits", () => {
   assert.equal(normalizeCartQuantity(Number.NaN), 0);
   assert.equal(normalizeCartQuantity(Number.POSITIVE_INFINITY), 0);
@@ -58,6 +91,15 @@ test("parseStoredCart safely ignores malformed or unsafe lines", () => {
       price: 12.5,
       quantity: 120,
       personalization: "  За Мария  ",
+      personalizationFields: [
+        {
+          fieldId: "name",
+          fieldKey: "name",
+          label: "Име",
+          value: "  Мария  ",
+        },
+        { fieldId: "", fieldKey: "bad", label: "Bad", value: "Bad" },
+      ],
       selectedColors: [blue, { optionId: "missing-fields" }],
     },
     { slug: "negative-price", title: "Невалиден", price: -1, quantity: 1 },
@@ -72,10 +114,23 @@ test("parseStoredCart safely ignores malformed or unsafe lines", () => {
   assert.equal(lines[0].slug, "valid-product");
   assert.equal(lines[0].quantity, MAX_CART_QUANTITY);
   assert.equal(lines[0].personalization, "За Мария");
+  assert.deepEqual(lines[0].personalizationFields, [
+    {
+      fieldId: "name",
+      fieldKey: "name",
+      label: "Име",
+      value: "Мария",
+    },
+  ]);
   assert.deepEqual(lines[0].selectedColors, [blue]);
   assert.equal(
     lines[0].lineId,
-    makeCartLineId("valid-product", "За Мария", [blue]),
+    makeCartLineId(
+      "valid-product",
+      "За Мария",
+      [blue],
+      lines[0].personalizationFields,
+    ),
   );
 });
 

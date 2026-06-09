@@ -20,6 +20,7 @@ import {
 } from "@/lib/cart-storage";
 import { CART_STORAGE_KEY, type CartLine } from "@/lib/cart-types";
 import type { SelectedProductColor } from "@/lib/product-colors";
+import type { ProductPersonalizationValue } from "@/lib/product-personalization";
 
 type CartContextValue = {
   lines: CartLine[];
@@ -30,6 +31,7 @@ type CartContextValue = {
     quantity?: number,
     personalization?: string,
     selectedColors?: SelectedProductColor[],
+    personalizationFields?: ProductPersonalizationValue[],
   ) => void;
   setQuantity: (lineId: string, quantity: number) => void;
   removeLine: (lineId: string) => void;
@@ -64,7 +66,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [lines, ready]);
 
   const addProduct = useCallback(
-    (product: Product, quantity = 1, personalization?: string, selectedColors?: SelectedProductColor[]) => {
+    (
+      product: Product,
+      quantity = 1,
+      personalization?: string,
+      selectedColors?: SelectedProductColor[],
+      personalizationFields?: ProductPersonalizationValue[],
+    ) => {
       const normalizedQuantity = normalizeCartQuantity(quantity);
       if (normalizedQuantity === 0 || !Number.isFinite(product.price) || product.price < 0) {
         return;
@@ -72,7 +80,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
       const storedPersonalization = normalizePersonalization(personalization);
       const storedColors = selectedColors?.length ? selectedColors : undefined;
-      const lineId = makeCartLineId(product.slug, storedPersonalization, storedColors);
+      const storedPersonalizationFields = personalizationFields?.length
+        ? personalizationFields
+        : undefined;
+      const lineId = makeCartLineId(
+        product.slug,
+        storedPersonalization,
+        storedColors,
+        storedPersonalizationFields,
+      );
 
       setLines((prev) => {
         const existing = prev.find((l) => l.lineId === lineId);
@@ -93,6 +109,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
             price: product.price,
             quantity: normalizedQuantity,
             personalization: storedPersonalization,
+            personalizationFields: storedPersonalizationFields,
             selectedColors: storedColors,
           },
         ];

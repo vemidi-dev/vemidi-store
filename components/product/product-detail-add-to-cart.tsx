@@ -5,7 +5,10 @@ import { useState } from "react";
 import { useCart } from "@/components/cart/cart-provider";
 import type { Product } from "@/lib/catalog";
 import type { SelectedProductColor } from "@/lib/product-colors";
-import type { ProductPersonalizationField } from "@/lib/product-personalization";
+import type {
+  ProductPersonalizationField,
+  ProductPersonalizationValue,
+} from "@/lib/product-personalization";
 
 type ProductDetailAddToCartProps = { product: Product };
 
@@ -79,6 +82,19 @@ export function ProductDetailAddToCart({ product }: ProductDetailAddToCartProps)
     .filter(Boolean)
     .join("\n")
     .slice(0, 1000);
+  const personalizationFields: ProductPersonalizationValue[] = fields.flatMap(
+    (field) => {
+      const value = (values[field.id] ?? "").trim();
+      return value
+        ? [{
+            fieldId: field.id,
+            fieldKey: field.key,
+            label: field.label,
+            value,
+          }]
+        : [];
+    },
+  );
 
   return (
     <div className="mt-10 rounded-2xl border border-boutique-line bg-boutique-paper p-5 sm:p-6">
@@ -197,6 +213,7 @@ export function ProductDetailAddToCart({ product }: ProductDetailAddToCartProps)
             1,
             personalization || undefined,
             flattenSelectedColors() || undefined,
+            personalizationFields,
           );
           setError(null);
           setAdded(true);

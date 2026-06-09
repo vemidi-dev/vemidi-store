@@ -1,9 +1,11 @@
 import { makeCartLineId } from "@/lib/cart-line-id";
 import type { CartLine } from "@/lib/cart-types";
 import type { SelectedProductColor } from "@/lib/product-colors";
+import type { ProductPersonalizationValue } from "@/lib/product-personalization";
 
 export const MAX_CART_QUANTITY = 99;
 export const PERSONALIZATION_MAX_LENGTH = 1000;
+export const PERSONALIZATION_FIELD_MAX_COUNT = 20;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
@@ -41,6 +43,30 @@ function parseSelectedColor(value: unknown): SelectedProductColor | null {
     optionId,
     optionName,
     optionHex,
+  };
+}
+
+function parsePersonalizationField(
+  value: unknown,
+): ProductPersonalizationValue | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const fieldId = typeof value.fieldId === "string" ? value.fieldId.trim() : "";
+  const fieldKey = typeof value.fieldKey === "string" ? value.fieldKey.trim() : "";
+  const label = typeof value.label === "string" ? value.label.trim() : "";
+  const fieldValue = typeof value.value === "string" ? value.value.trim() : "";
+
+  if (!fieldId || !fieldKey || !label || !fieldValue) {
+    return null;
+  }
+
+  return {
+    fieldId: fieldId.slice(0, 100),
+    fieldKey: fieldKey.slice(0, 100),
+    label: label.slice(0, 200),
+    value: fieldValue.slice(0, PERSONALIZATION_MAX_LENGTH),
   };
 }
 
@@ -96,6 +122,17 @@ export function parseStoredCart(raw: string | null): CartLine[] {
         typeof value.personalization === "string"
           ? normalizePersonalization(value.personalization)
           : undefined;
+      const personalizationFields = Array.isArray(value.personalizationFields)
+        ? value.personalizationFields
+            .slice(0, PERSONALIZATION_FIELD_MAX_COUNT)
+            .map(parsePersonalizationField)
+            .filter(
+              (field): field is ProductPersonalizationValue => field !== null,
+            )
+        : undefined;
+      const normalizedPersonalizationFields = personalizationFields?.length
+        ? personalizationFields
+        : undefined;
       const selectedColors = Array.isArray(value.selectedColors)
         ? value.selectedColors
             .map(parseSelectedColor)
@@ -104,12 +141,18 @@ export function parseStoredCart(raw: string | null): CartLine[] {
       const normalizedColors = selectedColors?.length ? selectedColors : undefined;
 
       lines.push({
-        lineId: makeCartLineId(slug, personalization, normalizedColors),
+        lineId: makeCartLineId(
+          slug,
+          personalization,
+          normalizedColors,
+          normalizedPersonalizationFields,
+        ),
         slug,
         title,
         price,
         quantity,
         personalization,
+        personalizationFields: normalizedPersonalizationFields,
         selectedColors: normalizedColors,
       });
     }

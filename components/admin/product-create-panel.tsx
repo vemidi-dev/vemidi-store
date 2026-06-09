@@ -6,6 +6,7 @@ import {
   adminHelperClass,
   adminPanelClass,
 } from "@/components/admin/styles";
+import { adminFormFields } from "@/lib/admin/form-fields";
 import { makeAdminTabHref } from "@/lib/admin/params";
 import type {
   CategoryRow,
@@ -42,7 +43,7 @@ export function ProductCreatePanel({
       </p>
 
       <form action={createProduct} className="mt-7 space-y-7">
-        <input type="hidden" name="tab" value="products" />
+        <input type="hidden" name={adminFormFields.common.tab} value="products" />
 
         <fieldset className="space-y-4">
           <legend className="text-xs font-semibold uppercase tracking-[0.16em] text-boutique-muted">
@@ -52,7 +53,7 @@ export function ProductCreatePanel({
             <label className="text-sm font-medium text-boutique-ink">
               Име на продукта
               <input
-                name="name"
+                name={adminFormFields.product.name}
                 required
                 defaultValue={draft?.name ?? ""}
                 className={adminFieldClass}
@@ -66,7 +67,7 @@ export function ProductCreatePanel({
             <label className="text-sm font-medium text-boutique-ink">
               Цена (евро)
               <input
-                name="price"
+                name={adminFormFields.product.price}
                 type="number"
                 step="0.01"
                 min="0"
@@ -81,7 +82,7 @@ export function ProductCreatePanel({
             <label className="text-sm font-medium text-boutique-ink md:col-span-2">
               Описание
               <textarea
-                name="description"
+                name={adminFormFields.product.description}
                 rows={4}
                 required
                 defaultValue={draft?.description ?? ""}
@@ -96,7 +97,7 @@ export function ProductCreatePanel({
             <label className="text-sm font-medium text-boutique-ink md:col-span-2">
               Допълнителна информация
               <textarea
-                name="additional_info"
+                name={adminFormFields.product.additionalInfo}
                 rows={3}
                 defaultValue={draft?.additionalInfo ?? ""}
                 className={`${adminFieldClass} resize-y`}
@@ -115,7 +116,7 @@ export function ProductCreatePanel({
           </legend>
           <div className="grid gap-5 md:grid-cols-2">
             <ImageFileInput
-              name="image_file"
+              name={adminFormFields.product.imageFile}
               label="Изображение на продукта"
               className={adminFieldClass}
               helperClassName={adminHelperClass}
@@ -151,7 +152,7 @@ export function ProductCreatePanel({
                         {(groupedCategories as CategoryRow[]).map((category) => (
                           <label key={category.id} className="inline-flex items-center gap-2 text-sm text-boutique-ink">
                             <input
-                              name="category_ids"
+                              name={adminFormFields.product.categoryIds}
                               type="checkbox"
                               value={category.id}
                               defaultChecked={draft?.categoryIds.includes(category.id)}
@@ -176,7 +177,7 @@ export function ProductCreatePanel({
           </legend>
           <label className="inline-flex items-center gap-2 text-sm text-boutique-ink">
             <input
-              name="is_customizable"
+              name={adminFormFields.product.isCustomizable}
               type="checkbox"
               defaultChecked={draft?.isCustomizable}
               className="h-4 w-4 rounded border-boutique-line text-boutique-accent"
@@ -186,7 +187,7 @@ export function ProductCreatePanel({
           <label className="text-sm font-medium text-boutique-ink">
             Бележка за доставка/изработка
             <textarea
-              name="fulfillment_note"
+              name={adminFormFields.product.fulfillmentNote}
               rows={2}
               defaultValue={draft?.fulfillmentNote ?? ""}
               className={`${adminFieldClass} resize-y`}

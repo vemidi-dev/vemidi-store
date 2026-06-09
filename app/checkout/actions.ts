@@ -2,6 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 
+import {
+  validatePersonalizationFields,
+  type PersonalizationFieldDefinition,
+} from "@/lib/checkout-personalization";
 import { getRequestFingerprint } from "@/lib/request-fingerprint";
 import { createServiceClient } from "@/lib/supabase/service";
 
@@ -19,6 +23,7 @@ type SubmittedCartItem = {
   slug?: unknown;
   quantity?: unknown;
   personalization?: unknown;
+  personalizationFields?: unknown;
   selectedColors?: unknown;
 };
 
@@ -38,6 +43,9 @@ const checkoutErrorMessages: Record<string, string> = {
   product_not_found: "Някой от продуктите вече не е наличен.",
   invalid_product_price: "Цената на продукт не може да бъде потвърдена.",
   personalization_too_long: "Текстът за персонализация е твърде дълъг.",
+  invalid_personalization_fields: "Данните за персонализация са невалидни.",
+  required_personalization_missing: "Попълнете всички задължителни полета за персонализация.",
+  invalid_personalization_date: "Въведете валидна дата в полето за персонализация.",
   product_not_customizable: "Избран продукт не поддържа персонализация.",
   invalid_color_count: "Изберете необходимия брой цветове за продукта.",
   invalid_color_selection: "Някой от избраните цветове вече не е наличен.",
@@ -128,6 +136,41 @@ export async function createStoreOrder(
     return { ok: false, message: checkoutErrorMessages.rate_limit_exceeded };
   }
 
+  const productIds = Array.from(
+    new Set(
+      items.flatMap((item) =>
+        typeof item.slug === "string" &&
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+          item.slug,
+        )
+          ? [item.slug]
+          : [],
+      ),
+    ),
+  );
+  if (productIds.length === 0) {
+    return { ok: false, message: checkoutErrorMessages.invalid_order_item };
+  }
+
+  const { data: fieldRows, error: fieldError } = await supabase
+    .from("product_personalization_fields")
+    .select("id,product_id,label,field_key,field_type,max_length,is_required")
+    .in("product_id", productIds);
+
+  if (fieldError) {
+    return {
+      ok: false,
+      message: "Магазинът временно не може да провери персонализацията.",
+    };
+  }
+
+  const fieldsByProduct = new Map<string, PersonalizationFieldDefinition[]>();
+  ((fieldRows ?? []) as PersonalizationFieldDefinition[]).forEach((field) => {
+    const definitions = fieldsByProduct.get(field.product_id) ?? [];
+    definitions.push(field);
+    fieldsByProduct.set(field.product_id, definitions);
+  });
+
   const customer = {
     name: text(formData, "customer_name", 120),
     phone: text(formData, "customer_phone", 30),
@@ -141,13 +184,35 @@ export async function createStoreOrder(
     details: text(formData, "delivery_details", 500),
   };
 
-  const rpcItems = items.map((item) => ({
-    productId: typeof item.slug === "string" ? item.slug : "",
-    quantity: typeof item.quantity === "number" ? item.quantity : 0,
-    personalization:
-      typeof item.personalization === "string" ? item.personalization : null,
-    selectedColors: Array.isArray(item.selectedColors) ? item.selectedColors : [],
-  }));
+  const rpcItems = [];
+  for (const item of items) {
+    const productId = typeof item.slug === "string" ? item.slug : "";
+    const definitions = fieldsByProduct.get(productId) ?? [];
+    const validated = validatePersonalizationFields(
+      item.personalizationFields,
+      definitions,
+    );
+
+    if (!validated.ok) {
+      return {
+        ok: false,
+        message: checkoutErrorMessages[validated.code],
+      };
+    }
+
+    const legacyPersonalization =
+      definitions.length === 0 && typeof item.personalization === "string"
+        ? item.personalization.trim().slice(0, 1000) || null
+        : null;
+
+    rpcItems.push({
+      productId,
+      quantity: typeof item.quantity === "number" ? item.quantity : 0,
+      personalization: validated.summary ?? legacyPersonalization,
+      personalizationFields: validated.fields,
+      selectedColors: Array.isArray(item.selectedColors) ? item.selectedColors : [],
+    });
+  }
 
   const { data, error } = await supabase.rpc("create_store_order", {
     p_customer: customer,

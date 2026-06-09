@@ -7,6 +7,7 @@ import {
   adminFieldClass,
   adminPanelClass,
 } from "@/components/admin/styles";
+import { adminFormFields } from "@/lib/admin/form-fields";
 import type { CategoryRow } from "@/lib/admin/types";
 
 export function CategoryManagementPanel({ categories }: { categories: CategoryRow[] }) {
@@ -33,18 +34,18 @@ export function CategoryManagementPanel({ categories }: { categories: CategoryRo
       </p>
 
       <form action={createCategory} className="mt-6 grid gap-4 md:grid-cols-[1fr_1fr_1fr_auto]">
-        <input type="hidden" name="tab" value="categories" />
+        <input type="hidden" name={adminFormFields.common.tab} value="categories" />
         <label className="text-sm font-medium text-boutique-ink">
           Име на категория
-          <input name="name" required placeholder="Напр. Сватба" className={adminFieldClass} />
+          <input name={adminFormFields.category.name} required placeholder="Напр. Сватба" className={adminFieldClass} />
         </label>
         <label className="text-sm font-medium text-boutique-ink">
           Slug
-          <input name="slug" required placeholder="napr-svatba" className={adminFieldClass} />
+          <input name={adminFormFields.category.slug} required placeholder="napr-svatba" className={adminFieldClass} />
         </label>
         <label className="text-sm font-medium text-boutique-ink">
           Тип категория
-          <select name="category_type" required defaultValue="product" className={adminFieldClass}>
+          <select name={adminFormFields.category.type} required defaultValue="product" className={adminFieldClass}>
             <option value="product">Продуктова категория</option>
             <option value="occasion">Повод</option>
           </select>
@@ -89,8 +90,8 @@ export function CategoryManagementPanel({ categories }: { categories: CategoryRo
                   <p className="text-xs text-boutique-muted">Slug: {category.slug}</p>
                 </div>
                 <form action={deleteCategory}>
-                  <input type="hidden" name="tab" value="categories" />
-                  <input type="hidden" name="id" value={category.id} />
+                  <input type="hidden" name={adminFormFields.common.tab} value="categories" />
+                  <input type="hidden" name={adminFormFields.common.id} value={category.id} />
                   <button
                     type="submit"
                     className="rounded-full border border-red-300 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-red-700 transition hover:bg-red-50"
@@ -108,12 +109,12 @@ export function CategoryManagementPanel({ categories }: { categories: CategoryRo
                   action={updateCategory}
                   className="mt-4 grid gap-4 md:grid-cols-[1fr_1fr_1fr_auto]"
                 >
-                  <input type="hidden" name="tab" value="categories" />
-                  <input type="hidden" name="id" value={category.id} />
+                  <input type="hidden" name={adminFormFields.common.tab} value="categories" />
+                  <input type="hidden" name={adminFormFields.common.id} value={category.id} />
                   <label className="text-sm font-medium text-boutique-ink">
                     Име на категория
                     <input
-                      name="name"
+                      name={adminFormFields.category.name}
                       required
                       defaultValue={category.name}
                       className={adminFieldClass}
@@ -122,7 +123,7 @@ export function CategoryManagementPanel({ categories }: { categories: CategoryRo
                   <label className="text-sm font-medium text-boutique-ink">
                     Slug
                     <input
-                      name="slug"
+                      name={adminFormFields.category.slug}
                       required
                       defaultValue={category.slug}
                       className={adminFieldClass}
@@ -131,7 +132,7 @@ export function CategoryManagementPanel({ categories }: { categories: CategoryRo
                   <label className="text-sm font-medium text-boutique-ink">
                     Тип категория
                     <select
-                      name="category_type"
+                      name={adminFormFields.category.type}
                       defaultValue={category.category_type}
                       className={adminFieldClass}
                     >

@@ -307,6 +307,7 @@ begin
         'quantity', v_quantity,
         'lineTotal', v_product.price * v_quantity,
         'personalization', v_personalization,
+        'personalizationFields', coalesce(v_item -> 'personalizationFields', '[]'::jsonb),
         'selectedColors', v_colors
       )
     );

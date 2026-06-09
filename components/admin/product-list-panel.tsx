@@ -7,6 +7,7 @@ import {
   adminPanelClass,
 } from "@/components/admin/styles";
 import type { AdminData } from "@/lib/admin/data";
+import { adminFormFields } from "@/lib/admin/form-fields";
 import type { CategoryRow } from "@/lib/admin/types";
 
 export function ProductListPanel({ data }: { data: AdminData }) {
@@ -137,8 +138,8 @@ export function ProductListPanel({ data }: { data: AdminData }) {
                     ) : null}
 
                     <form action={deleteProduct} className="mt-4">
-                      <input type="hidden" name="tab" value="products" />
-                      <input type="hidden" name="id" value={product.id} />
+                      <input type="hidden" name={adminFormFields.common.tab} value="products" />
+                      <input type="hidden" name={adminFormFields.common.id} value={product.id} />
                       <button
                         type="submit"
                         className="rounded-full border border-red-300 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-red-700 transition hover:bg-red-50"
@@ -154,18 +155,18 @@ export function ProductListPanel({ data }: { data: AdminData }) {
                     Редактирай продукт
                   </summary>
                   <form action={updateProduct} className="mt-4 grid gap-4 md:grid-cols-2">
-                    <input type="hidden" name="tab" value="products" />
-                    <input type="hidden" name="id" value={product.id} />
+                    <input type="hidden" name={adminFormFields.common.tab} value="products" />
+                    <input type="hidden" name={adminFormFields.common.id} value={product.id} />
                     <input
                       type="hidden"
-                      name="existing_image_url"
+                      name={adminFormFields.product.existingImageUrl}
                       value={product.image_url ?? ""}
                     />
 
                     <label className="text-sm font-medium text-boutique-ink">
                       Име
                       <input
-                        name="name"
+                        name={adminFormFields.product.name}
                         defaultValue={product.name}
                         required
                         className={adminFieldClass}
@@ -174,7 +175,7 @@ export function ProductListPanel({ data }: { data: AdminData }) {
                     <label className="text-sm font-medium text-boutique-ink">
                       Цена (евро)
                       <input
-                        name="price"
+                        name={adminFormFields.product.price}
                         type="number"
                         step="0.01"
                         min="0"
@@ -186,7 +187,7 @@ export function ProductListPanel({ data }: { data: AdminData }) {
                     <label className="text-sm font-medium text-boutique-ink md:col-span-2">
                       Описание
                       <textarea
-                        name="description"
+                        name={adminFormFields.product.description}
                         rows={3}
                         defaultValue={product.description}
                         required
@@ -196,7 +197,7 @@ export function ProductListPanel({ data }: { data: AdminData }) {
                     <label className="text-sm font-medium text-boutique-ink md:col-span-2">
                       Допълнителна информация
                       <textarea
-                        name="additional_info"
+                        name={adminFormFields.product.additionalInfo}
                         rows={3}
                         defaultValue={product.additional_info ?? ""}
                         className={`${adminFieldClass} resize-y`}
@@ -204,7 +205,7 @@ export function ProductListPanel({ data }: { data: AdminData }) {
                     </label>
 
                     <ImageFileInput
-                      name="image_file"
+                      name={adminFormFields.product.imageFile}
                       label="Нова снимка (по избор)"
                       className={adminFieldClass}
                       helperClassName={adminHelperClass}
@@ -233,7 +234,7 @@ export function ProductListPanel({ data }: { data: AdminData }) {
                                       className="inline-flex items-center gap-2 text-sm text-boutique-ink"
                                     >
                                       <input
-                                        name="category_ids"
+                                        name={adminFormFields.product.categoryIds}
                                         type="checkbox"
                                         value={category.id}
                                         defaultChecked={assignedIds.includes(category.id)}
@@ -264,7 +265,7 @@ export function ProductListPanel({ data }: { data: AdminData }) {
 
                     <label className="inline-flex items-center gap-2 text-sm text-boutique-ink md:col-span-2">
                       <input
-                        name="is_customizable"
+                        name={adminFormFields.product.isCustomizable}
                         type="checkbox"
                         defaultChecked={product.is_customizable}
                         className="h-4 w-4 rounded border-boutique-line text-boutique-accent"
@@ -274,7 +275,7 @@ export function ProductListPanel({ data }: { data: AdminData }) {
                     <label className="text-sm font-medium text-boutique-ink md:col-span-2">
                       Бележка за доставка/изработка
                       <textarea
-                        name="fulfillment_note"
+                        name={adminFormFields.product.fulfillmentNote}
                         rows={2}
                         defaultValue={product.fulfillment_note ?? ""}
                         className={`${adminFieldClass} resize-y`}

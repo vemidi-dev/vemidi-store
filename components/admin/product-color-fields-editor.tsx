@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react";
 
+import { adminFormFields } from "@/lib/admin/form-fields";
+
 type ColorGroup = {
   id: string;
   key: string;
@@ -241,11 +243,11 @@ export function ProductColorFieldsEditor({
               </div>
             )}
 
-            <input type="hidden" name="color_field_label[]" value={field.label} />
-            <input type="hidden" name="color_field_group_id[]" value={field.groupId} />
-            <input type="hidden" name="color_field_min_select[]" value={String(field.minSelect)} />
-            <input type="hidden" name="color_field_max_select[]" value={String(field.maxSelect)} />
-            <input type="hidden" name="color_field_option_ids[]" value={field.optionIds.join(",")} />
+            <input type="hidden" name={adminFormFields.colorField.labels} value={field.label} />
+            <input type="hidden" name={adminFormFields.colorField.groupIds} value={field.groupId} />
+            <input type="hidden" name={adminFormFields.colorField.minSelects} value={String(field.minSelect)} />
+            <input type="hidden" name={adminFormFields.colorField.maxSelects} value={String(field.maxSelect)} />
+            <input type="hidden" name={adminFormFields.colorField.optionIds} value={field.optionIds.join(",")} />
           </fieldset>
         );
       })}

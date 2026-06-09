@@ -69,7 +69,7 @@
 - [x] Split category forms, product forms, product lists, navigation, and notices into focused components.
 - [x] Move shared admin parameter, draft, and `FormData` parsing into pure modules.
 - [x] Separate product image upload operations from product persistence.
-- [ ] Replace repeated stringly typed field names with shared constants or schemas.
+- [x] Replace repeated stringly typed field names with shared constants or schemas.
 
 ### Phase 4: Make writes atomic
 
@@ -87,7 +87,7 @@
 - [ ] Add inventory/availability rules if products become stock-limited.
 - [x] Add idempotency for checkout order creation.
 - [x] Add server-side checkout rate limiting with privacy-safe client fingerprints.
-- [ ] Store personalization fields structurally and validate every required field on the server.
+- [x] Store personalization fields structurally and validate every required field on the server.
 - [x] Keep payment limited to cash on delivery; no payment-provider integration is currently planned.
 - [x] Clear the cart only after confirmed order creation.
 - [x] Redirect successful orders to a dedicated, non-indexed thank-you page.

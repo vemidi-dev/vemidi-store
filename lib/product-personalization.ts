@@ -9,6 +9,13 @@ export type ProductPersonalizationField = {
   allowsWishTemplates: boolean;
 };
 
+export type ProductPersonalizationValue = {
+  fieldId: string;
+  fieldKey: string;
+  label: string;
+  value: string;
+};
+
 export type WishTemplate = {
   id: string;
   title: string;
