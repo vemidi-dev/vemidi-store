@@ -83,6 +83,7 @@ function parseOptionalNumber(formData: FormData, key: string, integer = false) {
 
 function revalidateContent(kind: ContentKind, slug?: string) {
   revalidatePath("/admin");
+  revalidatePath("/");
   revalidatePath(config[kind].publicPath);
   revalidatePath("/sitemap.xml");
   if (slug) {
@@ -98,9 +99,16 @@ async function createContent(formData: FormData, kind: ContentKind) {
   const excerpt = getString(formData, "excerpt");
   const content = getString(formData, "content");
   const imageFile = getFile(formData, "image_file");
-  const isPublished = isChecked(formData, "is_published");
+  const isPublished = kind === "blog"
+    ? getString(formData, "submit_intent") === "publish"
+    : isChecked(formData, "is_published");
 
-  if (!title || !slug || !excerpt || !content || !isValidSlug(slug)) {
+  if (
+    !title ||
+    !slug ||
+    !isValidSlug(slug) ||
+    ((kind === "events" || isPublished) && (!excerpt || !content))
+  ) {
     redirectWith(
       "error",
       "Попълнете всички полета. Slug трябва да съдържа само малки латински букви, цифри и тирета.",
@@ -118,11 +126,22 @@ async function createContent(formData: FormData, kind: ContentKind) {
   };
 
   if (kind === "blog") {
+    const ctaLinkLabel = getOptionalString(formData, "cta_link_label");
+    const ctaCategoryId = getOptionalString(formData, "cta_category_id");
+    if (Boolean(ctaLinkLabel) !== Boolean(ctaCategoryId)) {
+      redirectWith(
+        "error",
+        "За линка под статията попълнете едновременно име на линка и продуктова категория.",
+        tab,
+      );
+    }
     row.category = getOptionalString(formData, "category");
     row.author = getOptionalString(formData, "author") ?? "VeMiDi crafts";
     row.read_minutes = parseOptionalNumber(formData, "read_minutes", true);
     row.is_featured = isChecked(formData, "is_featured");
     row.is_popular = isChecked(formData, "is_popular");
+    row.cta_link_label = ctaLinkLabel;
+    row.cta_category_id = ctaCategoryId;
     row.published_at = isPublished ? new Date().toISOString() : null;
   } else {
     const startsAt = parseDateTime(getString(formData, "starts_at"));
@@ -185,9 +204,17 @@ async function updateContent(formData: FormData, kind: ContentKind) {
   const content = getString(formData, "content");
   const existingImageUrl = getOptionalString(formData, "existing_image_url");
   const imageFile = getFile(formData, "image_file");
-  const isPublished = isChecked(formData, "is_published");
+  const isPublished = kind === "blog"
+    ? getString(formData, "submit_intent") === "publish"
+    : isChecked(formData, "is_published");
 
-  if (!id || !title || !slug || !excerpt || !content || !isValidSlug(slug)) {
+  if (
+    !id ||
+    !title ||
+    !slug ||
+    !isValidSlug(slug) ||
+    ((kind === "events" || isPublished) && (!excerpt || !content))
+  ) {
     redirectWith(
       "error",
       "Данните не са валидни. Slug трябва да съдържа само малки латински букви, цифри и тирета.",
@@ -213,11 +240,22 @@ async function updateContent(formData: FormData, kind: ContentKind) {
   };
 
   if (kind === "blog") {
+    const ctaLinkLabel = getOptionalString(formData, "cta_link_label");
+    const ctaCategoryId = getOptionalString(formData, "cta_category_id");
+    if (Boolean(ctaLinkLabel) !== Boolean(ctaCategoryId)) {
+      redirectWith(
+        "error",
+        "За линка под статията попълнете едновременно име на линка и продуктова категория.",
+        tab,
+      );
+    }
     row.category = getOptionalString(formData, "category");
     row.author = getOptionalString(formData, "author") ?? "VeMiDi crafts";
     row.read_minutes = parseOptionalNumber(formData, "read_minutes", true);
     row.is_featured = isChecked(formData, "is_featured");
     row.is_popular = isChecked(formData, "is_popular");
+    row.cta_link_label = ctaLinkLabel;
+    row.cta_category_id = ctaCategoryId;
     row.published_at = isPublished
       ? (previousRow?.published_at ?? new Date().toISOString())
       : null;

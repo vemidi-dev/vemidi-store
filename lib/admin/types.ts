@@ -12,6 +12,8 @@ export type BlogPostRow = {
   read_minutes: number | null;
   is_featured: boolean;
   is_popular: boolean;
+  cta_link_label: string | null;
+  cta_category_id: string | null;
   is_published: boolean;
   published_at: string | null;
   created_at: string;

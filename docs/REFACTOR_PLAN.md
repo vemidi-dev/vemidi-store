@@ -86,8 +86,11 @@
 - [ ] Store prices as integer minor units or an explicitly constrained decimal representation.
 - [ ] Add inventory/availability rules if products become stock-limited.
 - [x] Add idempotency for checkout order creation.
+- [x] Add server-side checkout rate limiting with privacy-safe client fingerprints.
 - [x] Keep payment limited to cash on delivery; no payment-provider integration is currently planned.
 - [x] Clear the cart only after confirmed order creation.
+- [x] Redirect successful orders to a dedicated, non-indexed thank-you page.
+- [x] Expose a one-time browser purchase event hook without showing the internal order UUID.
 
 ### Phase 6: UX and production readiness
 
@@ -97,6 +100,12 @@
 - [x] Add metadata, structured product data, sitemap, and robots configuration.
 - [ ] Add error monitoring, privacy-safe analytics, and operational logging.
 - [ ] Document environment variables, migration order, release checks, and rollback steps.
+
+### Content management
+
+- [x] Save incomplete blog entries as private drafts.
+- [x] Allow free-form blog category names with suggestions from existing entries.
+- [x] Configure an optional article CTA label and destination product category.
 
 ## Immediate Refactor Scope
 

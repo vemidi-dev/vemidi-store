@@ -11,6 +11,76 @@ create table if not exists public.store_order_requests (
 alter table public.store_order_requests enable row level security;
 revoke all on table public.store_order_requests from anon, authenticated;
 
+create table if not exists public.store_checkout_rate_limits (
+  client_key text primary key,
+  window_started_at timestamptz not null default now(),
+  request_count integer not null default 1,
+  updated_at timestamptz not null default now(),
+  constraint store_checkout_rate_limits_client_key_check check (
+    client_key ~ '^[0-9a-f]{64}$'
+  ),
+  constraint store_checkout_rate_limits_request_count_check check (
+    request_count >= 1
+  )
+);
+
+alter table public.store_checkout_rate_limits enable row level security;
+revoke all on table public.store_checkout_rate_limits from anon, authenticated;
+
+create or replace function public.check_store_checkout_rate_limit(
+  p_client_key text,
+  p_limit integer default 8,
+  p_window_seconds integer default 900
+)
+returns boolean
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_request_count integer;
+begin
+  if p_client_key !~ '^[0-9a-f]{64}$'
+    or p_limit < 1
+    or p_limit > 100
+    or p_window_seconds < 60
+    or p_window_seconds > 86400 then
+    raise exception 'invalid_rate_limit_parameters' using errcode = '22023';
+  end if;
+
+  insert into public.store_checkout_rate_limits (
+    client_key,
+    window_started_at,
+    request_count,
+    updated_at
+  )
+  values (p_client_key, now(), 1, now())
+  on conflict (client_key) do update
+  set
+    window_started_at = case
+      when public.store_checkout_rate_limits.window_started_at
+        <= now() - make_interval(secs => p_window_seconds)
+      then now()
+      else public.store_checkout_rate_limits.window_started_at
+    end,
+    request_count = case
+      when public.store_checkout_rate_limits.window_started_at
+        <= now() - make_interval(secs => p_window_seconds)
+      then 1
+      else public.store_checkout_rate_limits.request_count + 1
+    end,
+    updated_at = now()
+  returning request_count into v_request_count;
+
+  return v_request_count <= p_limit;
+end;
+$$;
+
+revoke all on function public.check_store_checkout_rate_limit(text, integer, integer) from public;
+revoke all on function public.check_store_checkout_rate_limit(text, integer, integer) from anon;
+revoke all on function public.check_store_checkout_rate_limit(text, integer, integer) from authenticated;
+grant execute on function public.check_store_checkout_rate_limit(text, integer, integer) to service_role;
+
 -- Remove the older public four-argument overload before installing the protected version.
 drop function if exists public.create_store_order(jsonb, jsonb, jsonb, text);
 

@@ -39,6 +39,27 @@ alter table public.blog_posts add column if not exists author text default 'VeMi
 alter table public.blog_posts add column if not exists read_minutes integer;
 alter table public.blog_posts add column if not exists is_featured boolean not null default false;
 alter table public.blog_posts add column if not exists is_popular boolean not null default false;
+alter table public.blog_posts add column if not exists cta_link_label text;
+alter table public.blog_posts
+  add column if not exists cta_category_id uuid
+  references public.categories (id) on delete set null;
+
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'blog_posts_cta_pair_check'
+      and conrelid = 'public.blog_posts'::regclass
+  ) then
+    alter table public.blog_posts
+      add constraint blog_posts_cta_pair_check check (
+        (cta_link_label is null and cta_category_id is null)
+        or (nullif(trim(cta_link_label), '') is not null and cta_category_id is not null)
+      );
+  end if;
+end
+$$;
 
 alter table public.events add column if not exists event_type text;
 alter table public.events add column if not exists audience text;

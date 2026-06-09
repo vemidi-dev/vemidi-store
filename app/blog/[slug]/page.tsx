@@ -50,7 +50,14 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const relatedEvents = events
     .filter((event) => !event.starts_at || new Date(event.starts_at).getTime() >= Date.now())
     .slice(0, 2);
-  const relatedProducts = catalog.products.slice(0, 2);
+  const ctaCategory = post.cta_category_id
+    ? catalog.categories.find((category) => category.id === post.cta_category_id)
+    : null;
+  const relatedProducts = ctaCategory
+    ? catalog.products
+        .filter((product) => product.categorySlugs.includes(ctaCategory.slug))
+        .slice(0, 2)
+    : catalog.products.slice(0, 2);
   const articleUrl = new URL(`/blog/${slug}`, getSiteUrl()).toString();
   const encodedUrl = encodeURIComponent(articleUrl);
   const encodedTitle = encodeURIComponent(post.title);
@@ -70,6 +77,20 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         ...(post.read_minutes ? [`${post.read_minutes} мин. четене`] : []),
       ]}
     >
+      {post.cta_link_label && ctaCategory ? (
+        <section className="rounded-3xl border border-boutique-line bg-boutique-paper px-6 py-8 text-center">
+          <p className="text-sm leading-relaxed text-boutique-muted">
+            Разгледайте подбраните предложения от категория „{ctaCategory.name}“.
+          </p>
+          <Link
+            href={`/shop?category=${encodeURIComponent(ctaCategory.slug)}`}
+            className="mt-5 inline-flex rounded-full bg-boutique-ink px-7 py-3 text-sm font-semibold text-boutique-paper transition hover:bg-boutique-accent"
+          >
+            {post.cta_link_label}
+          </Link>
+        </section>
+      ) : null}
+
       {relatedProducts.length ? (
         <section>
           <h2 className="font-heading text-2xl text-boutique-ink">Подходящи продукти</h2>

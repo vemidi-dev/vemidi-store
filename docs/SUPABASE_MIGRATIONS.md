@@ -24,6 +24,7 @@ exist. It adds the `create_store_order` RPC used by the storefront checkout. The
 
 - can be executed only with the server-side Supabase service role;
 - requires an idempotency key and returns the existing order for repeated requests;
+- limits each privacy-safe client fingerprint to 8 checkout attempts per 15 minutes;
 - accepts only cash-on-delivery orders;
 - reloads product names and prices from `public.products`;
 - validates quantities, personalization, and allowed color selections;
@@ -35,7 +36,9 @@ Before applying the latest checkout migration to an existing deployment, add
 `SUPABASE_SECRET_KEY` to the local and Vercel environments and redeploy the application. A legacy
 `SUPABASE_SERVICE_ROLE_KEY` is also supported, but the new `sb_secret_...` key is preferred.
 After that, rerun the complete `store_checkout_orders.sql` file. It removes the older anonymous
-four-argument function and installs the protected five-argument version.
+four-argument function, installs the protected five-argument version, and creates the server-only
+checkout rate-limit function. Only an HMAC fingerprint is stored; the visitor's readable IP address
+is not written to the database.
 
 Run `blog_and_events.sql` to add public blog posts and events with admin-only create, update, and
 delete access. Published rows are readable by visitors; drafts remain visible only to administrators.
@@ -43,6 +46,9 @@ Images use the existing `product-images` bucket under separate `blog/` and `even
 The migration also creates the private newsletter subscriber table and the public subscription RPC.
 It is safe to run the complete file again when upgrading an existing Blog/Events installation because
 the additional columns and tables use idempotent statements.
+The latest version also adds an optional article CTA label and product-category target. Blog entries
+can be saved as drafts with incomplete body content; publication still requires an excerpt and full
+text.
 
 If storefront tables return `permission denied` or an empty result despite containing rows, run
 `supabase/restore_storefront_read_grants.sql`. It restores both PostgreSQL grants and RLS SELECT

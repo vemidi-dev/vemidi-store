@@ -101,10 +101,15 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   if (activeTab === "blog" || activeTab === "events") {
     const table = activeTab === "blog" ? "blog_posts" : "events";
     const orderColumn = activeTab === "blog" ? "created_at" : "starts_at";
-    const result = await supabase
-      .from(table)
-      .select("*")
-      .order(orderColumn, { ascending: false, nullsFirst: false });
+    const [result, categoriesResult] = await Promise.all([
+      supabase
+        .from(table)
+        .select("*")
+        .order(orderColumn, { ascending: false, nullsFirst: false }),
+      activeTab === "blog"
+        ? supabase.from("categories").select("id,name,slug").order("name")
+        : Promise.resolve({ data: [], error: null }),
+    ]);
 
     return (
       <section className="pb-24 pt-10">
@@ -126,6 +131,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               <ContentManagementPanel
                 kind="blog"
                 items={(result.data ?? []) as import("@/lib/admin/types").BlogPostRow[]}
+                categories={(categoriesResult.data ?? []) as import("@/lib/admin/types").CategoryRow[]}
                 error={result.error}
               />
             ) : (

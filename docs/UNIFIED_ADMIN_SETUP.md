@@ -44,6 +44,7 @@ In the store's Vercel project, set:
 ```text
 NEXT_PUBLIC_SITE_URL=https://store.example.com
 SUPABASE_SECRET_KEY=your-secret-key
+CHECKOUT_RATE_LIMIT_SECRET=optional-long-random-secret
 ```
 
 Keep the existing `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
@@ -56,6 +57,10 @@ value as a secret:
 - add it only to Vercel Environment Variables and local `.env.local`;
 - never prefix it with `NEXT_PUBLIC_`;
 - never paste it into browser code, screenshots, commits, or public logs.
+
+`CHECKOUT_RATE_LIMIT_SECRET` is optional but recommended. Use a separate long random value. The
+server uses it to create a one-way HMAC fingerprint for rate limiting; readable IP addresses are not
+stored. If the variable is omitted, the Supabase secret key is used as the HMAC secret.
 
 For an existing deployment, add `SUPABASE_SECRET_KEY` to Vercel first and redeploy. Then run
 the latest `supabase/store_checkout_orders.sql`. This order avoids checkout downtime while the
@@ -71,5 +76,6 @@ public RPC permission is being removed.
 6. Add a store product to the cart and submit a cash-on-delivery order.
 7. Confirm that the new order and all its item details appear in the store admin panel.
 8. Submit the same checkout request twice and confirm that only one order is stored.
+9. Confirm that repeated rapid checkout attempts are blocked after the configured limit.
 
 Only after these checks should the landing page's old `/admin` route be redirected or removed.

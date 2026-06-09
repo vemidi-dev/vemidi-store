@@ -1,13 +1,19 @@
 "use server";
 
+import { createHmac } from "node:crypto";
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 
 import { createServiceClient } from "@/lib/supabase/service";
 
 export type CheckoutActionState = {
   ok: boolean;
   message: string;
-  orderId?: string;
+  purchase?: {
+    value: number;
+    currency: string;
+    itemCount: number;
+  };
 };
 
 type SubmittedCartItem = {
@@ -38,6 +44,7 @@ const checkoutErrorMessages: Record<string, string> = {
   invalid_color_selection: "Някой от избраните цветове вече не е наличен.",
   invalid_idempotency_key: "Заявката за поръчка е невалидна. Презаредете страницата и опитайте отново.",
   order_request_in_progress: "Поръчката вече се обработва. Изчакайте момент и опитайте отново.",
+  rate_limit_exceeded: "Направени са твърде много опити. Изчакайте 15 минути и опитайте отново.",
 };
 
 function text(formData: FormData, name: string, maxLength: number) {
@@ -59,6 +66,23 @@ function mapCheckoutError(message: string) {
   );
 
   return knownError?.[1] ?? "Поръчката не беше записана. Моля, опитайте отново.";
+}
+
+async function getCheckoutClientKey() {
+  const requestHeaders = await headers();
+  const forwardedFor = requestHeaders.get("x-forwarded-for")?.split(",")[0]?.trim();
+  const networkAddress = forwardedFor || requestHeaders.get("x-real-ip") || "unknown";
+  const userAgent = requestHeaders.get("user-agent")?.slice(0, 300) || "unknown";
+  const secret =
+    process.env.CHECKOUT_RATE_LIMIT_SECRET?.trim() ||
+    process.env.SUPABASE_SECRET_KEY?.trim() ||
+    process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+
+  if (!secret) return null;
+
+  return createHmac("sha256", secret)
+    .update(`${networkAddress}\n${userAgent}`)
+    .digest("hex");
 }
 
 export async function createStoreOrder(
@@ -92,6 +116,34 @@ export async function createStoreOrder(
       ok: false,
       message: "Магазинът временно не може да приема поръчки. Липсва защитената сървърна настройка.",
     };
+  }
+
+  const clientKey = await getCheckoutClientKey();
+  if (!clientKey) {
+    return {
+      ok: false,
+      message: "Магазинът временно не може да приеме поръчката. Липсва защитена настройка.",
+    };
+  }
+
+  const { data: rateLimitAllowed, error: rateLimitError } = await supabase.rpc(
+    "check_store_checkout_rate_limit",
+    {
+      p_client_key: clientKey,
+      p_limit: 8,
+      p_window_seconds: 900,
+    },
+  );
+
+  if (rateLimitError) {
+    return {
+      ok: false,
+      message: "Магазинът временно не може да провери заявката. Моля, опитайте отново.",
+    };
+  }
+
+  if (rateLimitAllowed !== true) {
+    return { ok: false, message: checkoutErrorMessages.rate_limit_exceeded };
   }
 
   const customer = {
@@ -131,11 +183,21 @@ export async function createStoreOrder(
     return { ok: false, message: "Поръчката беше изпратена, но липсва номер за потвърждение." };
   }
 
+  const { data: createdOrder } = await supabase
+    .from("orders")
+    .select("total_price,currency")
+    .eq("id", data)
+    .maybeSingle();
+
   revalidatePath("/admin");
 
   return {
     ok: true,
-    orderId: data,
     message: "Поръчката е приета успешно.",
+    purchase: {
+      value: Number(createdOrder?.total_price) || 0,
+      currency: String(createdOrder?.currency || "EUR"),
+      itemCount: rpcItems.reduce((total, item) => total + item.quantity, 0),
+    },
   };
 }

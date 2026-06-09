@@ -8,10 +8,15 @@ import {
 } from "@/app/admin/content-actions";
 import { ImageFileInput } from "@/components/admin/image-file-input";
 import { adminFieldClass, adminHelperClass, adminPanelClass } from "@/components/admin/styles";
-import type { BlogPostRow, EventRow } from "@/lib/admin/types";
+import type { BlogPostRow, CategoryRow, EventRow } from "@/lib/admin/types";
 
 type ContentManagementPanelProps =
-  | { kind: "blog"; items: BlogPostRow[]; error: { message: string } | null }
+  | {
+      kind: "blog";
+      items: BlogPostRow[];
+      categories: CategoryRow[];
+      error: { message: string } | null;
+    }
   | { kind: "events"; items: EventRow[]; error: { message: string } | null };
 
 function toDateTimeLocal(value: string | null) {
@@ -28,6 +33,10 @@ export function ContentManagementPanel(props: ContentManagementPanelProps) {
   const updateAction = isBlog ? updateBlogPost : updateEvent;
   const deleteAction = isBlog ? deleteBlogPost : deleteEvent;
   const singular = isBlog ? "публикация" : "събитие";
+  const productCategories = props.kind === "blog" ? props.categories : [];
+  const blogCategories = props.kind === "blog"
+    ? [...new Set(props.items.map((item) => item.category).filter(Boolean))] as string[]
+    : [];
 
   return (
     <div className="space-y-6">
@@ -53,21 +62,29 @@ export function ContentManagementPanel(props: ContentManagementPanelProps) {
           </label>
           <label className="text-sm font-medium text-boutique-ink md:col-span-2">
             Кратко описание
-            <textarea name="excerpt" required rows={2} maxLength={320} className={`${adminFieldClass} resize-y`} />
+            <textarea name="excerpt" required={!isBlog} rows={2} maxLength={320} className={`${adminFieldClass} resize-y`} />
+            {isBlog ? <p className={adminHelperClass}>Задължително при публикуване; може да остане празно в чернова.</p> : null}
           </label>
           <label className="text-sm font-medium text-boutique-ink md:col-span-2">
             Пълен текст
-            <textarea name="content" required rows={9} className={`${adminFieldClass} resize-y`} />
+            <textarea name="content" required={!isBlog} rows={9} className={`${adminFieldClass} resize-y`} />
             <p className={adminHelperClass}>Разделяйте абзаците с празен ред.</p>
           </label>
           {isBlog ? (
             <>
               <label className="text-sm font-medium text-boutique-ink">
                 Категория
-                <select name="category" className={adminFieldClass} defaultValue="">
-                  <option value="">Без категория</option>
-                  {["Идеи за подаръци", "Творчески идеи", "Персонализация", "Празници и поводи", "Ръчна изработка", "Новини от ателието", "Полезни съвети", "Истории на клиенти"].map((value) => <option key={value}>{value}</option>)}
-                </select>
+                <input
+                  name="category"
+                  list="blog-category-suggestions"
+                  maxLength={100}
+                  className={adminFieldClass}
+                  placeholder="Напр. Идеи за подаръци"
+                />
+                <datalist id="blog-category-suggestions">
+                  {blogCategories.map((category) => <option key={category} value={category} />)}
+                </datalist>
+                <p className={adminHelperClass}>Въведете собствено име на блог категория.</p>
               </label>
               <label className="text-sm font-medium text-boutique-ink">
                 Автор
@@ -81,6 +98,25 @@ export function ContentManagementPanel(props: ContentManagementPanelProps) {
                 <label className="inline-flex items-center gap-2 text-sm"><input name="is_featured" type="checkbox" /> Водеща статия</label>
                 <label className="inline-flex items-center gap-2 text-sm"><input name="is_popular" type="checkbox" /> Популярна</label>
               </div>
+              <label className="text-sm font-medium text-boutique-ink">
+                Име на линка под статията
+                <input
+                  name="cta_link_label"
+                  maxLength={100}
+                  className={adminFieldClass}
+                  placeholder="Напр. Разгледай подаръците"
+                />
+              </label>
+              <label className="text-sm font-medium text-boutique-ink">
+                Линкът да води към
+                <select name="cta_category_id" className={adminFieldClass} defaultValue="">
+                  <option value="">Без линк към категория</option>
+                  {productCategories.map((category) => (
+                    <option key={category.id} value={category.id}>{category.name}</option>
+                  ))}
+                </select>
+                <p className={adminHelperClass}>Избира се категория от продуктовия каталог.</p>
+              </label>
             </>
           ) : (
             <>
@@ -143,14 +179,27 @@ export function ContentManagementPanel(props: ContentManagementPanelProps) {
             helperClassName={adminHelperClass}
             helperText="PNG, JPG, WEBP или SVG до 5 MB."
           />
-          <label className="inline-flex items-center gap-2 self-center text-sm text-boutique-ink">
-            <input name="is_published" type="checkbox" className="h-4 w-4 accent-boutique-ink" />
-            Публикувай веднага
-          </label>
+          {!isBlog ? (
+            <label className="inline-flex items-center gap-2 self-center text-sm text-boutique-ink">
+              <input name="is_published" type="checkbox" className="h-4 w-4 accent-boutique-ink" />
+              Публикувай веднага
+            </label>
+          ) : null}
           <div className="md:col-span-2">
-            <button type="submit" className="rounded-full bg-boutique-ink px-6 py-3 text-xs font-semibold uppercase tracking-wider text-boutique-paper transition hover:bg-boutique-accent">
-              Добави {singular}
-            </button>
+            {isBlog ? (
+              <div className="flex flex-wrap gap-3">
+                <button name="submit_intent" value="draft" type="submit" className="rounded-full border border-boutique-line px-6 py-3 text-xs font-semibold uppercase tracking-wider text-boutique-ink transition hover:border-boutique-accent">
+                  Запази като чернова
+                </button>
+                <button name="submit_intent" value="publish" type="submit" className="rounded-full bg-boutique-ink px-6 py-3 text-xs font-semibold uppercase tracking-wider text-boutique-paper transition hover:bg-boutique-accent">
+                  Публикувай
+                </button>
+              </div>
+            ) : (
+              <button type="submit" className="rounded-full bg-boutique-ink px-6 py-3 text-xs font-semibold uppercase tracking-wider text-boutique-paper transition hover:bg-boutique-accent">
+                Добави {singular}
+              </button>
+            )}
           </div>
         </form>
       </section>
@@ -202,21 +251,34 @@ export function ContentManagementPanel(props: ContentManagementPanelProps) {
                       </label>
                       <label className="text-sm font-medium text-boutique-ink md:col-span-2">
                         Кратко описание
-                        <textarea name="excerpt" required rows={2} defaultValue={item.excerpt} className={`${adminFieldClass} resize-y`} />
+                        <textarea name="excerpt" required={!isBlog} rows={2} defaultValue={item.excerpt} className={`${adminFieldClass} resize-y`} />
                       </label>
                       <label className="text-sm font-medium text-boutique-ink md:col-span-2">
                         Пълен текст
-                        <textarea name="content" required rows={9} defaultValue={item.content} className={`${adminFieldClass} resize-y`} />
+                        <textarea name="content" required={!isBlog} rows={9} defaultValue={item.content} className={`${adminFieldClass} resize-y`} />
                       </label>
                       {isBlog ? (
                         <>
-                          <label className="text-sm font-medium text-boutique-ink">Категория<input name="category" defaultValue={(item as BlogPostRow).category ?? ""} className={adminFieldClass} /></label>
+                          <label className="text-sm font-medium text-boutique-ink">Категория<input name="category" list="blog-category-suggestions" defaultValue={(item as BlogPostRow).category ?? ""} className={adminFieldClass} /></label>
                           <label className="text-sm font-medium text-boutique-ink">Автор<input name="author" defaultValue={(item as BlogPostRow).author ?? "VeMiDi crafts"} className={adminFieldClass} /></label>
                           <label className="text-sm font-medium text-boutique-ink">Време за четене<input name="read_minutes" type="number" min="1" defaultValue={(item as BlogPostRow).read_minutes ?? ""} className={adminFieldClass} /></label>
                           <div className="flex flex-wrap items-center gap-5">
                             <label className="inline-flex items-center gap-2 text-sm"><input name="is_featured" type="checkbox" defaultChecked={(item as BlogPostRow).is_featured} /> Водеща</label>
                             <label className="inline-flex items-center gap-2 text-sm"><input name="is_popular" type="checkbox" defaultChecked={(item as BlogPostRow).is_popular} /> Популярна</label>
                           </div>
+                          <label className="text-sm font-medium text-boutique-ink">
+                            Име на линка под статията
+                            <input name="cta_link_label" maxLength={100} defaultValue={(item as BlogPostRow).cta_link_label ?? ""} className={adminFieldClass} />
+                          </label>
+                          <label className="text-sm font-medium text-boutique-ink">
+                            Линкът да води към
+                            <select name="cta_category_id" defaultValue={(item as BlogPostRow).cta_category_id ?? ""} className={adminFieldClass}>
+                              <option value="">Без линк към категория</option>
+                              {productCategories.map((category) => (
+                                <option key={category.id} value={category.id}>{category.name}</option>
+                              ))}
+                            </select>
+                          </label>
                         </>
                       ) : event ? (
                         <>
@@ -261,14 +323,27 @@ export function ContentManagementPanel(props: ContentManagementPanelProps) {
                         helperClassName={adminHelperClass}
                         helperText="Оставете празно, за да запазите текущата снимка."
                       />
-                      <label className="inline-flex items-center gap-2 self-center text-sm text-boutique-ink">
-                        <input name="is_published" type="checkbox" defaultChecked={item.is_published} className="h-4 w-4 accent-boutique-ink" />
-                        Публикувано
-                      </label>
+                      {!isBlog ? (
+                        <label className="inline-flex items-center gap-2 self-center text-sm text-boutique-ink">
+                          <input name="is_published" type="checkbox" defaultChecked={item.is_published} className="h-4 w-4 accent-boutique-ink" />
+                          Публикувано
+                        </label>
+                      ) : null}
                       <div className="md:col-span-2">
-                        <button type="submit" className="rounded-full bg-boutique-ink px-6 py-3 text-xs font-semibold uppercase tracking-wider text-boutique-paper hover:bg-boutique-accent">
-                          Запази промените
-                        </button>
+                        {isBlog ? (
+                          <div className="flex flex-wrap gap-3">
+                            <button name="submit_intent" value="draft" type="submit" className="rounded-full border border-boutique-line px-6 py-3 text-xs font-semibold uppercase tracking-wider text-boutique-ink hover:border-boutique-accent">
+                              {item.is_published ? "Премести в чернови" : "Запази черновата"}
+                            </button>
+                            <button name="submit_intent" value="publish" type="submit" className="rounded-full bg-boutique-ink px-6 py-3 text-xs font-semibold uppercase tracking-wider text-boutique-paper hover:bg-boutique-accent">
+                              {item.is_published ? "Запази публикуваните промени" : "Публикувай"}
+                            </button>
+                          </div>
+                        ) : (
+                          <button type="submit" className="rounded-full bg-boutique-ink px-6 py-3 text-xs font-semibold uppercase tracking-wider text-boutique-paper hover:bg-boutique-accent">
+                            Запази промените
+                          </button>
+                        )}
                       </div>
                     </form>
                   </details>

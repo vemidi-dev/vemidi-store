@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
 
@@ -20,13 +21,15 @@ const initialState: CheckoutActionState = {
   message: "",
 };
 
-function SubmitOrderButton() {
+const PURCHASE_STORAGE_KEY = "vemidi:last-purchase";
+
+function SubmitOrderButton({ ready }: { ready: boolean }) {
   const { pending } = useFormStatus();
 
   return (
     <button
       type="submit"
-      disabled={pending}
+      disabled={pending || !ready}
       className="mt-6 w-full rounded-full bg-boutique-ink px-6 py-3.5 text-sm font-semibold text-boutique-paper transition hover:bg-boutique-accent disabled:cursor-wait disabled:opacity-60"
     >
       {pending ? "Изпращане..." : "Изпрати поръчката"}
@@ -36,40 +39,29 @@ function SubmitOrderButton() {
 
 export function CheckoutPanel() {
   const { lines, subtotal, clear } = useCart();
+  const router = useRouter();
   const [state, formAction] = useActionState(createStoreOrder, initialState);
-  const [idempotencyKey] = useState(() => crypto.randomUUID());
+  const [idempotencyKey, setIdempotencyKey] = useState("");
+
+  useEffect(() => {
+    setIdempotencyKey(crypto.randomUUID());
+  }, []);
 
   useEffect(() => {
     if (state.ok) {
+      if (state.purchase) {
+        window.sessionStorage.setItem(PURCHASE_STORAGE_KEY, JSON.stringify(state.purchase));
+      }
       clear();
+      router.replace("/thank-you");
     }
-  }, [clear, state.ok]);
+  }, [clear, router, state.ok, state.purchase]);
 
   if (state.ok) {
     return (
-      <section className="pb-24 pt-8">
-        <PageContainer>
-          <div className="mx-auto max-w-2xl rounded-2xl border border-boutique-line bg-boutique-paper px-8 py-14 text-center shadow-boutique-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-boutique-accent">
-              Поръчката е приета
-            </p>
-            <h2 className="mt-4 font-heading text-4xl text-boutique-ink">Благодарим ви!</h2>
-            <p className="mx-auto mt-4 max-w-lg text-sm leading-relaxed text-boutique-muted">
-              Ще се свържем с вас за потвърждение и уточняване на срока за изработка.
-              Плащането е с наложен платеж при получаване.
-            </p>
-            {state.orderId ? (
-              <p className="mt-6 rounded-xl bg-boutique-bg px-4 py-3 text-sm text-boutique-ink">
-                Номер на поръчката: <strong>{state.orderId}</strong>
-              </p>
-            ) : null}
-            <Link
-              href="/shop"
-              className="mt-8 inline-flex rounded-full bg-boutique-ink px-8 py-3 text-sm font-semibold text-boutique-paper transition hover:bg-boutique-accent"
-            >
-              Обратно към магазина
-            </Link>
-          </div>
+      <section className="pb-24 pt-8" aria-live="polite">
+        <PageContainer className="text-center text-sm text-boutique-muted">
+          Поръчката е приета. Пренасочваме ви...
         </PageContainer>
       </section>
     );
@@ -289,7 +281,7 @@ export function CheckoutPanel() {
             <p className="mt-2 text-xs leading-relaxed text-boutique-muted">
               Цената за доставка се заплаща отделно според тарифата на избрания куриер.
             </p>
-            <SubmitOrderButton />
+            <SubmitOrderButton ready={Boolean(idempotencyKey)} />
             <Link
               href="/cart"
               className="mt-4 block text-center text-xs font-semibold uppercase tracking-wider text-boutique-muted hover:text-boutique-ink"
