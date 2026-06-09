@@ -218,21 +218,32 @@ export function ProductListPanel({ data }: { data: AdminData }) {
                       {categories.length === 0 ? (
                         <p className={adminHelperClass}>Няма налични категории.</p>
                       ) : (
-                        <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                          {categories.map((category) => (
-                            <label
-                              key={`${product.id}-${category.id}-edit`}
-                              className="inline-flex items-center gap-2 text-sm text-boutique-ink"
-                            >
-                              <input
-                                name="category_ids"
-                                type="checkbox"
-                                value={category.id}
-                                defaultChecked={assignedIds.includes(category.id)}
-                                className="h-4 w-4 rounded border-boutique-line text-boutique-accent"
-                              />
-                              {category.name}
-                            </label>
+                        <div className="mt-2 space-y-4">
+                          {(["product", "occasion"] as const).map((categoryType) => (
+                            <div key={categoryType}>
+                              <p className="text-xs font-semibold uppercase tracking-wider text-boutique-muted">
+                                {categoryType === "product" ? "Продукти" : "Поводи"}
+                              </p>
+                              <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                                {categories
+                                  .filter((category) => category.category_type === categoryType)
+                                  .map((category) => (
+                                    <label
+                                      key={`${product.id}-${category.id}-edit`}
+                                      className="inline-flex items-center gap-2 text-sm text-boutique-ink"
+                                    >
+                                      <input
+                                        name="category_ids"
+                                        type="checkbox"
+                                        value={category.id}
+                                        defaultChecked={assignedIds.includes(category.id)}
+                                        className="h-4 w-4 rounded border-boutique-line text-boutique-accent"
+                                      />
+                                      {category.name}
+                                    </label>
+                                  ))}
+                              </div>
+                            </div>
                           ))}
                         </div>
                       )}

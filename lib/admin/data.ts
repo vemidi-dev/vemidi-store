@@ -45,7 +45,11 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
     productColorFieldOptionsResult,
   ] = await Promise.all([
     supabase.from("products").select("*").order("id", { ascending: false }),
-    supabase.from("categories").select("id,name,slug").order("name", { ascending: true }),
+    supabase
+      .from("categories")
+      .select("id,name,slug,category_type")
+      .order("category_type", { ascending: true })
+      .order("name", { ascending: true }),
     supabase.from("product_categories").select("product_id,category_id"),
     supabase.from("color_groups").select("id,key,label").order("label", { ascending: true }),
     supabase

@@ -374,17 +374,23 @@ export async function createCategory(formData: FormData) {
   const activeTab = getAdminTab(formData, "categories");
   const name = getString(formData, "name");
   const slug = normalizeSlug(getString(formData, "slug"));
+  const categoryType = getString(formData, "category_type");
 
-  if (!name || !slug) {
+  if (!name || !slug || !["product", "occasion"].includes(categoryType)) {
     redirectWith("error", "Попълнете име и slug за категорията.", activeTab);
   }
 
-  const { error } = await supabase.from("categories").insert({ name, slug });
+  const { error } = await supabase
+    .from("categories")
+    .insert({ name, slug, category_type: categoryType });
   if (error) {
     redirectWith("error", `Грешка при добавяне на категория: ${error.message}`, activeTab);
   }
 
   revalidatePath(ADMIN_PATH);
+  revalidatePath("/categories");
+  revalidatePath("/occasions");
+  revalidatePath("/shop");
   redirectWith("success", "Категорията е добавена.", activeTab);
 }
 
@@ -394,17 +400,24 @@ export async function updateCategory(formData: FormData) {
   const id = getString(formData, "id");
   const name = getString(formData, "name");
   const slug = normalizeSlug(getString(formData, "slug"));
+  const categoryType = getString(formData, "category_type");
 
-  if (!id || !name || !slug) {
+  if (!id || !name || !slug || !["product", "occasion"].includes(categoryType)) {
     redirectWith("error", "Невалидни данни за категория.", activeTab);
   }
 
-  const { error } = await supabase.from("categories").update({ name, slug }).eq("id", id);
+  const { error } = await supabase
+    .from("categories")
+    .update({ name, slug, category_type: categoryType })
+    .eq("id", id);
   if (error) {
     redirectWith("error", `Грешка при редакция на категория: ${error.message}`, activeTab);
   }
 
   revalidatePath(ADMIN_PATH);
+  revalidatePath("/categories");
+  revalidatePath("/occasions");
+  revalidatePath("/shop");
   redirectWith("success", "Категорията е обновена.", activeTab);
 }
 
@@ -423,5 +436,8 @@ export async function deleteCategory(formData: FormData) {
   }
 
   revalidatePath(ADMIN_PATH);
+  revalidatePath("/categories");
+  revalidatePath("/occasions");
+  revalidatePath("/shop");
   redirectWith("success", "Категорията е изтрита.", activeTab);
 }

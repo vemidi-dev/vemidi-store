@@ -7,6 +7,7 @@ import { ProductCreatePanel } from "@/components/admin/product-create-panel";
 import { ProductListPanel } from "@/components/admin/product-list-panel";
 import { OrdersPanel } from "@/components/admin/orders-panel";
 import { ContentManagementPanel } from "@/components/admin/content-management-panel";
+import { EventRegistrationsPanel } from "@/components/admin/event-registrations-panel";
 import { PageContainer } from "@/components/layout/page-container";
 import { loadAdminData } from "@/lib/admin/data";
 import {
@@ -101,13 +102,19 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   if (activeTab === "blog" || activeTab === "events") {
     const table = activeTab === "blog" ? "blog_posts" : "events";
     const orderColumn = activeTab === "blog" ? "created_at" : "starts_at";
-    const [result, categoriesResult] = await Promise.all([
+    const [result, categoriesResult, registrationsResult] = await Promise.all([
       supabase
         .from(table)
         .select("*")
         .order(orderColumn, { ascending: false, nullsFirst: false }),
       activeTab === "blog"
-        ? supabase.from("categories").select("id,name,slug").order("name")
+        ? supabase.from("categories").select("id,name,slug,category_type").order("name")
+        : Promise.resolve({ data: [], error: null }),
+      activeTab === "events"
+        ? supabase
+            .from("event_registrations")
+            .select("*")
+            .order("created_at", { ascending: false })
         : Promise.resolve({ data: [], error: null }),
     ]);
 
@@ -135,11 +142,18 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                 error={result.error}
               />
             ) : (
-              <ContentManagementPanel
-                kind="events"
-                items={(result.data ?? []) as import("@/lib/admin/types").EventRow[]}
-                error={result.error}
-              />
+              <>
+                <ContentManagementPanel
+                  kind="events"
+                  items={(result.data ?? []) as import("@/lib/admin/types").EventRow[]}
+                  error={result.error}
+                />
+                <EventRegistrationsPanel
+                  events={(result.data ?? []) as import("@/lib/admin/types").EventRow[]}
+                  registrations={(registrationsResult.data ?? []) as import("@/lib/admin/types").EventRegistrationRow[]}
+                  error={registrationsResult.error}
+                />
+              </>
             )}
           </div>
         </PageContainer>

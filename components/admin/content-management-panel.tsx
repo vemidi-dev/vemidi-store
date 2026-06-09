@@ -142,8 +142,15 @@ export function ContentManagementPanel(props: ContentManagementPanelProps) {
                 </select>
               </label>
               <label className="text-sm font-medium text-boutique-ink">Цена (EUR)<input name="price" type="number" min="0" step="0.01" className={adminFieldClass} /></label>
-              <label className="text-sm font-medium text-boutique-ink">Максимални места<input name="capacity" type="number" min="1" className={adminFieldClass} /></label>
-              <label className="text-sm font-medium text-boutique-ink">Свободни места<input name="available_spots" type="number" min="0" className={adminFieldClass} /></label>
+              <label className="text-sm font-medium text-boutique-ink">
+                Максимални места
+                <input name="capacity" type="number" min="1" className={adminFieldClass} />
+              </label>
+              <label className="text-sm font-medium text-boutique-ink">
+                Свободни места
+                <input name="available_spots" type="number" min="0" className={adminFieldClass} />
+                <p className={adminHelperClass}>При ново събитие може да остане празно и ще бъде равно на максималните места.</p>
+              </label>
               <label className="text-sm font-medium text-boutique-ink">Възрастова група<input name="age_group" className={adminFieldClass} /></label>
               <label className="text-sm font-medium text-boutique-ink">Адрес<input name="address" className={adminFieldClass} /></label>
               <label className="text-sm font-medium text-boutique-ink">Продължителност (минути)<input name="duration_minutes" type="number" min="1" className={adminFieldClass} /></label>
@@ -286,8 +293,15 @@ export function ContentManagementPanel(props: ContentManagementPanelProps) {
                           <label className="text-sm font-medium text-boutique-ink">Аудитория<input name="audience" defaultValue={event.audience ?? ""} className={adminFieldClass} /></label>
                           <label className="text-sm font-medium text-boutique-ink">Формат<select name="format" defaultValue={event.format ?? "in_person"} className={adminFieldClass}><option value="in_person">На място</option><option value="online">Онлайн</option></select></label>
                           <label className="text-sm font-medium text-boutique-ink">Цена<input name="price" type="number" step="0.01" defaultValue={event.price ?? ""} className={adminFieldClass} /></label>
-                          <label className="text-sm font-medium text-boutique-ink">Капацитет<input name="capacity" type="number" defaultValue={event.capacity ?? ""} className={adminFieldClass} /></label>
-                          <label className="text-sm font-medium text-boutique-ink">Свободни места<input name="available_spots" type="number" defaultValue={event.available_spots ?? ""} className={adminFieldClass} /></label>
+                          <label className="text-sm font-medium text-boutique-ink">
+                            Капацитет
+                            <input name="capacity" type="number" min="1" defaultValue={event.capacity ?? ""} className={adminFieldClass} />
+                          </label>
+                          <label className="text-sm font-medium text-boutique-ink">
+                            Свободни места
+                            <input name="available_spots" type="number" min="0" max={event.capacity ?? undefined} defaultValue={event.available_spots ?? ""} className={adminFieldClass} />
+                            <p className={adminHelperClass}>Полето се намалява автоматично при записване и се увеличава при отказ.</p>
+                          </label>
                           <label className="text-sm font-medium text-boutique-ink">Възраст<input name="age_group" defaultValue={event.age_group ?? ""} className={adminFieldClass} /></label>
                           <label className="text-sm font-medium text-boutique-ink">Адрес<input name="address" defaultValue={event.address ?? ""} className={adminFieldClass} /></label>
                           <label className="text-sm font-medium text-boutique-ink">Продължителност<input name="duration_minutes" type="number" defaultValue={event.duration_minutes ?? ""} className={adminFieldClass} /></label>

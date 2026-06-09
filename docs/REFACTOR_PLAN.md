@@ -106,6 +106,10 @@
 - [x] Save incomplete blog entries as private drafts.
 - [x] Allow free-form blog category names with suggestions from existing entries.
 - [x] Configure an optional article CTA label and destination product category.
+- [x] Accept protected event registrations with atomic place reservation.
+- [x] Show event participants in the admin panel and manage confirmation/cancellation status.
+- [x] Validate event capacity and initialize available places for new events.
+- [x] Split catalog categories into product and occasion groups with dedicated public filters.
 
 ## Immediate Refactor Scope
 

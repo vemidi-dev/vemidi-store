@@ -10,16 +10,29 @@ import {
 import type { CategoryRow } from "@/lib/admin/types";
 
 export function CategoryManagementPanel({ categories }: { categories: CategoryRow[] }) {
+  const categoryGroups = [
+    {
+      type: "product" as const,
+      title: "Продуктови категории",
+      description: "Видове изделия и продуктови линии, например декорации, пликове или фигурки.",
+    },
+    {
+      type: "occasion" as const,
+      title: "Категории по повод",
+      description: "Поводи, за които се търси подарък, например сватба, юбилей или рожден ден.",
+    },
+  ];
+
   return (
     <article className={adminPanelClass}>
       <h2 className="font-heading text-2xl text-boutique-ink">
         Управление на категории
       </h2>
       <p className="mt-2 text-sm text-boutique-muted">
-        Добавяйте, редактирайте и изтривайте категориите, използвани във формите за продукти.
+        Категориите са разделени на видове продукти и поводи. Един продукт може да бъде включен в повече от една категория.
       </p>
 
-      <form action={createCategory} className="mt-6 grid gap-4 md:grid-cols-[1fr_1fr_auto]">
+      <form action={createCategory} className="mt-6 grid gap-4 md:grid-cols-[1fr_1fr_1fr_auto]">
         <input type="hidden" name="tab" value="categories" />
         <label className="text-sm font-medium text-boutique-ink">
           Име на категория
@@ -28,6 +41,13 @@ export function CategoryManagementPanel({ categories }: { categories: CategoryRo
         <label className="text-sm font-medium text-boutique-ink">
           Slug
           <input name="slug" required placeholder="napr-svatba" className={adminFieldClass} />
+        </label>
+        <label className="text-sm font-medium text-boutique-ink">
+          Тип категория
+          <select name="category_type" required defaultValue="product" className={adminFieldClass}>
+            <option value="product">Продуктова категория</option>
+            <option value="occasion">Повод</option>
+          </select>
         </label>
         <div className="self-end">
           <button
@@ -42,12 +62,27 @@ export function CategoryManagementPanel({ categories }: { categories: CategoryRo
       {categories.length === 0 ? (
         <p className="mt-5 text-sm text-boutique-muted">Все още няма категории.</p>
       ) : (
-        <ul className="mt-6 space-y-3">
-          {categories.map((category) => (
-            <li
-              key={category.id}
-              className="rounded-lg border border-boutique-line/70 bg-boutique-bg p-4"
-            >
+        <div className="mt-8 space-y-8">
+          {categoryGroups.map((group) => {
+            const groupedCategories = categories.filter(
+              (category) => category.category_type === group.type,
+            );
+
+            return (
+              <section key={group.type}>
+                <h3 className="font-heading text-xl text-boutique-ink">{group.title}</h3>
+                <p className="mt-1 text-sm text-boutique-muted">{group.description}</p>
+                {groupedCategories.length === 0 ? (
+                  <p className="mt-4 rounded-lg border border-dashed border-boutique-line px-4 py-3 text-sm text-boutique-muted">
+                    Няма добавени категории в тази група.
+                  </p>
+                ) : (
+                  <ul className="mt-4 space-y-3">
+                    {groupedCategories.map((category) => (
+                      <li
+                        key={category.id}
+                        className="rounded-lg border border-boutique-line/70 bg-boutique-bg p-4"
+                      >
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <p className="font-medium text-boutique-ink">{category.name}</p>
@@ -71,7 +106,7 @@ export function CategoryManagementPanel({ categories }: { categories: CategoryRo
                 </summary>
                 <form
                   action={updateCategory}
-                  className="mt-4 grid gap-4 md:grid-cols-[1fr_1fr_auto]"
+                  className="mt-4 grid gap-4 md:grid-cols-[1fr_1fr_1fr_auto]"
                 >
                   <input type="hidden" name="tab" value="categories" />
                   <input type="hidden" name="id" value={category.id} />
@@ -93,6 +128,17 @@ export function CategoryManagementPanel({ categories }: { categories: CategoryRo
                       className={adminFieldClass}
                     />
                   </label>
+                  <label className="text-sm font-medium text-boutique-ink">
+                    Тип категория
+                    <select
+                      name="category_type"
+                      defaultValue={category.category_type}
+                      className={adminFieldClass}
+                    >
+                      <option value="product">Продуктова категория</option>
+                      <option value="occasion">Повод</option>
+                    </select>
+                  </label>
                   <div className="self-end">
                     <button
                       type="submit"
@@ -103,9 +149,14 @@ export function CategoryManagementPanel({ categories }: { categories: CategoryRo
                   </div>
                 </form>
               </details>
-            </li>
-          ))}
-        </ul>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+            );
+          })}
+        </div>
       )}
     </article>
   );

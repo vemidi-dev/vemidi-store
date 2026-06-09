@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 };
 
 export default async function CategoriesPage() {
-  const categories = (await getStorefrontCategories()).map(toShowcaseCategory);
+  const categories = (await getStorefrontCategories("product")).map(toShowcaseCategory);
 
   return (
     <div>

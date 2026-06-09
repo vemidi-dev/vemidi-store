@@ -81,6 +81,31 @@ function parseOptionalNumber(formData: FormData, key: string, integer = false) {
   return integer ? Math.floor(value) : value;
 }
 
+function getEventCapacity(formData: FormData, tab: AdminTab, useCapacityAsDefault: boolean) {
+  const capacityRaw = getString(formData, "capacity");
+  const availableSpotsRaw = getString(formData, "available_spots");
+  const capacity = parseOptionalNumber(formData, "capacity", true);
+  const submittedAvailableSpots = parseOptionalNumber(formData, "available_spots", true);
+  const availableSpots =
+    submittedAvailableSpots ?? (useCapacityAsDefault ? capacity : null);
+
+  if (capacityRaw && (capacity === null || capacity < 1)) {
+    redirectWith("error", "Максималният брой места трябва да бъде поне 1.", tab);
+  }
+  if (availableSpotsRaw && submittedAvailableSpots === null) {
+    redirectWith("error", "Свободните места трябва да бъдат цяло положително число или 0.", tab);
+  }
+  if (capacity !== null && availableSpots !== null && availableSpots > capacity) {
+    redirectWith(
+      "error",
+      "Свободните места не могат да бъдат повече от максималния брой места.",
+      tab,
+    );
+  }
+
+  return { capacity, availableSpots };
+}
+
 function revalidateContent(kind: ContentKind, slug?: string) {
   revalidatePath("/admin");
   revalidatePath("/");
@@ -146,6 +171,7 @@ async function createContent(formData: FormData, kind: ContentKind) {
   } else {
     const startsAt = parseDateTime(getString(formData, "starts_at"));
     const endsAt = parseDateTime(getString(formData, "ends_at"));
+    const { capacity, availableSpots } = getEventCapacity(formData, tab, true);
     if (startsAt === undefined || endsAt === undefined) {
       redirectWith("error", "Датата или часът на събитието не е валиден.", tab);
     }
@@ -154,8 +180,8 @@ async function createContent(formData: FormData, kind: ContentKind) {
     row.audience = getOptionalString(formData, "audience");
     row.format = getOptionalString(formData, "format") ?? "in_person";
     row.price = parseOptionalNumber(formData, "price");
-    row.capacity = parseOptionalNumber(formData, "capacity", true);
-    row.available_spots = parseOptionalNumber(formData, "available_spots", true);
+    row.capacity = capacity;
+    row.available_spots = availableSpots;
     row.age_group = getOptionalString(formData, "age_group");
     row.address = getOptionalString(formData, "address");
     row.duration_minutes = parseOptionalNumber(formData, "duration_minutes", true);
@@ -262,6 +288,7 @@ async function updateContent(formData: FormData, kind: ContentKind) {
   } else {
     const startsAt = parseDateTime(getString(formData, "starts_at"));
     const endsAt = parseDateTime(getString(formData, "ends_at"));
+    const { capacity, availableSpots } = getEventCapacity(formData, tab, false);
     if (startsAt === undefined || endsAt === undefined) {
       redirectWith("error", "Датата или часът на събитието не е валиден.", tab);
     }
@@ -270,8 +297,8 @@ async function updateContent(formData: FormData, kind: ContentKind) {
     row.audience = getOptionalString(formData, "audience");
     row.format = getOptionalString(formData, "format") ?? "in_person";
     row.price = parseOptionalNumber(formData, "price");
-    row.capacity = parseOptionalNumber(formData, "capacity", true);
-    row.available_spots = parseOptionalNumber(formData, "available_spots", true);
+    row.capacity = capacity;
+    row.available_spots = availableSpots;
     row.age_group = getOptionalString(formData, "age_group");
     row.address = getOptionalString(formData, "address");
     row.duration_minutes = parseOptionalNumber(formData, "duration_minutes", true);

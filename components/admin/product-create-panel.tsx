@@ -27,6 +27,13 @@ export function ProductCreatePanel({
   colorOptions,
   draft,
 }: ProductCreatePanelProps) {
+  const productCategories = categories.filter(
+    (category) => category.category_type === "product",
+  );
+  const occasionCategories = categories.filter(
+    (category) => category.category_type === "occasion",
+  );
+
   return (
     <article className={adminPanelClass}>
       <h2 className="font-heading text-2xl text-boutique-ink">Добавяне на продукт</h2>
@@ -131,21 +138,30 @@ export function ProductCreatePanel({
                   </a>
                 </div>
               ) : (
-                <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                  {categories.map((category) => (
-                    <label
-                      key={category.id}
-                      className="inline-flex items-center gap-2 text-sm text-boutique-ink"
-                    >
-                      <input
-                        name="category_ids"
-                        type="checkbox"
-                        value={category.id}
-                        defaultChecked={draft?.categoryIds.includes(category.id)}
-                        className="h-4 w-4 rounded border-boutique-line text-boutique-accent"
-                      />
-                      {category.name}
-                    </label>
+                <div className="mt-2 space-y-4">
+                  {[
+                    ["Продукти", productCategories],
+                    ["Поводи", occasionCategories],
+                  ].map(([label, groupedCategories]) => (
+                    <div key={label as string}>
+                      <p className="text-xs font-semibold uppercase tracking-wider text-boutique-muted">
+                        {label as string}
+                      </p>
+                      <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                        {(groupedCategories as CategoryRow[]).map((category) => (
+                          <label key={category.id} className="inline-flex items-center gap-2 text-sm text-boutique-ink">
+                            <input
+                              name="category_ids"
+                              type="checkbox"
+                              value={category.id}
+                              defaultChecked={draft?.categoryIds.includes(category.id)}
+                              className="h-4 w-4 rounded border-boutique-line text-boutique-accent"
+                            />
+                            {category.name}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
                   ))}
                 </div>
               )}

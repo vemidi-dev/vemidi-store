@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import { randomUUID } from "node:crypto";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { ContentDetail } from "@/components/content/content-detail";
+import { EventRegistrationForm } from "@/components/content/event-registration-form";
 import {
   getPublishedEvent,
   getPublishedEvents,
@@ -60,6 +62,12 @@ export default async function EventPage({ params }: EventPageProps) {
     ["Възрастова група", event.age_group],
     ["Водещ", event.host_name],
   ].filter((row): row is [string, string] => Boolean(row[1]));
+  const hasStarted = event.starts_at ? new Date(event.starts_at).getTime() <= Date.now() : false;
+  const canRegisterInternally =
+    !event.registration_url &&
+    !hasStarted &&
+    event.available_spots !== null &&
+    event.available_spots > 0;
   return (
     <ContentDetail
       eyebrow="Събитие"
@@ -79,7 +87,18 @@ export default async function EventPage({ params }: EventPageProps) {
       {event.cancellation_policy ? <section><h2 className="font-heading text-2xl text-boutique-ink">Условия за отказ</h2><p className="mt-2">{event.cancellation_policy}</p></section> : null}
       {event.registration_url ? (
         <a href={event.registration_url} className="inline-flex rounded-full bg-boutique-ink px-7 py-3 text-sm font-semibold text-boutique-paper">Запиши се</a>
-      ) : (
+      ) : canRegisterInternally ? (
+        <EventRegistrationForm
+          eventId={event.id}
+          eventSlug={event.slug}
+          availableSpots={event.available_spots ?? 0}
+          idempotencyKey={randomUUID()}
+        />
+      ) : event.available_spots === 0 ? (
+        <p className="rounded-2xl border border-boutique-line bg-boutique-paper p-5 font-semibold text-boutique-ink">
+          Местата за това събитие са запълнени.
+        </p>
+      ) : hasStarted ? null : (
         <Link href="/contact" className="inline-flex rounded-full bg-boutique-ink px-7 py-3 text-sm font-semibold text-boutique-paper">Попитай за записване</Link>
       )}
       {relatedEvents.length ? (

@@ -10,7 +10,8 @@ Apply the SQL files in this order for a new environment:
 6. `supabase/atomic_product_admin_functions.sql`
 7. `supabase/admin_orders_access.sql`
 8. `supabase/store_checkout_orders.sql`
-9. `supabase/blog_and_events.sql`
+9. `supabase/category_types.sql`
+10. `supabase/blog_and_events.sql`
 
 For an existing environment, apply only migrations that have not already been run. The orders
 access migration depends on `admin_auth.sql` and the landing page's `public.orders` table.
@@ -49,6 +50,14 @@ the additional columns and tables use idempotent statements.
 The latest version also adds an optional article CTA label and product-category target. Blog entries
 can be saved as drafts with incomplete body content; publication still requires an excerpt and full
 text.
+It also creates private event registrations, atomically reserves available places, and lets
+administrators confirm or cancel registrations. Cancelling returns the reserved places. Apply
+`store_checkout_orders.sql` first because the public event form reuses its protected rate-limit RPC.
+
+Run `category_types.sql` to separate categories into `product` and `occasion`. Existing rows are
+preserved and start as product categories; reclassify occasion rows from the admin panel. This
+migration also restores the missing authenticated table privileges while the existing RLS policies
+continue to restrict writes to administrators.
 
 If storefront tables return `permission denied` or an empty result despite containing rows, run
 `supabase/restore_storefront_read_grants.sql`. It restores both PostgreSQL grants and RLS SELECT

@@ -57,7 +57,10 @@ export async function getStorefrontCatalog(): Promise<StorefrontCatalog> {
       .from("products")
       .select("id,name,description,price,image_url,is_customizable,created_at")
       .order("created_at", { ascending: false }),
-    supabase.from("categories").select("id,name,slug").order("name", { ascending: true }),
+    supabase
+      .from("categories")
+      .select("id,name,slug,category_type")
+      .order("name", { ascending: true }),
     supabase.from("product_categories").select("product_id,category_id"),
   ]);
 
@@ -89,17 +92,24 @@ export async function getStorefrontCatalog(): Promise<StorefrontCatalog> {
   return { categories, products };
 }
 
-export async function getStorefrontCategories(): Promise<StorefrontCategory[]> {
+export async function getStorefrontCategories(
+  categoryType?: StorefrontCategory["category_type"],
+): Promise<StorefrontCategory[]> {
   const supabase = await getClient();
   if (!supabase) {
     return [];
   }
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("categories")
-    .select("id,name,slug")
+    .select("id,name,slug,category_type")
     .order("name", { ascending: true });
 
+  if (categoryType) {
+    query = query.eq("category_type", categoryType);
+  }
+
+  const { data, error } = await query;
   return error ? [] : ((data ?? []) as StorefrontCategory[]);
 }
 

@@ -4,6 +4,7 @@ export type StorefrontCategory = {
   id: string;
   name: string;
   slug: string;
+  category_type: "product" | "occasion";
 };
 
 export type StorefrontProduct = Product & {

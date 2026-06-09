@@ -1,9 +1,8 @@
 "use server";
 
-import { createHmac } from "node:crypto";
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
 
+import { getRequestFingerprint } from "@/lib/request-fingerprint";
 import { createServiceClient } from "@/lib/supabase/service";
 
 export type CheckoutActionState = {
@@ -68,23 +67,6 @@ function mapCheckoutError(message: string) {
   return knownError?.[1] ?? "Поръчката не беше записана. Моля, опитайте отново.";
 }
 
-async function getCheckoutClientKey() {
-  const requestHeaders = await headers();
-  const forwardedFor = requestHeaders.get("x-forwarded-for")?.split(",")[0]?.trim();
-  const networkAddress = forwardedFor || requestHeaders.get("x-real-ip") || "unknown";
-  const userAgent = requestHeaders.get("user-agent")?.slice(0, 300) || "unknown";
-  const secret =
-    process.env.CHECKOUT_RATE_LIMIT_SECRET?.trim() ||
-    process.env.SUPABASE_SECRET_KEY?.trim() ||
-    process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
-
-  if (!secret) return null;
-
-  return createHmac("sha256", secret)
-    .update(`${networkAddress}\n${userAgent}`)
-    .digest("hex");
-}
-
 export async function createStoreOrder(
   _previousState: CheckoutActionState,
   formData: FormData,
@@ -118,7 +100,7 @@ export async function createStoreOrder(
     };
   }
 
-  const clientKey = await getCheckoutClientKey();
+  const clientKey = await getRequestFingerprint("store-checkout");
   if (!clientKey) {
     return {
       ok: false,

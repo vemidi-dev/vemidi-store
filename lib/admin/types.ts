@@ -49,6 +49,19 @@ export type EventRow = {
   updated_at: string;
 };
 
+export type EventRegistrationRow = {
+  id: string;
+  event_id: string;
+  full_name: string;
+  phone: string;
+  email: string | null;
+  participant_count: number;
+  note: string | null;
+  status: "new" | "confirmed" | "cancelled";
+  created_at: string;
+  updated_at: string;
+};
+
 export type ProductRow = {
   id: string;
   name: string;
@@ -64,6 +77,7 @@ export type CategoryRow = {
   id: string;
   name: string;
   slug: string;
+  category_type: "product" | "occasion";
 };
 
 export type ProductCategoryRow = {
