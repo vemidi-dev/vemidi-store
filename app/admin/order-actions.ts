@@ -7,22 +7,34 @@ import { isOrderStatus } from "@/lib/admin/orders";
 import { checkIsAdmin } from "@/lib/supabase/admin-auth";
 import { createClient } from "@/lib/supabase/server";
 
-function redirectToOrders(kind: "success" | "error", message: string): never {
+function redirectToOrders(
+  kind: "success" | "error",
+  message: string,
+  filters?: { status?: string; source?: string; search?: string },
+): never {
   const params = new URLSearchParams({ tab: "orders", [kind]: message });
+  if (filters?.status) params.set("status", filters.status);
+  if (filters?.source) params.set("source", filters.source);
+  if (filters?.search) params.set("q", filters.search);
   redirect(`/admin?${params.toString()}`);
 }
 
 export async function updateOrderStatus(formData: FormData) {
   const id = String(formData.get("id") ?? "").trim();
   const status = String(formData.get("status") ?? "").trim();
+  const filters = {
+    status: String(formData.get("return_status") ?? "").trim(),
+    source: String(formData.get("return_source") ?? "").trim(),
+    search: String(formData.get("return_q") ?? "").trim(),
+  };
 
   if (!id || !isOrderStatus(status)) {
-    redirectToOrders("error", "Невалидни данни за поръчката.");
+    redirectToOrders("error", "Невалидни данни за поръчката.", filters);
   }
 
   const supabase = await createClient();
   if (!supabase) {
-    redirectToOrders("error", "Supabase не е конфигуриран.");
+    redirectToOrders("error", "Supabase не е конфигуриран.", filters);
   }
 
   const {
@@ -40,9 +52,9 @@ export async function updateOrderStatus(formData: FormData) {
 
   const { error } = await supabase.from("orders").update({ status }).eq("id", id);
   if (error) {
-    redirectToOrders("error", `Статусът не беше променен: ${error.message}`);
+    redirectToOrders("error", `Статусът не беше променен: ${error.message}`, filters);
   }
 
   revalidatePath("/admin");
-  redirectToOrders("success", "Статусът на поръчката е обновен.");
+  redirectToOrders("success", "Статусът на поръчката е обновен.", filters);
 }

@@ -22,12 +22,15 @@ returns boolean
 language sql
 stable
 security definer
-set search_path = public
+set search_path = ''
 as $$
-  select exists (
+  select
+    uid is not null
+    and uid = auth.uid()
+    and exists (
     select 1
-    from public.admin_users a
-    where a.user_id = uid
+    from public.admin_users as administrator
+    where administrator.user_id = uid
   );
 $$;
 

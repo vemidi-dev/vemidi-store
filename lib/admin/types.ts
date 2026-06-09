@@ -1,4 +1,22 @@
-export type AdminTab = "products" | "categories" | "orders" | "blog" | "events" | "wishes";
+export type AdminTab =
+  | "products"
+  | "categories"
+  | "orders"
+  | "blog"
+  | "events"
+  | "wishes"
+  | "subscribers";
+
+export type SubscriptionTopic = "blog" | "products" | "events";
+
+export type NewsletterSubscriberRow = {
+  id: string;
+  email: string;
+  topics: SubscriptionTopic[];
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
 
 export type WishTemplateRow = {
   id: string;

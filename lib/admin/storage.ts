@@ -2,6 +2,12 @@ import { randomUUID } from "crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 const IMAGE_BUCKET = "product-images";
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+const IMAGE_EXTENSIONS: Record<string, string> = {
+  "image/png": "png",
+  "image/jpeg": "jpg",
+  "image/webp": "webp",
+};
 
 export type UploadedProductImage = {
   path: string;
@@ -10,9 +16,26 @@ export type UploadedProductImage = {
 
 type ImageFolder = "products" | "blog" | "events";
 
-function getFileExtension(fileName: string) {
-  const extension = fileName.split(".").pop()?.toLowerCase() ?? "";
-  return extension && /^[a-z0-9]+$/.test(extension) ? extension : "bin";
+async function hasValidImageSignature(file: File) {
+  const bytes = new Uint8Array(await file.slice(0, 12).arrayBuffer());
+  if (file.type === "image/png") {
+    return (
+      bytes[0] === 0x89 &&
+      bytes[1] === 0x50 &&
+      bytes[2] === 0x4e &&
+      bytes[3] === 0x47
+    );
+  }
+  if (file.type === "image/jpeg") {
+    return bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
+  }
+  if (file.type === "image/webp") {
+    return (
+      String.fromCharCode(...bytes.slice(0, 4)) === "RIFF" &&
+      String.fromCharCode(...bytes.slice(8, 12)) === "WEBP"
+    );
+  }
+  return false;
 }
 
 export async function uploadAdminImage(
@@ -20,7 +43,17 @@ export async function uploadAdminImage(
   file: File,
   folder: ImageFolder,
 ): Promise<UploadedProductImage> {
-  const extension = getFileExtension(file.name);
+  const extension = IMAGE_EXTENSIONS[file.type];
+  if (!extension) {
+    throw new Error("Позволени са само PNG, JPG и WEBP изображения.");
+  }
+  if (file.size === 0 || file.size > MAX_IMAGE_SIZE) {
+    throw new Error("Изображението трябва да бъде до 5 MB.");
+  }
+  if (!(await hasValidImageSignature(file))) {
+    throw new Error("Файлът не съдържа валидно изображение.");
+  }
+
   const path = `${folder}/${Date.now()}-${randomUUID()}.${extension}`;
   const { error } = await supabase.storage
     .from(IMAGE_BUCKET)

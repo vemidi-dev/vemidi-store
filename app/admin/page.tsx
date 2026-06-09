@@ -8,6 +8,7 @@ import { ProductListPanel } from "@/components/admin/product-list-panel";
 import { OrdersPanel } from "@/components/admin/orders-panel";
 import { ContentManagementPanel } from "@/components/admin/content-management-panel";
 import { EventRegistrationsPanel } from "@/components/admin/event-registrations-panel";
+import { SubscriberManagementPanel } from "@/components/admin/subscriber-management-panel";
 import { WishManagementPanel } from "@/components/admin/wish-management-panel";
 import { PageContainer } from "@/components/layout/page-container";
 import { loadAdminData } from "@/lib/admin/data";
@@ -19,6 +20,11 @@ import {
 import { checkIsAdmin } from "@/lib/supabase/admin-auth";
 import { createClient } from "@/lib/supabase/server";
 import { loadOrders } from "@/lib/admin/orders";
+import {
+  filterSubscribers,
+  normalizeSubscriberStatus,
+  normalizeSubscriberTopic,
+} from "@/lib/admin/subscriptions";
 
 type AdminPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -37,6 +43,13 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   const orderStatus = firstValue(params.status);
   const orderSearch = firstValue(params.q);
   const orderSource = firstValue(params.source);
+  const subscriberSearch = firstValue(params.subscriber_q);
+  const subscriberTopic = normalizeSubscriberTopic(
+    firstValue(params.subscriber_topic),
+  );
+  const subscriberStatus = normalizeSubscriberStatus(
+    firstValue(params.subscriber_status),
+  );
 
   const supabase = await createClient();
   if (!supabase) {
@@ -101,6 +114,49 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     );
   }
 
+  if (activeTab === "subscribers") {
+    const result = await supabase
+      .from("newsletter_subscribers")
+      .select("id,email,topics,is_active,created_at,updated_at")
+      .order("updated_at", { ascending: false });
+    const allSubscribers =
+      (result.data ?? []) as import("@/lib/admin/types").NewsletterSubscriberRow[];
+    const subscribers = filterSubscribers(allSubscribers, {
+      search: subscriberSearch,
+      topic: subscriberTopic,
+      status: subscriberStatus,
+    });
+
+    return (
+      <section className="pb-24 pt-10">
+        <PageContainer>
+          <div className="mx-auto max-w-6xl space-y-8">
+            <AdminHeader activeTab={activeTab} />
+            {success || error ? (
+              <div
+                className={`rounded-xl border px-4 py-3 text-sm ${
+                  error
+                    ? "border-red-200 bg-red-50 text-red-700"
+                    : "border-emerald-200 bg-emerald-50 text-emerald-700"
+                }`}
+              >
+                {error || success}
+              </div>
+            ) : null}
+            <SubscriberManagementPanel
+              subscribers={subscribers}
+              allSubscribers={allSubscribers}
+              search={subscriberSearch}
+              topic={subscriberTopic}
+              status={subscriberStatus}
+              error={result.error?.message ?? null}
+            />
+          </div>
+        </PageContainer>
+      </section>
+    );
+  }
+
   if (activeTab === "orders") {
     const ordersResult = await loadOrders(supabase, orderStatus, orderSearch, orderSource);
 
@@ -122,6 +178,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             ) : null}
             <OrdersPanel
               orders={ordersResult.orders}
+              allOrders={ordersResult.allOrders}
               status={orderStatus}
               search={orderSearch}
               source={orderSource}

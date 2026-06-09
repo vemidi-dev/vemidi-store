@@ -9,6 +9,10 @@ The store is the central admin application. It uses Supabase Auth and `public.ad
 The landing page can continue creating orders with its server-side service role key. Its old admin
 panel should remain available until the new orders section has been verified in production.
 
+The shared admin orders tab supports status and source filters, operational counters, and a protected
+CSV export. The export follows the currently selected filters, requires an administrator session,
+and is returned with `Cache-Control: private, no-store` because it contains customer data.
+
 ## 1. Database access
 
 Run `supabase/admin_orders_access.sql` in the shared Supabase project's SQL Editor.

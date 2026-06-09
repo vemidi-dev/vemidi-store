@@ -2,6 +2,7 @@ import { updateOrderStatus } from "@/app/admin/order-actions";
 import {
   formatOrderDate,
   formatOrderPrice,
+  getOrderCounts,
   getOrderSource,
   getOrderSourceLabel,
   getOrderStatusLabel,
@@ -15,6 +16,7 @@ import { adminFieldClass, adminPanelClass } from "./styles";
 
 type OrdersPanelProps = {
   orders: OrderRow[];
+  allOrders: OrderRow[];
   status: string;
   search: string;
   source: string;
@@ -142,7 +144,23 @@ function OrderDetails({ order }: { order: OrderRow }) {
   );
 }
 
-export function OrdersPanel({ orders, status, search, source, error }: OrdersPanelProps) {
+export function OrdersPanel({
+  orders,
+  allOrders,
+  status,
+  search,
+  source,
+  error,
+}: OrdersPanelProps) {
+  const counts = getOrderCounts(allOrders);
+  const exportParams = new URLSearchParams();
+  if (status) exportParams.set("status", status);
+  if (source) exportParams.set("source", source);
+  if (search) exportParams.set("q", search);
+  const exportHref = `/admin/orders/export${
+    exportParams.size ? `?${exportParams.toString()}` : ""
+  }`;
+
   return (
     <div className="space-y-5">
       <section className={adminPanelClass}>
@@ -193,12 +211,44 @@ export function OrdersPanel({ orders, status, search, source, error }: OrdersPan
             </button>
           </form>
         </div>
+        <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
+          {[
+            ["Всички", counts.total],
+            ["Нови", counts.new],
+            ["В обработка", counts.active],
+            ["Завършени", counts.completed],
+            ["Магазин", counts.store],
+            ["Лендинг", counts.landing],
+          ].map(([label, value]) => (
+            <div
+              key={label}
+              className="rounded-xl border border-boutique-line bg-boutique-bg p-4"
+            >
+              <p className="text-xs text-boutique-muted">{label}</p>
+              <p className="mt-2 font-heading text-2xl text-boutique-ink">{value}</p>
+            </div>
+          ))}
+        </div>
       </section>
 
       {error ? (
         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           Поръчките не могат да се заредят: {error.message}. Изпълнете SQL миграцията за достъп до
           поръчки.
+        </div>
+      ) : null}
+
+      {!error ? (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-boutique-muted">
+            Показани {orders.length} от {counts.total} поръчки.
+          </p>
+          <a
+            href={exportHref}
+            className="rounded-lg bg-boutique-sage-deep px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-boutique-ink"
+          >
+            Експортирай показаните CSV
+          </a>
         </div>
       ) : null}
 
@@ -250,6 +300,9 @@ export function OrdersPanel({ orders, status, search, source, error }: OrdersPan
 
           <form action={updateOrderStatus} className="mt-5 flex flex-wrap items-end gap-3">
             <input type="hidden" name="id" value={order.id} />
+            <input type="hidden" name="return_status" value={status} />
+            <input type="hidden" name="return_source" value={source} />
+            <input type="hidden" name="return_q" value={search} />
             <label className="min-w-52 text-sm font-medium text-boutique-ink">
               Промени статус
               <select

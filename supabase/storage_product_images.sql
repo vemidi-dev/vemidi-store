@@ -7,9 +7,15 @@ values (
   'product-images',
   true,
   5242880,
-  array['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml']
+  array['image/png', 'image/jpeg', 'image/webp']
 )
 on conflict (id) do nothing;
+
+update storage.buckets
+set
+  file_size_limit = 5242880,
+  allowed_mime_types = array['image/png', 'image/jpeg', 'image/webp']
+where id = 'product-images';
 
 drop policy if exists "product_images_public_read" on storage.objects;
 create policy "product_images_public_read"

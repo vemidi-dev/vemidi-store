@@ -4,14 +4,25 @@ Apply the SQL files in this order for a new environment:
 
 1. `supabase/products_table.sql`
 2. `supabase/add_product_extra_info_fields.sql`
-3. `supabase/add_product_color_configuration.sql`
-4. `supabase/admin_auth.sql`
-5. `supabase/storage_product_images.sql`
-6. `supabase/atomic_product_admin_functions.sql`
-7. `supabase/admin_orders_access.sql`
-8. `supabase/store_checkout_orders.sql`
-9. `supabase/category_types.sql`
-10. `supabase/blog_and_events.sql`
+3. `supabase/refactor_multi_categories.sql`
+4. `supabase/add_product_color_configuration.sql`
+5. `supabase/admin_auth.sql`
+6. `supabase/storage_product_images.sql`
+7. `supabase/atomic_product_admin_functions.sql`
+8. `supabase/admin_orders_access.sql`
+9. `supabase/store_checkout_orders.sql`
+10. `supabase/category_types.sql`
+11. `supabase/blog_and_events.sql`
+12. `supabase/subscription_topics.sql`
+13. `supabase/subscription_admin_management.sql`
+14. `supabase/product_personalization_and_wishes.sql`
+15. Re-run `supabase/store_checkout_orders.sql`
+16. `supabase/security_hardening_phase1.sql`
+17. `supabase/security_hardening_phase2.sql`
+
+`supabase/migrate_product_color_rules_to_fields.sql` is needed only when upgrading an installation
+that already contains the older `product_color_rules` data. Run it after
+`add_product_color_configuration.sql`.
 
 For an existing environment, apply only migrations that have not already been run. The orders
 access migration depends on `admin_auth.sql` and the landing page's `public.orders` table.
@@ -53,6 +64,26 @@ text.
 It also creates private event registrations, atomically reserves available places, and lets
 administrators confirm or cancel registrations. Cancelling returns the reserved places. Apply
 `store_checkout_orders.sql` first because the public event form reuses its protected rate-limit RPC.
+
+Run `subscription_admin_management.sql` after `blog_and_events.sql` to enable the protected
+“Абонаменти” tab in the admin panel. It grants authenticated access at the table level, while RLS
+continues to allow reading and editing only for users present in `public.admin_users`. Public visitors
+can subscribe only through `subscribe_to_topics` and cannot read the subscriber list.
+
+Run `product_personalization_and_wishes.sql` after categories and products exist. Re-run
+`store_checkout_orders.sql` afterwards so checkout validates and stores the latest personalization
+field format.
+
+For an existing production deployment, security hardening is intentionally split:
+
+1. run `security_hardening_phase1.sql`;
+2. deploy the matching application code and verify blog/event subscription forms;
+3. run `security_hardening_phase2.sql`.
+
+Phase 1 creates the server-only subscription RPC, binds admin checks to the current authenticated
+user, and restricts uploaded images to PNG/JPEG/WebP files up to 5 MB. Phase 2 removes direct browser
+execution of the legacy public subscription RPCs. Do not reverse steps 2 and 3, or the currently
+deployed forms may briefly stop accepting subscriptions.
 
 Run `category_types.sql` to separate categories into `product` and `occasion`. Existing rows are
 preserved and start as product categories; reclassify occasion rows from the admin panel. This

@@ -12,7 +12,7 @@ type ImageFileInputProps = {
   maxSizeMb?: number;
 };
 
-const ACCEPTED_MIME_TYPES = ["image/png", "image/jpeg", "image/webp", "image/svg+xml"];
+const ACCEPTED_MIME_TYPES = ["image/png", "image/jpeg", "image/webp"];
 
 export function ImageFileInput({
   name,
@@ -48,9 +48,9 @@ export function ImageFileInput({
           }
 
           if (!ACCEPTED_MIME_TYPES.includes(file.type)) {
-            input.setCustomValidity("Позволени формати: PNG, JPG, WEBP или SVG.");
+            input.setCustomValidity("Позволени формати: PNG, JPG или WEBP.");
             input.reportValidity();
-            setMessage("Невалиден формат. Изберете PNG, JPG, WEBP или SVG.");
+            setMessage("Невалиден формат. Изберете PNG, JPG или WEBP.");
             return;
           }
 

@@ -1,67 +1,15 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import {
+  subscribeToSelectedTopics,
+  type SubscriptionActionState,
+} from "@/lib/subscriptions/subscribe";
 
-export type NewsletterState = {
-  status: "idle" | "success" | "error";
-  message: string;
-};
-
-const allowedTopics = new Set(["blog", "products", "events"]);
+export type NewsletterState = SubscriptionActionState;
 
 export async function subscribeToNewsletter(
   _previousState: NewsletterState,
   formData: FormData,
 ): Promise<NewsletterState> {
-  if (String(formData.get("website") ?? "").trim()) {
-    return { status: "error", message: "Записването не беше прието." };
-  }
-  if (formData.get("privacy_consent") !== "on") {
-    return {
-      status: "error",
-      message: "Необходимо е съгласие с политиката за поверителност.",
-    };
-  }
-
-  const email = String(formData.get("email") ?? "").trim().toLowerCase();
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    return { status: "error", message: "Въведете валиден имейл адрес." };
-  }
-
-  const topics = formData
-    .getAll("topics")
-    .map(String)
-    .filter((topic) => allowedTopics.has(topic));
-  const uniqueTopics = [...new Set(topics)];
-
-  if (uniqueTopics.length === 0) {
-    return { status: "error", message: "Изберете поне една тема за известия." };
-  }
-
-  const supabase = await createClient();
-  if (!supabase) {
-    return {
-      status: "error",
-      message: "Абонаментът временно не е достъпен. Опитайте отново по-късно.",
-    };
-  }
-
-  const { error } = await supabase.rpc("subscribe_to_topics", {
-    p_email: email,
-    p_topics: uniqueTopics,
-  });
-
-  if (error) {
-    return {
-      status: "error",
-      message: error.message.includes("subscribe_to_topics")
-        ? "Необходима е еднократна настройка на абонаментите в Supabase."
-        : "Не успяхме да запишем абонамента. Опитайте отново.",
-    };
-  }
-
-  return {
-    status: "success",
-    message: "Готово. Предпочитанията Ви за известия са записани.",
-  };
+  return subscribeToSelectedTopics(formData);
 }

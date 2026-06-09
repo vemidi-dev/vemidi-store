@@ -86,6 +86,16 @@ export function AdminHeader({ activeTab }: { activeTab: AdminTab }) {
         >
           Пожелания
         </a>
+        <a
+          href={makeAdminTabHref("subscribers")}
+          className={`rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-wider transition ${
+            activeTab === "subscribers"
+              ? "bg-boutique-ink text-boutique-paper"
+              : "text-boutique-ink hover:bg-boutique-bg"
+          }`}
+        >
+          Абонаменти
+        </a>
       </nav>
     </>
   );

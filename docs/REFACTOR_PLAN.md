@@ -52,7 +52,7 @@
 - [x] Replace the obsolete lint script and make `typecheck`, `lint`, and `build` reliable.
 - [x] Fix all current lint and TypeScript failures without changing intended UI behavior.
 - [x] Harden cart deserialization and quantity handling.
-- [ ] Add focused unit tests for cart line IDs, stored-cart parsing, and money totals.
+- [x] Add focused unit tests for cart line IDs, stored-cart parsing, and money totals.
 - [x] Record the production-build baseline for home, catalog, product, cart, login, and admin routes.
 
 ### Phase 2: Consolidate the storefront data layer
@@ -87,6 +87,7 @@
 - [ ] Add inventory/availability rules if products become stock-limited.
 - [x] Add idempotency for checkout order creation.
 - [x] Add server-side checkout rate limiting with privacy-safe client fingerprints.
+- [ ] Store personalization fields structurally and validate every required field on the server.
 - [x] Keep payment limited to cash on delivery; no payment-provider integration is currently planned.
 - [x] Clear the cart only after confirmed order creation.
 - [x] Redirect successful orders to a dedicated, non-indexed thank-you page.
@@ -99,7 +100,8 @@
 - [x] Audit keyboard navigation, focus states, labels, contrast, and reduced-motion behavior.
 - [x] Add metadata, structured product data, sitemap, and robots configuration.
 - [ ] Add error monitoring, privacy-safe analytics, and operational logging.
-- [ ] Document environment variables, migration order, release checks, and rollback steps.
+- [x] Audit Supabase RLS, privileged RPC access, subscription rate limiting, and upload validation.
+- [x] Document environment variables, migration order, release checks, and rollback steps.
 
 ### Content management
 
