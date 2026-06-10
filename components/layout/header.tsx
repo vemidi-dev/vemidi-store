@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import { MobileNav } from "@/components/layout/mobile-nav";
 import { NavCartLink } from "@/components/layout/nav-cart-link";
 import { PageContainer } from "@/components/layout/page-container";
 import { siteConfig } from "@/config/site";
@@ -59,13 +60,14 @@ export async function Header() {
             >
               Разгледай
             </Link>
+            <MobileNav />
           </div>
         </div>
       </PageContainer>
 
       <nav
         aria-label="Мобилна навигация"
-        className="border-t border-boutique-line/50 bg-white px-5 py-3.5 xl:hidden"
+        className="hidden border-t border-boutique-line/50 bg-white px-5 py-3.5 md:block xl:hidden"
       >
         <ul className="mx-auto flex max-w-6xl flex-wrap justify-center gap-x-6 gap-y-3">
           {siteConfig.navigation.map((item) => (
