@@ -1,9 +1,9 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
 
 import { ProductCard } from "@/components/product/product-card";
 import { PageContainer } from "@/components/layout/page-container";
-import { MediaPlaceholder } from "@/components/ui/media-placeholder";
 import { isProductOnPromotion } from "@/lib/product-pricing";
 import { getStorefrontCatalog } from "@/lib/storefront/repository";
 
@@ -277,10 +277,14 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
               </p>
             </div>
           </div>
-          <div className="min-h-[18rem]">
-            <MediaPlaceholder
-              label="Банер за страницата с продукти"
-              className="min-h-[18rem]"
+          <div className="relative min-h-[18rem] overflow-hidden">
+            <Image
+              src="/assets/products.png"
+              alt="Ръчно изработени продукти от VeMiDi crafts"
+              fill
+              priority
+              sizes="(max-width: 1024px) 100vw, 60vw"
+              className="object-cover"
             />
           </div>
         </div>

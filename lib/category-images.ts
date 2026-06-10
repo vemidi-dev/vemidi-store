@@ -13,12 +13,25 @@ const SLUG_ALIASES: Record<string, string> = {
   "ramki-i-pana": "ramki-pana",
   "podaracheta-za-gosti": "gosti",
   "gipsovi-figurki": "gips",
-  "skandinavski-muh": "gips",
+  "skandinavski-muh": "moss",
+  "sakndinavski-muh": "moss",
+  "sakndinavski muh": "moss",
+  moss: "moss",
+  family: "semejni",
+  "semejni-podaraci": "semejni",
+  "semejni-podaracheta": "semejni",
   zakachalki: "zakachalki-kluch",
+  home: "new-home",
+  "za-nov-dom": "new-home",
+  "nov-dom": "new-home",
 };
 
 const PRODUCT_IMAGE_FILES: Record<string, string> = {
+  bijuta: "bijuta.jpg",
+  "bijuta-i-aksesoari": "bijuta.jpg",
   gips: "gips.png",
+  moss: "../moss.png",
+  semejni: "../semejni.jpg",
   gosti: "gosti.jpg",
   kutii: "kutii.png",
   medali: "medali.png",
@@ -30,6 +43,11 @@ const PRODUCT_IMAGE_FILES: Record<string, string> = {
 };
 
 const OCCASION_IMAGE_FILES: Record<string, string> = {
+  "8-mart": "../8-mart.png",
+  koleda: "../koleda.png",
+  velikden: "../velikden.png",
+  "za-deca": "../za-deca.png",
+  "new-home": "../ocassion-new-home.png",
   krashtene: "../occasion-krashtene.webp",
   bebe: "../occasion-bebe.png",
   svatba: "../occasion-svatba.webp",

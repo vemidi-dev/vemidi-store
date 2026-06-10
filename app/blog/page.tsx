@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 
 import { ContentImage } from "@/components/content/content-image";
@@ -172,10 +173,14 @@ export default async function BlogPage({ searchParams }: Props) {
               </p>
             </PageContainer>
           </div>
-          <div className="min-h-72 lg:min-h-full">
-            <MediaPlaceholder
-              label="Основна снимка за Блог"
-              className="min-h-72 rounded-none border-0 lg:min-h-full"
+          <div className="relative min-h-72 overflow-hidden lg:min-h-full">
+            <Image
+              src="/assets/cover-blog.png"
+              alt="Идеи и вдъхновение от блога на VeMiDi crafts"
+              fill
+              priority
+              sizes="(max-width: 1024px) 100vw, 60vw"
+              className="object-cover"
             />
           </div>
         </div>

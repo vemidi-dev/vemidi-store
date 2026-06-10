@@ -9,15 +9,18 @@
 
 ## Страница „Категории“
 
+- `products.png` — банер за страницата „Продукти“ (`/shop`)
 - `banner-categories.webp` - широк банер в горната част на страницата
 
 ## Страница „Събития“
 
-- `events-hero.webp` - основна снимка от творческа работилница или от ателието
+- `sabitia.png` — банер за страницата „Събития“ (`/events`)
+- `events-hero.webp` - алтернативно име (по избор)
 
 ## Страница „Блог“
 
-- `blog-hero.webp` - широк банер с творческа или подаръчна композиция
+- `cover-blog.png` — банер за страницата „Блог“ (`/blog`)
+- `blog-hero.webp` - алтернативно име (по избор)
 - `blog-shop-promo.webp` - снимка в страничния блок към магазина
 
 ## Категории (начална страница, /categories, /occasions)
@@ -34,15 +37,22 @@
 - `categories/product/plik-za-pari.png` → slug `plik-za-pari` (или `plikove-za-pari`)
 - `categories/product/ramki-pana.jpg` → slug `ramki-i-pana`
 - `categories/product/gosti.jpg` → slug `podaracheta-za-gosti`
-- `categories/product/gips.png` → slug `gips`
+- `categories/product/gips.png` → slug `gips` (гипсови фигурки)
+- `moss.png` → slug `sakndinavski muh` (скандинавски мъх)
+- `semejni.jpg` → slug `family` (семейни подаръци)
 - `categories/product/zakachalki-kluch.png` → slug `zakachalki`
 
 Препоръчително: `.webp`, квадратно изображение.
 
 ### Поводи
 
-Може в `categories/occasion/` или в корена на `assets/` с префикс `occasion-`:
+Може в `categories/occasion/` или в корена на `assets/`:
 
+- `8-mart.png` → slug `8-mart` (8 март)
+- `velikden.png` → slug `velikden` (Великден)
+- `koleda.png` → slug `koleda` (Коледа)
+- `za-deca.png` → slug `za-deca` (За деца)
+- `ocassion-new-home.png` → slug `home` (За нов дом)
 - `occasion-krashtene.webp` → slug `krashtene`
 - `occasion-bebe.png` → slug `bebe`
 - `occasion-svatba.webp` → slug `svatba`
@@ -52,7 +62,8 @@
 ## Други снимки в корена на assets
 
 - `tvorcheski-komplekti.webp` — продуктова категория със slug `tvorcheski-komplekti`
-- `occasions-hero.webp` — банер за страницата „По повод“
+- `povodi.png` — банер за страницата „По повод“ (`/occasions`)
+- `occasions-hero.webp` — алтернативно име (по избор)
 
 ## Препоръки
 

@@ -118,10 +118,14 @@ export default async function OccasionsPage() {
             </PageContainer>
           </div>
 
-          <div className="min-h-72 lg:min-h-full">
-            <MediaPlaceholder
-              label="Банер за страницата „По повод“"
-              className="min-h-72 rounded-none border-0 lg:min-h-full"
+          <div className="relative min-h-72 overflow-hidden lg:min-h-full">
+            <Image
+              src="/assets/povodi.png"
+              alt="Персонализирани подаръци за специални поводи"
+              fill
+              priority
+              sizes="(max-width: 1024px) 100vw, 60vw"
+              className="object-cover"
             />
           </div>
         </div>

@@ -28,6 +28,18 @@ test("getCategoryImageSrc maps product slugs to current image files", () => {
     getCategoryImageSrc("gips", "product"),
     "/assets/categories/product/gips.png",
   );
+  assert.equal(
+    getCategoryImageSrc("bijuta", "product"),
+    "/assets/categories/product/bijuta.jpg",
+  );
+  assert.equal(
+    getCategoryImageSrc("sakndinavski muh", "product"),
+    "/assets/moss.png",
+  );
+  assert.equal(
+    getCategoryImageSrc("family", "product"),
+    "/assets/semejni.jpg",
+  );
 });
 
 test("getCategoryImageSrc maps occasion slugs and aliases", () => {
@@ -38,5 +50,25 @@ test("getCategoryImageSrc maps occasion slugs and aliases", () => {
   assert.equal(
     getCategoryImageSrc("rd", "occasion"),
     "/assets/occasion-rozhden-den.webp",
+  );
+  assert.equal(
+    getCategoryImageSrc("8-mart", "occasion"),
+    "/assets/8-mart.png",
+  );
+  assert.equal(
+    getCategoryImageSrc("velikden", "occasion"),
+    "/assets/velikden.png",
+  );
+  assert.equal(
+    getCategoryImageSrc("koleda", "occasion"),
+    "/assets/koleda.png",
+  );
+  assert.equal(
+    getCategoryImageSrc("za-deca", "occasion"),
+    "/assets/za-deca.png",
+  );
+  assert.equal(
+    getCategoryImageSrc("home", "occasion"),
+    "/assets/ocassion-new-home.png",
   );
 });

@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 
 import { EventGallerySection } from "@/components/content/event-gallery-section";
 import { EventNotificationForm } from "@/components/content/event-notification-form";
 import { ContentImage } from "@/components/content/content-image";
 import { PageContainer } from "@/components/layout/page-container";
-import { MediaPlaceholder } from "@/components/ui/media-placeholder";
 import type { EventRow } from "@/lib/admin/types";
 import { getPublishedEvents } from "@/lib/content/repository";
 import { formatEur } from "@/lib/format-eur";
@@ -221,10 +221,14 @@ export default async function EventsPage() {
               </span>
             </PageContainer>
           </div>
-          <div className="min-h-80 lg:min-h-full">
-            <MediaPlaceholder
-              label="Основна снимка за страницата „Събития“"
-              className="min-h-80 rounded-none border-0 lg:min-h-full"
+          <div className="relative min-h-80 overflow-hidden lg:min-h-full">
+            <Image
+              src="/assets/sabitia.png"
+              alt="Творчески работилници за деца в ателието VeMiDi"
+              fill
+              priority
+              sizes="(max-width: 1024px) 100vw, 60vw"
+              className="object-cover"
             />
           </div>
         </div>
