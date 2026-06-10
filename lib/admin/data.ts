@@ -8,6 +8,10 @@ import type {
   ProductColorFieldOptionRow,
   ProductColorFieldRow,
   ProductRow,
+  ProductImageRow,
+  ProductPersonalizationFieldRow,
+  ProductWishTemplateRow,
+  WishTemplateRow,
 } from "@/lib/admin/types";
 
 type QueryError = { message: string } | null;
@@ -23,6 +27,10 @@ export type AdminData = {
   colorOptionById: Map<string, ColorOptionRow>;
   colorFieldsByProductId: Map<string, ProductColorFieldRow[]>;
   selectedColorOptionIdsByFieldId: Map<string, Set<string>>;
+  imagesByProductId: Map<string, ProductImageRow[]>;
+  personalizationFieldsByProductId: Map<string, ProductPersonalizationFieldRow[]>;
+  wishTemplates: WishTemplateRow[];
+  wishTemplateIdsByProductId: Map<string, string[]>;
   errors: {
     products: QueryError;
     categories: QueryError;
@@ -31,6 +39,10 @@ export type AdminData = {
     colorOptions: QueryError;
     productColorFields: QueryError;
     productColorFieldOptions: QueryError;
+    productImages: QueryError;
+    personalizationFields: QueryError;
+    wishTemplates: QueryError;
+    productWishTemplates: QueryError;
   };
 };
 
@@ -43,12 +55,17 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
     colorOptionsResult,
     productColorFieldsResult,
     productColorFieldOptionsResult,
+    productImagesResult,
+    personalizationFieldsResult,
+    wishTemplatesResult,
+    productWishTemplatesResult,
   ] = await Promise.all([
     supabase.from("products").select("*").order("id", { ascending: false }),
     supabase
       .from("categories")
-      .select("id,name,slug,category_type")
+      .select("id,name,slug,category_type,show_on_home,home_sort_order")
       .order("category_type", { ascending: true })
+      .order("home_sort_order", { ascending: true })
       .order("name", { ascending: true }),
     supabase.from("product_categories").select("product_id,category_id"),
     supabase.from("color_groups").select("id,key,label").order("label", { ascending: true }),
@@ -61,6 +78,25 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
       .from("product_color_fields")
       .select("id,product_id,group_id,label,enabled,min_select,max_select,sort_order"),
     supabase.from("product_color_field_options").select("field_id,color_option_id"),
+    supabase
+      .from("product_images")
+      .select("id,product_id,image_url,alt_text,sort_order,is_primary")
+      .order("sort_order", { ascending: true }),
+    supabase
+      .from("product_personalization_fields")
+      .select(
+        "id,product_id,label,field_key,field_type,placeholder,max_length,is_required,allows_wish_templates,sort_order",
+      )
+      .order("sort_order", { ascending: true }),
+    supabase
+      .from("wish_templates")
+      .select("id,title,body,is_active,sort_order")
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true }),
+    supabase
+      .from("product_wish_templates")
+      .select("product_id,wish_template_id,sort_order")
+      .order("sort_order", { ascending: true }),
   ]);
 
   const products = (productsResult.data ?? []) as ProductRow[];
@@ -71,6 +107,12 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
   const productColorFields = (productColorFieldsResult.data ?? []) as ProductColorFieldRow[];
   const productColorFieldOptions = (productColorFieldOptionsResult.data ??
     []) as ProductColorFieldOptionRow[];
+  const productImages = (productImagesResult.data ?? []) as ProductImageRow[];
+  const personalizationFields = (personalizationFieldsResult.data ??
+    []) as ProductPersonalizationFieldRow[];
+  const wishTemplates = (wishTemplatesResult.data ?? []) as WishTemplateRow[];
+  const productWishTemplates = (productWishTemplatesResult.data ??
+    []) as ProductWishTemplateRow[];
 
   const categoryById = new Map(categories.map((category) => [category.id, category]));
   const categoryIdsByProductId = new Map<string, string[]>();
@@ -78,6 +120,12 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
   const colorOptionById = new Map(colorOptions.map((option) => [option.id, option]));
   const colorFieldsByProductId = new Map<string, ProductColorFieldRow[]>();
   const selectedColorOptionIdsByFieldId = new Map<string, Set<string>>();
+  const imagesByProductId = new Map<string, ProductImageRow[]>();
+  const personalizationFieldsByProductId = new Map<
+    string,
+    ProductPersonalizationFieldRow[]
+  >();
+  const wishTemplateIdsByProductId = new Map<string, string[]>();
 
   productCategories.forEach((row) => {
     const categoryIds = categoryIdsByProductId.get(row.product_id) ?? [];
@@ -108,6 +156,24 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
     selectedColorOptionIdsByFieldId.set(selection.field_id, optionIds);
   });
 
+  productImages.forEach((image) => {
+    const images = imagesByProductId.get(image.product_id) ?? [];
+    images.push(image);
+    imagesByProductId.set(image.product_id, images);
+  });
+
+  personalizationFields.forEach((field) => {
+    const fields = personalizationFieldsByProductId.get(field.product_id) ?? [];
+    fields.push(field);
+    personalizationFieldsByProductId.set(field.product_id, fields);
+  });
+
+  productWishTemplates.forEach((link) => {
+    const ids = wishTemplateIdsByProductId.get(link.product_id) ?? [];
+    ids.push(link.wish_template_id);
+    wishTemplateIdsByProductId.set(link.product_id, ids);
+  });
+
   return {
     products,
     categories,
@@ -119,6 +185,10 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
     colorOptionById,
     colorFieldsByProductId,
     selectedColorOptionIdsByFieldId,
+    imagesByProductId,
+    personalizationFieldsByProductId,
+    wishTemplates,
+    wishTemplateIdsByProductId,
     errors: {
       products: productsResult.error,
       categories: categoriesResult.error,
@@ -127,6 +197,10 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
       colorOptions: colorOptionsResult.error,
       productColorFields: productColorFieldsResult.error,
       productColorFieldOptions: productColorFieldOptionsResult.error,
+      productImages: productImagesResult.error,
+      personalizationFields: personalizationFieldsResult.error,
+      wishTemplates: wishTemplatesResult.error,
+      productWishTemplates: productWishTemplatesResult.error,
     },
   };
 }

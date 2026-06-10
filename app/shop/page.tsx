@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { ProductCard } from "@/components/product/product-card";
 import { PageContainer } from "@/components/layout/page-container";
 import { MediaPlaceholder } from "@/components/ui/media-placeholder";
+import { isProductOnPromotion } from "@/lib/product-pricing";
 import { getStorefrontCatalog } from "@/lib/storefront/repository";
 
 export const metadata: Metadata = {
@@ -51,6 +52,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
   const activePrice = firstValue(params.price);
   const activeSort = firstValue(params.sort) || "featured";
   const personalizationOnly = firstValue(params.personalization) === "only";
+  const promotionsOnly = firstValue(params.promotions) === "only";
 
   const { categories, products } = await getStorefrontCatalog();
 
@@ -94,9 +96,17 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
       ? product.categorySlugs.includes(activeOccasion)
       : true;
     const matchesPersonalization = personalizationOnly ? Boolean(product.customizable) : true;
+    const matchesPromotions = promotionsOnly ? isProductOnPromotion(product) : true;
     const matchesPrice = activePrice ? getPriceBucket(product.price) === activePrice : true;
 
-    return matchesQuery && matchesProductCategory && matchesOccasion && matchesPersonalization && matchesPrice;
+    return (
+      matchesQuery &&
+      matchesProductCategory &&
+      matchesOccasion &&
+      matchesPersonalization &&
+      matchesPromotions &&
+      matchesPrice
+    );
   });
 
   filtered = [...filtered].sort((a, b) => {
@@ -124,6 +134,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
       : "",
     activePrice ? `Цена: ${priceFilters.find((item) => item.id === activePrice)?.label ?? activePrice}` : "",
     personalizationOnly ? "Само с персонализация" : "",
+    promotionsOnly ? "Само промоции" : "",
     query ? `Търсене: "${query}"` : "",
   ].filter(Boolean);
 
@@ -221,6 +232,17 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
           Само продукти с персонализация
         </label>
 
+        <label className="flex items-start gap-2 text-sm text-boutique-muted">
+          <input
+            type="checkbox"
+            name="promotions"
+            value="only"
+            defaultChecked={promotionsOnly}
+            className="mt-0.5 accent-boutique-sage-deep"
+          />
+          Само промоции
+        </label>
+
         <div className="flex gap-2">
           <button
             type="submit"
@@ -311,6 +333,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
                   <input type="hidden" name="occasion" value={activeOccasion} />
                   <input type="hidden" name="price" value={activePrice} />
                   {personalizationOnly ? <input type="hidden" name="personalization" value="only" /> : null}
+                  {promotionsOnly ? <input type="hidden" name="promotions" value="only" /> : null}
                   <label className="text-sm text-boutique-muted">
                     Сортиране:
                     <select

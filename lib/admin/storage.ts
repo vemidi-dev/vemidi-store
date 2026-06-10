@@ -14,7 +14,7 @@ export type UploadedProductImage = {
   url: string;
 };
 
-type ImageFolder = "products" | "blog" | "events";
+type ImageFolder = "products" | "blog" | "events" | "events/gallery";
 
 async function hasValidImageSignature(file: File) {
   const bytes = new Uint8Array(await file.slice(0, 12).arrayBuffer());
@@ -71,6 +71,10 @@ export async function uploadAdminImage(
 
 export function uploadProductImage(supabase: SupabaseClient, file: File) {
   return uploadAdminImage(supabase, file, "products");
+}
+
+export function uploadEventGalleryImage(supabase: SupabaseClient, file: File) {
+  return uploadAdminImage(supabase, file, "events/gallery");
 }
 
 export async function deleteProductImage(supabase: SupabaseClient, path: string) {

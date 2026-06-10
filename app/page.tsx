@@ -15,18 +15,44 @@ export default async function HomePage() {
     getPublishedBlogPosts(),
     getPublishedEvents(),
   ]);
-  const occasionCategories = categories.filter(
+  const homeCategories = categories
+    .filter((category) => category.show_on_home)
+    .sort((a, b) => {
+      const positionDifference = a.home_sort_order - b.home_sort_order;
+      return positionDifference || a.name.localeCompare(b.name, "bg");
+    });
+  const occasionCategories = homeCategories.filter(
     (category) => category.category_type === "occasion",
   );
-  const productCategories = categories.filter(
+  const productCategories = homeCategories.filter(
     (category) => category.category_type === "product",
   );
   const featuredProductCategories = productCategories.slice(0, 8).map(toShowcaseCategory);
   const featuredOccasionCategories = occasionCategories.slice(0, 6).map(toShowcaseCategory);
   const latestPosts = blogPosts.slice(0, 3);
   const now = Date.now();
+  const getEventTime = (event: (typeof events)[number]) =>
+    event.ends_at ?? event.starts_at;
   const upcomingEvents = events
-    .filter((event) => !event.starts_at || new Date(event.starts_at).getTime() >= now)
+    .filter((event) => {
+      const eventTime = getEventTime(event);
+      return !eventTime || new Date(eventTime).getTime() >= now;
+    })
+    .sort(
+      (a, b) =>
+        new Date(a.starts_at ?? "9999-12-31").getTime() -
+        new Date(b.starts_at ?? "9999-12-31").getTime(),
+    )
+    .slice(0, 3);
+  const pastEvents = events
+    .filter((event) => {
+      const eventTime = getEventTime(event);
+      return Boolean(eventTime && new Date(eventTime).getTime() < now);
+    })
+    .sort(
+      (a, b) =>
+        new Date(b.starts_at ?? 0).getTime() - new Date(a.starts_at ?? 0).getTime(),
+    )
     .slice(0, 3);
 
   return (
@@ -104,7 +130,11 @@ export default async function HomePage() {
 
       <HomeProcess />
       <HomeAtelier />
-      <HomeContentGrid posts={latestPosts} events={upcomingEvents} />
+      <HomeContentGrid
+        posts={latestPosts}
+        upcomingEvents={upcomingEvents}
+        pastEvents={pastEvents}
+      />
     </div>
   );
 }

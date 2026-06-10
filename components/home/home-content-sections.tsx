@@ -39,12 +39,68 @@ function formatEventDate(value: string | null) {
   };
 }
 
+function UpcomingEventCard({ event }: { event: EventRow }) {
+  const date = formatEventDate(event.starts_at);
+
+  return (
+    <article className="grid items-center gap-3 rounded-lg border border-boutique-line bg-boutique-warm/55 p-3 sm:grid-cols-[4rem_1fr_auto]">
+      <div className="border-r border-boutique-line pr-4 text-center">
+        <p className="font-heading text-3xl leading-none text-boutique-ink">{date.day}</p>
+        <p className="mt-1 text-xs font-semibold uppercase text-boutique-sage-deep">
+          {date.month}
+        </p>
+      </div>
+      <div>
+        <h3 className="font-heading text-base leading-snug text-boutique-ink">
+          <Link href={`/events/${event.slug}`} className="hover:text-boutique-sage-deep">
+            {event.title}
+          </Link>
+        </h3>
+        <p className="mt-1 text-xs text-boutique-muted">
+          {event.price !== null ? formatEur(event.price) : "Цената предстои"}
+          {event.available_spots !== null
+            ? ` · ${event.available_spots} свободни места`
+            : ""}
+        </p>
+      </div>
+      <div className="text-xs leading-5 text-boutique-muted sm:text-right">
+        <p>⌖ {event.location || (event.format === "online" ? "Онлайн" : "Мястото предстои")}</p>
+        <p>◷ {date.time} ч.</p>
+      </div>
+    </article>
+  );
+}
+
+function PastEventCard({ event }: { event: EventRow }) {
+  return (
+    <article>
+      <Link
+        href={`/events/${event.slug}`}
+        className="group block overflow-hidden rounded-lg border border-boutique-line/80 bg-white"
+      >
+        <div className="aspect-[4/3] overflow-hidden bg-boutique-warm">
+          <ContentImage
+            src={event.image_url}
+            alt={event.title}
+            label="Снимка от събитието"
+          />
+        </div>
+        <h3 className="px-2.5 py-2 font-heading text-sm leading-snug text-boutique-ink transition group-hover:text-boutique-sage-deep line-clamp-2">
+          {event.title}
+        </h3>
+      </Link>
+    </article>
+  );
+}
+
 export function HomeContentGrid({
   posts,
-  events,
+  upcomingEvents,
+  pastEvents,
 }: {
   posts: BlogPostRow[];
-  events: EventRow[];
+  upcomingEvents: EventRow[];
+  pastEvents: EventRow[];
 }) {
   return (
     <>
@@ -104,49 +160,34 @@ export function HomeContentGrid({
               </Link>
             </div>
 
-            {events.length ? (
-              <div className="mt-8 grid gap-3">
-                {events.map((event) => {
-                  const date = formatEventDate(event.starts_at);
-                  return (
-                    <article
-                      key={event.id}
-                      className="grid items-center gap-4 rounded-lg border border-boutique-line bg-boutique-warm/55 p-4 sm:grid-cols-[4.5rem_1fr_auto]"
-                    >
-                      <div className="border-r border-boutique-line pr-4 text-center">
-                        <p className="font-heading text-3xl leading-none text-boutique-ink">
-                          {date.day}
-                        </p>
-                        <p className="mt-1 text-xs font-semibold uppercase text-boutique-sage-deep">
-                          {date.month}
-                        </p>
-                      </div>
-                      <div>
-                        <h3 className="font-heading text-base leading-snug text-boutique-ink">
-                          <Link href={`/events/${event.slug}`} className="hover:text-boutique-sage-deep">
-                            {event.title}
-                          </Link>
-                        </h3>
-                        <p className="mt-1 text-xs text-boutique-muted">
-                          {event.price !== null ? formatEur(event.price) : "Цената предстои"}
-                          {event.available_spots !== null
-                            ? ` · ${event.available_spots} свободни места`
-                            : ""}
-                        </p>
-                      </div>
-                      <div className="text-xs leading-5 text-boutique-muted sm:text-right">
-                        <p>⌖ {event.location || (event.format === "online" ? "Онлайн" : "Мястото предстои")}</p>
-                        <p>◷ {date.time} ч.</p>
-                      </div>
-                    </article>
-                  );
-                })}
+            {upcomingEvents.length ? (
+              <div className="mt-5 grid gap-2.5">
+                {upcomingEvents.map((event) => (
+                  <UpcomingEventCard key={event.id} event={event} />
+                ))}
               </div>
             ) : (
-              <p className="mt-8 rounded-xl border border-dashed border-boutique-line p-6 text-sm text-boutique-muted">
-                Новите работилници и събития ще бъдат публикувани тук.
+              <p className="mt-4 text-xs leading-relaxed text-boutique-muted/80">
+                В момента няма предстоящи събития.
               </p>
             )}
+
+            {pastEvents.length ? (
+              <div
+                className={`${
+                  upcomingEvents.length ? "mt-6 border-t border-boutique-line/60 pt-5" : "mt-4"
+                }`}
+              >
+                <h3 className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-boutique-muted">
+                  Минали събития
+                </h3>
+                <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                  {pastEvents.map((event) => (
+                    <PastEventCard key={event.id} event={event} />
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </div>
         </PageContainer>
       </section>

@@ -1,6 +1,9 @@
 import { createProduct } from "@/app/admin/actions";
 import { ImageFileInput } from "@/components/admin/image-file-input";
 import { ProductColorFieldsEditor } from "@/components/admin/product-color-fields-editor";
+import { ProductPersonalizationFieldsEditor } from "@/components/admin/product-personalization-fields-editor";
+import { ProductCardBadgeField } from "@/components/admin/product-card-badge-field";
+import { ProductWishSelector } from "@/components/admin/product-wish-selector";
 import {
   adminFieldClass,
   adminHelperClass,
@@ -13,12 +16,14 @@ import type {
   ColorGroupRow,
   ColorOptionRow,
   ProductCreateDraft,
+  WishTemplateRow,
 } from "@/lib/admin/types";
 
 type ProductCreatePanelProps = {
   categories: CategoryRow[];
   colorGroups: ColorGroupRow[];
   colorOptions: ColorOptionRow[];
+  wishes: WishTemplateRow[];
   draft: ProductCreateDraft | null;
 };
 
@@ -26,6 +31,7 @@ export function ProductCreatePanel({
   categories,
   colorGroups,
   colorOptions,
+  wishes,
   draft,
 }: ProductCreatePanelProps) {
   const productCategories = categories.filter(
@@ -116,11 +122,12 @@ export function ProductCreatePanel({
           </legend>
           <div className="grid gap-5 md:grid-cols-2">
             <ImageFileInput
-              name={adminFormFields.product.imageFile}
-              label="Изображение на продукта"
+              name={adminFormFields.product.imageFiles}
+              label="Снимки на продукта"
+              multiple
               className={adminFieldClass}
               helperClassName={adminHelperClass}
-              helperText="Качи файл (PNG, JPG, WEBP или SVG, до 5 MB). Файлът се записва в Supabase Storage."
+              helperText="Може да изберете няколко PNG, JPG или WEBP файла. Първата снимка става основна."
             />
 
             <fieldset className="rounded-lg border border-boutique-line/70 bg-boutique-bg p-3">
@@ -173,17 +180,19 @@ export function ProductCreatePanel({
 
         <fieldset className="space-y-4 border-t border-boutique-line/70 pt-6">
           <legend className="text-xs font-semibold uppercase tracking-[0.16em] text-boutique-muted">
+            Подходящи готови пожелания
+          </legend>
+          <ProductWishSelector
+            wishes={wishes}
+            selectedIds={draft?.wishTemplateIds}
+            helperClassName={adminHelperClass}
+          />
+        </fieldset>
+
+        <fieldset className="space-y-4 border-t border-boutique-line/70 pt-6">
+          <legend className="text-xs font-semibold uppercase tracking-[0.16em] text-boutique-muted">
             Допълнителни настройки
           </legend>
-          <label className="inline-flex items-center gap-2 text-sm text-boutique-ink">
-            <input
-              name={adminFormFields.product.isCustomizable}
-              type="checkbox"
-              defaultChecked={draft?.isCustomizable}
-              className="h-4 w-4 rounded border-boutique-line text-boutique-accent"
-            />
-            Продуктът е персонализируем
-          </label>
           <label className="text-sm font-medium text-boutique-ink">
             Бележка за доставка/изработка
             <textarea
@@ -197,6 +206,32 @@ export function ProductCreatePanel({
               Кратка бележка за срок, изработка или потвърждение.
             </p>
           </label>
+
+          <ProductCardBadgeField defaultValue={draft?.cardBadge} />
+
+          <label className="inline-flex items-center gap-2 text-sm font-medium text-boutique-ink">
+            <input
+              name={adminFormFields.product.isSoldOut}
+              type="checkbox"
+              defaultChecked={draft?.isSoldOut}
+              className="h-4 w-4 rounded border-boutique-line text-boutique-accent"
+            />
+            Изчерпан
+            <span className="text-xs font-normal text-boutique-muted">
+              — продуктът остава видим, но не може да се поръча.
+            </span>
+          </label>
+        </fieldset>
+
+        <fieldset className="space-y-4 border-t border-boutique-line/70 pt-6">
+          <legend className="text-xs font-semibold uppercase tracking-[0.16em] text-boutique-muted">
+            Персонализация
+          </legend>
+          <ProductPersonalizationFieldsEditor
+            initialFields={draft?.personalizationFields}
+            helperClassName={adminHelperClass}
+            fieldClassName={adminFieldClass}
+          />
         </fieldset>
 
         <fieldset className="space-y-4 border-t border-boutique-line/70 pt-6">

@@ -2,7 +2,9 @@
   "name": "lumaforge-store",
   "private": true,
   "scripts": {
+    "clean": "node ./scripts/clean-next.mjs",
     "dev": "next dev",
+    "dev:clean": "npm run clean && npm run dev",
     "dev:turbo": "next dev --turbo",
     "dev:webpack": "next dev",
     "build": "next build",

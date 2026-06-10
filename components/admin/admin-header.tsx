@@ -47,6 +47,26 @@ export function AdminHeader({ activeTab }: { activeTab: AdminTab }) {
           Управление на категории
         </a>
         <a
+          href={makeAdminTabHref("colors")}
+          className={`rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-wider transition ${
+            activeTab === "colors"
+              ? "bg-boutique-ink text-boutique-paper"
+              : "text-boutique-ink hover:bg-boutique-bg"
+          }`}
+        >
+          Цветове
+        </a>
+        <a
+          href={makeAdminTabHref("promotions")}
+          className={`rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-wider transition ${
+            activeTab === "promotions"
+              ? "bg-boutique-ink text-boutique-paper"
+              : "text-boutique-ink hover:bg-boutique-bg"
+          }`}
+        >
+          Промоции
+        </a>
+        <a
           href={makeAdminTabHref("orders")}
           className={`rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-wider transition ${
             activeTab === "orders"

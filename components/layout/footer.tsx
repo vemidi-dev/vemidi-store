@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { PageContainer } from "@/components/layout/page-container";
+import { SocialLinks } from "@/components/layout/social-links";
 import { siteConfig } from "@/config/site";
 
 export function Footer() {
@@ -13,6 +14,7 @@ export function Footer() {
             Подаръци, декорации и творчески комплекти, изработени на ръка с лично отношение.
             Създаваме малки серии и персонални изделия, които пазят спомен.
           </p>
+          <SocialLinks variant="footer" />
         </div>
 
         <div className="space-y-4">

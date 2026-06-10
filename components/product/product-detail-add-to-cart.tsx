@@ -96,6 +96,20 @@ export function ProductDetailAddToCart({ product }: ProductDetailAddToCartProps)
     },
   );
 
+  if (product.soldOut) {
+    return (
+      <div className="mt-8 rounded-xl border border-boutique-line bg-boutique-bg px-5 py-5">
+        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-boutique-muted">
+          Изчерпан
+        </p>
+        <p className="mt-2 text-sm leading-relaxed text-boutique-muted">
+          Този продукт временно не е наличен за поръчка. Можете да се свържете с нас за
+          алтернатива или срок.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="mt-10 rounded-2xl border border-boutique-line bg-boutique-paper p-5 sm:p-6">
       {fields.length ? (
@@ -205,6 +219,7 @@ export function ProductDetailAddToCart({ product }: ProductDetailAddToCartProps)
       {error ? <p className="mt-5 text-sm font-medium text-red-700">{error}</p> : null}
       <button
         type="button"
+        aria-live="polite"
         onClick={() => {
           const validationError = validate();
           if (validationError) return setError(validationError);
@@ -217,11 +232,15 @@ export function ProductDetailAddToCart({ product }: ProductDetailAddToCartProps)
           );
           setError(null);
           setAdded(true);
-          setTimeout(() => setAdded(false), 1800);
+          setTimeout(() => setAdded(false), 2200);
         }}
-        className="mt-7 w-full rounded-xl bg-boutique-sage-deep px-8 py-4 text-sm font-semibold text-white transition hover:bg-boutique-ink"
+        className={`mt-7 w-full rounded-xl px-8 py-4 text-sm font-semibold text-white transition ${
+          added
+            ? "bg-boutique-sage shadow-boutique-sm"
+            : "bg-boutique-sage-deep hover:bg-boutique-ink"
+        }`}
       >
-        {added ? "Добавено в количката" : "Добави в количката"}
+        {added ? "✓ Добавено в количката" : "Добави в количката"}
       </button>
 
       {wishFieldId ? (
@@ -249,8 +268,7 @@ export function ProductDetailAddToCart({ product }: ProductDetailAddToCartProps)
             <div className="mt-6 grid gap-3">
               {(product.wishTemplates ?? []).map((wish) => (
                 <article key={wish.id} className="rounded-xl border border-boutique-line bg-boutique-paper p-4">
-                  <h3 className="font-semibold text-boutique-ink">{wish.title}</h3>
-                  <p className="mt-2 whitespace-pre-line text-sm leading-6 text-boutique-muted">
+                  <p className="whitespace-pre-line text-sm leading-6 text-boutique-muted">
                     {wish.body}
                   </p>
                   <button

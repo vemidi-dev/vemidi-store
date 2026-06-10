@@ -1,13 +1,12 @@
-"use client";
-
-import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
 
-import { useCart } from "@/components/cart/cart-provider";
-import { MediaPlaceholder } from "@/components/ui/media-placeholder";
+import { ProductPrice } from "@/components/product/product-price";
+import { ProductCardMedia } from "@/components/product/product-card-media";
 import type { Product } from "@/lib/catalog";
-import { formatEur } from "@/lib/format-eur";
+import {
+  getProductCardCtaLabel,
+  resolveProductCardStatusLabel,
+} from "@/lib/product-card";
 
 type ProductCardProps = {
   product: Product;
@@ -15,55 +14,45 @@ type ProductCardProps = {
 };
 
 export function ProductCard({ product, variant = "default" }: ProductCardProps) {
-  const { addProduct } = useCart();
-  const [added, setAdded] = useState(false);
-  const cover = product.images[0];
   const compact = variant === "catalog";
+  const statusLabel = resolveProductCardStatusLabel(product);
+  const ctaLabel = getProductCardCtaLabel(product);
+  const ctaClassName = compact
+    ? "mt-3 inline-flex text-xs font-semibold text-boutique-sage-deep underline-offset-4 hover:underline"
+    : "mt-4 block w-full rounded-full bg-boutique-ink py-3.5 text-center text-sm font-semibold tracking-wide text-boutique-paper shadow-sm transition duration-300 hover:bg-boutique-accent hover:shadow-md";
 
   return (
-    <article className={`group flex flex-col overflow-hidden border border-boutique-line/70 bg-boutique-paper transition duration-500 ease-out hover:-translate-y-1 hover:border-boutique-sage/40 hover:shadow-boutique ${
-      compact
-        ? "rounded-xl shadow-boutique-sm"
-        : "rounded-3xl shadow-[0_18px_40px_-18px_rgb(44_40_37_/0.12)]"
-    }`}>
-      <Link
-        href={`/products/${product.slug}`}
-        className={`relative overflow-hidden ${compact ? "aspect-square" : "aspect-[4/5]"}`}
-      >
-        {cover?.src ? (
-          <>
-            <Image
-              src={cover.src}
-              alt={cover.alt}
-              fill
-              sizes="(max-width: 768px) 100vw, 33vw"
-              className="object-cover transition duration-700 ease-out group-hover:scale-[1.04]"
-            />
-            <div
-              className="pointer-events-none absolute inset-0 bg-gradient-to-t from-boutique-ink/35 via-transparent to-transparent opacity-60 transition duration-500 group-hover:opacity-80"
-              aria-hidden
-            />
-          </>
-        ) : (
-          <MediaPlaceholder label="Снимка на продукта" />
-        )}
-      </Link>
+    <article
+      className={`group flex flex-col overflow-hidden border border-boutique-line/70 bg-boutique-paper transition duration-500 ease-out hover:-translate-y-1 hover:border-boutique-sage/40 hover:shadow-boutique ${
+        compact
+          ? "rounded-xl shadow-boutique-sm"
+          : "rounded-3xl shadow-[0_18px_40px_-18px_rgb(44_40_37_/0.12)]"
+      }`}
+    >
+      <ProductCardMedia
+        slug={product.slug}
+        images={product.images}
+        soldOut={product.soldOut}
+        promotion={product.promotion}
+        compact={compact}
+      />
 
       <div className={`flex flex-1 flex-col ${compact ? "p-4" : "p-6 sm:p-7"}`}>
-        {product.tag ? (
+        {statusLabel ? (
           <p className="text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-boutique-accent">
-            {product.tag}
+            {statusLabel}
           </p>
-        ) : (
-          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-boutique-muted">
-            В ателието
-          </p>
-        )}
+        ) : null}
 
-        <Link href={`/products/${product.slug}`} className="mt-2 block focus:outline-none">
-          <h2 className={`font-heading leading-snug text-boutique-ink transition duration-300 group-hover:text-boutique-sage-deep ${
-            compact ? "text-base" : "text-xl"
-          }`}>
+        <Link
+          href={`/products/${product.slug}`}
+          className={`block focus:outline-none ${statusLabel ? "mt-2" : ""}`}
+        >
+          <h2
+            className={`font-heading leading-snug text-boutique-ink transition duration-300 group-hover:text-boutique-sage-deep ${
+              compact ? "text-base" : "text-xl"
+            }`}
+          >
             {product.title}
           </h2>
         </Link>
@@ -75,45 +64,16 @@ export function ProductCard({ product, variant = "default" }: ProductCardProps) 
         ) : null}
 
         <div className={compact ? "mt-4" : "mt-6 border-t border-boutique-line/80 pt-5"}>
-          <p className={`font-heading tracking-tight text-boutique-sage-deep ${
-            compact ? "text-lg" : "text-2xl"
-          }`}>
-            {formatEur(product.price)}
-          </p>
-          {compact ? (
-            <Link
-              href={`/products/${product.slug}`}
-              className="mt-3 inline-flex text-xs font-semibold text-boutique-sage-deep underline-offset-4 hover:underline"
-            >
-              {product.customizable ? "Персонализирай →" : "Виж продукта →"}
-            </Link>
-          ) : product.customizable ? (
-            <Link
-              href={`/products/${product.slug}`}
-              className="mt-4 block w-full rounded-full bg-boutique-ink py-3.5 text-center text-sm font-semibold tracking-wide text-boutique-paper shadow-sm transition duration-300 hover:bg-boutique-accent hover:shadow-md"
-            >
-              Избери персонализация
-            </Link>
+          <ProductPrice product={product} size={compact ? "md" : "lg"} />
+          {product.soldOut ? (
+            <p className="mt-3 text-xs font-semibold uppercase tracking-[0.16em] text-boutique-muted">
+              Изчерпан
+            </p>
           ) : (
-            <button
-              type="button"
-              aria-live="polite"
-              onClick={() => {
-                addProduct(product, 1);
-                setAdded(true);
-                setTimeout(() => setAdded(false), 1800);
-              }}
-              className="mt-4 w-full rounded-full bg-boutique-ink py-3.5 text-sm font-semibold tracking-wide text-boutique-paper shadow-sm transition duration-300 hover:bg-boutique-accent hover:shadow-md active:scale-[0.99]"
-            >
-              {added ? "Добавено в количката" : "Добави в количката"}
-            </button>
+            <Link href={`/products/${product.slug}`} className={ctaClassName}>
+              {compact ? `${ctaLabel} →` : ctaLabel}
+            </Link>
           )}
-          <Link
-            href={`/products/${product.slug}`}
-            className="mt-3 block text-center text-xs font-medium text-boutique-accent underline-offset-4 transition hover:text-boutique-ink hover:underline"
-          >
-            Виж детайли
-          </Link>
         </div>
       </div>
     </article>

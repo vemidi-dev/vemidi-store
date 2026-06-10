@@ -6,16 +6,18 @@ import { redirect } from "next/navigation";
 import {
   getAdminTab,
   getCategoryIds,
-  getFile,
+  getFiles,
   getOptionalString,
   getPrice,
   getString,
+  getWishTemplateIds,
   isChecked,
   makeCreateProductDraft,
   normalizeSlug,
   parseSelectLimit,
 } from "@/lib/admin/form-data";
 import { adminFormFields } from "@/lib/admin/form-fields";
+import { normalizeProductCardBadge } from "@/lib/product-card";
 import {
   createProductAtomic,
   deleteProductAtomic,
@@ -33,12 +35,15 @@ import type {
   ColorGroupRow,
   ColorOptionRow,
   ParsedColorField,
+  ParsedPersonalizationField,
 } from "@/lib/admin/types";
 import { checkIsAdmin } from "@/lib/supabase/admin-auth";
 import { createClient } from "@/lib/supabase/server";
 
 const ADMIN_PATH = "/admin";
 const ADMIN_LOGIN_PATH = "/admin/login";
+const MAX_GALLERY_FILES_PER_UPLOAD = 8;
+const MAX_GALLERY_UPLOAD_BYTES = 9 * 1024 * 1024;
 
 function redirectWith(
   kind: "success" | "error",
@@ -64,6 +69,14 @@ function revalidateProductPaths(productId?: string) {
   }
 }
 
+function revalidateCategoryPaths() {
+  revalidatePath(ADMIN_PATH);
+  revalidatePath("/");
+  revalidatePath("/categories");
+  revalidatePath("/occasions");
+  revalidatePath("/shop");
+}
+
 async function deleteImageBestEffort(
   supabase: NonNullable<Awaited<ReturnType<typeof createClient>>>,
   path: string | null,
@@ -77,6 +90,63 @@ async function deleteImageBestEffort(
   } catch {
     // Database state is authoritative; stale storage objects can be cleaned up later.
   }
+}
+
+async function deleteImagesBestEffort(
+  supabase: NonNullable<Awaited<ReturnType<typeof createClient>>>,
+  images: UploadedProductImage[],
+) {
+  await Promise.all(
+    images.map((image) => deleteImageBestEffort(supabase, image.path)),
+  );
+}
+
+async function uploadProductImages(
+  supabase: NonNullable<Awaited<ReturnType<typeof createClient>>>,
+  files: File[],
+) {
+  const uploaded: UploadedProductImage[] = [];
+
+  try {
+    for (const file of files) {
+      uploaded.push(await uploadProductImage(supabase, file));
+    }
+    return uploaded;
+  } catch (error) {
+    await deleteImagesBestEffort(supabase, uploaded);
+    throw error;
+  }
+}
+
+async function attachProductImages(
+  supabase: NonNullable<Awaited<ReturnType<typeof createClient>>>,
+  productId: string,
+  productName: string,
+  images: UploadedProductImage[],
+) {
+  if (images.length === 0) {
+    return null;
+  }
+
+  const { error } = await supabase.rpc("admin_attach_product_images", {
+    p_product_id: productId,
+    p_images: images.map((image) => ({
+      image_url: image.url,
+      alt_text: productName,
+    })),
+  });
+  return error;
+}
+
+function getGalleryUploadError(files: File[]) {
+  if (files.length > MAX_GALLERY_FILES_PER_UPLOAD) {
+    return `Изберете най-много ${MAX_GALLERY_FILES_PER_UPLOAD} снимки наведнъж.`;
+  }
+  const totalSize = files.reduce((sum, file) => sum + file.size, 0);
+  if (totalSize > MAX_GALLERY_UPLOAD_BYTES) {
+    return "Общият размер на снимките трябва да бъде до 9 MB.";
+  }
+  return null;
 }
 
 async function parseProductColorFields(
@@ -127,19 +197,19 @@ async function parseProductColorFields(
       continue;
     }
     if (!label || !groupId) {
-      return { fields: [], error: "Всяко цветово поле трябва да има лейбъл и категория." };
+      return { fields: [], error: "Всеки избор на цвят трябва да има име и палитра." };
     }
 
     const groupExists = groups.some((group) => group.id === groupId);
     if (!groupExists) {
-      return { fields: [], error: "Избрана е невалидна категория за цветово поле." };
+      return { fields: [], error: "Избрана е невалидна цветова палитра." };
     }
 
     const minSelect = parseSelectLimit(minRaw, 0);
     const maxSelect = parseSelectLimit(maxRaw, 1);
 
     if (minSelect === null || maxSelect === null || maxSelect < 1 || minSelect > maxSelect) {
-      return { fields: [], error: "Невалиден брой избори за цветове (min/max)." };
+      return { fields: [], error: "Настройката за броя избирани цветове е невалидна." };
     }
 
     const optionIds = Array.from(
@@ -157,7 +227,7 @@ async function parseProductColorFields(
     if (optionIds.length < minSelect || optionIds.length < maxSelect) {
       return {
         fields: [],
-        error: "Броят позволени цветове е по-малък от зададените min/max ограничения.",
+        error: "Изберете достатъчно налични цветове за зададения брой клиентски избори.",
       };
     }
 
@@ -177,6 +247,79 @@ async function parseProductColorFields(
   }
 
   return { fields: parsedFields, error: null };
+}
+
+function parseProductPersonalizationFields(
+  formData: FormData,
+): { fields: ParsedPersonalizationField[]; error: string | null } {
+  const labels = formData
+    .getAll(adminFormFields.personalizationField.labels)
+    .map((value) => String(value ?? "").trim());
+  const keys = formData
+    .getAll(adminFormFields.personalizationField.keys)
+    .map((value) => String(value ?? "").trim());
+  const types = formData
+    .getAll(adminFormFields.personalizationField.types)
+    .map((value) => String(value ?? "").trim());
+  const placeholders = formData
+    .getAll(adminFormFields.personalizationField.placeholders)
+    .map((value) => String(value ?? "").trim());
+  const maxLengths = formData
+    .getAll(adminFormFields.personalizationField.maxLengths)
+    .map((value) => Number(String(value ?? "").trim()));
+  const required = formData
+    .getAll(adminFormFields.personalizationField.required)
+    .map((value) => String(value) === "1");
+  const allowsWishes = formData
+    .getAll(adminFormFields.personalizationField.allowsWishes)
+    .map((value) => String(value) === "1");
+
+  if (labels.length > 20) {
+    return {
+      fields: [],
+      error: "Един продукт може да има най-много 20 полета за персонализация.",
+    };
+  }
+
+  const fields: ParsedPersonalizationField[] = [];
+  const usedKeys = new Set<string>();
+
+  for (let index = 0; index < labels.length; index += 1) {
+    const label = labels[index] ?? "";
+    const key = keys[index] ?? "";
+    const type = types[index] ?? "";
+    const maxLength = type === "date" ? 10 : maxLengths[index];
+
+    if (
+      !label ||
+      !/^[a-z][a-z0-9_]{0,63}$/.test(key) ||
+      !["text", "textarea", "date"].includes(type) ||
+      !Number.isInteger(maxLength) ||
+      maxLength < 1 ||
+      maxLength > 1000 ||
+      usedKeys.has(key)
+    ) {
+      return {
+        fields: [],
+        error: `Проверете настройките на поле за персонализация #${index + 1}.`,
+      };
+    }
+
+    usedKeys.add(key);
+    fields.push({
+      label,
+      key,
+      type: type as ParsedPersonalizationField["type"],
+      placeholder: placeholders[index] ?? "",
+      maxLength,
+      required: required[index] ?? false,
+      allowsWishTemplates:
+        type === "textarea" && (allowsWishes[index] ?? false),
+      sortOrder: index,
+    });
+  }
+
+  return { fields, error: null };
 }
 
 async function getAuthorizedClient() {
@@ -217,13 +360,23 @@ export async function createProduct(formData: FormData) {
   const additionalInfo = getOptionalString(formData, adminFormFields.product.additionalInfo);
   const fulfillmentNote = getOptionalString(formData, adminFormFields.product.fulfillmentNote);
   const isCustomizable = isChecked(formData, adminFormFields.product.isCustomizable);
-  const imageFile = getFile(formData, adminFormFields.product.imageFile);
+  const isSoldOut = isChecked(formData, adminFormFields.product.isSoldOut);
+  const cardBadge = normalizeProductCardBadge(
+    getOptionalString(formData, adminFormFields.product.cardBadge),
+  );
+  const imageFiles = getFiles(formData, adminFormFields.product.imageFiles);
+  const galleryUploadError = getGalleryUploadError(imageFiles);
   const price = getPrice(formData);
   const categoryIds = getCategoryIds(formData);
+  const wishTemplateIds = getWishTemplateIds(formData);
   const { fields: colorFields, error: colorFieldsError } = await parseProductColorFields(
     supabase,
     formData,
   );
+  const {
+    fields: personalizationFields,
+    error: personalizationFieldsError,
+  } = parseProductPersonalizationFields(formData);
 
   if (!name || !description || price === null || categoryIds.length === 0) {
     redirectWith(
@@ -236,15 +389,21 @@ export async function createProduct(formData: FormData) {
   if (colorFieldsError) {
     redirectWith("error", colorFieldsError, activeTab, draft);
   }
+  if (personalizationFieldsError) {
+    redirectWith("error", personalizationFieldsError, activeTab, draft);
+  }
 
-  let uploadedImage: UploadedProductImage | null = null;
-  if (imageFile) {
+  let uploadedImages: UploadedProductImage[] = [];
+  if (imageFiles.length > 0) {
     try {
-      uploadedImage = await uploadProductImage(supabase, imageFile);
+      uploadedImages = await uploadProductImages(supabase, imageFiles);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Неуспешно качване на изображението.";
       redirectWith("error", `Грешка при качване на изображение: ${message}`, activeTab, draft);
     }
+  }
+  if (galleryUploadError) {
+    redirectWith("error", galleryUploadError, activeTab, draft);
   }
 
   const { data: productId, error: mutationError } = await createProductAtomic(supabase, {
@@ -253,17 +412,38 @@ export async function createProduct(formData: FormData) {
     additionalInfo,
     fulfillmentNote,
     price,
-    imageUrl: uploadedImage?.url ?? null,
-    isCustomizable,
+    imageUrl: uploadedImages[0]?.url ?? null,
+    isCustomizable: isCustomizable || personalizationFields.length > 0,
+    isSoldOut,
+    cardBadge,
     categoryIds,
     colorFields,
+    personalizationFields,
+    wishTemplateIds,
   });
 
   if (mutationError || !productId) {
-    await deleteImageBestEffort(supabase, uploadedImage?.path ?? null);
+    await deleteImagesBestEffort(supabase, uploadedImages);
     redirectWith(
       "error",
       getProductMutationErrorMessage(mutationError),
+      activeTab,
+      draft,
+    );
+  }
+
+  const galleryError = await attachProductImages(
+    supabase,
+    String(productId),
+    name,
+    uploadedImages,
+  );
+  if (galleryError) {
+    await deleteProductAtomic(supabase, String(productId));
+    await deleteImagesBestEffort(supabase, uploadedImages);
+    redirectWith(
+      "error",
+      "Продуктът не беше добавен, защото галерията не можа да бъде записана. Изпълнете product_image_gallery.sql.",
       activeTab,
       draft,
     );
@@ -283,14 +463,24 @@ export async function updateProduct(formData: FormData) {
   const additionalInfo = getOptionalString(formData, adminFormFields.product.additionalInfo);
   const fulfillmentNote = getOptionalString(formData, adminFormFields.product.fulfillmentNote);
   const existingImageUrl = getString(formData, adminFormFields.product.existingImageUrl) || null;
-  const imageFile = getFile(formData, adminFormFields.product.imageFile);
+  const imageFiles = getFiles(formData, adminFormFields.product.imageFiles);
+  const galleryUploadError = getGalleryUploadError(imageFiles);
   const categoryIds = getCategoryIds(formData);
+  const wishTemplateIds = getWishTemplateIds(formData);
   const isCustomizable = isChecked(formData, adminFormFields.product.isCustomizable);
+  const isSoldOut = isChecked(formData, adminFormFields.product.isSoldOut);
+  const cardBadge = normalizeProductCardBadge(
+    getOptionalString(formData, adminFormFields.product.cardBadge),
+  );
   const price = getPrice(formData);
   const { fields: colorFields, error: colorFieldsError } = await parseProductColorFields(
     supabase,
     formData,
   );
+  const {
+    fields: personalizationFields,
+    error: personalizationFieldsError,
+  } = parseProductPersonalizationFields(formData);
 
   if (!id || !name || !description || price === null || categoryIds.length === 0) {
     redirectWith("error", "Невалидни данни за редакция.", activeTab);
@@ -298,20 +488,24 @@ export async function updateProduct(formData: FormData) {
   if (colorFieldsError) {
     redirectWith("error", colorFieldsError, activeTab);
   }
+  if (personalizationFieldsError) {
+    redirectWith("error", personalizationFieldsError, activeTab);
+  }
 
-  let uploadedImage: UploadedProductImage | null = null;
-  let imageUrl = existingImageUrl;
-  if (imageFile) {
+  let uploadedImages: UploadedProductImage[] = [];
+  if (imageFiles.length > 0) {
     try {
-      uploadedImage = await uploadProductImage(supabase, imageFile);
-      imageUrl = uploadedImage.url;
+      uploadedImages = await uploadProductImages(supabase, imageFiles);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Неуспешно качване на изображението.";
       redirectWith("error", `Грешка при качване на изображение: ${message}`, activeTab);
     }
   }
+  if (galleryUploadError) {
+    redirectWith("error", galleryUploadError, activeTab);
+  }
 
-  const { data: previousImageUrl, error: mutationError } = await updateProductAtomic(
+  const { error: mutationError } = await updateProductAtomic(
     supabase,
     id,
     {
@@ -320,15 +514,19 @@ export async function updateProduct(formData: FormData) {
       additionalInfo,
       fulfillmentNote,
       price,
-      imageUrl,
-      isCustomizable,
+      imageUrl: existingImageUrl,
+      isCustomizable: isCustomizable || personalizationFields.length > 0,
+      isSoldOut,
+      cardBadge,
       categoryIds,
       colorFields,
+      personalizationFields,
+      wishTemplateIds,
     },
   );
 
   if (mutationError) {
-    await deleteImageBestEffort(supabase, uploadedImage?.path ?? null);
+    await deleteImagesBestEffort(supabase, uploadedImages);
     redirectWith(
       "error",
       getProductMutationErrorMessage(mutationError),
@@ -336,8 +534,19 @@ export async function updateProduct(formData: FormData) {
     );
   }
 
-  if (uploadedImage && typeof previousImageUrl === "string" && previousImageUrl !== imageUrl) {
-    await deleteImageBestEffort(supabase, getProductImagePath(previousImageUrl));
+  const galleryError = await attachProductImages(
+    supabase,
+    id,
+    name,
+    uploadedImages,
+  );
+  if (galleryError) {
+    await deleteImagesBestEffort(supabase, uploadedImages);
+    redirectWith(
+      "error",
+      "Промените са запазени, но новите снимки не бяха добавени. Изпълнете product_image_gallery.sql.",
+      activeTab,
+    );
   }
 
   revalidateProductPaths(id);
@@ -353,6 +562,10 @@ export async function deleteProduct(formData: FormData) {
     redirectWith("error", "Липсва id за изтриване.", activeTab);
   }
 
+  const { data: galleryRows } = await supabase
+    .from("product_images")
+    .select("image_url")
+    .eq("product_id", id);
   const { data: imageUrl, error: mutationError } = await deleteProductAtomic(supabase, id);
   if (mutationError) {
     redirectWith(
@@ -362,12 +575,98 @@ export async function deleteProduct(formData: FormData) {
     );
   }
 
-  await deleteImageBestEffort(
-    supabase,
-    getProductImagePath(typeof imageUrl === "string" ? imageUrl : null),
+  const imageUrls = new Set(
+    [
+      ...(galleryRows ?? []).map((row) => String(row.image_url)),
+      typeof imageUrl === "string" ? imageUrl : "",
+    ].filter(Boolean),
+  );
+  await Promise.all(
+    [...imageUrls].map((url) =>
+      deleteImageBestEffort(supabase, getProductImagePath(url)),
+    ),
   );
   revalidateProductPaths(id);
   redirectWith("success", "Продуктът е изтрит.", activeTab);
+}
+
+export async function setPrimaryProductImage(formData: FormData) {
+  const supabase = await getAuthorizedClient();
+  const imageId = getString(formData, adminFormFields.productImage.imageId);
+  if (!imageId) {
+    redirectWith("error", "Липсва снимка.", "products");
+  }
+
+  const { data: image } = await supabase
+    .from("product_images")
+    .select("product_id")
+    .eq("id", imageId)
+    .single();
+  const { error } = await supabase.rpc("admin_set_primary_product_image", {
+    p_image_id: imageId,
+  });
+  if (error) {
+    redirectWith("error", "Основната снимка не беше променена.", "products");
+  }
+
+  revalidateProductPaths(image?.product_id ? String(image.product_id) : undefined);
+  redirectWith("success", "Основната снимка е променена.", "products");
+}
+
+export async function moveProductImage(formData: FormData) {
+  const supabase = await getAuthorizedClient();
+  const imageId = getString(formData, adminFormFields.productImage.imageId);
+  const direction = getString(formData, adminFormFields.productImage.direction);
+  if (!imageId || !["up", "down"].includes(direction)) {
+    redirectWith("error", "Невалидна заявка за преместване.", "products");
+  }
+
+  const { data: image } = await supabase
+    .from("product_images")
+    .select("product_id")
+    .eq("id", imageId)
+    .single();
+  const { data: moved, error } = await supabase.rpc("admin_move_product_image", {
+    p_image_id: imageId,
+    p_direction: direction,
+  });
+  if (error) {
+    redirectWith("error", "Снимката не беше преместена.", "products");
+  }
+  if (moved !== true) {
+    redirectWith("success", "Снимката вече е в края на галерията.", "products");
+  }
+
+  revalidateProductPaths(image?.product_id ? String(image.product_id) : undefined);
+  redirectWith("success", "Редът на снимките е променен.", "products");
+}
+
+export async function deleteProductGalleryImage(formData: FormData) {
+  const supabase = await getAuthorizedClient();
+  const imageId = getString(formData, adminFormFields.productImage.imageId);
+  if (!imageId) {
+    redirectWith("error", "Липсва снимка за изтриване.", "products");
+  }
+
+  const { data, error } = await supabase.rpc(
+    "admin_delete_product_gallery_image",
+    { p_image_id: imageId },
+  );
+  if (error || !data || typeof data !== "object") {
+    redirectWith("error", "Снимката не беше изтрита.", "products");
+  }
+
+  const result = data as { product_id?: unknown; image_url?: unknown };
+  await deleteImageBestEffort(
+    supabase,
+    getProductImagePath(
+      typeof result.image_url === "string" ? result.image_url : null,
+    ),
+  );
+  revalidateProductPaths(
+    typeof result.product_id === "string" ? result.product_id : undefined,
+  );
+  redirectWith("success", "Снимката е изтрита.", "products");
 }
 
 export async function createCategory(formData: FormData) {
@@ -376,22 +675,35 @@ export async function createCategory(formData: FormData) {
   const name = getString(formData, adminFormFields.category.name);
   const slug = normalizeSlug(getString(formData, adminFormFields.category.slug));
   const categoryType = getString(formData, adminFormFields.category.type);
+  const showOnHome = isChecked(formData, adminFormFields.category.showOnHome);
 
   if (!name || !slug || !["product", "occasion"].includes(categoryType)) {
     redirectWith("error", "Попълнете име и slug за категорията.", activeTab);
   }
 
+  const { data: lastCategory } = await supabase
+    .from("categories")
+    .select("home_sort_order")
+    .eq("category_type", categoryType)
+    .order("home_sort_order", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const homeSortOrder = (Number(lastCategory?.home_sort_order) || 0) + 10;
+
   const { error } = await supabase
     .from("categories")
-    .insert({ name, slug, category_type: categoryType });
+    .insert({
+      name,
+      slug,
+      category_type: categoryType,
+      show_on_home: showOnHome,
+      home_sort_order: homeSortOrder,
+    });
   if (error) {
     redirectWith("error", `Грешка при добавяне на категория: ${error.message}`, activeTab);
   }
 
-  revalidatePath(ADMIN_PATH);
-  revalidatePath("/categories");
-  revalidatePath("/occasions");
-  revalidatePath("/shop");
+  revalidateCategoryPaths();
   redirectWith("success", "Категорията е добавена.", activeTab);
 }
 
@@ -402,24 +714,74 @@ export async function updateCategory(formData: FormData) {
   const name = getString(formData, adminFormFields.category.name);
   const slug = normalizeSlug(getString(formData, adminFormFields.category.slug));
   const categoryType = getString(formData, adminFormFields.category.type);
+  const showOnHome = isChecked(formData, adminFormFields.category.showOnHome);
 
   if (!id || !name || !slug || !["product", "occasion"].includes(categoryType)) {
     redirectWith("error", "Невалидни данни за категория.", activeTab);
   }
 
+  const { data: existingCategory, error: existingCategoryError } = await supabase
+    .from("categories")
+    .select("category_type,home_sort_order")
+    .eq("id", id)
+    .single();
+  if (existingCategoryError || !existingCategory) {
+    redirectWith("error", "Категорията не беше намерена.", activeTab);
+  }
+
+  let homeSortOrder = existingCategory.home_sort_order;
+  if (existingCategory.category_type !== categoryType) {
+    const { data: lastCategory } = await supabase
+      .from("categories")
+      .select("home_sort_order")
+      .eq("category_type", categoryType)
+      .order("home_sort_order", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    homeSortOrder = (Number(lastCategory?.home_sort_order) || 0) + 10;
+  }
+
   const { error } = await supabase
     .from("categories")
-    .update({ name, slug, category_type: categoryType })
+    .update({
+      name,
+      slug,
+      category_type: categoryType,
+      show_on_home: showOnHome,
+      home_sort_order: homeSortOrder,
+    })
     .eq("id", id);
   if (error) {
     redirectWith("error", `Грешка при редакция на категория: ${error.message}`, activeTab);
   }
 
-  revalidatePath(ADMIN_PATH);
-  revalidatePath("/categories");
-  revalidatePath("/occasions");
-  revalidatePath("/shop");
+  revalidateCategoryPaths();
   redirectWith("success", "Категорията е обновена.", activeTab);
+}
+
+export async function moveCategory(formData: FormData) {
+  const supabase = await getAuthorizedClient();
+  const activeTab = getAdminTab(formData, "categories");
+  const id = getString(formData, adminFormFields.common.id);
+  const direction = getString(formData, adminFormFields.category.direction);
+
+  if (!id || !["up", "down"].includes(direction)) {
+    redirectWith("error", "Невалидна заявка за преместване.", activeTab);
+  }
+
+  const { data: moved, error } = await supabase.rpc("admin_move_home_category", {
+    p_category_id: id,
+    p_direction: direction,
+  });
+  if (error) {
+    redirectWith("error", "Позицията не беше променена.", activeTab);
+  }
+  if (moved !== true) {
+    redirectWith("success", "Категорията вече е в края на списъка.", activeTab);
+  }
+
+  revalidateCategoryPaths();
+  redirectWith("success", "Позицията е променена.", activeTab);
 }
 
 export async function deleteCategory(formData: FormData) {
@@ -436,9 +798,6 @@ export async function deleteCategory(formData: FormData) {
     redirectWith("error", `Грешка при изтриване на категория: ${error.message}`, activeTab);
   }
 
-  revalidatePath(ADMIN_PATH);
-  revalidatePath("/categories");
-  revalidatePath("/occasions");
-  revalidatePath("/shop");
+  revalidateCategoryPaths();
   redirectWith("success", "Категорията е изтрита.", activeTab);
 }

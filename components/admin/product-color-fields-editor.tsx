@@ -47,7 +47,7 @@ function makeEmptyField(groupId: string): LocalColorField {
     uid: crypto.randomUUID(),
     label: "",
     groupId,
-    minSelect: 0,
+    minSelect: 1,
     maxSelect: 1,
     optionIds: [],
   };
@@ -71,9 +71,7 @@ export function ProductColorFieldsEditor({
           maxSelect: field.maxSelect,
           optionIds: field.optionIds,
         }))
-      : defaultGroupId
-        ? [makeEmptyField(defaultGroupId)]
-        : [],
+      : [],
   );
 
   const optionsByGroupId = useMemo(() => {
@@ -88,9 +86,17 @@ export function ProductColorFieldsEditor({
 
   if (colorGroups.length === 0) {
     return (
-      <p className={helperClassName}>
-        Няма дефинирани цветови групи. Пуснете SQL за color groups / color options.
-      </p>
+      <div className="rounded-lg border border-dashed border-boutique-line p-4">
+        <p className={helperClassName}>
+          Няма създадени цветови палитри. Добавете ги първо от таб „Цветове“.
+        </p>
+        <a
+          href="/admin?tab=colors"
+          className="mt-3 inline-flex rounded-full border border-boutique-line px-4 py-2 text-xs font-semibold text-boutique-ink"
+        >
+          Към цветовите палитри
+        </a>
+      </div>
     );
   }
 
@@ -107,7 +113,7 @@ export function ProductColorFieldsEditor({
           >
             <div className="flex items-center justify-between gap-3">
               <legend className="text-sm font-semibold text-boutique-ink">
-                Цветово поле #{index + 1}
+                Избор на цвят #{index + 1}
               </legend>
               <button
                 type="button"
@@ -119,7 +125,7 @@ export function ProductColorFieldsEditor({
             </div>
 
             <label className="text-sm font-medium text-boutique-ink">
-              Лейбъл на полето
+              Какво избира клиентът?
               <input
                 value={field.label}
                 onChange={(event) => {
@@ -128,13 +134,13 @@ export function ProductColorFieldsEditor({
                     prev.map((item) => (item.uid === field.uid ? { ...item, label: value } : item)),
                   );
                 }}
-                placeholder="Напр. Цвят на хартия"
+                placeholder="Напр. Цвят на панделката"
                 className={fieldClassName}
               />
             </label>
 
             <label className="text-sm font-medium text-boutique-ink">
-              Категория цветове
+              Използвай палитра
               <select
                 value={field.groupId}
                 onChange={(event) => {
@@ -156,52 +162,90 @@ export function ProductColorFieldsEditor({
             </label>
 
             <div className="grid gap-3 sm:grid-cols-2">
-              <label className="text-sm font-medium text-boutique-ink">
-                Минимум избори
+              <label className="inline-flex items-center gap-2 self-end rounded-lg border border-boutique-line bg-white px-3 py-3 text-sm text-boutique-ink">
                 <input
-                  type="number"
-                  min="0"
-                  value={field.minSelect}
+                  type="checkbox"
+                  checked={field.minSelect > 0}
                   onChange={(event) => {
-                    const minSelect = Math.max(0, Number(event.currentTarget.value) || 0);
+                    const minSelect = event.currentTarget.checked ? 1 : 0;
                     setFields((prev) =>
-                      prev.map((item) => (item.uid === field.uid ? { ...item, minSelect } : item)),
+                      prev.map((item) =>
+                        item.uid === field.uid ? { ...item, minSelect } : item,
+                      ),
                     );
                   }}
-                  className={fieldClassName}
                 />
+                Изборът е задължителен
               </label>
               <label className="text-sm font-medium text-boutique-ink">
-                Максимум избори
-                <input
-                  type="number"
-                  min="1"
-                  value={field.maxSelect}
+                Брой цветове
+                <select
+                  value={field.maxSelect > 1 ? "multiple" : "single"}
                   onChange={(event) => {
-                    const maxSelect = Math.max(1, Number(event.currentTarget.value) || 1);
+                    const maxSelect =
+                      event.currentTarget.value === "multiple" ? 2 : 1;
                     setFields((prev) =>
-                      prev.map((item) => (item.uid === field.uid ? { ...item, maxSelect } : item)),
+                      prev.map((item) =>
+                        item.uid === field.uid ? { ...item, maxSelect } : item,
+                      ),
                     );
                   }}
                   className={fieldClassName}
-                />
+                >
+                  <option value="single">Един цвят</option>
+                  <option value="multiple">Няколко цвята</option>
+                </select>
               </label>
             </div>
+
+            {field.maxSelect > 1 ? (
+              <label className="block max-w-xs text-sm font-medium text-boutique-ink">
+                Най-много избрани цветове
+                <input
+                  type="number"
+                  min="2"
+                  max={Math.max(2, field.optionIds.length)}
+                  value={field.maxSelect}
+                  onChange={(event) => {
+                    const maxSelect = Math.max(
+                      2,
+                      Math.min(
+                        field.optionIds.length || 2,
+                        Number(event.currentTarget.value) || 2,
+                      ),
+                    );
+                    setFields((prev) =>
+                      prev.map((item) =>
+                        item.uid === field.uid ? { ...item, maxSelect } : item,
+                      ),
+                    );
+                  }}
+                  className={fieldClassName}
+                />
+                <span className={helperClassName}>
+                  Използвайте това само когато клиентът може да комбинира цветове.
+                </span>
+              </label>
+            ) : null}
 
             {options.length === 0 ? (
               <p className={helperClassName}>Няма активни цветове за тази категория.</p>
             ) : (
               <div className="space-y-2">
                 <p className="text-xs font-medium text-boutique-muted">
-                  Разрешени цветове ({selectedCount} избрани)
+                  Кои цветове са налични за продукта? ({selectedCount} избрани)
                 </p>
-                <div className="grid gap-2 sm:grid-cols-2">
+                <div className="flex flex-wrap gap-3">
                   {options.map((option) => {
                     const checked = field.optionIds.includes(option.id);
                     return (
                       <label
                         key={`${field.uid}-${option.id}`}
-                        className="inline-flex items-center gap-2 text-sm text-boutique-ink"
+                        className={`cursor-pointer rounded-xl border p-2 text-center text-xs transition ${
+                          checked
+                            ? "border-boutique-sage-deep bg-white shadow-sm"
+                            : "border-boutique-line bg-white/60 opacity-75 hover:opacity-100"
+                        }`}
                       >
                         <input
                           type="checkbox"
@@ -222,20 +266,30 @@ export function ProductColorFieldsEditor({
                                 return {
                                   ...item,
                                   optionIds: item.optionIds.filter((id) => id !== option.id),
+                                  maxSelect:
+                                    item.maxSelect > 1
+                                      ? Math.max(
+                                          2,
+                                          Math.min(
+                                            item.maxSelect,
+                                            item.optionIds.length - 1,
+                                          ),
+                                        )
+                                      : 1,
                                 };
                               }),
                             );
                           }}
                           className="h-4 w-4 rounded border-boutique-line text-boutique-accent"
                         />
-                        <span>{option.name}</span>
                         {option.hex ? (
                           <span
                             aria-hidden
-                            className="h-4 w-4 rounded-full border border-boutique-line"
+                            className="mx-auto block h-10 w-10 rounded-full border border-boutique-line shadow-inner"
                             style={{ backgroundColor: option.hex }}
                           />
                         ) : null}
+                        <span className="mt-1 block max-w-20">{option.name}</span>
                       </label>
                     );
                   })}
@@ -259,7 +313,7 @@ export function ProductColorFieldsEditor({
         }
         className="rounded-full border border-boutique-line px-4 py-2 text-xs font-semibold uppercase tracking-wider text-boutique-ink transition hover:border-boutique-accent/40"
       >
-        + Добави цветово поле
+        + Добави избор на цвят
       </button>
     </div>
   );

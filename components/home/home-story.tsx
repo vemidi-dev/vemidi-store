@@ -51,38 +51,40 @@ export function HomeBenefits() {
 
 export function HomeProcess() {
   const steps = [
-    ["Изберете продукт", "Разгледайте каталога и отворете продукта, който харесвате."],
-    ["Персонализирайте", "Добавете име, дата, послание или предпочитани цветове."],
-    ["Ние изработваме", "С внимание към всеки детайл и любов към ръчната работа."],
-    ["Получавате с усмивка", "Изпращаме готовия подарък с наложен платеж."],
+    "Избери продукт",
+    "Добави персонализация",
+    "Потвърди поръчката",
   ];
 
   return (
-    <section className="border-y border-boutique-line bg-white py-14 md:py-16">
+    <section className="border-y border-boutique-line bg-boutique-paper py-8 md:py-10">
       <PageContainer>
-        <div className="mx-auto max-w-2xl text-center">
-          <h2 className="font-heading text-3xl text-boutique-ink">
-            Как работи? <span className="text-boutique-rose-deep">♡</span>
-          </h2>
-        </div>
-        <div className="mt-10 grid gap-8 md:grid-cols-4">
-          {steps.map(([title, text], index) => (
-            <article
+        <h2 className="text-center font-heading text-2xl text-boutique-ink md:text-[1.75rem]">
+          Как да поръчам
+        </h2>
+
+        <ol className="mx-auto mt-6 grid max-w-3xl gap-3 md:mt-7 md:grid-cols-3 md:gap-5">
+          {steps.map((title, index) => (
+            <li
               key={title}
-              className="relative text-center"
+              className="flex items-center gap-3 rounded-xl border border-boutique-line/80 bg-white px-4 py-3 md:flex-col md:gap-2.5 md:border-0 md:bg-transparent md:px-2 md:py-0 md:text-center"
             >
-              <div className="mx-auto grid h-16 w-16 place-items-center rounded-full border border-boutique-rose/40 bg-boutique-blush font-heading text-2xl text-boutique-rose-deep">
-                0{index + 1}
-              </div>
-              <h3 className="mt-5 font-heading text-xl text-boutique-ink">{title}</h3>
-              <p className="mx-auto mt-2 max-w-[15rem] text-xs leading-5 text-boutique-muted">
-                {text}
+              <span
+                aria-hidden
+                className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-boutique-sage/35 bg-boutique-paper font-heading text-sm text-boutique-sage-deep"
+              >
+                {index + 1}
+              </span>
+              <p className="text-sm font-medium leading-snug text-boutique-ink">
+                {title}
               </p>
-            </article>
+            </li>
           ))}
-        </div>
-        <p className="mt-10 text-center text-sm text-boutique-rose-deep">
-          ♡ Ако имате въпрос, винаги сме на разположение.
+        </ol>
+
+        <p className="mx-auto mt-5 max-w-xl text-center text-sm leading-relaxed text-boutique-muted md:mt-6">
+          След поръчката ще се свържем с вас за потвърждение на детайлите и срока за
+          изработка.
         </p>
       </PageContainer>
     </section>

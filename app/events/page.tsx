@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { EventGallerySection } from "@/components/content/event-gallery-section";
 import { EventNotificationForm } from "@/components/content/event-notification-form";
 import { ContentImage } from "@/components/content/content-image";
 import { PageContainer } from "@/components/layout/page-container";
@@ -231,6 +232,7 @@ export default async function EventsPage() {
 
       {upcomingEvents.length ? <UpcomingEvents events={upcomingEvents} /> : null}
       <PastEvents events={pastEvents} />
+      <EventGallerySection />
       {upcomingEvents.length === 0 ? <NoUpcomingEvents /> : null}
       <EventNotificationForm />
     </div>

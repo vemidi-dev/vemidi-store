@@ -1,6 +1,7 @@
 import {
   createCategory,
   deleteCategory,
+  moveCategory,
   updateCategory,
 } from "@/app/admin/actions";
 import {
@@ -50,6 +51,15 @@ export function CategoryManagementPanel({ categories }: { categories: CategoryRo
             <option value="occasion">Повод</option>
           </select>
         </label>
+        <label className="inline-flex items-center gap-2 text-sm font-medium text-boutique-ink md:col-span-3">
+          <input
+            name={adminFormFields.category.showOnHome}
+            type="checkbox"
+            defaultChecked
+            className="h-4 w-4 rounded border-boutique-line text-boutique-accent"
+          />
+          Показвай на началната страница
+        </label>
         <div className="self-end">
           <button
             type="submit"
@@ -65,9 +75,12 @@ export function CategoryManagementPanel({ categories }: { categories: CategoryRo
       ) : (
         <div className="mt-8 space-y-8">
           {categoryGroups.map((group) => {
-            const groupedCategories = categories.filter(
-              (category) => category.category_type === group.type,
-            );
+            const groupedCategories = categories
+              .filter((category) => category.category_type === group.type)
+              .sort((a, b) => {
+                const positionDifference = a.home_sort_order - b.home_sort_order;
+                return positionDifference || a.name.localeCompare(b.name, "bg");
+              });
 
             return (
               <section key={group.type}>
@@ -88,17 +101,48 @@ export function CategoryManagementPanel({ categories }: { categories: CategoryRo
                 <div>
                   <p className="font-medium text-boutique-ink">{category.name}</p>
                   <p className="text-xs text-boutique-muted">Slug: {category.slug}</p>
+                  <p className="mt-1 text-xs text-boutique-muted">
+                    {category.show_on_home
+                      ? "Показва се на началната страница"
+                      : "Скрита от началната страница"}
+                  </p>
                 </div>
-                <form action={deleteCategory}>
-                  <input type="hidden" name={adminFormFields.common.tab} value="categories" />
-                  <input type="hidden" name={adminFormFields.common.id} value={category.id} />
-                  <button
-                    type="submit"
-                    className="rounded-full border border-red-300 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-red-700 transition hover:bg-red-50"
-                  >
-                    Изтрий
-                  </button>
-                </form>
+                <div className="flex flex-wrap gap-2">
+                  <form action={moveCategory}>
+                    <input type="hidden" name={adminFormFields.common.tab} value="categories" />
+                    <input type="hidden" name={adminFormFields.common.id} value={category.id} />
+                    <input type="hidden" name={adminFormFields.category.direction} value="up" />
+                    <button
+                      type="submit"
+                      disabled={groupedCategories[0]?.id === category.id}
+                      className="rounded-full border border-boutique-line px-3 py-2 text-xs font-semibold text-boutique-ink disabled:cursor-not-allowed disabled:opacity-35"
+                    >
+                      Нагоре
+                    </button>
+                  </form>
+                  <form action={moveCategory}>
+                    <input type="hidden" name={adminFormFields.common.tab} value="categories" />
+                    <input type="hidden" name={adminFormFields.common.id} value={category.id} />
+                    <input type="hidden" name={adminFormFields.category.direction} value="down" />
+                    <button
+                      type="submit"
+                      disabled={groupedCategories.at(-1)?.id === category.id}
+                      className="rounded-full border border-boutique-line px-3 py-2 text-xs font-semibold text-boutique-ink disabled:cursor-not-allowed disabled:opacity-35"
+                    >
+                      Надолу
+                    </button>
+                  </form>
+                  <form action={deleteCategory}>
+                    <input type="hidden" name={adminFormFields.common.tab} value="categories" />
+                    <input type="hidden" name={adminFormFields.common.id} value={category.id} />
+                    <button
+                      type="submit"
+                      className="rounded-full border border-red-300 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-red-700 transition hover:bg-red-50"
+                    >
+                      Изтрий
+                    </button>
+                  </form>
+                </div>
               </div>
 
               <details className="mt-3 rounded-lg border border-boutique-line/70 bg-boutique-paper p-3">
@@ -139,6 +183,15 @@ export function CategoryManagementPanel({ categories }: { categories: CategoryRo
                       <option value="product">Продуктова категория</option>
                       <option value="occasion">Повод</option>
                     </select>
+                  </label>
+                  <label className="inline-flex items-center gap-2 text-sm font-medium text-boutique-ink md:col-span-3">
+                    <input
+                      name={adminFormFields.category.showOnHome}
+                      type="checkbox"
+                      defaultChecked={category.show_on_home}
+                      className="h-4 w-4 rounded border-boutique-line text-boutique-accent"
+                    />
+                    Показвай на началната страница
                   </label>
                   <div className="self-end">
                     <button

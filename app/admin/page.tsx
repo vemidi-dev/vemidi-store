@@ -3,12 +3,15 @@ import { redirect } from "next/navigation";
 import { AdminHeader } from "@/components/admin/admin-header";
 import { AdminNotices } from "@/components/admin/admin-notices";
 import { CategoryManagementPanel } from "@/components/admin/category-management-panel";
+import { ColorManagementPanel } from "@/components/admin/color-management-panel";
 import { ProductCreatePanel } from "@/components/admin/product-create-panel";
 import { ProductListPanel } from "@/components/admin/product-list-panel";
 import { OrdersPanel } from "@/components/admin/orders-panel";
 import { ContentManagementPanel } from "@/components/admin/content-management-panel";
+import { EventGalleryManagementPanel } from "@/components/admin/event-gallery-management-panel";
 import { EventRegistrationsPanel } from "@/components/admin/event-registrations-panel";
 import { SubscriberManagementPanel } from "@/components/admin/subscriber-management-panel";
+import { PromotionManagementPanel } from "@/components/admin/promotion-management-panel";
 import { WishManagementPanel } from "@/components/admin/wish-management-panel";
 import { PageContainer } from "@/components/layout/page-container";
 import { loadAdminData } from "@/lib/admin/data";
@@ -84,12 +87,10 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   }
 
   if (activeTab === "wishes") {
-    const [products, categories, wishes, links, fields] = await Promise.all([
-      supabase.from("products").select("*").order("name"),
-      supabase.from("categories").select("id,name,slug,category_type").eq("category_type", "occasion").order("name"),
+    const [categories, wishes, links] = await Promise.all([
+      supabase.from("categories").select("id,name,slug,category_type,show_on_home,home_sort_order").eq("category_type", "occasion").order("name"),
       supabase.from("wish_templates").select("id,title,body,is_active,sort_order").order("sort_order"),
       supabase.from("wish_template_occasions").select("wish_template_id,category_id"),
-      supabase.from("product_personalization_fields").select("*").order("product_id").order("sort_order"),
     ]);
     return (
       <section className="pb-24 pt-10">
@@ -102,11 +103,9 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               </div>
             ) : null}
             <WishManagementPanel
-              products={(products.data ?? []) as import("@/lib/admin/types").ProductRow[]}
               occasions={(categories.data ?? []) as import("@/lib/admin/types").CategoryRow[]}
               wishes={(wishes.data ?? []) as import("@/lib/admin/types").WishTemplateRow[]}
               links={(links.data ?? []) as import("@/lib/admin/types").WishTemplateOccasionRow[]}
-              fields={(fields.data ?? []) as import("@/lib/admin/types").ProductPersonalizationFieldRow[]}
             />
           </div>
         </PageContainer>
@@ -190,24 +189,124 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     );
   }
 
+  if (activeTab === "promotions") {
+    const [productsResult, promotionsResult] = await Promise.all([
+      supabase.from("products").select("id,name,price").order("name"),
+      supabase
+        .from("product_promotions")
+        .select(
+          "id,product_id,name,discount_type,discount_value,starts_at,ends_at,is_active,created_at",
+        )
+        .order("created_at", { ascending: false }),
+    ]);
+
+    return (
+      <section className="pb-24 pt-10">
+        <PageContainer>
+          <div className="mx-auto max-w-6xl space-y-8">
+            <AdminHeader activeTab={activeTab} />
+            {success || error ? (
+              <div
+                className={`rounded-xl border px-4 py-3 text-sm ${
+                  error
+                    ? "border-red-200 bg-red-50 text-red-700"
+                    : "border-emerald-200 bg-emerald-50 text-emerald-700"
+                }`}
+              >
+                {error || success}
+              </div>
+            ) : null}
+            {promotionsResult.error ? (
+              <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                Промоциите не могат да бъдат заредени. Изпълнете
+                product_promotions.sql.
+              </div>
+            ) : (
+              <PromotionManagementPanel
+                products={(productsResult.data ?? []) as import("@/lib/admin/types").ProductRow[]}
+                promotions={
+                  (promotionsResult.data ?? []) as import("@/lib/product-pricing").ProductPromotionRow[]
+                }
+              />
+            )}
+          </div>
+        </PageContainer>
+      </section>
+    );
+  }
+
+  if (activeTab === "colors") {
+    const [groupsResult, optionsResult] = await Promise.all([
+      supabase.from("color_groups").select("id,key,label").order("label"),
+      supabase
+        .from("color_options")
+        .select("id,group_id,name,hex,sort_order,is_active")
+        .order("sort_order"),
+    ]);
+
+    return (
+      <section className="pb-24 pt-10">
+        <PageContainer>
+          <div className="mx-auto max-w-6xl space-y-8">
+            <AdminHeader activeTab={activeTab} />
+            {success || error ? (
+              <div
+                className={`rounded-xl border px-4 py-3 text-sm ${
+                  error
+                    ? "border-red-200 bg-red-50 text-red-700"
+                    : "border-emerald-200 bg-emerald-50 text-emerald-700"
+                }`}
+              >
+                {error || success}
+              </div>
+            ) : null}
+            {groupsResult.error || optionsResult.error ? (
+              <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                Цветовите палитри не могат да бъдат заредени. Изпълнете
+                color_palette_management.sql.
+              </div>
+            ) : (
+              <ColorManagementPanel
+                groups={
+                  (groupsResult.data ?? []) as import("@/lib/admin/types").ColorGroupRow[]
+                }
+                options={
+                  (optionsResult.data ?? []) as import("@/lib/admin/types").ColorOptionRow[]
+                }
+              />
+            )}
+          </div>
+        </PageContainer>
+      </section>
+    );
+  }
+
   if (activeTab === "blog" || activeTab === "events") {
     const table = activeTab === "blog" ? "blog_posts" : "events";
     const orderColumn = activeTab === "blog" ? "created_at" : "starts_at";
-    const [result, categoriesResult, registrationsResult] = await Promise.all([
-      supabase
-        .from(table)
-        .select("*")
-        .order(orderColumn, { ascending: false, nullsFirst: false }),
-      activeTab === "blog"
-        ? supabase.from("categories").select("id,name,slug,category_type").order("name")
-        : Promise.resolve({ data: [], error: null }),
-      activeTab === "events"
-        ? supabase
-            .from("event_registrations")
-            .select("*")
-            .order("created_at", { ascending: false })
-        : Promise.resolve({ data: [], error: null }),
-    ]);
+    const [result, categoriesResult, registrationsResult, galleryResult] =
+      await Promise.all([
+        supabase
+          .from(table)
+          .select("*")
+          .order(orderColumn, { ascending: false, nullsFirst: false }),
+        activeTab === "blog"
+          ? supabase.from("categories").select("id,name,slug,category_type").order("name")
+          : Promise.resolve({ data: [], error: null }),
+        activeTab === "events"
+          ? supabase
+              .from("event_registrations")
+              .select("*")
+              .order("created_at", { ascending: false })
+          : Promise.resolve({ data: [], error: null }),
+        activeTab === "events"
+          ? supabase
+              .from("event_gallery_images")
+              .select("id,image_url,alt_text,sort_order,is_published,created_at")
+              .order("sort_order", { ascending: true })
+              .order("created_at", { ascending: true })
+          : Promise.resolve({ data: [], error: null }),
+      ]);
 
     return (
       <section className="pb-24 pt-10">
@@ -239,6 +338,18 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                   items={(result.data ?? []) as import("@/lib/admin/types").EventRow[]}
                   error={result.error}
                 />
+                {galleryResult.error ? (
+                  <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                    Галерията не може да бъде заредена. Изпълнете
+                    event_gallery_images.sql.
+                  </div>
+                ) : (
+                  <EventGalleryManagementPanel
+                    images={
+                      (galleryResult.data ?? []) as import("@/lib/admin/types").EventGalleryImageRow[]
+                    }
+                  />
+                )}
                 <EventRegistrationsPanel
                   events={(result.data ?? []) as import("@/lib/admin/types").EventRow[]}
                   registrations={(registrationsResult.data ?? []) as import("@/lib/admin/types").EventRegistrationRow[]}
@@ -269,6 +380,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                 categories={data.categories}
                 colorGroups={data.colorGroups}
                 colorOptions={data.colorOptions}
+                wishes={data.wishTemplates}
                 draft={draft}
               />
               <ProductListPanel data={data} />

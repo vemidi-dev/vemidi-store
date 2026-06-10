@@ -14,6 +14,10 @@ const errorLabels: Record<keyof AdminData["errors"], string> = {
   colorOptions: "цветови опции",
   productColorFields: "цветови полета",
   productColorFieldOptions: "избрани цветове",
+  productImages: "продуктови галерии",
+  personalizationFields: "полета за персонализация",
+  wishTemplates: "готови пожелания",
+  productWishTemplates: "пожелания към продуктите",
 };
 
 export function AdminNotices({ success, error, errors }: AdminNoticesProps) {

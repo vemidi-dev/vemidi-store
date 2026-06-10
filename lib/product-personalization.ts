@@ -18,7 +18,5 @@ export type ProductPersonalizationValue = {
 
 export type WishTemplate = {
   id: string;
-  title: string;
   body: string;
-  occasionSlugs: string[];
 };

@@ -19,6 +19,11 @@ Apply the SQL files in this order for a new environment:
 15. Re-run `supabase/store_checkout_orders.sql`
 16. `supabase/security_hardening_phase1.sql`
 17. `supabase/security_hardening_phase2.sql`
+18. `supabase/category_home_display.sql`
+19. `supabase/product_image_gallery.sql`
+20. `supabase/color_palette_management.sql`
+21. `supabase/atomic_product_personalization.sql`
+22. `supabase/product_wish_assignments.sql`
 
 `supabase/migrate_product_color_rules_to_fields.sql` is needed only when upgrading an installation
 that already contains the older `product_color_rules` data. Run it after
@@ -90,6 +95,25 @@ Run `category_types.sql` to separate categories into `product` and `occasion`. E
 preserved and start as product categories; reclassify occasion rows from the admin panel. This
 migration also restores the missing authenticated table privileges while the existing RLS policies
 continue to restrict writes to administrators.
+
+Run `category_home_display.sql` after `category_types.sql`. It keeps existing categories visible,
+adds a separate home-page position for each category type, and enables the admin controls for
+showing, hiding, and reordering home-page categories.
+
+Run `product_image_gallery.sql` after the product and admin migrations. It backfills every existing
+`products.image_url` into an ordered gallery and adds admin-only operations for uploading, choosing
+the primary image, reordering, and deleting gallery images.
+
+Run `color_palette_management.sql` after the existing color configuration and admin migrations. It
+removes the old paper/wood-only restriction and enables reusable palettes such as ribbons, text,
+flowers, and future materials.
+
+Run `atomic_product_personalization.sql` after `product_personalization_and_wishes.sql`. It moves
+personalization-field management into the product create/edit transaction, so products and their
+fields are always saved together.
+
+Run `product_wish_assignments.sql` after `atomic_product_personalization.sql`. It assigns wishes
+directly to products, backfills the current occasion-based matches, and adds them to atomic saves.
 
 If storefront tables return `permission denied` or an empty result despite containing rows, run
 `supabase/restore_storefront_read_grants.sql`. It restores both PostgreSQL grants and RLS SELECT

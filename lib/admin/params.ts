@@ -2,6 +2,7 @@ import type {
   AdminTab,
   ProductCreateDraft,
   ProductDraftColorField,
+  ProductDraftPersonalizationField,
 } from "@/lib/admin/types";
 
 export function firstValue(value: string | string[] | undefined) {
@@ -14,6 +15,8 @@ export function firstValue(value: string | string[] | undefined) {
 export function normalizeAdminTab(value: string): AdminTab {
   if (
     value === "categories" ||
+    value === "colors" ||
+    value === "promotions" ||
     value === "orders" ||
     value === "blog" ||
     value === "events" ||
@@ -50,8 +53,12 @@ export function parseProductCreateDraft(raw: string): ProductCreateDraft | null 
       fulfillment_note?: unknown;
       price?: unknown;
       is_customizable?: unknown;
+      is_sold_out?: unknown;
+      card_badge?: unknown;
       category_ids?: unknown;
       color_fields?: unknown;
+      personalization_fields?: unknown;
+      wish_template_ids?: unknown;
     };
 
     const categoryIds = Array.isArray(parsed.category_ids)
@@ -104,6 +111,66 @@ export function parseProductCreateDraft(raw: string): ProductCreateDraft | null 
           .filter((field): field is ProductDraftColorField => field !== null)
       : [];
 
+    const personalizationFields = Array.isArray(parsed.personalization_fields)
+      ? parsed.personalization_fields
+          .map((field) => {
+            if (!field || typeof field !== "object") {
+              return null;
+            }
+            const candidate = field as {
+              label?: unknown;
+              field_key?: unknown;
+              field_type?: unknown;
+              placeholder?: unknown;
+              max_length?: unknown;
+              is_required?: unknown;
+              allows_wish_templates?: unknown;
+            };
+            const type =
+              candidate.field_type === "textarea" || candidate.field_type === "date"
+                ? candidate.field_type
+                : "text";
+            const maxLength = Math.min(
+              1000,
+              Math.max(
+                1,
+                toNonNegativeInteger(
+                  typeof candidate.max_length === "string"
+                    ? candidate.max_length
+                    : "",
+                  type === "date" ? 10 : 100,
+                ),
+              ),
+            );
+            const result: ProductDraftPersonalizationField = {
+              label: typeof candidate.label === "string" ? candidate.label : "",
+              key:
+                typeof candidate.field_key === "string"
+                  ? candidate.field_key
+                  : "",
+              type,
+              placeholder:
+                typeof candidate.placeholder === "string"
+                  ? candidate.placeholder
+                  : "",
+              maxLength,
+              required: candidate.is_required === true,
+              allowsWishTemplates:
+                type === "textarea" && candidate.allows_wish_templates === true,
+            };
+            return result.label && result.key ? result : null;
+          })
+          .filter(
+            (field): field is ProductDraftPersonalizationField => field !== null,
+          )
+      : [];
+    const wishTemplateIds = Array.isArray(parsed.wish_template_ids)
+      ? parsed.wish_template_ids.filter(
+          (value): value is string =>
+            typeof value === "string" && value.trim().length > 0,
+        )
+      : [];
+
     return {
       name: typeof parsed.name === "string" ? parsed.name : "",
       description: typeof parsed.description === "string" ? parsed.description : "",
@@ -112,8 +179,12 @@ export function parseProductCreateDraft(raw: string): ProductCreateDraft | null 
         typeof parsed.fulfillment_note === "string" ? parsed.fulfillment_note : "",
       price: typeof parsed.price === "string" ? parsed.price : "",
       isCustomizable: parsed.is_customizable === true,
+      isSoldOut: parsed.is_sold_out === true,
+      cardBadge: typeof parsed.card_badge === "string" ? parsed.card_badge : "",
       categoryIds,
       colorFields,
+      personalizationFields,
+      wishTemplateIds,
     };
   } catch {
     return null;

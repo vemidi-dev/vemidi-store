@@ -1,6 +1,15 @@
-import { deleteProduct, updateProduct } from "@/app/admin/actions";
+import {
+  deleteProduct,
+  deleteProductGalleryImage,
+  moveProductImage,
+  setPrimaryProductImage,
+  updateProduct,
+} from "@/app/admin/actions";
 import { ImageFileInput } from "@/components/admin/image-file-input";
+import { ProductCardBadgeField } from "@/components/admin/product-card-badge-field";
 import { ProductColorFieldsEditor } from "@/components/admin/product-color-fields-editor";
+import { ProductPersonalizationFieldsEditor } from "@/components/admin/product-personalization-fields-editor";
+import { ProductWishSelector } from "@/components/admin/product-wish-selector";
 import {
   adminFieldClass,
   adminHelperClass,
@@ -22,6 +31,10 @@ export function ProductListPanel({ data }: { data: AdminData }) {
     colorOptionById,
     colorFieldsByProductId,
     selectedColorOptionIdsByFieldId,
+    imagesByProductId,
+    personalizationFieldsByProductId,
+    wishTemplates,
+    wishTemplateIdsByProductId,
   } = data;
 
   return (
@@ -62,6 +75,33 @@ export function ProductListPanel({ data }: { data: AdminData }) {
                 ...(selectedColorOptionIdsByFieldId.get(field.id) ?? new Set<string>()),
               ],
             }));
+            const productImages = imagesByProductId.get(product.id) ?? [];
+            const storedPersonalizationFields =
+              personalizationFieldsByProductId.get(product.id) ?? [];
+            const initialPersonalizationFields =
+              storedPersonalizationFields.length > 0
+                ? storedPersonalizationFields.map((field) => ({
+                    label: field.label,
+                    key: field.field_key,
+                    type: field.field_type,
+                    placeholder: field.placeholder ?? "",
+                    maxLength: field.max_length,
+                    required: field.is_required,
+                    allowsWishTemplates: field.allows_wish_templates,
+                  }))
+                : product.is_customizable
+                  ? [
+                      {
+                        label: "Текст за персонализация",
+                        key: "personalization",
+                        type: "textarea" as const,
+                        placeholder: "Въведете желания текст",
+                        maxLength: 1000,
+                        required: false,
+                        allowsWishTemplates: true,
+                      },
+                    ]
+                  : [];
 
             return (
               <li
@@ -70,10 +110,16 @@ export function ProductListPanel({ data }: { data: AdminData }) {
               >
                 <div className="grid gap-4 md:grid-cols-[120px_1fr]">
                   <div className="h-24 w-full overflow-hidden rounded-lg border border-boutique-line bg-white md:h-28">
-                    {product.image_url ? (
+                    {productImages[0]?.image_url || product.image_url ? (
                       <div
                         className="h-full w-full bg-cover bg-center"
-                        style={{ backgroundImage: `url(${product.image_url})` }}
+                        style={{
+                          backgroundImage: `url(${
+                            productImages.find((image) => image.is_primary)?.image_url ??
+                            productImages[0]?.image_url ??
+                            product.image_url
+                          })`,
+                        }}
                       />
                     ) : (
                       <div className="grid h-full w-full place-items-center text-xs text-boutique-muted">
@@ -84,7 +130,14 @@ export function ProductListPanel({ data }: { data: AdminData }) {
 
                   <div>
                     <div className="flex flex-wrap items-center justify-between gap-3">
-                      <h3 className="font-heading text-xl text-boutique-ink">{product.name}</h3>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="font-heading text-xl text-boutique-ink">{product.name}</h3>
+                        {product.is_sold_out ? (
+                          <span className="rounded-full bg-boutique-muted/15 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-boutique-muted">
+                            Изчерпан
+                          </span>
+                        ) : null}
+                      </div>
                       <p className="font-medium text-boutique-ink">
                         {Number(product.price).toFixed(2)} €
                       </p>
@@ -205,11 +258,12 @@ export function ProductListPanel({ data }: { data: AdminData }) {
                     </label>
 
                     <ImageFileInput
-                      name={adminFormFields.product.imageFile}
-                      label="Нова снимка (по избор)"
+                      name={adminFormFields.product.imageFiles}
+                      label="Добави снимки към галерията"
+                      multiple
                       className={adminFieldClass}
                       helperClassName={adminHelperClass}
-                      helperText="Ако не качите нов файл, ще остане текущото изображение. Формати: PNG, JPG, WEBP или SVG (до 5 MB)."
+                      helperText="Изберете една или повече PNG, JPG или WEBP снимки до 5 MB."
                     />
 
                     <fieldset className="rounded-lg border border-boutique-line/70 bg-boutique-bg p-3 md:col-span-2">
@@ -263,15 +317,28 @@ export function ProductListPanel({ data }: { data: AdminData }) {
                       />
                     </fieldset>
 
-                    <label className="inline-flex items-center gap-2 text-sm text-boutique-ink md:col-span-2">
-                      <input
-                        name={adminFormFields.product.isCustomizable}
-                        type="checkbox"
-                        defaultChecked={product.is_customizable}
-                        className="h-4 w-4 rounded border-boutique-line text-boutique-accent"
+                    <fieldset className="space-y-3 rounded-lg border border-boutique-line/70 bg-boutique-bg p-3 md:col-span-2">
+                      <legend className="px-1 text-sm font-medium text-boutique-ink">
+                        Персонализация
+                      </legend>
+                      <ProductPersonalizationFieldsEditor
+                        initialFields={initialPersonalizationFields}
+                        helperClassName={adminHelperClass}
+                        fieldClassName={adminFieldClass}
                       />
-                      Продуктът е персонализируем
-                    </label>
+                    </fieldset>
+                    <fieldset className="space-y-3 rounded-lg border border-boutique-line/70 bg-boutique-bg p-3 md:col-span-2">
+                      <legend className="px-1 text-sm font-medium text-boutique-ink">
+                        Подходящи готови пожелания
+                      </legend>
+                      <ProductWishSelector
+                        wishes={wishTemplates}
+                        selectedIds={
+                          wishTemplateIdsByProductId.get(product.id) ?? []
+                        }
+                        helperClassName={adminHelperClass}
+                      />
+                    </fieldset>
                     <label className="text-sm font-medium text-boutique-ink md:col-span-2">
                       Бележка за доставка/изработка
                       <textarea
@@ -283,6 +350,20 @@ export function ProductListPanel({ data }: { data: AdminData }) {
                     </label>
 
                     <div className="md:col-span-2">
+                      <ProductCardBadgeField defaultValue={product.card_badge} />
+                    </div>
+
+                    <label className="inline-flex items-center gap-2 text-sm font-medium text-boutique-ink md:col-span-2">
+                      <input
+                        name={adminFormFields.product.isSoldOut}
+                        type="checkbox"
+                        defaultChecked={product.is_sold_out}
+                        className="h-4 w-4 rounded border-boutique-line text-boutique-accent"
+                      />
+                      Изчерпан
+                    </label>
+
+                    <div className="md:col-span-2">
                       <button
                         type="submit"
                         className="rounded-full bg-boutique-ink px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-boutique-paper transition hover:bg-boutique-accent"
@@ -291,6 +372,101 @@ export function ProductListPanel({ data }: { data: AdminData }) {
                       </button>
                     </div>
                   </form>
+
+                  {productImages.length > 0 ? (
+                    <section className="mt-5 border-t border-boutique-line/70 pt-5">
+                      <div>
+                        <h4 className="font-semibold text-boutique-ink">Галерия</h4>
+                        <p className="mt-1 text-xs text-boutique-muted">
+                          Изберете корица и подредете снимките за картата и продуктовата страница.
+                        </p>
+                      </div>
+                      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        {productImages.map((image, index) => (
+                          <article
+                            key={image.id}
+                            className="rounded-xl border border-boutique-line bg-white p-3"
+                          >
+                            <div
+                              className="aspect-[4/3] rounded-lg bg-cover bg-center"
+                              style={{ backgroundImage: `url(${image.image_url})` }}
+                              role="img"
+                              aria-label={image.alt_text || product.name}
+                            />
+                            <div className="mt-3 flex items-center justify-between gap-2">
+                              <span className="text-xs text-boutique-muted">
+                                Снимка {index + 1}
+                              </span>
+                              {image.is_primary ? (
+                                <span className="rounded-full bg-boutique-warm px-2 py-1 text-[0.65rem] font-semibold text-boutique-ink">
+                                  Основна
+                                </span>
+                              ) : (
+                                <form action={setPrimaryProductImage}>
+                                  <input
+                                    type="hidden"
+                                    name={adminFormFields.productImage.imageId}
+                                    value={image.id}
+                                  />
+                                  <button className="text-xs font-semibold text-boutique-sage-deep">
+                                    Направи основна
+                                  </button>
+                                </form>
+                              )}
+                            </div>
+                            <div className="mt-3 flex flex-wrap gap-2">
+                              <form action={moveProductImage}>
+                                <input
+                                  type="hidden"
+                                  name={adminFormFields.productImage.imageId}
+                                  value={image.id}
+                                />
+                                <input
+                                  type="hidden"
+                                  name={adminFormFields.productImage.direction}
+                                  value="up"
+                                />
+                                <button
+                                  disabled={index === 0}
+                                  className="rounded-full border border-boutique-line px-3 py-1.5 text-xs disabled:opacity-35"
+                                >
+                                  Наляво
+                                </button>
+                              </form>
+                              <form action={moveProductImage}>
+                                <input
+                                  type="hidden"
+                                  name={adminFormFields.productImage.imageId}
+                                  value={image.id}
+                                />
+                                <input
+                                  type="hidden"
+                                  name={adminFormFields.productImage.direction}
+                                  value="down"
+                                />
+                                <button
+                                  disabled={index === productImages.length - 1}
+                                  className="rounded-full border border-boutique-line px-3 py-1.5 text-xs disabled:opacity-35"
+                                >
+                                  Надясно
+                                </button>
+                              </form>
+                              <form action={deleteProductGalleryImage}>
+                                <input
+                                  type="hidden"
+                                  name={adminFormFields.productImage.imageId}
+                                  value={image.id}
+                                />
+                                <button className="rounded-full border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-700">
+                                  Изтрий
+                                </button>
+                              </form>
+                            </div>
+                          </article>
+                        ))}
+                      </div>
+                    </section>
+                  ) : null}
                 </details>
               </li>
             );

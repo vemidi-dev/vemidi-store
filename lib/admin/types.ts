@@ -1,6 +1,8 @@
 export type AdminTab =
   | "products"
   | "categories"
+  | "colors"
+  | "promotions"
   | "orders"
   | "blog"
   | "events"
@@ -29,6 +31,12 @@ export type WishTemplateRow = {
 export type WishTemplateOccasionRow = {
   wish_template_id: string;
   category_id: string;
+};
+
+export type ProductWishTemplateRow = {
+  product_id: string;
+  wish_template_id: string;
+  sort_order: number;
 };
 
 export type ProductPersonalizationFieldRow = {
@@ -93,6 +101,15 @@ export type EventRow = {
   updated_at: string;
 };
 
+export type EventGalleryImageRow = {
+  id: string;
+  image_url: string;
+  alt_text: string | null;
+  sort_order: number;
+  is_published: boolean;
+  created_at: string;
+};
+
 export type EventRegistrationRow = {
   id: string;
   event_id: string;
@@ -115,6 +132,17 @@ export type ProductRow = {
   price: number;
   image_url: string | null;
   is_customizable: boolean;
+  is_sold_out: boolean;
+  card_badge?: string | null;
+};
+
+export type ProductImageRow = {
+  id: string;
+  product_id: string;
+  image_url: string;
+  alt_text: string | null;
+  sort_order: number;
+  is_primary: boolean;
 };
 
 export type CategoryRow = {
@@ -122,6 +150,8 @@ export type CategoryRow = {
   name: string;
   slug: string;
   category_type: "product" | "occasion";
+  show_on_home: boolean;
+  home_sort_order: number;
 };
 
 export type ProductCategoryRow = {
@@ -168,6 +198,16 @@ export type ProductDraftColorField = {
   optionIds: string[];
 };
 
+export type ProductDraftPersonalizationField = {
+  label: string;
+  key: string;
+  type: "text" | "textarea" | "date";
+  placeholder: string;
+  maxLength: number;
+  required: boolean;
+  allowsWishTemplates: boolean;
+};
+
 export type ProductCreateDraft = {
   name: string;
   description: string;
@@ -175,8 +215,12 @@ export type ProductCreateDraft = {
   fulfillmentNote: string;
   price: string;
   isCustomizable: boolean;
+  isSoldOut: boolean;
+  cardBadge: string;
   categoryIds: string[];
   colorFields: ProductDraftColorField[];
+  personalizationFields: ProductDraftPersonalizationField[];
+  wishTemplateIds: string[];
 };
 
 export type ParsedColorField = {
@@ -187,3 +231,8 @@ export type ParsedColorField = {
   optionIds: string[];
   sortOrder: number;
 };
+
+export type ParsedPersonalizationField =
+  ProductDraftPersonalizationField & {
+    sortOrder: number;
+  };

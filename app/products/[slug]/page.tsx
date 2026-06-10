@@ -5,7 +5,8 @@ import { notFound } from "next/navigation";
 import { ProductDetailAddToCart } from "@/components/product/product-detail-add-to-cart";
 import { ProductDetailGallery } from "@/components/product/product-detail-gallery";
 import { PageContainer } from "@/components/layout/page-container";
-import { formatEur } from "@/lib/format-eur";
+import { ProductPrice } from "@/components/product/product-price";
+import { isProductOnPromotion } from "@/lib/product-pricing";
 import { getStorefrontProduct } from "@/lib/storefront/repository";
 import { getSiteUrl } from "@/lib/site-url";
 
@@ -57,6 +58,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
 
   const productUrl = new URL(`/products/${slug}`, getSiteUrl()).toString();
   const productImage = product.images.find((item) => item.src)?.src;
+  const onPromotion = isProductOnPromotion(product);
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -72,6 +74,16 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
       "@type": "Offer",
       priceCurrency: "EUR",
       price: product.price.toFixed(2),
+      ...(onPromotion && product.compareAtPrice != null
+        ? { priceSpecification: {
+            "@type": "UnitPriceSpecification",
+            price: product.price.toFixed(2),
+            priceCurrency: "EUR",
+          } }
+        : {}),
+      ...(product.promotion?.endsAt
+        ? { priceValidUntil: product.promotion.endsAt }
+        : {}),
       url: productUrl,
       availability: "https://schema.org/PreOrder",
       itemCondition: "https://schema.org/NewCondition",
@@ -102,23 +114,28 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
 
             <div className="flex flex-col pb-6 lg:py-4">
               <div className="space-y-6">
-                {product.tag ? (
+                {product.cardBadge ? (
                   <p className="text-[0.7rem] font-semibold uppercase tracking-[0.28em] text-boutique-accent">
-                    {product.tag}
+                    {product.cardBadge}
                   </p>
-                ) : (
-                  <p className="text-[0.7rem] font-semibold uppercase tracking-[0.28em] text-boutique-muted">
-                    В ателието
-                  </p>
-                )}
+                ) : null}
 
                 <h1 className="font-heading text-4xl leading-[1.12] tracking-tight text-boutique-ink sm:text-5xl lg:text-[2.75rem]">
                   {product.title}
                 </h1>
 
-                <p className="font-heading text-3xl tracking-tight text-boutique-ink/90 sm:text-4xl">
-                  {formatEur(product.price)}
-                </p>
+                <div className="flex flex-wrap items-center gap-3">
+                  <ProductPrice product={product} size="lg" />
+                  {product.soldOut ? (
+                    <span className="rounded-full bg-boutique-muted/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-boutique-muted">
+                      Изчерпан
+                    </span>
+                  ) : product.promotion ? (
+                    <span className="rounded-full bg-boutique-accent/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-boutique-accent">
+                      {product.promotion.label}
+                    </span>
+                  ) : null}
+                </div>
               </div>
 
               <p className="mt-12 max-w-xl text-lg leading-[1.75] text-boutique-muted md:text-xl md:leading-[1.8]">

@@ -41,6 +41,7 @@ const checkoutErrorMessages: Record<string, string> = {
   invalid_order_item: "В количката има невалиден артикул.",
   invalid_quantity: "В количката има невалидно количество.",
   product_not_found: "Някой от продуктите вече не е наличен.",
+  product_sold_out: "Някой от продуктите в количката е изчерпан.",
   invalid_product_price: "Цената на продукт не може да бъде потвърдена.",
   personalization_too_long: "Текстът за персонализация е твърде дълъг.",
   invalid_personalization_fields: "Данните за персонализация са невалидни.",

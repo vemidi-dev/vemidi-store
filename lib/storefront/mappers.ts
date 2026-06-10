@@ -1,4 +1,10 @@
 import type { Product } from "@/lib/catalog";
+import { normalizeProductCardBadge } from "@/lib/product-card";
+import {
+  resolveProductPricing,
+  type ProductPromotionRow,
+} from "@/lib/product-pricing";
+import { getCategoryImageSrc } from "@/lib/category-images";
 import type { ShopCategory } from "@/lib/shop-categories";
 import type { StorefrontCategory } from "@/lib/storefront/types";
 
@@ -7,21 +13,6 @@ export const DEFAULT_PRODUCT_IMAGE =
 
 export const DEFAULT_CATEGORY_IMAGE =
   "";
-
-const CATEGORY_IMAGES: Record<string, string> = {
-  bebe: "/assets/occasion-krashtene.webp",
-  krashtene: "/assets/occasion-krashtene.webp",
-  svatba: "/assets/occasion-svatba.webp",
-  rd: "/assets/occasion-rozhden-den.webp",
-  "rozhden-den": "/assets/occasion-rozhden-den.webp",
-  jubilej: "/assets/occasion-yubiley.webp",
-  yubiley: "/assets/occasion-yubiley.webp",
-  abiturient: "/assets/occasion-abiturientski-bal.webp",
-  "abiturientski-bal": "/assets/occasion-abiturientski-bal.webp",
-  "za-uchitel": "/assets/occasion-za-uchiteli.webp",
-  "za-uchiteli": "/assets/occasion-za-uchiteli.webp",
-  "tvorcheski-komplekti": "/assets/tvorcheski-komplekti.webp",
-};
 
 export type ProductRow = {
   id: string;
@@ -32,32 +23,68 @@ export type ProductRow = {
   price: number;
   image_url: string | null;
   is_customizable: boolean;
+  is_sold_out?: boolean;
+  card_badge?: string | null;
 };
 
-export function toProduct(row: ProductRow): Product {
+export type ProductImageRow = {
+  id: string;
+  product_id: string;
+  image_url: string;
+  alt_text: string | null;
+  sort_order: number;
+  is_primary: boolean;
+};
+
+export function toProduct(
+  row: ProductRow,
+  imageRows: ProductImageRow[] = [],
+  promotion?: ProductPromotionRow | null,
+): Product {
+  const images = [...imageRows]
+    .sort((a, b) => {
+      if (a.is_primary !== b.is_primary) {
+        return a.is_primary ? -1 : 1;
+      }
+      return a.sort_order - b.sort_order;
+    })
+    .map((image) => ({
+      src: image.image_url,
+      alt: image.alt_text || row.name,
+    }));
+
+  const basePrice = Number(row.price);
+  const pricing = resolveProductPricing(basePrice, promotion ?? null);
+
   return {
     slug: row.id,
     title: row.name,
     description: row.description,
     additionalInfo: row.additional_info,
     fulfillmentNote: row.fulfillment_note,
-    price: Number(row.price),
+    price: pricing.price,
+    compareAtPrice: pricing.compareAtPrice,
+    promotion: pricing.promotion,
+    cardBadge: normalizeProductCardBadge(row.card_badge),
     customizable: row.is_customizable,
-    images: [
-      {
-        src: row.image_url ?? DEFAULT_PRODUCT_IMAGE,
-        alt: row.name,
-      },
-    ],
+    soldOut: Boolean(row.is_sold_out),
+    images:
+      images.length > 0
+        ? images
+        : [{ src: row.image_url ?? DEFAULT_PRODUCT_IMAGE, alt: row.name }],
   };
 }
 
 export function toShowcaseCategory(category: StorefrontCategory): ShopCategory {
+  const imageSrc = getCategoryImageSrc(category.slug, category.category_type);
+  const categoryLabel =
+    category.category_type === "occasion" ? "повод" : "вид продукт";
+
   return {
     slug: category.slug,
     title: category.name,
     categoryType: category.category_type,
-    imageSrc: CATEGORY_IMAGES[category.slug] ?? DEFAULT_CATEGORY_IMAGE,
-    imageAlt: `${category.name} - категория продукти`,
+    imageSrc: imageSrc || DEFAULT_CATEGORY_IMAGE,
+    imageAlt: `${category.name} - ${categoryLabel}`,
   };
 }

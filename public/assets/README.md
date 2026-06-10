@@ -20,26 +20,39 @@
 - `blog-hero.webp` - широк банер с творческа или подаръчна композиция
 - `blog-shop-promo.webp` - снимка в страничния блок към магазина
 
-## Поводи
+## Категории (начална страница, /categories, /occasions)
 
-- `occasions-hero.webp` - широк банер в горната част на страницата „По повод“
-- `occasion-krashtene.webp`
-- `occasion-svatba.webp`
-- `occasion-rozhden-den.webp`
-- `occasion-yubiley.webp`
-- `occasion-abiturientski-bal.webp`
-- `occasion-za-uchiteli.webp`
+Снимките се връзват по **slug на категорията** от админ панела.
 
-## Видове продукти
+### Видове продукти
 
-- `product-plikove-za-pari.webp`
-- `product-kutii.webp`
-- `product-ramki-i-pana.webp`
-- `product-skandinavski-muh.webp`
-- `product-zakachalki.webp`
-- `product-podaracheta-za-gosti.webp`
-- `tvorcheski-komplekti.webp`
-- `product-sapuneni-rozi.webp`
+Папка: `categories/product/`
+
+Името на файла = slug на категорията, например:
+
+- `categories/product/kutii.png` → slug `kutii`
+- `categories/product/plik-za-pari.png` → slug `plik-za-pari` (или `plikove-za-pari`)
+- `categories/product/ramki-pana.jpg` → slug `ramki-i-pana`
+- `categories/product/gosti.jpg` → slug `podaracheta-za-gosti`
+- `categories/product/gips.png` → slug `gips`
+- `categories/product/zakachalki-kluch.png` → slug `zakachalki`
+
+Препоръчително: `.webp`, квадратно изображение.
+
+### Поводи
+
+Може в `categories/occasion/` или в корена на `assets/` с префикс `occasion-`:
+
+- `occasion-krashtene.webp` → slug `krashtene`
+- `occasion-bebe.png` → slug `bebe`
+- `occasion-svatba.webp` → slug `svatba`
+
+Картата с пътищата е в `lib/category-images.ts`.
+
+## Други снимки в корена на assets
+
+- `tvorcheski-komplekti.webp` — продуктова категория със slug `tvorcheski-komplekti`
+- `occasions-hero.webp` — банер за страницата „По повод“
 
 ## Препоръки
 

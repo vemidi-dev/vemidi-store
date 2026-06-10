@@ -6,10 +6,12 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
 
+import { CartAddedToast } from "@/components/cart/cart-added-toast";
 import type { Product } from "@/lib/catalog";
 import { makeCartLineId } from "@/lib/cart-line-id";
 import {
@@ -40,6 +42,13 @@ type CartContextValue = {
 
 const CartContext = createContext<CartContextValue | null>(null);
 
+const CART_TOAST_DURATION_MS = 4500;
+
+type CartAddedToastState = {
+  id: number;
+  title: string;
+};
+
 function readStoredLines(): CartLine[] {
   if (typeof window === "undefined") {
     return [];
@@ -51,6 +60,8 @@ function readStoredLines(): CartLine[] {
 export function CartProvider({ children }: { children: ReactNode }) {
   const [lines, setLines] = useState<CartLine[]>([]);
   const [ready, setReady] = useState(false);
+  const [addedToast, setAddedToast] = useState<CartAddedToastState | null>(null);
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     setLines(readStoredLines());
@@ -64,6 +75,36 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(lines));
   }, [lines, ready]);
+
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current) {
+        clearTimeout(toastTimerRef.current);
+      }
+    };
+  }, []);
+
+  const dismissAddedToast = useCallback(() => {
+    if (toastTimerRef.current) {
+      clearTimeout(toastTimerRef.current);
+      toastTimerRef.current = null;
+    }
+    setAddedToast(null);
+  }, []);
+
+  const showAddedToast = useCallback((title: string) => {
+    const toastId = Date.now();
+    setAddedToast({ id: toastId, title });
+
+    if (toastTimerRef.current) {
+      clearTimeout(toastTimerRef.current);
+    }
+
+    toastTimerRef.current = setTimeout(() => {
+      setAddedToast((current) => (current?.id === toastId ? null : current));
+      toastTimerRef.current = null;
+    }, CART_TOAST_DURATION_MS);
+  }, []);
 
   const addProduct = useCallback(
     (
@@ -114,8 +155,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
           },
         ];
       });
+
+      showAddedToast(product.title);
     },
-    [],
+    [showAddedToast],
   );
 
   const setQuantity = useCallback((lineId: string, quantity: number) => {
@@ -149,7 +192,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
     };
   }, [addProduct, clear, lines, removeLine, setQuantity]);
 
-  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
+  return (
+    <CartContext.Provider value={value}>
+      {children}
+      {addedToast ? (
+        <CartAddedToast title={addedToast.title} onDismiss={dismissAddedToast} />
+      ) : null}
+    </CartContext.Provider>
+  );
 }
 
 export function useCart() {

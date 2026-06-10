@@ -8,6 +8,8 @@ type CreateProductDraftPayload = {
   fulfillment_note: string;
   price: string;
   is_customizable: boolean;
+  is_sold_out: boolean;
+  card_badge: string;
   category_ids: string[];
   color_fields: Array<{
     label: string;
@@ -16,6 +18,16 @@ type CreateProductDraftPayload = {
     max_select: string;
     option_ids: string;
   }>;
+  personalization_fields: Array<{
+    label: string;
+    field_key: string;
+    field_type: string;
+    placeholder: string;
+    max_length: string;
+    is_required: boolean;
+    allows_wish_templates: boolean;
+  }>;
+  wish_template_ids: string[];
 };
 
 export function getString(formData: FormData, key: string) {
@@ -40,11 +52,28 @@ export function getFile(formData: FormData, key: string): File | null {
   return value instanceof File && value.size > 0 ? value : null;
 }
 
+export function getFiles(formData: FormData, key: string): File[] {
+  return formData
+    .getAll(key)
+    .filter((value): value is File => value instanceof File && value.size > 0);
+}
+
 export function getCategoryIds(formData: FormData) {
   return Array.from(
     new Set(
       formData
         .getAll(adminFormFields.product.categoryIds)
+        .map((value) => String(value ?? "").trim())
+        .filter(Boolean),
+    ),
+  );
+}
+
+export function getWishTemplateIds(formData: FormData) {
+  return Array.from(
+    new Set(
+      formData
+        .getAll(adminFormFields.product.wishTemplateIds)
         .map((value) => String(value ?? "").trim())
         .filter(Boolean),
     ),
@@ -58,6 +87,8 @@ export function normalizeSlug(raw: string) {
 export function getAdminTab(formData: FormData, fallback: AdminTab): AdminTab {
   const raw = getString(formData, adminFormFields.common.tab);
   return raw === "categories" ||
+    raw === "colors" ||
+    raw === "promotions" ||
     raw === "products" ||
     raw === "orders" ||
     raw === "blog" ||
@@ -109,6 +140,37 @@ export function makeCreateProductDraft(formData: FormData) {
     option_ids: optionIds[index] ?? "",
   })).filter((field) => field.label || field.group_id || field.option_ids);
 
+  const personalizationLabels = formData
+    .getAll(adminFormFields.personalizationField.labels)
+    .map((value) => String(value ?? "").trim());
+  const personalizationKeys = formData
+    .getAll(adminFormFields.personalizationField.keys)
+    .map((value) => String(value ?? "").trim());
+  const personalizationTypes = formData
+    .getAll(adminFormFields.personalizationField.types)
+    .map((value) => String(value ?? "").trim());
+  const personalizationPlaceholders = formData
+    .getAll(adminFormFields.personalizationField.placeholders)
+    .map((value) => String(value ?? "").trim());
+  const personalizationMaxLengths = formData
+    .getAll(adminFormFields.personalizationField.maxLengths)
+    .map((value) => String(value ?? "").trim());
+  const personalizationRequired = formData
+    .getAll(adminFormFields.personalizationField.required)
+    .map((value) => String(value) === "1");
+  const personalizationAllowsWishes = formData
+    .getAll(adminFormFields.personalizationField.allowsWishes)
+    .map((value) => String(value) === "1");
+  const personalizationFields = personalizationLabels.map((label, index) => ({
+    label,
+    field_key: personalizationKeys[index] ?? "",
+    field_type: personalizationTypes[index] ?? "text",
+    placeholder: personalizationPlaceholders[index] ?? "",
+    max_length: personalizationMaxLengths[index] ?? "",
+    is_required: personalizationRequired[index] ?? false,
+    allows_wish_templates: personalizationAllowsWishes[index] ?? false,
+  }));
+
   const draft: CreateProductDraftPayload = {
     name: getString(formData, adminFormFields.product.name),
     description: getString(formData, adminFormFields.product.description),
@@ -116,8 +178,12 @@ export function makeCreateProductDraft(formData: FormData) {
     fulfillment_note: getString(formData, adminFormFields.product.fulfillmentNote),
     price: getString(formData, adminFormFields.product.price),
     is_customizable: isChecked(formData, adminFormFields.product.isCustomizable),
+    is_sold_out: isChecked(formData, adminFormFields.product.isSoldOut),
+    card_badge: getString(formData, adminFormFields.product.cardBadge),
     category_ids: getCategoryIds(formData),
     color_fields: colorFields,
+    personalization_fields: personalizationFields,
+    wish_template_ids: getWishTemplateIds(formData),
   };
 
   return JSON.stringify(draft);

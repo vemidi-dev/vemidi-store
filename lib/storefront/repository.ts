@@ -6,7 +6,12 @@ import type {
   ProductPersonalizationField,
   WishTemplate,
 } from "@/lib/product-personalization";
-import { toProduct, type ProductRow } from "@/lib/storefront/mappers";
+import type { ProductPromotionRow } from "@/lib/product-pricing";
+import {
+  toProduct,
+  type ProductImageRow,
+  type ProductRow,
+} from "@/lib/storefront/mappers";
 import type {
   StorefrontCatalog,
   StorefrontCategory,
@@ -50,23 +55,86 @@ async function getClient(): Promise<SupabaseClient | null> {
   return createClient();
 }
 
+function pickActivePromotionByProductId(
+  rows: ProductPromotionRow[],
+): Map<string, ProductPromotionRow> {
+  const now = Date.now();
+  const byProductId = new Map<string, ProductPromotionRow>();
+
+  rows.forEach((row) => {
+    if (!row.is_active) {
+      return;
+    }
+
+    const startsAt = new Date(row.starts_at).getTime();
+    const endsAt = new Date(row.ends_at).getTime();
+    if (startsAt > now || endsAt <= now) {
+      return;
+    }
+
+    const existing = byProductId.get(row.product_id);
+    if (!existing || new Date(row.created_at).getTime() > new Date(existing.created_at).getTime()) {
+      byProductId.set(row.product_id, row);
+    }
+  });
+
+  return byProductId;
+}
+
+async function loadActivePromotions(
+  supabase: SupabaseClient,
+): Promise<Map<string, ProductPromotionRow>> {
+  const { data, error } = await supabase
+    .from("product_promotions")
+    .select(
+      "id,product_id,name,discount_type,discount_value,starts_at,ends_at,is_active,created_at",
+    )
+    .eq("is_active", true);
+
+  if (error) {
+    return new Map();
+  }
+
+  return pickActivePromotionByProductId((data ?? []) as ProductPromotionRow[]);
+}
+
 export async function getStorefrontCatalog(): Promise<StorefrontCatalog> {
   const supabase = await getClient();
   if (!supabase) {
     return { categories: [], products: [] };
   }
 
-  const [productsResult, categoriesResult, relationsResult] = await Promise.all([
-    supabase
-      .from("products")
-      .select("id,name,description,price,image_url,is_customizable,created_at")
-      .order("created_at", { ascending: false }),
-    supabase
-      .from("categories")
-      .select("id,name,slug,category_type")
-      .order("name", { ascending: true }),
-    supabase.from("product_categories").select("product_id,category_id"),
-  ]);
+  const [
+    productsResult,
+    categoriesResult,
+    relationsResult,
+    imagesResult,
+    promotionsByProductId,
+    colorFieldsResult,
+    personalizationFieldsResult,
+  ] = await Promise.all([
+      supabase
+        .from("products")
+        .select(
+          "id,name,description,price,image_url,is_customizable,is_sold_out,card_badge,created_at",
+        )
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("categories")
+        .select("id,name,slug,category_type,show_on_home,home_sort_order")
+        .order("name", { ascending: true }),
+      supabase.from("product_categories").select("product_id,category_id"),
+      supabase
+        .from("product_images")
+        .select("id,product_id,image_url,alt_text,sort_order,is_primary")
+        .order("sort_order", { ascending: true }),
+      loadActivePromotions(supabase),
+      supabase
+        .from("product_color_fields")
+        .select("product_id")
+        .eq("enabled", true),
+      supabase.from("product_personalization_fields").select("product_id"),
+    ]);
 
   const categories = (categoriesResult.data ?? []) as StorefrontCategory[];
   const relations = (relationsResult.data ?? []) as ProductCategoryRow[];
@@ -74,6 +142,9 @@ export async function getStorefrontCatalog(): Promise<StorefrontCatalog> {
     categories.map((category) => [category.id, category.slug]),
   );
   const categorySlugsByProductId = new Map<string, string[]>();
+  const imagesByProductId = new Map<string, ProductImageRow[]>();
+  const productIdsWithColorOptions = new Set<string>();
+  const productIdsWithPersonalizationOptions = new Set<string>();
 
   relations.forEach((relation) => {
     const categorySlug = categorySlugById.get(relation.category_id);
@@ -86,10 +157,34 @@ export async function getStorefrontCatalog(): Promise<StorefrontCatalog> {
     categorySlugsByProductId.set(relation.product_id, slugs);
   });
 
+  ((imagesResult.data ?? []) as ProductImageRow[]).forEach((image) => {
+    const images = imagesByProductId.get(image.product_id) ?? [];
+    images.push(image);
+    imagesByProductId.set(image.product_id, images);
+  });
+
+  (colorFieldsResult.data ?? []).forEach((row) => {
+    if (typeof row.product_id === "string") {
+      productIdsWithColorOptions.add(row.product_id);
+    }
+  });
+
+  (personalizationFieldsResult.data ?? []).forEach((row) => {
+    if (typeof row.product_id === "string") {
+      productIdsWithPersonalizationOptions.add(row.product_id);
+    }
+  });
+
   const products: StorefrontProduct[] = ((productsResult.data ?? []) as ProductRow[]).map(
     (row) => ({
-      ...toProduct(row),
+      ...toProduct(
+        row,
+        imagesByProductId.get(row.id) ?? [],
+        promotionsByProductId.get(row.id) ?? null,
+      ),
       categorySlugs: categorySlugsByProductId.get(row.id) ?? [],
+      hasColorOptions: productIdsWithColorOptions.has(row.id),
+      hasPersonalizationOptions: productIdsWithPersonalizationOptions.has(row.id),
     }),
   );
 
@@ -106,7 +201,7 @@ export async function getStorefrontCategories(
 
   let query = supabase
     .from("categories")
-    .select("id,name,slug,category_type")
+    .select("id,name,slug,category_type,show_on_home,home_sort_order")
     .order("name", { ascending: true });
 
   if (categoryType) {
@@ -211,7 +306,7 @@ export async function getStorefrontProduct(productId: string): Promise<Product |
   const { data, error } = await supabase
     .from("products")
     .select(
-      "id,name,description,additional_info,fulfillment_note,price,image_url,is_customizable",
+      "id,name,description,additional_info,fulfillment_note,price,image_url,is_customizable,is_sold_out,card_badge",
     )
     .eq("id", productId)
     .maybeSingle();
@@ -220,23 +315,36 @@ export async function getStorefrontProduct(productId: string): Promise<Product |
     return null;
   }
 
-  const product = toProduct(data as ProductRow);
-  const [colorFields, personalizationResult, categoryResult, wishesResult, linksResult] =
+  const [imagesResult, colorFields, personalizationResult, wishesResult, linksResult, promotionsByProductId] =
     await Promise.all([
+      supabase
+        .from("product_images")
+        .select("id,product_id,image_url,alt_text,sort_order,is_primary")
+        .eq("product_id", productId)
+        .order("sort_order", { ascending: true }),
       getProductColorFields(supabase, productId),
       supabase
         .from("product_personalization_fields")
         .select("id,label,field_key,field_type,placeholder,max_length,is_required,allows_wish_templates,sort_order")
         .eq("product_id", productId)
         .order("sort_order"),
-      supabase.from("product_categories").select("category_id").eq("product_id", productId),
       supabase
         .from("wish_templates")
-        .select("id,title,body,sort_order")
+        .select("id,body,sort_order")
         .eq("is_active", true)
         .order("sort_order"),
-      supabase.from("wish_template_occasions").select("wish_template_id,category_id"),
+      supabase
+        .from("product_wish_templates")
+        .select("wish_template_id,sort_order")
+        .eq("product_id", productId)
+        .order("sort_order"),
+      loadActivePromotions(supabase),
     ]);
+  const product = toProduct(
+    data as ProductRow,
+    (imagesResult.data ?? []) as ProductImageRow[],
+    promotionsByProductId.get(productId) ?? null,
+  );
 
   product.colorFields = colorFields;
   product.personalizationFields = (personalizationResult.data ?? []).map(
@@ -252,35 +360,16 @@ export async function getStorefrontProduct(productId: string): Promise<Product |
     }),
   );
 
-  const productCategoryIds = new Set(
-    (categoryResult.data ?? []).map((row) => String(row.category_id)),
+  const wishById = new Map(
+    (wishesResult.data ?? []).map((wish) => [String(wish.id), wish]),
   );
-  const categorySlugById = new Map(
-    (
-      await supabase
-        .from("categories")
-        .select("id,slug")
-        .eq("category_type", "occasion")
-    ).data?.map((row) => [String(row.id), String(row.slug)]) ?? [],
+  product.wishTemplates = (linksResult.data ?? []).flatMap(
+    (link): WishTemplate[] => {
+      const wish = wishById.get(String(link.wish_template_id));
+      return wish
+        ? [{ id: String(wish.id), body: String(wish.body) }]
+        : [];
+    },
   );
-  const occasionsByWish = new Map<string, string[]>();
-  (linksResult.data ?? []).forEach((link) => {
-    if (!productCategoryIds.has(String(link.category_id))) return;
-    const slug = categorySlugById.get(String(link.category_id));
-    if (!slug) return;
-    const slugs = occasionsByWish.get(String(link.wish_template_id)) ?? [];
-    slugs.push(slug);
-    occasionsByWish.set(String(link.wish_template_id), slugs);
-  });
-  product.wishTemplates = (wishesResult.data ?? [])
-    .filter((wish) => occasionsByWish.has(String(wish.id)))
-    .map(
-      (wish): WishTemplate => ({
-        id: String(wish.id),
-        title: String(wish.title),
-        body: String(wish.body),
-        occasionSlugs: occasionsByWish.get(String(wish.id)) ?? [],
-      }),
-    );
   return product;
 }

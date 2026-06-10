@@ -1,5 +1,6 @@
 import type { ProductColorField } from "@/lib/product-colors";
 import type { ProductPersonalizationField, WishTemplate } from "@/lib/product-personalization";
+import type { ProductPromotionSnapshot } from "@/lib/product-pricing";
 
 export type ProductImage = {
   src: string;
@@ -12,12 +13,22 @@ export type Product = {
   description: string;
   additionalInfo?: string | null;
   fulfillmentNote?: string | null;
-  /** Price in EUR. */
+  /** Current effective price in EUR. */
   price: number;
-  tag?: string;
+  /** Original list price when a promotion is active. */
+  compareAtPrice?: number | null;
+  promotion?: ProductPromotionSnapshot | null;
+  /** Admin-selected storefront badge, e.g. Ново or По поръчка. */
+  cardBadge?: string | null;
   images: ProductImage[];
+  /** Set on catalog listings when the product has enabled color fields. */
+  hasColorOptions?: boolean;
+  /** Set on catalog listings when the product has personalization fields. */
+  hasPersonalizationOptions?: boolean;
   /** When true, customer can enter up to 50 characters before adding to cart. */
   customizable?: boolean;
+  /** When true, the product is shown as sold out and cannot be ordered. */
+  soldOut?: boolean;
   /** Optional color configuration grouped by material/type. */
   colorFields?: ProductColorField[];
   personalizationFields?: ProductPersonalizationField[];
