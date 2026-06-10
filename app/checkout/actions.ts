@@ -2,10 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 
+import type { OrderRow } from "@/lib/admin/orders";
 import {
   validatePersonalizationFields,
   type PersonalizationFieldDefinition,
 } from "@/lib/checkout-personalization";
+import { sendOrderNotifications } from "@/lib/orders/send-order-notifications";
 import { getRequestFingerprint } from "@/lib/request-fingerprint";
 import { createServiceClient } from "@/lib/supabase/service";
 
@@ -233,9 +235,19 @@ export async function createStoreOrder(
 
   const { data: createdOrder } = await supabase
     .from("orders")
-    .select("total_price,currency")
+    .select(
+      "id,created_at,status,product_name,kit_name,kit_size,coloring,personalization,child_name,total_price,currency,customer_name,customer_phone,customer_email,courier,delivery_type,city,delivery_details,office_id,office_name,office_address,payment_method,note,raw_payload",
+    )
     .eq("id", data)
     .maybeSingle();
+
+  if (createdOrder) {
+    try {
+      await sendOrderNotifications(createdOrder as OrderRow);
+    } catch (error) {
+      console.error("Order notification email failed:", error);
+    }
+  }
 
   revalidatePath("/admin");
 

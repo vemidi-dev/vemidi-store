@@ -9,6 +9,7 @@ import {
   createStoreOrder,
   type CheckoutActionState,
 } from "@/app/checkout/actions";
+import { CheckoutDeliveryFields } from "@/components/checkout/checkout-delivery-fields";
 import { useCart } from "@/components/cart/cart-provider";
 import { PageContainer } from "@/components/layout/page-container";
 import { formatEur } from "@/lib/format-eur";
@@ -144,49 +145,7 @@ export function CheckoutPanel() {
               </div>
             </section>
 
-            <section className="rounded-2xl border border-boutique-line bg-boutique-paper p-6 shadow-boutique-sm md:p-8">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-boutique-accent">
-                02 · Доставка
-              </p>
-              <h2 className="mt-3 font-heading text-2xl text-boutique-ink">
-                Адрес и начин на доставка
-              </h2>
-              <div className="mt-6 grid gap-5 sm:grid-cols-2">
-                <label className="text-sm font-medium text-boutique-ink">
-                  Куриер
-                  <select name="courier" defaultValue="" required className={fieldClass}>
-                    <option value="" disabled>Изберете</option>
-                    <option value="econt">Еконт</option>
-                    <option value="speedy">Спиди</option>
-                  </select>
-                </label>
-                <label className="text-sm font-medium text-boutique-ink">
-                  Доставка
-                  <select name="delivery_type" defaultValue="" required className={fieldClass}>
-                    <option value="" disabled>Изберете</option>
-                    <option value="office">До офис</option>
-                    <option value="address">До адрес</option>
-                  </select>
-                </label>
-                <label className="text-sm font-medium text-boutique-ink">
-                  Населено място
-                  <input name="city" required maxLength={120} className={fieldClass} />
-                </label>
-                <label className="text-sm font-medium text-boutique-ink">
-                  Офис или пощенски код
-                  <input name="office_or_postcode" maxLength={200} className={fieldClass} />
-                </label>
-                <label className="text-sm font-medium text-boutique-ink sm:col-span-2">
-                  Адрес / уточнение за офиса
-                  <textarea
-                    name="delivery_details"
-                    rows={3}
-                    maxLength={500}
-                    className={`${fieldClass} resize-y`}
-                  />
-                </label>
-              </div>
-            </section>
+            <CheckoutDeliveryFields />
 
             <section className="rounded-2xl border border-boutique-line bg-boutique-paper p-6 shadow-boutique-sm md:p-8">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-boutique-accent">

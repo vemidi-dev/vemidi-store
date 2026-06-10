@@ -21,7 +21,17 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY
 SUPABASE_SECRET_KEY
 CHECKOUT_RATE_LIMIT_SECRET
 NEXT_PUBLIC_SITE_URL
+RESEND_API_KEY
+ORDER_NOTIFICATION_FROM
+ORDER_NOTIFICATION_TO
 ```
+
+`RESEND_API_KEY` enables transactional emails after checkout. Without it the store still accepts
+orders, but no email is sent. Verify the sender domain in Resend before production use.
+
+`ECONT_API_USERNAME` and `ECONT_API_PASSWORD` enable live city/office lookup for Econt checkout.
+Use the same API credentials as the campaign landing pages. Without them checkout falls back to
+manual delivery fields.
 
 Use `https://vemidi-store.vercel.app` for `NEXT_PUBLIC_SITE_URL` while the store is on the temporary
 domain. Change it to `https://vemidi-crafts.com` only when the domain is moved to this project.
@@ -38,9 +48,11 @@ environment snapshot.
 Run:
 
 ```text
+npm run env:check
 npm test
 npm run lint
 npm run typecheck
+npm run supabase:check
 npm run build
 ```
 

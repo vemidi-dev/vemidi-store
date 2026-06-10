@@ -5,3 +5,4 @@ out
 .env*.local
 *.tsbuildinfo
 .vercel
+tmp-next-start*

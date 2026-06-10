@@ -24,6 +24,10 @@ Apply the SQL files in this order for a new environment:
 20. `supabase/color_palette_management.sql`
 21. `supabase/atomic_product_personalization.sql`
 22. `supabase/product_wish_assignments.sql`
+23. `supabase/product_promotions.sql`
+24. `supabase/product_sold_out.sql`
+25. `supabase/product_card_badge.sql`
+26. `supabase/event_gallery_images.sql`
 
 `supabase/migrate_product_color_rules_to_fields.sql` is needed only when upgrading an installation
 that already contains the older `product_color_rules` data. Run it after
@@ -141,3 +145,16 @@ Storage objects cannot participate in the Postgres transaction. The application 
 - deleting the product image after a successful product deletion.
 
 Only URLs from the `product-images` Supabase bucket are eligible for automatic deletion.
+
+Run `product_promotions.sql` after products and admin auth exist. It adds time-bound percentage or
+fixed discounts, updates storefront pricing helpers, and extends `create_store_order` to apply active
+promotions server-side.
+
+Run `product_sold_out.sql` after `product_promotions.sql`. It adds `products.is_sold_out`, blocks
+sold-out products during checkout, and updates the checkout RPC.
+
+Run `product_card_badge.sql` after `product_sold_out.sql`. It adds optional storefront card badges
+such as `new` or `bestseller`.
+
+Run `event_gallery_images.sql` after blog/events migrations. It stores ordered gallery images for past
+workshops, with admin upload/reorder support and public display on the events page.
