@@ -86,5 +86,6 @@ export function toShowcaseCategory(category: StorefrontCategory): ShopCategory {
     categoryType: category.category_type,
     imageSrc: imageSrc || DEFAULT_CATEGORY_IMAGE,
     imageAlt: `${category.name} - ${categoryLabel}`,
+    cardDescription: category.card_description,
   };
 }

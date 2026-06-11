@@ -11,6 +11,7 @@ import type {
   ProductImageRow,
   ProductPersonalizationFieldRow,
   ProductWishTemplateRow,
+  WishTemplateOccasionRow,
   WishTemplateRow,
 } from "@/lib/admin/types";
 
@@ -30,6 +31,7 @@ export type AdminData = {
   imagesByProductId: Map<string, ProductImageRow[]>;
   personalizationFieldsByProductId: Map<string, ProductPersonalizationFieldRow[]>;
   wishTemplates: WishTemplateRow[];
+  wishTemplateOccasions: WishTemplateOccasionRow[];
   wishTemplateIdsByProductId: Map<string, string[]>;
   errors: {
     products: QueryError;
@@ -42,6 +44,7 @@ export type AdminData = {
     productImages: QueryError;
     personalizationFields: QueryError;
     wishTemplates: QueryError;
+    wishTemplateOccasions: QueryError;
     productWishTemplates: QueryError;
   };
 };
@@ -58,12 +61,13 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
     productImagesResult,
     personalizationFieldsResult,
     wishTemplatesResult,
+    wishTemplateOccasionsResult,
     productWishTemplatesResult,
   ] = await Promise.all([
     supabase.from("products").select("*").order("id", { ascending: false }),
     supabase
       .from("categories")
-      .select("id,name,slug,category_type,show_on_home,home_sort_order")
+      .select("id,name,slug,category_type,show_on_home,home_sort_order,card_description")
       .order("category_type", { ascending: true })
       .order("home_sort_order", { ascending: true })
       .order("name", { ascending: true }),
@@ -94,6 +98,9 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
       .eq("is_active", true)
       .order("sort_order", { ascending: true }),
     supabase
+      .from("wish_template_occasions")
+      .select("wish_template_id,category_id"),
+    supabase
       .from("product_wish_templates")
       .select("product_id,wish_template_id,sort_order")
       .order("sort_order", { ascending: true }),
@@ -111,6 +118,8 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
   const personalizationFields = (personalizationFieldsResult.data ??
     []) as ProductPersonalizationFieldRow[];
   const wishTemplates = (wishTemplatesResult.data ?? []) as WishTemplateRow[];
+  const wishTemplateOccasions = (wishTemplateOccasionsResult.data ??
+    []) as WishTemplateOccasionRow[];
   const productWishTemplates = (productWishTemplatesResult.data ??
     []) as ProductWishTemplateRow[];
 
@@ -188,6 +197,7 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
     imagesByProductId,
     personalizationFieldsByProductId,
     wishTemplates,
+    wishTemplateOccasions,
     wishTemplateIdsByProductId,
     errors: {
       products: productsResult.error,
@@ -200,6 +210,7 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
       productImages: productImagesResult.error,
       personalizationFields: personalizationFieldsResult.error,
       wishTemplates: wishTemplatesResult.error,
+      wishTemplateOccasions: wishTemplateOccasionsResult.error,
       productWishTemplates: productWishTemplatesResult.error,
     },
   };

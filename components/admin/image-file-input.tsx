@@ -35,8 +35,17 @@ export function ImageFileInput({
   const maxTotalBytes = maxTotalSizeMb * 1024 * 1024;
 
   return (
-    <label className="text-sm font-medium text-boutique-ink">
-      {label}
+    <div>
+      <p className="text-sm font-medium text-boutique-ink">{label}</p>
+      <label
+        htmlFor={id}
+        className={`${className} mt-2 flex cursor-pointer flex-col items-center justify-center border-dashed bg-boutique-paper px-4 py-6 text-center transition hover:border-boutique-accent/50 hover:bg-boutique-bg`}
+      >
+        <span className="text-sm font-semibold text-boutique-ink">
+          {multiple ? "Избери снимки" : "Избери снимка"}
+        </span>
+        <span className="mt-1 text-xs text-boutique-muted">PNG, JPG или WEBP</span>
+      </label>
       <input
         id={id}
         name={name}
@@ -44,7 +53,7 @@ export function ImageFileInput({
         multiple={multiple}
         required={required}
         accept={ACCEPTED_MIME_TYPES.join(",")}
-        className={className}
+        className="sr-only"
         onChange={(event) => {
           const input = event.currentTarget;
           const files = Array.from(input.files ?? []);
@@ -97,6 +106,6 @@ export function ImageFileInput({
         }}
       />
       <p className={helperClassName}>{message}</p>
-    </label>
+    </div>
   );
 }

@@ -16,6 +16,7 @@ import type {
   ColorGroupRow,
   ColorOptionRow,
   ProductCreateDraft,
+  WishTemplateOccasionRow,
   WishTemplateRow,
 } from "@/lib/admin/types";
 
@@ -24,6 +25,7 @@ type ProductCreatePanelProps = {
   colorGroups: ColorGroupRow[];
   colorOptions: ColorOptionRow[];
   wishes: WishTemplateRow[];
+  wishOccasionLinks: WishTemplateOccasionRow[];
   draft: ProductCreateDraft | null;
 };
 
@@ -32,6 +34,7 @@ export function ProductCreatePanel({
   colorGroups,
   colorOptions,
   wishes,
+  wishOccasionLinks,
   draft,
 }: ProductCreatePanelProps) {
   const productCategories = categories.filter(
@@ -178,16 +181,20 @@ export function ProductCreatePanel({
           </div>
         </fieldset>
 
-        <fieldset className="space-y-4 border-t border-boutique-line/70 pt-6">
-          <legend className="text-xs font-semibold uppercase tracking-[0.16em] text-boutique-muted">
+        <details className="border-t border-boutique-line/70 pt-6">
+          <summary className="cursor-pointer text-xs font-semibold uppercase tracking-[0.16em] text-boutique-muted">
             Подходящи готови пожелания
-          </legend>
-          <ProductWishSelector
-            wishes={wishes}
-            selectedIds={draft?.wishTemplateIds}
-            helperClassName={adminHelperClass}
-          />
-        </fieldset>
+          </summary>
+          <div className="mt-4">
+            <ProductWishSelector
+              wishes={wishes}
+              occasions={occasionCategories}
+              wishOccasionLinks={wishOccasionLinks}
+              selectedIds={draft?.wishTemplateIds}
+              helperClassName={adminHelperClass}
+            />
+          </div>
+        </details>
 
         <fieldset className="space-y-4 border-t border-boutique-line/70 pt-6">
           <legend className="text-xs font-semibold uppercase tracking-[0.16em] text-boutique-muted">

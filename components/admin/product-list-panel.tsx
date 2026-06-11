@@ -34,8 +34,13 @@ export function ProductListPanel({ data }: { data: AdminData }) {
     imagesByProductId,
     personalizationFieldsByProductId,
     wishTemplates,
+    wishTemplateOccasions,
     wishTemplateIdsByProductId,
   } = data;
+
+  const occasionCategories = categories.filter(
+    (category) => category.category_type === "occasion",
+  );
 
   return (
     <article className={adminPanelClass}>
@@ -327,18 +332,22 @@ export function ProductListPanel({ data }: { data: AdminData }) {
                         fieldClassName={adminFieldClass}
                       />
                     </fieldset>
-                    <fieldset className="space-y-3 rounded-lg border border-boutique-line/70 bg-boutique-bg p-3 md:col-span-2">
-                      <legend className="px-1 text-sm font-medium text-boutique-ink">
+                    <details className="rounded-lg border border-boutique-line/70 bg-boutique-bg p-3 md:col-span-2">
+                      <summary className="cursor-pointer px-1 text-sm font-medium text-boutique-ink">
                         Подходящи готови пожелания
-                      </legend>
-                      <ProductWishSelector
-                        wishes={wishTemplates}
-                        selectedIds={
-                          wishTemplateIdsByProductId.get(product.id) ?? []
-                        }
-                        helperClassName={adminHelperClass}
-                      />
-                    </fieldset>
+                      </summary>
+                      <div className="mt-3">
+                        <ProductWishSelector
+                          wishes={wishTemplates}
+                          occasions={occasionCategories}
+                          wishOccasionLinks={wishTemplateOccasions}
+                          selectedIds={
+                            wishTemplateIdsByProductId.get(product.id) ?? []
+                          }
+                          helperClassName={adminHelperClass}
+                        />
+                      </div>
+                    </details>
                     <label className="text-sm font-medium text-boutique-ink md:col-span-2">
                       Бележка за доставка/изработка
                       <textarea

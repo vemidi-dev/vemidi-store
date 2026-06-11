@@ -28,6 +28,7 @@ Apply the SQL files in this order for a new environment:
 24. `supabase/product_sold_out.sql`
 25. `supabase/product_card_badge.sql`
 26. `supabase/event_gallery_images.sql`
+27. `supabase/category_card_description.sql`
 
 `supabase/migrate_product_color_rules_to_fields.sql` is needed only when upgrading an installation
 that already contains the older `product_color_rules` data. Run it after

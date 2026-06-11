@@ -381,6 +381,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                 colorGroups={data.colorGroups}
                 colorOptions={data.colorOptions}
                 wishes={data.wishTemplates}
+                wishOccasionLinks={data.wishTemplateOccasions}
                 draft={draft}
               />
               <ProductListPanel data={data} />

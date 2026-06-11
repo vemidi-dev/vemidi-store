@@ -4,7 +4,10 @@ import Link from "next/link";
 
 import { PageContainer } from "@/components/layout/page-container";
 import { MediaPlaceholder } from "@/components/ui/media-placeholder";
-import type { ShopCategory } from "@/lib/shop-categories";
+import {
+  DEFAULT_CATEGORY_CARD_DESCRIPTION,
+  type ShopCategory,
+} from "@/lib/shop-categories";
 import { toShowcaseCategory } from "@/lib/storefront/mappers";
 import { getStorefrontCatalog } from "@/lib/storefront/repository";
 
@@ -17,22 +20,6 @@ export const metadata: Metadata = {
 
 type CategoryWithCount = ShopCategory & {
   productCount: number;
-};
-
-const categoryDescriptions: Record<string, string> = {
-  "plik-za-pari": "Елегантни пликове за пари за всеки специален повод.",
-  "plikove-za-pari": "Елегантни пликове за пари за всеки специален повод.",
-  kutii: "Красиви кутии за спомени, подаръци и специални моменти.",
-  "kutii-i-kutiyki": "Красиви кутии за спомени, подаръци и специални моменти.",
-  "ramki-i-pana": "Персонализирани рамки и пана с лично послание.",
-  gips: "Нежни подаръци и декорации със скандинавски мъх.",
-  "skandinavski-muh": "Нежни подаръци и декорации със скандинавски мъх.",
-  "sakndinavski muh": "Нежни подаръци и декорации със скандинавски мъх.",
-  "sakndinavski-muh": "Нежни подаръци и декорации със скандинавски мъх.",
-  zakachalki: "Практични аксесоари, превърнати в личен подарък.",
-  "podaracheta-za-gosti": "Малки жестове с голямо значение за Вашите гости.",
-  "tvorcheski-komplekti": "Комплекти за творчество, въображение и споделено време.",
-  "sapuneni-rozi": "Ароматни цветя, които запазват красотата си.",
 };
 
 function getCategoryHref(category: ShopCategory) {
@@ -77,8 +64,7 @@ function ProductCategoryCard({ category }: { category: CategoryWithCount }) {
           </p>
         ) : null}
         <p className="mt-3 min-h-10 text-sm leading-5 text-boutique-muted">
-          {categoryDescriptions[category.slug] ??
-            "Открийте ръчно изработени подаръци с възможност за персонализация."}
+          {category.cardDescription?.trim() || DEFAULT_CATEGORY_CARD_DESCRIPTION}
         </p>
         <span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-boutique-sage-deep">
           Разгледай

@@ -676,6 +676,8 @@ export async function createCategory(formData: FormData) {
   const slug = normalizeSlug(getString(formData, adminFormFields.category.slug));
   const categoryType = getString(formData, adminFormFields.category.type);
   const showOnHome = isChecked(formData, adminFormFields.category.showOnHome);
+  const cardDescription =
+    getString(formData, adminFormFields.category.cardDescription).trim() || null;
 
   if (!name || !slug || !["product", "occasion"].includes(categoryType)) {
     redirectWith("error", "Попълнете име и slug за категорията.", activeTab);
@@ -698,6 +700,7 @@ export async function createCategory(formData: FormData) {
       category_type: categoryType,
       show_on_home: showOnHome,
       home_sort_order: homeSortOrder,
+      card_description: cardDescription,
     });
   if (error) {
     redirectWith("error", `Грешка при добавяне на категория: ${error.message}`, activeTab);
@@ -715,6 +718,8 @@ export async function updateCategory(formData: FormData) {
   const slug = normalizeSlug(getString(formData, adminFormFields.category.slug));
   const categoryType = getString(formData, adminFormFields.category.type);
   const showOnHome = isChecked(formData, adminFormFields.category.showOnHome);
+  const cardDescription =
+    getString(formData, adminFormFields.category.cardDescription).trim() || null;
 
   if (!id || !name || !slug || !["product", "occasion"].includes(categoryType)) {
     redirectWith("error", "Невалидни данни за категория.", activeTab);
@@ -749,6 +754,7 @@ export async function updateCategory(formData: FormData) {
       category_type: categoryType,
       show_on_home: showOnHome,
       home_sort_order: homeSortOrder,
+      card_description: cardDescription,
     })
     .eq("id", id);
   if (error) {

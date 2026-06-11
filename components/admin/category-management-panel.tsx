@@ -51,6 +51,15 @@ export function CategoryManagementPanel({ categories }: { categories: CategoryRo
             <option value="occasion">Повод</option>
           </select>
         </label>
+        <label className="text-sm font-medium text-boutique-ink md:col-span-3">
+          Кратък текст за картата
+          <textarea
+            name={adminFormFields.category.cardDescription}
+            rows={2}
+            placeholder="Кратко описание, което се показва под името на категорията"
+            className={`${adminFieldClass} min-h-20 resize-y`}
+          />
+        </label>
         <label className="inline-flex items-center gap-2 text-sm font-medium text-boutique-ink md:col-span-3">
           <input
             name={adminFormFields.category.showOnHome}
@@ -101,6 +110,11 @@ export function CategoryManagementPanel({ categories }: { categories: CategoryRo
                 <div>
                   <p className="font-medium text-boutique-ink">{category.name}</p>
                   <p className="text-xs text-boutique-muted">Slug: {category.slug}</p>
+                  {category.card_description ? (
+                    <p className="mt-1 text-xs text-boutique-muted line-clamp-2">
+                      {category.card_description}
+                    </p>
+                  ) : null}
                   <p className="mt-1 text-xs text-boutique-muted">
                     {category.show_on_home
                       ? "Показва се на началната страница"
@@ -183,6 +197,16 @@ export function CategoryManagementPanel({ categories }: { categories: CategoryRo
                       <option value="product">Продуктова категория</option>
                       <option value="occasion">Повод</option>
                     </select>
+                  </label>
+                  <label className="text-sm font-medium text-boutique-ink md:col-span-3">
+                    Кратък текст за картата
+                    <textarea
+                      name={adminFormFields.category.cardDescription}
+                      rows={2}
+                      defaultValue={category.card_description ?? ""}
+                      placeholder="Кратко описание, което се показва под името на категорията"
+                      className={`${adminFieldClass} min-h-20 resize-y`}
+                    />
                   </label>
                   <label className="inline-flex items-center gap-2 text-sm font-medium text-boutique-ink md:col-span-3">
                     <input

@@ -127,51 +127,55 @@ export function ColorManagementPanel({
                 В тази палитра все още няма цветове.
               </p>
             ) : (
-              <div className="mt-5 grid gap-3 md:grid-cols-2">
+              <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
                 {groupOptions.map((option, index) => (
                   <article
                     key={option.id}
-                    className="rounded-xl border border-boutique-line bg-white p-4"
+                    className="rounded-lg border border-boutique-line bg-white p-2.5"
                   >
-                    <form action={updateColorOption} className="grid gap-3">
+                    <form action={updateColorOption} className="space-y-2">
                       <input
                         type="hidden"
                         name={adminFormFields.colorPalette.optionId}
                         value={option.id}
                       />
-                      <div className="grid grid-cols-[3rem_1fr] items-end gap-3">
+                      <div className="flex items-end gap-2">
                         <input
                           name={adminFormFields.colorPalette.hex}
                           type="color"
                           defaultValue={option.hex || "#E5E1DC"}
                           aria-label={`Цвят за ${option.name}`}
-                          className="h-11 w-12 cursor-pointer rounded-lg border border-boutique-line bg-white p-1"
+                          className="h-9 w-9 shrink-0 cursor-pointer rounded-md border border-boutique-line bg-white p-0.5"
                         />
-                        <label className="text-sm font-medium text-boutique-ink">
+                        <label className="min-w-0 flex-1 text-xs font-medium text-boutique-ink">
                           Име
                           <input
                             name={adminFormFields.colorPalette.name}
                             defaultValue={option.name}
                             required
-                            className={adminFieldClass}
+                            className={`${adminFieldClass} !mt-1 !py-1.5 !text-sm`}
                           />
                         </label>
                       </div>
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <label className="flex items-center gap-2 text-xs text-boutique-muted">
+                      <div className="flex flex-wrap items-center justify-between gap-1.5 border-t border-boutique-line/70 pt-2">
+                        <label className="flex items-center gap-1.5 text-[11px] text-boutique-muted">
                           <input
                             name="is_active"
                             type="checkbox"
                             defaultChecked={option.is_active}
+                            className="h-3.5 w-3.5 rounded border-boutique-line"
                           />
                           Активен
                         </label>
-                        <button className="text-xs font-semibold text-boutique-sage-deep">
+                        <button
+                          type="submit"
+                          className="rounded-full border border-boutique-sage-deep/30 px-2.5 py-1 text-[11px] font-semibold text-boutique-sage-deep"
+                        >
                           Запази
                         </button>
                       </div>
                     </form>
-                    <div className="mt-3 flex gap-2 border-t border-boutique-line pt-3">
+                    <div className="mt-1.5 flex gap-1.5">
                       {(["up", "down"] as const).map((direction) => (
                         <form action={moveColorOption} key={direction}>
                           <input
@@ -190,7 +194,7 @@ export function ColorManagementPanel({
                                 ? index === 0
                                 : index === groupOptions.length - 1
                             }
-                            className="rounded-full border border-boutique-line px-3 py-1.5 text-xs disabled:opacity-35"
+                            className="rounded-full border border-boutique-line px-2 py-1 text-[11px] disabled:opacity-35"
                           >
                             {direction === "up" ? "Наляво" : "Надясно"}
                           </button>

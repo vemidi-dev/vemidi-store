@@ -152,6 +152,7 @@ export type CategoryRow = {
   category_type: "product" | "occasion";
   show_on_home: boolean;
   home_sort_order: number;
+  card_description: string | null;
 };
 
 export type ProductCategoryRow = {

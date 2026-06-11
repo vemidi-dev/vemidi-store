@@ -17,6 +17,7 @@ const errorLabels: Record<keyof AdminData["errors"], string> = {
   productImages: "продуктови галерии",
   personalizationFields: "полета за персонализация",
   wishTemplates: "готови пожелания",
+  wishTemplateOccasions: "поводи за пожелания",
   productWishTemplates: "пожелания към продуктите",
 };
 
