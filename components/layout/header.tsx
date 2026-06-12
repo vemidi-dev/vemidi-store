@@ -9,7 +9,7 @@ import { siteConfig } from "@/config/site";
 import { getSiteContent } from "@/lib/content/site-content";
 
 const navLinkClass =
-  "relative rounded-sm text-sm font-medium text-boutique-muted transition-colors duration-200 after:pointer-events-none after:absolute after:-bottom-1 after:left-0 after:h-px after:w-full after:origin-left after:scale-x-0 after:bg-boutique-rose-deep after:transition-transform after:duration-300 hover:text-boutique-rose-deep hover:after:scale-x-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-boutique-rose-deep";
+  "relative whitespace-nowrap rounded-sm text-sm font-medium text-boutique-muted transition-colors duration-200 after:pointer-events-none after:absolute after:-bottom-1 after:left-0 after:h-px after:w-full after:origin-left after:scale-x-0 after:bg-boutique-rose-deep after:transition-transform after:duration-300 hover:text-boutique-rose-deep hover:after:scale-x-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-boutique-rose-deep";
 
 export async function Header() {
   const content = await getSiteContent();
@@ -17,7 +17,7 @@ export async function Header() {
   return (
     <div className="sticky top-0 z-50 shadow-[0_1px_0_rgb(44_40_37_/0.05)]">
       <header className="border-b border-boutique-line/70 bg-white/95 backdrop-blur-sm">
-      <PageContainer>
+      <PageContainer className="max-w-[90rem]">
         <div className="flex items-center justify-between gap-2 py-3.5 sm:gap-6">
           <Link
             href="/"
@@ -43,7 +43,7 @@ export async function Header() {
           </Link>
 
           <nav aria-label="Основна навигация" className="hidden flex-1 justify-center xl:flex">
-            <ul className="flex items-center gap-5">
+            <ul className="flex items-center gap-4 2xl:gap-5">
               {siteConfig.navigation.map((item) => (
                 <li key={item.href}>
                   <Link href={item.href} className={navLinkClass}>

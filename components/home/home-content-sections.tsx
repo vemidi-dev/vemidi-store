@@ -43,7 +43,7 @@ function UpcomingEventCard({ event }: { event: EventRow }) {
   const date = formatEventDate(event.starts_at);
 
   return (
-    <article className="grid items-center gap-3 rounded-lg border border-boutique-line bg-boutique-warm/55 p-3 sm:grid-cols-[4rem_1fr_auto]">
+    <article className="grid items-center gap-4 rounded-xl border border-boutique-line bg-boutique-warm/55 p-4 sm:grid-cols-[4.5rem_1fr_auto]">
       <div className="border-r border-boutique-line pr-4 text-center">
         <p className="font-heading text-3xl leading-none text-boutique-ink">{date.day}</p>
         <p className="mt-1 text-xs font-semibold uppercase text-boutique-sage-deep">
@@ -51,7 +51,7 @@ function UpcomingEventCard({ event }: { event: EventRow }) {
         </p>
       </div>
       <div>
-        <h3 className="font-heading text-base leading-snug text-boutique-ink">
+        <h3 className="font-heading text-lg leading-snug text-boutique-ink">
           <Link href={`/events/${event.slug}`} className="hover:text-boutique-sage-deep">
             {event.title}
           </Link>
@@ -104,11 +104,11 @@ export function HomeContentGrid({
 }) {
   return (
     <>
-      <section className="border-b border-boutique-line bg-boutique-paper py-14 md:py-16">
-        <PageContainer className="grid gap-12 lg:grid-cols-2 lg:gap-0">
-          <div className="lg:border-r lg:border-boutique-line lg:pr-10">
-            <div className="flex items-end justify-between gap-4">
-              <h2 className="font-heading text-3xl text-boutique-ink">Последни от блога</h2>
+      <section className="border-b border-boutique-line bg-boutique-paper py-12 md:py-20">
+        <PageContainer className="grid gap-14 md:max-w-7xl lg:grid-cols-2 lg:gap-0">
+          <div className="lg:border-r lg:border-boutique-line lg:pr-12">
+            <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
+              <h2 className="font-heading text-3xl tracking-tight text-boutique-ink md:text-4xl">Последни от блога</h2>
               <Link
                 href="/blog"
                 className="text-xs font-semibold text-boutique-sage-deep underline-offset-4 hover:underline"
@@ -118,7 +118,7 @@ export function HomeContentGrid({
             </div>
 
             {posts.length ? (
-              <div className="mt-8 grid gap-5 sm:grid-cols-3">
+              <div className="mt-8 grid gap-7 sm:grid-cols-3 sm:gap-5">
                 {posts.map((post) => (
                   <article key={post.id}>
                     <Link
@@ -131,7 +131,7 @@ export function HomeContentGrid({
                         label="Снимка за статията"
                       />
                     </Link>
-                    <h3 className="mt-3 font-heading text-base leading-snug text-boutique-ink">
+                    <h3 className="mt-3 font-heading text-lg leading-snug text-boutique-ink">
                       <Link href={`/blog/${post.slug}`} className="hover:text-boutique-sage-deep">
                         {post.title}
                       </Link>
@@ -149,9 +149,9 @@ export function HomeContentGrid({
             )}
           </div>
 
-          <div className="lg:pl-10">
-            <div className="flex items-end justify-between gap-4">
-              <h2 className="font-heading text-3xl text-boutique-ink">Предстоящи събития</h2>
+          <div className="lg:pl-12">
+            <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
+              <h2 className="font-heading text-3xl tracking-tight text-boutique-ink md:text-4xl">Предстоящи събития</h2>
               <Link
                 href="/events"
                 className="text-xs font-semibold text-boutique-sage-deep underline-offset-4 hover:underline"
@@ -161,7 +161,7 @@ export function HomeContentGrid({
             </div>
 
             {upcomingEvents.length ? (
-              <div className="mt-5 grid gap-2.5">
+              <div className="mt-6 grid gap-3">
                 {upcomingEvents.map((event) => (
                   <UpcomingEventCard key={event.id} event={event} />
                 ))}
@@ -181,7 +181,7 @@ export function HomeContentGrid({
                 <h3 className="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-boutique-muted">
                   Минали събития
                 </h3>
-                <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
                   {pastEvents.map((event) => (
                     <PastEventCard key={event.id} event={event} />
                   ))}

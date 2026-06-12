@@ -69,29 +69,29 @@ export default async function HomePage() {
       <HomeBenefits />
 
       {featuredProducts.length ? (
-        <section className="border-b border-boutique-line bg-boutique-bg py-10 md:py-16">
-          <PageContainer>
-            <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+        <section className="border-b border-boutique-line bg-boutique-bg py-12 md:py-20">
+          <PageContainer className="md:max-w-7xl">
+            <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-boutique-accent">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-boutique-accent">
                   {content["home.featured_eyebrow"]}
                 </p>
-                <h2 className="mt-2 font-heading text-3xl text-boutique-ink md:text-4xl">
+                <h2 className="mt-3 font-heading text-4xl tracking-tight text-boutique-ink md:text-5xl">
                   {content["home.featured_title"]}
                 </h2>
-                <p className="mt-3 max-w-2xl text-sm leading-relaxed text-boutique-muted md:text-base">
+                <p className="mt-4 max-w-2xl text-base leading-relaxed text-boutique-muted">
                   {content["home.featured_description"]}
                 </p>
               </div>
               <Link
                 href="/shop"
-                className="inline-flex w-fit items-center gap-3 rounded-lg bg-boutique-rose-deep px-5 py-3 text-sm font-semibold text-white transition hover:bg-boutique-ink"
+                className="inline-flex w-fit items-center gap-3 rounded-xl bg-boutique-rose-deep px-6 py-3.5 text-sm font-semibold text-white shadow-boutique-sm transition hover:-translate-y-0.5 hover:bg-boutique-ink hover:shadow-boutique"
               >
                 {content["home.featured_button"]} <span aria-hidden>→</span>
               </Link>
             </div>
 
-            <div className="mt-7 grid grid-cols-2 gap-3 sm:gap-5 lg:mt-10 lg:grid-cols-3">
+            <div className="mt-9 grid grid-cols-2 gap-3 sm:gap-6 lg:mt-12 lg:grid-cols-3 lg:gap-7">
               {featuredProducts.map((product) => (
                 <ProductCard key={product.id} product={product} variant="catalog" />
               ))}
@@ -100,14 +100,14 @@ export default async function HomePage() {
         </section>
       ) : null}
 
-      <section className="border-b border-boutique-line bg-white py-9 md:py-16">
-        <PageContainer>
+      <section className="border-b border-boutique-line bg-white py-12 md:py-20">
+        <PageContainer className="md:max-w-7xl">
           <div className="text-center">
-            <h2 className="font-heading text-2xl text-boutique-ink sm:text-3xl">
+            <h2 className="font-heading text-3xl tracking-tight text-boutique-ink sm:text-4xl">
               {content["home.occasions_title"]} <span className="text-boutique-rose-deep">♡</span>
             </h2>
           </div>
-          <div className="mt-6 grid grid-cols-3 gap-2 sm:mt-9 sm:gap-3 lg:grid-cols-[repeat(6,minmax(0,1fr))_7rem]">
+          <div className="mt-8 grid grid-cols-2 gap-3 sm:mt-10 sm:grid-cols-3 sm:gap-4 lg:grid-cols-[repeat(6,minmax(0,1fr))_8rem]">
             {featuredOccasionCategories.map((category) => (
               <CategoryShowcaseCard
                 key={category.slug}
@@ -118,7 +118,7 @@ export default async function HomePage() {
             <Link
               href="/occasions"
               aria-label="Виж всички поводи"
-              className="group col-span-3 flex min-h-16 items-center justify-center gap-3 rounded-xl border border-boutique-sage/30 bg-boutique-warm/55 px-4 text-center transition hover:-translate-y-1 hover:border-boutique-sage-deep/45 hover:bg-boutique-warm sm:col-span-1 sm:min-h-32 sm:flex-col sm:gap-0"
+              className="group col-span-2 flex min-h-20 items-center justify-center gap-3 rounded-xl border border-boutique-sage/30 bg-boutique-warm/55 px-4 text-center transition hover:-translate-y-1 hover:border-boutique-sage-deep/45 hover:bg-boutique-warm sm:col-span-1 sm:min-h-36 sm:flex-col sm:gap-0"
             >
               <span className="grid h-9 w-9 place-items-center rounded-full bg-boutique-sage-deep text-lg text-boutique-on-sage shadow-boutique-sm transition group-hover:bg-boutique-accent sm:h-14 sm:w-14 sm:text-2xl">
                 <span aria-hidden>→</span>
@@ -136,14 +136,14 @@ export default async function HomePage() {
         </PageContainer>
       </section>
 
-      <section className="border-b border-boutique-line bg-boutique-paper py-9 md:py-16">
-        <PageContainer>
+      <section className="border-b border-boutique-line bg-boutique-paper py-12 md:py-20">
+        <PageContainer className="md:max-w-7xl">
           <div className="text-center">
-            <h2 className="font-heading text-2xl text-boutique-ink sm:text-3xl">
+            <h2 className="font-heading text-3xl tracking-tight text-boutique-ink sm:text-4xl">
               {content["home.categories_title"]} <span className="text-boutique-rose-deep">♡</span>
             </h2>
           </div>
-          <div className="mt-7 grid grid-cols-4 gap-x-3 gap-y-5 sm:mt-10 sm:gap-x-4 sm:gap-y-8 lg:grid-cols-8">
+          <div className="mt-8 grid grid-cols-3 gap-x-4 gap-y-7 sm:mt-10 sm:grid-cols-4 sm:gap-x-5 sm:gap-y-9 lg:grid-cols-8">
             {featuredProductCategories.map((category) => (
               <CategoryShowcaseCard
                 key={category.slug}
@@ -157,10 +157,10 @@ export default async function HomePage() {
               Категориите за продукти ще се покажат тук след добавянето им.
             </p>
           ) : null}
-          <div className="mt-10 text-center">
+          <div className="mt-12 text-center">
             <Link
               href="/categories"
-              className="inline-flex rounded-lg bg-boutique-rose-deep px-6 py-3 text-sm font-semibold text-white transition hover:bg-boutique-ink"
+              className="inline-flex rounded-xl bg-boutique-rose-deep px-7 py-3.5 text-sm font-semibold text-white shadow-boutique-sm transition hover:-translate-y-0.5 hover:bg-boutique-ink"
             >
               Виж всички продукти
             </Link>

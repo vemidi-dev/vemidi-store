@@ -107,18 +107,22 @@ export function disableOptionalPersonalizationField(
 export function calculatePersonalizationDelta(
   fields: ProductPersonalizationField[] | undefined,
   values: ProductPersonalizationValue[] | undefined,
+  enabledOptionalFields?: ReadonlySet<string>,
 ) {
-  if (!fields?.length || !values?.length) {
+  if (!fields?.length) {
     return 0;
   }
 
   const completedFieldIds = new Set(
-    values.filter((value) => value.value.trim()).map((value) => value.fieldId),
+    (values ?? [])
+      .filter((value) => value.value.trim())
+      .map((value) => value.fieldId),
   );
 
   return fields.reduce(
     (total, field) =>
-      completedFieldIds.has(field.id)
+      completedFieldIds.has(field.id) ||
+      (!field.required && enabledOptionalFields?.has(field.id))
         ? total + Math.max(0, Number(field.priceDelta) || 0)
         : total,
     0,

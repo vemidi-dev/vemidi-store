@@ -71,7 +71,7 @@ test("optional personalization fields start closed without toggle", () => {
   assert.equal(calculatePersonalizationDelta(fields, []), 0);
 });
 
-test("enabling optional field reveals input and keeps surcharge at zero until value exists", () => {
+test("enabling optional field reveals input and immediately applies surcharge", () => {
   const enabled = enableOptionalPersonalizationField(new Set(), optionalPaidField.id);
   const values = { [optionalPaidField.id]: "" };
 
@@ -81,8 +81,9 @@ test("enabling optional field reveals input and keeps surcharge at zero until va
     calculatePersonalizationDelta(
       fields,
       buildPersonalizationFieldValues(fields, values, enabled),
+      enabled,
     ),
-    0,
+    2.5,
   );
 });
 

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import {
   calculateEstimatedUnitPrice,
-  calculateOptionFinalPrice,
+  formatOptionChoicePrice,
   formatPriceDelta,
 } from "@/lib/product-option-pricing";
 import type { ProductOptionGroup, ProductOptionSelection } from "@/lib/product-options";
@@ -23,10 +23,6 @@ type ProductOptionsSelectorProps = {
   onChange: (selections: ProductOptionSelection[]) => void;
   onEstimatedPriceChange?: (price: number) => void;
 };
-
-function formatCurrency(value: number) {
-  return `${value.toFixed(2).replace(".", ",")} €`;
-}
 
 export function ProductOptionsSelector({
   basePrice,
@@ -77,6 +73,17 @@ export function ProductOptionsSelector({
     return map;
   }, [value]);
 
+  const primaryChoiceGroupId = useMemo(
+    () =>
+      groups.find(
+        (group) =>
+          group.isActive &&
+          isChoiceOptionGroup(group) &&
+          !getBooleanOptionValues(group),
+      )?.id ?? null,
+    [groups],
+  );
+
   const updateSelection = (groupId: string, next: ProductOptionSelection) => {
     const others = value.filter((selection) => selection.groupId !== groupId);
     const hasContent = next.valueIds.length > 0 || Boolean(next.textValue?.trim());
@@ -88,7 +95,7 @@ export function ProductOptionsSelector({
   }
 
   return (
-    <div className="mt-7 space-y-6">
+    <div className="mt-6 space-y-6">
       {visibleGroups.map((group) => {
         const selection = selectionByGroup.get(group.id) ?? {
           groupId: group.id,
@@ -108,7 +115,7 @@ export function ProductOptionsSelector({
                   {group.isRequired ? " *" : ""}
                 </legend>
                 <label
-                  className={`mt-3 flex items-center gap-4 rounded-2xl border border-boutique-line bg-boutique-bg px-5 py-4 ${
+                  className={`mt-2.5 flex items-center gap-3 rounded-xl border border-boutique-line bg-boutique-bg px-4 py-3 transition ${
                     booleanValues.yes.isSoldOut
                       ? "cursor-not-allowed opacity-60"
                       : "cursor-pointer"
@@ -131,17 +138,17 @@ export function ProductOptionsSelector({
                     }
                   />
                   <span
-                    className={`relative h-7 w-12 shrink-0 rounded-full transition ${
+                    className={`relative h-6 w-11 shrink-0 rounded-full transition ${
                       selected ? "bg-boutique-sage" : "bg-boutique-line"
                     }`}
                   >
                     <span
-                      className={`absolute left-1 top-1 h-5 w-5 rounded-full bg-white shadow-sm transition ${
+                      className={`absolute left-1 top-1 h-4 w-4 rounded-full bg-white shadow-sm transition ${
                         selected ? "translate-x-5" : ""
                       }`}
                     />
                   </span>
-                  <span className="min-w-0 flex-1 font-medium leading-relaxed text-boutique-ink">
+                  <span className="min-w-0 flex-1 text-sm font-semibold leading-5 text-boutique-ink">
                     {booleanValues.yes.label}
                   </span>
                   {deltaLabel ? (
@@ -160,24 +167,25 @@ export function ProductOptionsSelector({
                 {group.name}
                 {group.isRequired ? " *" : ""}
               </legend>
-              <div
-                className={`mt-3 grid gap-3 ${
-                  group.inputType === "single" ? "sm:grid-cols-2" : "sm:grid-cols-2"
-                }`}
-              >
+              <div className="mt-2.5 grid gap-2.5">
                 {group.values
                   .filter((option) => option.isActive)
                   .map((option) => {
                     const selected = selection.valueIds.includes(option.id);
-                    const deltaLabel = formatPriceDelta(option.priceDelta);
-                    const finalPrice = calculateOptionFinalPrice(
+                    const showsFinalPrice = group.id === primaryChoiceGroupId;
+                    const priceLabel = formatOptionChoicePrice(
                       basePrice,
                       option.priceDelta,
+                      group.inputType === "single" && showsFinalPrice,
                     );
                     return (
                       <label
                         key={option.id}
-                        className={`relative flex min-h-24 cursor-pointer items-center gap-4 rounded-2xl border px-5 py-4 text-sm transition ${
+                        className={`relative grid min-h-[4.5rem] cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 text-sm transition ${
+                          priceLabel
+                            ? "grid-cols-[auto_minmax(0,1fr)_auto]"
+                            : "grid-cols-[auto_minmax(0,1fr)]"
+                        } ${
                           option.isSoldOut
                             ? "cursor-not-allowed border-boutique-line/60 bg-boutique-bg text-boutique-muted opacity-60"
                             : selected
@@ -186,7 +194,7 @@ export function ProductOptionsSelector({
                         }`}
                       >
                         <input
-                          className="h-5 w-5 shrink-0 accent-boutique-sage-deep"
+                          className="h-4 w-4 shrink-0 accent-boutique-sage-deep"
                           type={group.inputType === "single" ? "radio" : "checkbox"}
                           name={`option-${group.id}`}
                           checked={selected}
@@ -207,18 +215,20 @@ export function ProductOptionsSelector({
                             });
                           }}
                         />
-                        <span className="flex min-w-0 flex-1 items-center justify-between gap-4">
-                          <span className="font-medium leading-relaxed text-boutique-ink">
+                        <span className="contents">
+                          <span className="min-w-0 font-semibold leading-5 text-boutique-ink">
                             {option.label}
                           </span>
                           {option.isSoldOut ? (
-                            <span className="ml-2 text-xs text-boutique-muted">(изчерпано)</span>
+                            <span className="absolute right-4 top-2 text-[0.65rem] font-semibold uppercase tracking-wide text-boutique-muted">
+                              (изчерпано)
+                            </span>
                           ) : null}
-                          <span className="shrink-0 text-base font-semibold text-boutique-ink">
-                            {group.inputType === "single"
-                              ? formatCurrency(finalPrice)
-                              : deltaLabel ?? "Без доплащане"}
+                        {priceLabel ? (
+                          <span className="shrink-0 whitespace-nowrap text-base font-semibold text-boutique-ink">
+                            {priceLabel}
                           </span>
+                        ) : null}
                         </span>
                       </label>
                     );
@@ -250,7 +260,7 @@ export function ProductOptionsSelector({
           };
 
           return (
-            <label key={group.id} className="block text-sm font-medium text-boutique-ink">
+            <label key={group.id} className="block text-sm font-semibold text-boutique-ink">
               <span>
                 {group.name}
                 {group.isRequired ? " *" : ""}
@@ -272,7 +282,7 @@ export function ProductOptionsSelector({
         return null;
       })}
 
-      <p className="text-sm text-boutique-muted">
+      <p className="rounded-xl bg-boutique-bg px-4 py-2.5 text-sm leading-5 text-boutique-muted">
         Ориентировъчна цена:{" "}
         <span className="font-semibold text-boutique-ink">
           {estimatedPrice.toFixed(2).replace(".", ",")} €

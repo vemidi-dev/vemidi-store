@@ -21,6 +21,7 @@ import {
   calculateOptionFinalPrice,
   calculateOptionDelta,
   calculatePriceDeltaFromFinalPrice,
+  formatOptionChoicePrice,
 } from "@/lib/product-option-pricing";
 import { validateProductOptionSelections } from "@/lib/product-option-validation";
 import { resolveProductPricing } from "@/lib/product-pricing";
@@ -372,6 +373,13 @@ test("admin final variant prices convert to stable deltas", () => {
   assert.equal(calculatePriceDeltaFromFinalPrice(13.5, 18), 4.5);
   assert.equal(calculatePriceDeltaFromFinalPrice(13.5, 24), 10.5);
   assert.equal(calculateOptionFinalPrice(13.5, 4.5), 18);
+});
+
+test("primary variants show final price while secondary options show surcharge", () => {
+  assert.equal(formatOptionChoicePrice(13.5, 0, true), "13,50 €");
+  assert.equal(formatOptionChoicePrice(13.5, 4.5, true), "18,00 €");
+  assert.equal(formatOptionChoicePrice(13.5, 0, false), null);
+  assert.equal(formatOptionChoicePrice(13.5, 2.5, false), "+2,50 €");
 });
 
 test("base promotion applies only to base price", () => {

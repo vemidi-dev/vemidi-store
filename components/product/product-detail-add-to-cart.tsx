@@ -94,6 +94,15 @@ export function ProductDetailAddToCart({
         return `Попълнете полето „${field.label}“.`;
       }
     }
+    for (const field of fields) {
+      if (
+        !field.required &&
+        enabledOptionalFields.has(field.id) &&
+        !(values[field.id] ?? "").trim()
+      ) {
+        return `Попълнете полето „${field.label}“ или изключете персонализацията.`;
+      }
+    }
     for (const field of colorFields) {
       const count = (selectedByGroup[field.id] ?? []).length;
       if (count < field.minSelect || count > field.maxSelect) {
@@ -124,6 +133,7 @@ export function ProductDetailAddToCart({
   const personalizationDelta = calculatePersonalizationDelta(
     fields,
     personalizationFields,
+    enabledOptionalFields,
   );
 
   const focusPersonalizationField = (fieldId: string) => {
@@ -172,9 +182,9 @@ export function ProductDetailAddToCart({
   }
 
   return (
-    <div className="mt-10 rounded-2xl border border-boutique-line bg-boutique-paper p-5 sm:p-6">
+    <div className="mt-8 rounded-2xl border border-boutique-line bg-boutique-paper p-4 sm:p-5">
       {fields.length ? (
-        <div className="grid gap-5 sm:grid-cols-2">
+        <div className="grid gap-4">
           {fields.map((field) => {
             const value = values[field.id] ?? "";
             const showInput = shouldShowPersonalizationInput(field, enabledOptionalFields);
@@ -206,11 +216,11 @@ export function ProductDetailAddToCart({
               return (
                 <div
                   key={field.id}
-                  className={field.type === "textarea" ? "sm:col-span-2" : ""}
+                  className="w-full"
                 >
                   <label
                     htmlFor={`personalization-toggle-${field.id}`}
-                    className="flex cursor-pointer items-center gap-4 rounded-2xl border border-boutique-line bg-boutique-bg px-5 py-4"
+                    className="flex cursor-pointer items-center gap-3 rounded-xl border border-boutique-line bg-boutique-bg px-4 py-3 transition hover:border-boutique-sage-deep/40"
                   >
                     <input
                       id={`personalization-toggle-${field.id}`}
@@ -225,17 +235,17 @@ export function ProductDetailAddToCart({
                     />
                     <span
                       aria-hidden="true"
-                      className={`relative h-7 w-12 shrink-0 rounded-full transition ${
+                      className={`relative h-6 w-11 shrink-0 rounded-full transition ${
                         enabled ? "bg-boutique-sage" : "bg-boutique-line"
                       }`}
                     >
                       <span
-                        className={`absolute left-1 top-1 h-5 w-5 rounded-full bg-white shadow-sm transition ${
+                        className={`absolute left-1 top-1 h-4 w-4 rounded-full bg-white shadow-sm transition ${
                           enabled ? "translate-x-5" : ""
                         }`}
                       />
                     </span>
-                    <span className="min-w-0 flex-1 text-sm font-medium leading-relaxed text-boutique-ink">
+                    <span className="min-w-0 flex-1 text-sm font-semibold leading-5 text-boutique-ink">
                       {formatPersonalizationToggleLabel(field)}
                     </span>
                   </label>
@@ -291,9 +301,7 @@ export function ProductDetailAddToCart({
               <label
                 key={field.id}
                 htmlFor={inputId}
-                className={`text-sm font-medium text-boutique-ink ${
-                  field.type === "textarea" ? "sm:col-span-2" : ""
-                }`}
+                className="text-sm font-medium text-boutique-ink"
               >
                 <span className="flex items-center justify-between gap-3">
                   <span>
@@ -325,7 +333,7 @@ export function ProductDetailAddToCart({
             );
           })}
           {fields.some((field) => field.allowsWishTemplates) ? (
-            <p className="sm:col-span-2 text-xs leading-5 text-boutique-muted">
+            <p className="text-xs leading-5 text-boutique-muted">
               Прегледайте и редактирайте избраното пожелание спрямо получателя – име, пол,
               възраст и конкретен повод.
             </p>
@@ -413,7 +421,7 @@ export function ProductDetailAddToCart({
           setAdded(true);
           setTimeout(() => setAdded(false), 2200);
         }}
-        className={`mt-7 w-full rounded-xl px-8 py-4 text-sm font-semibold text-white transition ${
+        className={`mt-5 w-full rounded-xl px-8 py-3.5 text-sm font-semibold text-white transition ${
           added
             ? "bg-boutique-sage shadow-boutique-sm"
             : "bg-boutique-sage-deep hover:bg-boutique-ink"

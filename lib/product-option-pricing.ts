@@ -18,6 +18,20 @@ export function calculateOptionFinalPrice(basePrice: number, priceDelta: number)
   return Math.round((safeBasePrice + safeDelta) * 100) / 100;
 }
 
+export function formatOptionChoicePrice(
+  basePrice: number,
+  priceDelta: number,
+  showsFinalPrice: boolean,
+): string | null {
+  if (showsFinalPrice) {
+    return `${calculateOptionFinalPrice(basePrice, priceDelta)
+      .toFixed(2)
+      .replace(".", ",")} €`;
+  }
+
+  return formatPriceDelta(priceDelta);
+}
+
 export function calculatePriceDeltaFromFinalPrice(
   basePrice: number,
   finalPrice: number,

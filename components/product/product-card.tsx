@@ -18,7 +18,7 @@ export function ProductCard({ product, variant = "default" }: ProductCardProps) 
   const statusLabel = resolveProductCardStatusLabel(product);
   const ctaLabel = getProductCardCtaLabel(product);
   const ctaClassName = compact
-    ? "mt-1.5 inline-flex min-h-9 items-center text-xs font-semibold text-boutique-sage-deep underline-offset-4 hover:underline sm:mt-2"
+    ? "mt-2 inline-flex min-h-9 items-center text-xs font-semibold text-boutique-sage-deep underline-offset-4 hover:underline sm:mt-3 sm:text-sm"
     : "mt-4 block w-full rounded-full bg-boutique-ink py-3.5 text-center text-sm font-semibold tracking-wide text-boutique-paper shadow-sm transition duration-300 hover:bg-boutique-accent hover:shadow-md";
 
   return (
@@ -37,7 +37,7 @@ export function ProductCard({ product, variant = "default" }: ProductCardProps) 
         compact={compact}
       />
 
-      <div className={`flex flex-1 flex-col ${compact ? "p-2.5 sm:p-4" : "p-6 sm:p-7"}`}>
+      <div className={`flex flex-1 flex-col ${compact ? "p-3 sm:p-5" : "p-6 sm:p-7"}`}>
         {statusLabel ? (
           <p
             className={`font-semibold uppercase tracking-[0.22em] text-boutique-accent ${
@@ -57,7 +57,7 @@ export function ProductCard({ product, variant = "default" }: ProductCardProps) 
           <h2
             className={`font-heading text-boutique-ink transition duration-300 group-hover:text-boutique-sage-deep ${
               compact
-                ? "line-clamp-2 text-[0.8125rem] leading-snug sm:text-base"
+                ? "line-clamp-2 text-sm leading-snug sm:text-lg"
                 : "text-xl leading-snug"
             }`}
           >
@@ -71,7 +71,7 @@ export function ProductCard({ product, variant = "default" }: ProductCardProps) 
           </p>
         ) : null}
 
-        <div className={compact ? "mt-2 sm:mt-4" : "mt-6 border-t border-boutique-line/80 pt-5"}>
+        <div className={compact ? "mt-3 sm:mt-5" : "mt-6 border-t border-boutique-line/80 pt-5"}>
           <ProductPrice product={product} size={compact ? "md" : "lg"} />
           {product.soldOut ? (
             <p className="mt-3 text-xs font-semibold uppercase tracking-[0.16em] text-boutique-muted">

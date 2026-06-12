@@ -29,36 +29,36 @@ export function HomeHero({ content }: { content: SiteContent }) {
 
   return (
     <section className="overflow-hidden border-b border-boutique-line bg-boutique-paper">
-      <div className="grid lg:grid-cols-[0.9fr_1.1fr]">
+      <div className="grid lg:min-h-[40rem] lg:grid-cols-2 2xl:min-h-[44rem]">
         <div className="order-2 flex items-center bg-[linear-gradient(135deg,#fdfcfa_0%,#ebe4db_100%)] lg:order-1">
-          <div className="w-full px-5 py-8 sm:px-10 sm:py-12 lg:ml-auto lg:max-w-[36rem] lg:px-12 lg:py-16">
-            <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-boutique-rose-deep">
+          <div className="w-full px-5 py-9 sm:px-10 sm:py-12 lg:ml-auto lg:max-w-[43rem] lg:px-14 lg:py-20 xl:px-16">
+            <p className="text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-boutique-rose-deep sm:text-xs">
               ♡ {content["home.hero_eyebrow"]}
             </p>
-            <h1 className="mt-3 font-heading text-[2.35rem] leading-[0.98] tracking-tight text-boutique-ink sm:mt-5 sm:text-6xl">
+            <h1 className="mt-4 font-heading text-[2.6rem] leading-[0.98] tracking-[-0.035em] text-boutique-ink sm:mt-5 sm:text-6xl lg:text-[4.35rem] xl:text-[4.8rem]">
               {content["home.hero_title_line_1"]}
               <span className="block">
                 {content["home.hero_title_line_2"]}
               </span>
-              <span className="mt-2 block text-[0.82em] italic text-boutique-rose-deep">
+              <span className="mt-2 block text-[0.78em] italic leading-[1.05] text-boutique-rose-deep">
                 {content["home.hero_title_accent"]}
               </span>
             </h1>
-            <p className="mt-4 max-w-xl text-sm leading-6 text-boutique-muted sm:mt-6 sm:text-base sm:leading-7">
+            <p className="mt-5 max-w-[36rem] text-[0.95rem] leading-7 text-boutique-muted sm:mt-6 sm:text-base lg:text-[1.05rem] lg:leading-8">
               {content["home.hero_description"]}
             </p>
 
-            <div className="mt-5 grid grid-cols-2 gap-2 sm:mt-8 sm:grid-cols-4 sm:gap-3">
+            <div className="mt-7 grid grid-cols-2 gap-2.5 sm:mt-9 sm:grid-cols-4 sm:gap-3">
               {quickPaths.map((item) => (
                 <Link
-                  className="group flex min-h-16 items-center gap-2 rounded-lg border border-boutique-rose/25 bg-white/70 px-3 py-2.5 text-left shadow-boutique-sm transition hover:-translate-y-1 hover:border-boutique-rose-deep/40 hover:bg-white sm:min-h-28 sm:block sm:rounded-xl sm:p-4 sm:text-center"
+                  className="group flex min-h-[4.75rem] items-center gap-3 rounded-xl border border-boutique-rose/25 bg-white/80 px-3.5 py-3 text-left shadow-boutique-sm transition hover:-translate-y-1 hover:border-boutique-rose-deep/40 hover:bg-white hover:shadow-boutique sm:min-h-32 sm:flex-col sm:justify-center sm:gap-3 sm:p-4 sm:text-center"
                   href={item.href}
                   key={item.href}
                 >
-                  <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-boutique-blush text-base text-boutique-rose-deep sm:mx-auto sm:h-9 sm:w-9 sm:text-lg">
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-boutique-blush text-base text-boutique-rose-deep transition group-hover:bg-boutique-sage-deep group-hover:text-boutique-on-sage sm:h-10 sm:w-10 sm:text-lg">
                     {item.icon}
                   </span>
-                  <span className="block text-[0.68rem] font-semibold leading-snug text-boutique-ink sm:mt-3 sm:text-xs">
+                  <span className="block text-xs font-semibold leading-snug text-boutique-ink sm:text-[0.8rem]">
                     {item.title}
                   </span>
                 </Link>
@@ -67,7 +67,7 @@ export function HomeHero({ content }: { content: SiteContent }) {
           </div>
         </div>
 
-        <div className="relative order-1 min-h-[16rem] overflow-hidden sm:min-h-[22rem] lg:order-2 lg:min-h-[38rem]">
+        <div className="relative order-1 min-h-[17rem] overflow-hidden sm:min-h-[22rem] lg:order-2 lg:min-h-full">
           <Image
             alt="Персонализиран дървен подарък за кръщене"
             className="object-cover"

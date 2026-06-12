@@ -223,7 +223,7 @@ export default async function EventsPage() {
           </div>
           <div className="relative min-h-80 overflow-hidden lg:min-h-full">
             <Image
-              src="/assets/sabitia.png"
+              src="/assets/cover-events.png"
               alt="Творчески работилници за деца в ателието VeMiDi"
               fill
               priority
