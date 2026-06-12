@@ -17,7 +17,9 @@ import {
 } from "@/lib/product-options";
 import {
   calculateEstimatedUnitPrice,
+  calculateOptionFinalPrice,
   calculateOptionDelta,
+  calculatePriceDeltaFromFinalPrice,
 } from "@/lib/product-option-pricing";
 import { validateProductOptionSelections } from "@/lib/product-option-validation";
 import { resolveProductPricing } from "@/lib/product-pricing";
@@ -326,6 +328,13 @@ test("client forged price is ignored in pricing helper", () => {
     { groupId: groupSizeId, valueIds: [valueLargeId] },
   ]);
   assert.equal(unit, 25);
+});
+
+test("admin final variant prices convert to stable deltas", () => {
+  assert.equal(calculatePriceDeltaFromFinalPrice(13.5, 13.5), 0);
+  assert.equal(calculatePriceDeltaFromFinalPrice(13.5, 18), 4.5);
+  assert.equal(calculatePriceDeltaFromFinalPrice(13.5, 24), 10.5);
+  assert.equal(calculateOptionFinalPrice(13.5, 4.5), 18);
 });
 
 test("base promotion applies only to base price", () => {

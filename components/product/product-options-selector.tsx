@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import {
   calculateEstimatedUnitPrice,
+  calculateOptionFinalPrice,
   formatPriceDelta,
 } from "@/lib/product-option-pricing";
 import type { ProductOptionGroup, ProductOptionSelection } from "@/lib/product-options";
@@ -21,6 +22,10 @@ type ProductOptionsSelectorProps = {
   onChange: (selections: ProductOptionSelection[]) => void;
   onEstimatedPriceChange?: (price: number) => void;
 };
+
+function formatCurrency(value: number) {
+  return `${value.toFixed(2).replace(".", ",")} €`;
+}
 
 export function ProductOptionsSelector({
   basePrice,
@@ -96,25 +101,33 @@ export function ProductOptionsSelector({
                 {group.name}
                 {group.isRequired ? " *" : ""}
               </legend>
-              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              <div
+                className={`mt-3 grid gap-3 ${
+                  group.inputType === "single" ? "sm:grid-cols-2" : "sm:grid-cols-2"
+                }`}
+              >
                 {group.values
                   .filter((option) => option.isActive)
                   .map((option) => {
                     const selected = selection.valueIds.includes(option.id);
                     const deltaLabel = formatPriceDelta(option.priceDelta);
+                    const finalPrice = calculateOptionFinalPrice(
+                      basePrice,
+                      option.priceDelta,
+                    );
                     return (
                       <label
                         key={option.id}
-                        className={`flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 text-sm ${
+                        className={`relative flex min-h-24 cursor-pointer items-center gap-4 rounded-2xl border px-5 py-4 text-sm transition ${
                           option.isSoldOut
                             ? "cursor-not-allowed border-boutique-line/60 bg-boutique-bg text-boutique-muted opacity-60"
                             : selected
-                              ? "border-boutique-sage-deep bg-boutique-sage/10"
-                              : "border-boutique-line bg-white"
+                              ? "border-boutique-sage-deep bg-boutique-sage/10 shadow-boutique-sm"
+                              : "border-boutique-line bg-white hover:border-boutique-sage-deep/50"
                         }`}
                       >
                         <input
-                          className="shrink-0"
+                          className="h-5 w-5 shrink-0 accent-boutique-sage-deep"
                           type={group.inputType === "single" ? "radio" : "checkbox"}
                           name={`option-${group.id}`}
                           checked={selected}
@@ -135,16 +148,18 @@ export function ProductOptionsSelector({
                             });
                           }}
                         />
-                        <span className="flex-1">
-                          <span className="font-medium text-boutique-ink">{option.label}</span>
+                        <span className="flex min-w-0 flex-1 items-center justify-between gap-4">
+                          <span className="font-medium leading-relaxed text-boutique-ink">
+                            {option.label}
+                          </span>
                           {option.isSoldOut ? (
                             <span className="ml-2 text-xs text-boutique-muted">(изчерпано)</span>
                           ) : null}
-                          {deltaLabel ? (
-                            <span className="ml-2 text-xs font-semibold text-boutique-accent">
-                              {deltaLabel}
-                            </span>
-                          ) : null}
+                          <span className="shrink-0 text-base font-semibold text-boutique-ink">
+                            {group.inputType === "single"
+                              ? formatCurrency(finalPrice)
+                              : deltaLabel ?? "Без доплащане"}
+                          </span>
                         </span>
                       </label>
                     );

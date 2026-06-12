@@ -8,6 +8,7 @@ import {
   updateProductMerchandising,
 } from "@/app/admin/actions";
 import { AdminConfirmForm } from "@/components/admin/admin-confirm-form";
+import { AdminUnsavedChangesGuard } from "@/components/admin/admin-unsaved-changes-guard";
 import { AdminListControls } from "@/components/admin/admin-list-controls";
 import { AdminOpenDetailsButton } from "@/components/admin/admin-open-details-button";
 import { ImageFileInput } from "@/components/admin/image-file-input";
@@ -368,7 +369,14 @@ export function ProductListPanel({ data }: { data: AdminData }) {
                   <summary className="cursor-pointer text-xs font-semibold text-boutique-sage-deep">
                     Редактирай продукт
                   </summary>
-                  <form action={updateProduct} className="mt-4 grid gap-4 md:grid-cols-2">
+                  <form
+                    id={`admin-edit-product-form-${product.id}`}
+                    action={updateProduct}
+                    className="mt-4 grid gap-4 md:grid-cols-2"
+                  >
+                    <AdminUnsavedChangesGuard
+                      formId={`admin-edit-product-form-${product.id}`}
+                    />
                     <input type="hidden" name={adminFormFields.common.tab} value="products" />
                     <input type="hidden" name={adminFormFields.common.id} value={product.id} />
                     <input
@@ -387,7 +395,7 @@ export function ProductListPanel({ data }: { data: AdminData }) {
                       />
                     </label>
                     <label className="text-sm font-medium text-boutique-ink">
-                      Цена (евро)
+                      Основна цена / цена на най-евтиния вариант (евро)
                       <input
                         name={adminFormFields.product.price}
                         type="number"
@@ -473,6 +481,7 @@ export function ProductListPanel({ data }: { data: AdminData }) {
                         <ProductOptionGroupsEditor
                           initialGroups={initialOptionGroups}
                           allDependencyOptions={productDependencyOptions}
+                          basePrice={Number(product.price) || 0}
                           helperClassName={adminHelperClass}
                           fieldClassName={adminFieldClass}
                         />

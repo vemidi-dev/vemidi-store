@@ -1,4 +1,5 @@
 import { createProduct } from "@/app/admin/actions";
+import { AdminUnsavedChangesGuard } from "@/components/admin/admin-unsaved-changes-guard";
 import { ImageFileInput } from "@/components/admin/image-file-input";
 import { ProductColorFieldsEditor } from "@/components/admin/product-color-fields-editor";
 import { ProductOptionGroupsEditor } from "@/components/admin/product-option-groups-editor";
@@ -52,7 +53,8 @@ export function ProductCreatePanel({
         Попълнете основните данни за продукта. Полетата са организирани по секции.
       </p>
 
-      <form action={createProduct} className="mt-7 space-y-7">
+      <form id="admin-create-product-form" action={createProduct} className="mt-7 space-y-7">
+        <AdminUnsavedChangesGuard formId="admin-create-product-form" />
         <input type="hidden" name={adminFormFields.common.tab} value="products" />
 
         <fieldset className="space-y-4">
@@ -75,7 +77,7 @@ export function ProductCreatePanel({
             </label>
 
             <label className="text-sm font-medium text-boutique-ink">
-              Цена (евро)
+              Основна цена / цена на най-евтиния вариант (евро)
               <input
                 name={adminFormFields.product.price}
                 type="number"
@@ -86,7 +88,9 @@ export function ProductCreatePanel({
                 className={adminFieldClass}
                 placeholder="0.00"
               />
-              <p className={adminHelperClass}>Въведете стойност в EUR, например 29.90.</p>
+              <p className={adminHelperClass}>
+                Ако продуктът има варианти, въведете цената на най-евтиния вариант.
+              </p>
             </label>
 
             <label className="text-sm font-medium text-boutique-ink md:col-span-2">
@@ -250,6 +254,7 @@ export function ProductCreatePanel({
             <ProductOptionGroupsEditor
               initialGroups={draft?.optionGroups}
               allDependencyOptions={[]}
+              basePrice={Number(draft?.price) || 0}
               helperClassName={adminHelperClass}
               fieldClassName={adminFieldClass}
             />

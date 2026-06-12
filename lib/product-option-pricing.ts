@@ -12,6 +12,23 @@ export function formatPriceDelta(delta: number): string | null {
   return delta > 0 ? `+${formatted} €` : `${formatted} €`;
 }
 
+export function calculateOptionFinalPrice(basePrice: number, priceDelta: number) {
+  const safeBasePrice = Number.isFinite(basePrice) ? Math.max(0, basePrice) : 0;
+  const safeDelta = Number.isFinite(priceDelta) ? Math.max(0, priceDelta) : 0;
+  return Math.round((safeBasePrice + safeDelta) * 100) / 100;
+}
+
+export function calculatePriceDeltaFromFinalPrice(
+  basePrice: number,
+  finalPrice: number,
+) {
+  const safeBasePrice = Number.isFinite(basePrice) ? Math.max(0, basePrice) : 0;
+  const safeFinalPrice = Number.isFinite(finalPrice)
+    ? Math.max(safeBasePrice, finalPrice)
+    : safeBasePrice;
+  return Math.round((safeFinalPrice - safeBasePrice) * 100) / 100;
+}
+
 export function calculateOptionDelta(
   groups: ProductOptionGroup[],
   selections: ProductOptionSelection[],
@@ -53,5 +70,5 @@ export function calculateEstimatedUnitPrice(
   selections: ProductOptionSelection[],
 ): number {
   const delta = calculateOptionDelta(groups, selections);
-  return Math.max(0, Math.round((effectiveBasePrice + delta) * 100) / 100);
+  return calculateOptionFinalPrice(effectiveBasePrice, delta);
 }

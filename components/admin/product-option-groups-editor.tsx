@@ -1,10 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { adminFormFields } from "@/lib/admin/form-fields";
 import type { ParsedOptionGroup, ParsedOptionValue } from "@/lib/admin/types";
-import { formatPriceDelta } from "@/lib/product-option-pricing";
+import {
+  calculateOptionFinalPrice,
+  calculatePriceDeltaFromFinalPrice,
+  formatPriceDelta,
+} from "@/lib/product-option-pricing";
 
 type InitialOptionGroup = ParsedOptionGroup;
 
@@ -17,6 +21,7 @@ type LocalGroup = Omit<ParsedOptionGroup, "values"> & {
 type ProductOptionGroupsEditorProps = {
   initialGroups?: InitialOptionGroup[];
   allDependencyOptions: Array<{ id: string; label: string; groupName: string }>;
+  basePrice: number;
   helperClassName: string;
   fieldClassName: string;
 };
@@ -106,15 +111,37 @@ function isChoiceType(inputType: ParsedOptionGroup["inputType"]) {
 export function ProductOptionGroupsEditor({
   initialGroups = [],
   allDependencyOptions,
+  basePrice: initialBasePrice,
   helperClassName,
   fieldClassName,
 }: ProductOptionGroupsEditorProps) {
+  const editorRef = useRef<HTMLDivElement>(null);
+  const [basePrice, setBasePrice] = useState(
+    Number.isFinite(initialBasePrice) ? initialBasePrice : 0,
+  );
   const [groups, setGroups] = useState<LocalGroup[]>(
     initialGroups.length
       ? initialGroups.map(toLocalGroup)
       : [],
   );
   const [openUid, setOpenUid] = useState<string | null>(null);
+
+  useEffect(() => {
+    const form = editorRef.current?.closest("form");
+    const priceInput = form?.elements.namedItem(adminFormFields.product.price);
+    if (!(priceInput instanceof HTMLInputElement)) {
+      return;
+    }
+
+    const syncBasePrice = () => {
+      const nextPrice = Number(priceInput.value);
+      setBasePrice(Number.isFinite(nextPrice) ? Math.max(0, nextPrice) : 0);
+    };
+
+    syncBasePrice();
+    priceInput.addEventListener("input", syncBasePrice);
+    return () => priceInput.removeEventListener("input", syncBasePrice);
+  }, []);
 
   const preview = useMemo(
     () =>
@@ -158,7 +185,7 @@ export function ProductOptionGroupsEditor({
   };
 
   return (
-    <div className="space-y-4">
+    <div ref={editorRef} className="space-y-4">
       <p className={helperClassName}>
         Добавете група за всеки въпрос към клиента, например „Размер на комплекта“,
         „Оцветяване“ или „Персонализация“. При избор между варианти добавете отделен ред
@@ -465,8 +492,8 @@ export function ProductOptionGroupsEditor({
                   <div>
                     <p className="text-sm font-semibold text-boutique-ink">Варианти за избор</p>
                     <p className="mt-1 text-xs text-boutique-muted">
-                      Основната цена е цената на най-евтиния вариант. Тук добавяйте само
-                      доплащането за по-скъпите варианти.
+                      Основната цена на продукта трябва да е цената на най-евтиния вариант.
+                      За всеки вариант въведете крайната цена, която клиентът ще плати.
                     </p>
                   </div>
                   {group.values.map((value, valueIndex) => (
@@ -506,21 +533,22 @@ export function ProductOptionGroupsEditor({
                           />
                         </label>
                         <label className="text-sm font-medium text-boutique-ink">
-                          Доплащане (€)
+                          Крайна цена (€)
                           <input
                             type="number"
-                            min={0}
+                            min={basePrice}
                             step="0.01"
                             className={fieldClassName}
-                            value={value.priceDelta}
+                            value={calculateOptionFinalPrice(basePrice, value.priceDelta)}
                             onChange={(event) => {
+                              const finalPrice = Number(event.target.value);
                               const nextValues = group.values.map((item) =>
                                 item.uid === value.uid
                                   ? {
                                       ...item,
-                                      priceDelta: Math.max(
-                                        0,
-                                        Number(event.target.value) || 0,
+                                      priceDelta: calculatePriceDeltaFromFinalPrice(
+                                        basePrice,
+                                        finalPrice,
                                       ),
                                     }
                                   : item,
@@ -528,6 +556,9 @@ export function ProductOptionGroupsEditor({
                               updateGroup(group.uid, { values: nextValues });
                             }}
                           />
+                          <span className="mt-1 block text-xs font-normal text-boutique-muted">
+                            Минимум {basePrice.toFixed(2).replace(".", ",")} €
+                          </span>
                         </label>
                         <button
                           type="button"
