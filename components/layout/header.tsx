@@ -23,15 +23,14 @@ export async function Header() {
             href="/"
             className="group flex min-w-0 shrink items-center gap-2 rounded-lg pr-1 transition-colors duration-200 sm:shrink-0 sm:gap-3 sm:pr-2"
           >
-            <span className="grid h-10 w-10 place-items-center overflow-hidden rounded-full border border-boutique-rose/25 bg-boutique-paper transition-colors duration-200 group-hover:border-boutique-rose-deep/40">
-              <Image
-                src="/logo-vemidi.svg"
-                alt="VeMiDi crafts logo"
-                width={32}
-                height={32}
-                className="h-8 w-8 object-contain"
-              />
-            </span>
+            <Image
+              src="/assets/logo-transparent-color.png"
+              alt="VeMiDi crafts logo"
+              width={96}
+              height={96}
+              priority
+              className="h-12 w-12 shrink-0 scale-[1.65] object-contain transition-transform duration-200 group-hover:scale-[1.72] sm:h-14 sm:w-14"
+            />
             <span className="min-w-0 leading-tight">
               <span className="block truncate font-heading text-base tracking-tight text-boutique-ink transition-colors duration-200 group-hover:text-boutique-rose-deep sm:text-xl">
                 VeMiDi crafts

@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { PageContainer } from "@/components/layout/page-container";
+import { VisualPageHero } from "@/components/layout/visual-page-hero";
 import { MediaPlaceholder } from "@/components/ui/media-placeholder";
 import {
   DEFAULT_CATEGORY_CARD_DESCRIPTION,
@@ -143,39 +144,19 @@ export default async function CategoriesPage() {
 
   return (
     <div>
-      <section className="overflow-hidden border-b border-boutique-line bg-boutique-paper">
-        <div className="grid lg:min-h-[19rem] lg:grid-cols-[0.8fr_1.2fr]">
-          <PageContainer className="flex items-center py-5 sm:py-12 lg:pr-12">
-            <div className="max-w-xl">
-              <p className="text-sm text-boutique-muted">
-                <Link href="/" className="transition hover:text-boutique-sage-deep">
-                  Начало
-                </Link>
-                <span className="mx-2" aria-hidden>
-                  ›
-                </span>
-                {content["categories.hero_title"]}
-              </p>
-              <h1 className="mt-3 font-heading text-4xl text-boutique-ink sm:mt-5 sm:text-6xl">
-                Категории
-              </h1>
-              <p className="mt-3 max-w-lg text-sm leading-6 text-boutique-muted sm:mt-5 sm:text-base sm:leading-7">
-                {content["categories.hero_description"]}
-              </p>
-            </div>
-          </PageContainer>
-          <div className="relative min-h-44 sm:min-h-64 lg:min-h-full">
-            <Image
-              src="/assets/banner-categories.webp"
-              alt="Ръчно изработени персонализирани подаръци по категории"
-              fill
-              priority
-              sizes="(max-width: 1024px) 100vw, 60vw"
-              className="object-cover"
-            />
-          </div>
-        </div>
-      </section>
+      <VisualPageHero
+        eyebrow={
+          <>
+            <Link href="/" className="transition hover:underline">Начало</Link>
+            <span className="px-2" aria-hidden>›</span>
+            {content["categories.hero_title"]}
+          </>
+        }
+        title={content["categories.hero_title"]}
+        description={content["categories.hero_description"]}
+        imageSrc="/assets/banner-categories.webp"
+        imageAlt="Ръчно изработени персонализирани подаръци по категории"
+      />
 
       <section className="py-6 md:py-16">
         <PageContainer>

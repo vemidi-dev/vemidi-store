@@ -1,9 +1,9 @@
-import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
 
 import { ProductCard } from "@/components/product/product-card";
 import { PageContainer } from "@/components/layout/page-container";
+import { VisualPageHero } from "@/components/layout/visual-page-hero";
 import { isProductOnPromotion } from "@/lib/product-pricing";
 import { getSiteContent } from "@/lib/content/site-content";
 import { getStorefrontCatalog } from "@/lib/storefront/repository";
@@ -256,33 +256,19 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
 
   return (
     <div>
-      <section className="border-b border-boutique-line bg-boutique-paper">
-        <div className="grid lg:min-h-[18rem] lg:grid-cols-[0.72fr_1.28fr]">
-          <div className="flex items-center bg-[linear-gradient(135deg,#fdfcfa_0%,#ebe4db_100%)] px-5 py-5 sm:px-12 sm:py-12 lg:pl-[max(3rem,calc((100vw-72rem)/2))]">
-            <div className="max-w-lg">
-              <p className="text-sm text-boutique-sage-deep">
-                <Link href="/" className="hover:underline">Начало</Link> <span className="px-2">›</span> Продукти
-              </p>
-              <h1 className="mt-2 font-heading text-3xl text-boutique-ink sm:mt-5 sm:text-5xl">
-                {content["shop.hero_title"]}
-              </h1>
-              <p className="mt-2 text-sm leading-6 text-boutique-muted sm:mt-5 sm:leading-7">
-                {content["shop.hero_description"]}
-              </p>
-            </div>
-          </div>
-          <div className="relative min-h-36 overflow-hidden sm:min-h-[18rem]">
-            <Image
-              src="/assets/products.png"
-              alt="Ръчно изработени продукти от VeMiDi crafts"
-              fill
-              priority
-              sizes="(max-width: 1024px) 100vw, 60vw"
-              className="object-cover"
-            />
-          </div>
-        </div>
-      </section>
+      <VisualPageHero
+        eyebrow={
+          <>
+            <Link href="/" className="hover:underline">Начало</Link>
+            <span className="px-2" aria-hidden>›</span>
+            Продукти
+          </>
+        }
+        title={content["shop.hero_title"]}
+        description={content["shop.hero_description"]}
+        imageSrc="/assets/products.png"
+        imageAlt="Ръчно изработени продукти от VeMiDi crafts"
+      />
 
       <section id="product-grid" className="bg-white py-10 md:py-14">
         <PageContainer>

@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { PageContainer } from "@/components/layout/page-container";
+import { VisualPageHero } from "@/components/layout/visual-page-hero";
 import { MediaPlaceholder } from "@/components/ui/media-placeholder";
 import { getSiteContent } from "@/lib/content/site-content";
 import type { ShopCategory } from "@/lib/shop-categories";
@@ -101,39 +102,13 @@ export default async function OccasionsPage() {
 
   return (
     <div>
-      <section className="overflow-hidden border-b border-boutique-line bg-boutique-paper">
-        <div className="grid lg:min-h-[22rem] lg:grid-cols-[0.72fr_1.28fr]">
-          <div className="flex items-center bg-[linear-gradient(135deg,#fdfcfa_0%,#ebe4db_100%)]">
-            <PageContainer className="py-5 text-center sm:py-14 lg:pl-14 lg:pr-10">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-boutique-rose-deep">
-                {content["occasions.hero_eyebrow"]}
-              </p>
-              <h1 className="mt-3 font-heading text-4xl leading-none text-boutique-ink sm:mt-5 sm:text-7xl">
-                {content["occasions.hero_title"]}
-              </h1>
-              <p className="mx-auto mt-3 max-w-sm text-sm leading-6 text-boutique-muted sm:mt-7 sm:text-lg sm:leading-7">
-                {content["occasions.hero_description"]}
-              </p>
-              <div className="mx-auto mt-4 hidden max-w-64 items-center gap-4 text-boutique-rose-deep sm:mt-7 sm:flex">
-                <span className="h-px flex-1 bg-boutique-rose/50" />
-                <span className="font-heading text-2xl">♡</span>
-                <span className="h-px flex-1 bg-boutique-rose/50" />
-              </div>
-            </PageContainer>
-          </div>
-
-          <div className="relative min-h-36 overflow-hidden sm:min-h-72 lg:min-h-full">
-            <Image
-              src="/assets/povodi.png"
-              alt="Персонализирани подаръци за специални поводи"
-              fill
-              priority
-              sizes="(max-width: 1024px) 100vw, 60vw"
-              className="object-cover"
-            />
-          </div>
-        </div>
-      </section>
+      <VisualPageHero
+        eyebrow={content["occasions.hero_eyebrow"]}
+        title={content["occasions.hero_title"]}
+        description={content["occasions.hero_description"]}
+        imageSrc="/assets/povodi.png"
+        imageAlt="Персонализирани подаръци за специални поводи"
+      />
 
       <section className="py-6 md:py-16">
         <PageContainer>

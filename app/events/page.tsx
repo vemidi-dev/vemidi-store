@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 
 import { EventGallerySection } from "@/components/content/event-gallery-section";
 import { EventNotificationForm } from "@/components/content/event-notification-form";
 import { ContentImage } from "@/components/content/content-image";
 import { PageContainer } from "@/components/layout/page-container";
+import { VisualPageHero } from "@/components/layout/visual-page-hero";
 import type { EventRow } from "@/lib/admin/types";
 import { getPublishedEvents } from "@/lib/content/repository";
 import { formatEur } from "@/lib/format-eur";
@@ -202,37 +202,13 @@ export default async function EventsPage() {
 
   return (
     <div>
-      <section className="overflow-hidden border-b border-boutique-line bg-boutique-paper">
-        <div className="grid min-h-[28rem] lg:grid-cols-[0.72fr_1.28fr]">
-          <div className="flex items-center bg-[linear-gradient(135deg,#fdfcfa_0%,#ebe4db_100%)]">
-            <PageContainer className="py-14 lg:pl-14 lg:pr-10">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-boutique-rose-deep">
-                Творчество и споделено време
-              </p>
-              <h1 className="mt-5 font-heading text-6xl leading-none text-boutique-ink sm:text-7xl">
-                Събития
-              </h1>
-              <p className="mt-7 max-w-md text-lg leading-8 text-boutique-muted">
-                Творчески работилници за деца в моето ателие – място, където
-                въображението оживява и малките творци създават с радост.
-              </p>
-              <span className="mt-7 block font-heading text-3xl text-boutique-rose-deep">
-                ♡
-              </span>
-            </PageContainer>
-          </div>
-          <div className="relative min-h-80 overflow-hidden lg:min-h-full">
-            <Image
-              src="/assets/cover-events.png"
-              alt="Творчески работилници за деца в ателието VeMiDi"
-              fill
-              priority
-              sizes="(max-width: 1024px) 100vw, 60vw"
-              className="object-cover"
-            />
-          </div>
-        </div>
-      </section>
+      <VisualPageHero
+        eyebrow="Творчество и споделено време"
+        title="Събития"
+        description="Творчески работилници за деца в моето ателие – място, където въображението оживява и малките творци създават с радост."
+        imageSrc="/assets/cover-events.png"
+        imageAlt="Творчески работилници за деца в ателието VeMiDi"
+      />
 
       {upcomingEvents.length ? <UpcomingEvents events={upcomingEvents} /> : null}
       <PastEvents events={pastEvents} />

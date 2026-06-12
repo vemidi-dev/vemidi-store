@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 
 import { ContentImage } from "@/components/content/content-image";
 import { NewsletterForm } from "@/components/content/newsletter-form";
 import { PageContainer } from "@/components/layout/page-container";
+import { VisualPageHero } from "@/components/layout/visual-page-hero";
 import { MediaPlaceholder } from "@/components/ui/media-placeholder";
 import type { BlogPostRow } from "@/lib/admin/types";
 import { getPublishedBlogPosts } from "@/lib/content/repository";
@@ -155,36 +155,13 @@ export default async function BlogPage({ searchParams }: Props) {
 
   return (
     <div>
-      <section className="overflow-hidden border-b border-boutique-line bg-boutique-paper">
-        <div className="grid min-h-[22rem] lg:grid-cols-[0.7fr_1.3fr]">
-          <div className="flex items-center bg-[linear-gradient(135deg,#fdfcfa_0%,#ebe4db_100%)]">
-            <PageContainer className="py-14 lg:pl-14 lg:pr-10">
-              <h1 className="font-heading text-6xl leading-none text-boutique-ink sm:text-7xl">
-                Блог
-              </h1>
-              <div className="mt-6 flex max-w-36 items-center gap-3 text-boutique-rose-deep">
-                <span className="h-px flex-1 bg-boutique-rose/45" />
-                <span className="font-heading text-xl">♡</span>
-                <span className="h-px flex-1 bg-boutique-rose/45" />
-              </div>
-              <p className="mt-6 max-w-md text-base leading-7 text-boutique-muted">
-                Идеи, вдъхновение и полезни съвети за специални поводи, детско творчество
-                и персонализирани подаръци.
-              </p>
-            </PageContainer>
-          </div>
-          <div className="relative min-h-72 overflow-hidden lg:min-h-full">
-            <Image
-              src="/assets/cover-blog.png"
-              alt="Идеи и вдъхновение от блога на VeMiDi crafts"
-              fill
-              priority
-              sizes="(max-width: 1024px) 100vw, 60vw"
-              className="object-cover"
-            />
-          </div>
-        </div>
-      </section>
+      <VisualPageHero
+        eyebrow="Идеи и вдъхновение"
+        title="Блог"
+        description="Идеи, вдъхновение и полезни съвети за специални поводи, детско творчество и персонализирани подаръци."
+        imageSrc="/assets/cover-blog.png"
+        imageAlt="Идеи и вдъхновение от блога на VeMiDi crafts"
+      />
 
       {topicCategories.length ? (
         <section className="py-12">
