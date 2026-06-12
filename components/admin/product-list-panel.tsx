@@ -18,6 +18,7 @@ import { AdminFormPendingGuard } from "@/components/admin/admin-form-pending-gua
 import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
 import { ProductGalleryAddForm } from "@/components/admin/product-gallery-add-form";
 import { ProductGalleryReplaceForm } from "@/components/admin/product-gallery-replace-form";
+import { ProductImageFileInput } from "@/components/admin/product-image-file-input";
 import { ProductCardBadgeField } from "@/components/admin/product-card-badge-field";
 import { ProductColorFieldsEditor } from "@/components/admin/product-color-fields-editor";
 import { ProductOptionGroupsEditor } from "@/components/admin/product-option-groups-editor";
@@ -564,6 +565,19 @@ export function ProductListPanel({
                       <ProductCardBadgeField defaultValue={product.card_badge} />
                     </div>
 
+                    {hasNoGalleryImages ? (
+                      <div className="md:col-span-2">
+                        <ProductImageFileInput
+                          name={adminFormFields.product.imageFiles}
+                          label="Снимки на продукта"
+                          className={adminFieldClass}
+                          helperClassName={adminHelperClass}
+                          existingGalleryCount={galleryImageCount}
+                          helperText="Изберете снимки и натиснете „Запази промените“. PNG, JPG или WEBP — оптимизират се автоматично."
+                        />
+                      </div>
+                    ) : null}
+
                     <label className="inline-flex items-center gap-2 text-sm font-medium text-boutique-ink md:col-span-2">
                       <input
                         name={adminFormFields.product.isSoldOut}
@@ -577,13 +591,23 @@ export function ProductListPanel({
                     <div className="md:col-span-2">
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <AdminSubmitButton
-                          pendingLabel="Запазване…"
+                          pendingLabel={
+                            hasNoGalleryImages
+                              ? "Запазване и качване…"
+                              : "Запазване…"
+                          }
                           className="rounded-full bg-boutique-ink px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-boutique-paper transition hover:bg-boutique-accent disabled:cursor-not-allowed disabled:opacity-70"
                         >
                           Запази промените
                         </AdminSubmitButton>
                       </div>
-                      <AdminFormPendingGuard />
+                      <AdminFormPendingGuard
+                        message={
+                          hasNoGalleryImages
+                            ? "Запазване и качване на снимки… Моля, не затваряйте страницата."
+                            : undefined
+                        }
+                      />
                     </div>
                   </form>
 
@@ -616,15 +640,16 @@ export function ProductListPanel({
                         role="status"
                         className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
                       >
-                        {DUPLICATE_MISSING_IMAGES_NOTICE}
+                        {DUPLICATE_MISSING_IMAGES_NOTICE} Изберете снимки във формата по-горе и
+                        натиснете „Запази промените“.
                       </p>
-                    ) : null}
-
-                    <ProductGalleryAddForm
-                      productId={product.id}
-                      productName={product.name}
-                      existingGalleryCount={galleryImageCount}
-                    />
+                    ) : (
+                      <ProductGalleryAddForm
+                        productId={product.id}
+                        productName={product.name}
+                        existingGalleryCount={galleryImageCount}
+                      />
+                    )}
 
                     {productImages.length > 0 ? (
                       <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

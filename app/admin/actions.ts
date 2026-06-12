@@ -515,6 +515,12 @@ export async function updateProduct(formData: FormData) {
     getOptionalString(formData, adminFormFields.product.cardBadge),
   );
   const price = getPrice(formData);
+  const imageFiles = getFiles(formData, adminFormFields.product.imageFiles);
+  const existingGalleryCount = id ? await getProductGalleryImageCount(supabase, id) : 0;
+  const galleryUploadError =
+    imageFiles.length > 0
+      ? validateProductImageUploadBatch(imageFiles, existingGalleryCount)
+      : null;
   const { fields: colorFields, error: colorFieldsError } = await parseProductColorFields(
     supabase,
     formData,
@@ -528,6 +534,9 @@ export async function updateProduct(formData: FormData) {
 
   if (!id || !name || !description || price === null || categoryIds.length === 0) {
     redirectWith("error", "Невалидни данни за редакция.", activeTab);
+  }
+  if (galleryUploadError) {
+    redirectWithProductEdit("error", galleryUploadError, id);
   }
   if (colorFieldsError) {
     redirectWith("error", colorFieldsError, activeTab);
@@ -566,15 +575,50 @@ export async function updateProduct(formData: FormData) {
   );
 
   if (mutationError) {
-    redirectWith(
+    redirectWithProductEdit(
       "error",
       getProductMutationErrorMessage(mutationError),
-      activeTab,
+      id,
     );
   }
 
+  let uploadedImages: UploadedProductImage[] = [];
+  if (imageFiles.length > 0) {
+    try {
+      uploadedImages = await processAndUploadProductImages(
+        supabase,
+        id,
+        imageFiles,
+        existingGalleryCount,
+      );
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Неуспешно качване на изображението.";
+      redirectWithProductEdit(
+        "error",
+        `Продуктът е запазен, но снимките не бяха качени: ${message}`,
+        id,
+      );
+    }
+
+    const galleryError = await attachProductImages(supabase, id, name, uploadedImages);
+    if (galleryError) {
+      await deleteUploadedImagesBestEffort(supabase, uploadedImages);
+      const migrationMissing = galleryError.message.includes("admin_attach_product_images");
+      redirectWithProductEdit(
+        "error",
+        migrationMissing
+          ? "Продуктът е запазен, но снимките не бяха добавени. Изпълнете product_image_gallery.sql."
+          : "Продуктът е запазен, но снимките не бяха добавени към галерията.",
+        id,
+      );
+    }
+  }
+
   revalidateProductPaths(id);
-  redirectWith("success", "Продуктът е обновен.", activeTab);
+  const optimizationSummary =
+    uploadedImages.length > 0 ? ` Качени ${uploadedImages.length} оптимизирани снимки.` : "";
+  redirectWithProductEdit("success", `Продуктът е обновен.${optimizationSummary}`, id);
 }
 
 export async function addProductGalleryImages(formData: FormData) {
