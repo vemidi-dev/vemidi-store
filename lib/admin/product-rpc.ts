@@ -83,6 +83,7 @@ function toRpcInput(input: ProductMutationInput) {
       field_type: field.type,
       placeholder: field.placeholder,
       max_length: field.maxLength,
+      price_delta: field.priceDelta,
       is_required: field.required,
       allows_wish_templates: field.allowsWishTemplates,
       sort_order: field.sortOrder,
@@ -112,6 +113,15 @@ export async function updateProductAtomic(
 
 export async function deleteProductAtomic(supabase: SupabaseClient, productId: string) {
   return supabase.rpc("admin_delete_product", { p_product_id: productId });
+}
+
+export async function duplicateProductAtomic(
+  supabase: SupabaseClient,
+  sourceProductId: string,
+) {
+  return supabase.rpc("admin_duplicate_product", {
+    p_product_id: sourceProductId,
+  });
 }
 
 const rpcErrorMessages: Record<string, string> = {

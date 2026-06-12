@@ -124,6 +124,7 @@ export function parseProductCreateDraft(raw: string): ProductCreateDraft | null 
               field_type?: unknown;
               placeholder?: unknown;
               max_length?: unknown;
+              price_delta?: unknown;
               is_required?: unknown;
               allows_wish_templates?: unknown;
             };
@@ -155,6 +156,11 @@ export function parseProductCreateDraft(raw: string): ProductCreateDraft | null 
                   ? candidate.placeholder
                   : "",
               maxLength,
+              priceDelta:
+                typeof candidate.price_delta === "string" ||
+                typeof candidate.price_delta === "number"
+                  ? Math.max(0, Number(candidate.price_delta) || 0)
+                  : 0,
               required: candidate.is_required === true,
               allowsWishTemplates:
                 type === "textarea" && candidate.allows_wish_templates === true,

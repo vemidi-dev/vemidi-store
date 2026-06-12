@@ -33,6 +33,7 @@ import type { ProductOptionSelection } from "@/lib/product-options";
 import { CART_STORAGE_KEY, LEGACY_CART_STORAGE_KEY, type CartLine } from "@/lib/cart-types";
 import type { SelectedProductColor } from "@/lib/product-colors";
 import type { ProductPersonalizationValue } from "@/lib/product-personalization";
+import { calculatePersonalizationDelta } from "@/lib/product-personalization";
 
 type CartContextValue = {
   lines: CartLine[];
@@ -170,13 +171,19 @@ export function CartProvider({ children }: { children: ReactNode }) {
           JSON.stringify(storedAttribution),
         );
       }
-      const estimatedPrice = product.optionGroups?.length
+      const optionPrice = product.optionGroups?.length
         ? calculateEstimatedUnitPrice(
             product.price,
             product.optionGroups,
             storedOptionSelections ?? [],
           )
         : product.price;
+      const estimatedPrice =
+        optionPrice +
+        calculatePersonalizationDelta(
+          product.personalizationFields,
+          storedPersonalizationFields,
+        );
       const lineId = makeCartLineId(
         product.slug,
         storedPersonalization,

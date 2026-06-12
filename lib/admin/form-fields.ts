@@ -29,6 +29,7 @@ export const adminFormFields = {
   productImage: {
     imageId: "image_id",
     direction: "direction",
+    replaceFile: "replace_image_file",
   },
   merchandising: {
     isFeatured: "is_featured",
@@ -56,6 +57,7 @@ export const adminFormFields = {
     types: "personalization_type[]",
     placeholders: "personalization_placeholder[]",
     maxLengths: "personalization_max_length[]",
+    priceDeltas: "personalization_price_delta[]",
     required: "personalization_required[]",
     allowsWishes: "personalization_allows_wishes[]",
   },

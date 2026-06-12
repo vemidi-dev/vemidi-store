@@ -5,17 +5,20 @@ import { redirect } from "next/navigation";
 
 import { getString } from "@/lib/admin/form-data";
 import { adminFormFields } from "@/lib/admin/form-fields";
+import { getProductImagePath } from "@/lib/admin/storage";
+import { EVENT_GALLERY_SCOPE_ID } from "@/lib/images/constants";
 import {
-  deleteProductImage,
-  getProductImagePath,
-  uploadEventGalleryImage,
-  type UploadedProductImage,
-} from "@/lib/admin/storage";
+  createSupabaseImageStorageAdapter,
+  deleteStoragePathsBestEffort,
+  getUploadedImagePaths,
+  processAndUploadImages,
+  validateImageUploadBatch,
+  type UploadedImage,
+} from "@/lib/images/upload-image";
 import { checkIsAdmin } from "@/lib/supabase/admin-auth";
 import { createClient } from "@/lib/supabase/server";
 
-const MAX_GALLERY_FILES_PER_UPLOAD = 9;
-const MAX_GALLERY_UPLOAD_BYTES = 9 * 1024 * 1024;
+const EVENT_GALLERY_PROFILE = "event_gallery" as const;
 
 function done(kind: "success" | "error", message: string): never {
   revalidatePath("/admin");
@@ -50,39 +53,26 @@ function getFiles(formData: FormData, fieldName: string) {
     .filter((value): value is File => value instanceof File && value.size > 0);
 }
 
-function getGalleryUploadError(files: File[]) {
-  if (files.length > MAX_GALLERY_FILES_PER_UPLOAD) {
-    return `Изберете най-много ${MAX_GALLERY_FILES_PER_UPLOAD} снимки наведнъж.`;
-  }
-
-  const totalSize = files.reduce((sum, file) => sum + file.size, 0);
-  if (totalSize > MAX_GALLERY_UPLOAD_BYTES) {
-    return "Общият размер на снимките трябва да бъде до 9 MB.";
-  }
-
-  return null;
-}
-
-async function deleteImagesBestEffort(
+async function getEventGalleryImageCount(
   supabase: Awaited<ReturnType<typeof getAuthorizedClient>>,
-  images: UploadedProductImage[],
 ) {
-  await Promise.all(
-    images.map(async (image) => {
-      try {
-        await deleteProductImage(supabase, image.path);
-      } catch {
-        // Best effort cleanup.
-      }
-    }),
-  );
+  const { count, error } = await supabase
+    .from("event_gallery_images")
+    .select("id", { count: "exact", head: true });
+
+  return error ? 0 : count ?? 0;
 }
 
 export async function uploadEventGalleryImages(formData: FormData) {
   const supabase = await getAuthorizedClient();
   const files = getFiles(formData, adminFormFields.eventGallery.imageFiles);
   const defaultAlt = getString(formData, adminFormFields.eventGallery.defaultAlt);
-  const galleryUploadError = getGalleryUploadError(files);
+  const existingCount = await getEventGalleryImageCount(supabase);
+  const galleryUploadError = validateImageUploadBatch(
+    EVENT_GALLERY_PROFILE,
+    files,
+    existingCount,
+  );
 
   if (files.length === 0) {
     done("error", "Изберете поне една снимка за галерията.");
@@ -92,14 +82,17 @@ export async function uploadEventGalleryImages(formData: FormData) {
     done("error", galleryUploadError);
   }
 
-  const uploaded: UploadedProductImage[] = [];
+  let uploaded: UploadedImage[] = [];
 
   try {
-    for (const file of files) {
-      uploaded.push(await uploadEventGalleryImage(supabase, file));
-    }
+    uploaded = await processAndUploadImages(
+      supabase,
+      EVENT_GALLERY_PROFILE,
+      EVENT_GALLERY_SCOPE_ID,
+      files,
+      existingCount,
+    );
   } catch (error) {
-    await deleteImagesBestEffort(supabase, uploaded);
     const message =
       error instanceof Error ? error.message : "Неуспешно качване на снимките.";
     done("error", message);
@@ -114,7 +107,8 @@ export async function uploadEventGalleryImages(formData: FormData) {
   });
 
   if (error) {
-    await deleteImagesBestEffort(supabase, uploaded);
+    const adapter = createSupabaseImageStorageAdapter(supabase);
+    await deleteStoragePathsBestEffort(adapter, getUploadedImagePaths(uploaded));
     done(
       "error",
       error.message.includes("Could not find the function")
@@ -177,10 +171,10 @@ export async function deleteEventGalleryImage(formData: FormData) {
   );
 
   if (imagePath) {
-    try {
-      await deleteProductImage(supabase, imagePath);
-    } catch {
-      // DB row is already removed.
+    const adapter = createSupabaseImageStorageAdapter(supabase);
+    const cleanup = await deleteStoragePathsBestEffort(adapter, [imagePath]);
+    if (cleanup.errorMessage) {
+      done("error", cleanup.errorMessage);
     }
   }
 

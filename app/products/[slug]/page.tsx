@@ -14,6 +14,7 @@ import {
 } from "@/lib/storefront/repository";
 import { getSiteUrl } from "@/lib/site-url";
 import { buildCampaignAttribution } from "@/lib/campaign-attribution";
+import { getCampaignProductPageOptionSelections } from "@/lib/campaign-handoff";
 
 type ProductPageProps = {
   params: Promise<{ slug: string }>;
@@ -74,6 +75,10 @@ export default async function ProductDetailPage({
     notFound();
   }
 
+  const initialOptionSelections = getCampaignProductPageOptionSelections(
+    product,
+    query,
+  );
   const productUrl = new URL(`/products/${slug}`, getSiteUrl()).toString();
   const productById = new Map(
     catalog.products.map((catalogProduct) => [
@@ -180,7 +185,11 @@ export default async function ProductDetailPage({
                 </p>
               ) : null}
 
-              <ProductDetailAddToCart attribution={attribution} product={product} />
+              <ProductDetailAddToCart
+                attribution={attribution}
+                initialOptionSelections={initialOptionSelections}
+                product={product}
+              />
 
               <div className="mt-14 grid gap-3 md:mt-16">
                 <article className="rounded-2xl border border-boutique-line bg-boutique-bg p-5">

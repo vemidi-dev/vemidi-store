@@ -69,6 +69,18 @@ export function isTextOptionGroup(group: ProductOptionGroup) {
   return group.inputType === "text" || group.inputType === "textarea" || group.inputType === "date";
 }
 
+export function getBooleanOptionValues(group: ProductOptionGroup) {
+  if (group.inputType !== "single") {
+    return null;
+  }
+
+  const activeValues = group.values.filter((value) => value.isActive);
+  const yes = activeValues.find((value) => value.key === "yes");
+  const no = activeValues.find((value) => value.key === "no");
+
+  return yes && no && activeValues.length === 2 ? { yes, no } : null;
+}
+
 export function getVisibleOptionGroups(
   groups: ProductOptionGroup[],
   selections: ProductOptionSelection[],

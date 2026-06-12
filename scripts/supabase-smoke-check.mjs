@@ -43,9 +43,11 @@ const tableChecks = [
   ["categories", "id"],
   ["product_categories", "product_id"],
   ["product_images", "id"],
+  ["product_option_groups", "id"],
+  ["product_option_values", "id"],
   ["product_promotions", "id"],
   ["product_color_fields", "id"],
-  ["product_personalization_fields", "id"],
+  ["product_personalization_fields", "id, price_delta"],
   ["wish_templates", "id"],
   ["orders", "id"],
   ["newsletter_subscribers", "id"],
@@ -75,6 +77,27 @@ const rpcChecks = [
       p_idempotency_key: "00000000-0000-4000-8000-000000000000",
     },
     ["empty_order", "invalid_customer_name"],
+  ],
+  [
+    "admin_duplicate_product",
+    { p_product_id: "00000000-0000-4000-8000-000000000001" },
+    ["admin_required", "product_not_found"],
+  ],
+  [
+    "admin_import_product_images",
+    {
+      p_product_id: "00000000-0000-4000-8000-000000000001",
+      p_images: [],
+    },
+    ["admin_required", "product_not_found"],
+  ],
+  [
+    "admin_replace_product_gallery_image",
+    {
+      p_image_id: "00000000-0000-4000-8000-000000000002",
+      p_image_url: "https://example.com/smoke-check.webp",
+    },
+    ["admin_required", "product_image_not_found"],
   ],
 ];
 

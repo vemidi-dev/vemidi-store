@@ -105,7 +105,7 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
     supabase
       .from("product_personalization_fields")
       .select(
-        "id,product_id,label,field_key,field_type,placeholder,max_length,is_required,allows_wish_templates,sort_order",
+        "id,product_id,label,field_key,field_type,placeholder,max_length,price_delta,is_required,allows_wish_templates,sort_order",
       )
       .order("sort_order", { ascending: true }),
     supabase

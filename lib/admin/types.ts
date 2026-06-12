@@ -48,6 +48,7 @@ export type ProductPersonalizationFieldRow = {
   field_type: "text" | "textarea" | "date";
   placeholder: string | null;
   max_length: number;
+  price_delta: number;
   is_required: boolean;
   allows_wish_templates: boolean;
   sort_order: number;
@@ -217,6 +218,7 @@ export type ProductDraftPersonalizationField = {
   type: "text" | "textarea" | "date";
   placeholder: string;
   maxLength: number;
+  priceDelta: number;
   required: boolean;
   allowsWishTemplates: boolean;
 };

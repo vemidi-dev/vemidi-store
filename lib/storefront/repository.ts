@@ -378,7 +378,7 @@ export async function getStorefrontProduct(productId: string): Promise<Product |
       getProductColorFields(supabase, productId),
       supabase
         .from("product_personalization_fields")
-        .select("id,label,field_key,field_type,placeholder,max_length,is_required,allows_wish_templates,sort_order")
+        .select("id,label,field_key,field_type,placeholder,max_length,price_delta,is_required,allows_wish_templates,sort_order")
         .eq("product_id", productId)
         .order("sort_order"),
       supabase
@@ -432,6 +432,7 @@ export async function getStorefrontProduct(productId: string): Promise<Product |
       type: field.field_type as ProductPersonalizationField["type"],
       placeholder: field.placeholder ? String(field.placeholder) : null,
       maxLength: Number(field.max_length) || 100,
+      priceDelta: Math.max(0, Number(field.price_delta) || 0),
       required: Boolean(field.is_required),
       allowsWishTemplates: Boolean(field.allows_wish_templates),
     }),

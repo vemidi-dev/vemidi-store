@@ -3,6 +3,10 @@ import {
   normalizeCampaignCode,
   type CampaignAttribution,
 } from "@/lib/campaign-attribution";
+import {
+  isValidOptionKey,
+  resolveHandoffOptionSelections,
+} from "@/lib/campaign-option-keys";
 import { normalizeCartQuantity } from "@/lib/cart-storage";
 import type { Product } from "@/lib/catalog";
 import type { ProductOptionSelection } from "@/lib/product-options";
@@ -33,6 +37,8 @@ export type CampaignHandoffQuery = {
   colorOptionIdsByFieldId: Map<string, string>;
   personalizationByFieldKey: Map<string, string>;
   optionSelections: ProductOptionSelection[];
+  optionValueKeysByGroupKey: Map<string, string[]>;
+  optionTextByGroupKey: Map<string, string>;
   unknownKeys: string[];
 };
 
@@ -82,6 +88,14 @@ function sanitizePersonalizationValue(value: string, maxLength: number) {
     .slice(0, maxLength);
 }
 
+function decodeQueryValue(value: string) {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
 export function parseCampaignHandoffQuery(
   query: Record<string, string | string[] | undefined>,
 ): CampaignHandoffQuery {
@@ -90,6 +104,8 @@ export function parseCampaignHandoffQuery(
   const personalizationByFieldKey = new Map<string, string>();
   const optionValueIdsByGroupId = new Map<string, string[]>();
   const optionTextByGroupId = new Map<string, string>();
+  const optionValueKeysByGroupKey = new Map<string, string[]>();
+  const optionTextByGroupKey = new Map<string, string>();
 
   for (const [key, rawValue] of Object.entries(query)) {
     const normalizedKey = key.trim().toLowerCase();
@@ -114,7 +130,7 @@ export function parseCampaignHandoffQuery(
       if (fieldKey) {
         personalizationByFieldKey.set(
           fieldKey,
-          sanitizePersonalizationValue(decodeURIComponent(value), 1000),
+          sanitizePersonalizationValue(decodeQueryValue(value), 1000),
         );
       }
       continue;
@@ -125,7 +141,7 @@ export function parseCampaignHandoffQuery(
       if (isUuid(groupId)) {
         optionTextByGroupId.set(
           groupId,
-          sanitizePersonalizationValue(decodeURIComponent(value), 1000),
+          sanitizePersonalizationValue(decodeQueryValue(value), 1000),
         );
       } else {
         unknownKeys.push(key);
@@ -148,6 +164,45 @@ export function parseCampaignHandoffQuery(
       } else {
         optionValueIdsByGroupId.set(groupId, valueIds);
       }
+      continue;
+    }
+
+    if (normalizedKey.startsWith("option_text_")) {
+      const groupKey = key.slice("option_text_".length);
+      if (!isValidOptionKey(groupKey)) {
+        unknownKeys.push(key);
+        continue;
+      }
+      if (optionTextByGroupKey.has(groupKey)) {
+        unknownKeys.push(key);
+        continue;
+      }
+      optionTextByGroupKey.set(
+        groupKey,
+        sanitizePersonalizationValue(decodeQueryValue(value), 1000),
+      );
+      continue;
+    }
+
+    if (normalizedKey.startsWith("option_")) {
+      const groupKey = key.slice("option_".length);
+      if (!isValidOptionKey(groupKey)) {
+        unknownKeys.push(key);
+        continue;
+      }
+      const valueKeys = value
+        .split(",")
+        .map((part) => part.trim())
+        .filter(Boolean);
+      if (valueKeys.length === 0) {
+        unknownKeys.push(key);
+        continue;
+      }
+      if (optionValueKeysByGroupKey.has(groupKey)) {
+        unknownKeys.push(key);
+        continue;
+      }
+      optionValueKeysByGroupKey.set(groupKey, valueKeys);
       continue;
     }
 
@@ -188,6 +243,8 @@ export function parseCampaignHandoffQuery(
         textValue,
       })),
     ],
+    optionValueKeysByGroupKey,
+    optionTextByGroupKey,
     unknownKeys,
   };
 }
@@ -301,6 +358,7 @@ function getMissingRequirements(
 export function buildCampaignProductRedirectPath(
   product: Product,
   attribution?: CampaignAttribution,
+  optionSelections: ProductOptionSelection[] = [],
 ) {
   const params = new URLSearchParams();
   if (attribution?.campaign) {
@@ -312,10 +370,35 @@ export function buildCampaignProductRedirectPath(
   if (attribution?.landingUrl) {
     params.set("landing", attribution.landingUrl);
   }
+  for (const selection of optionSelections) {
+    if (selection.valueIds.length > 0) {
+      params.set(`opt_${selection.groupId}`, selection.valueIds.join(","));
+    }
+  }
 
   return `/products/${encodeURIComponent(product.slug)}${
     params.size ? `?${params.toString()}` : ""
   }`;
+}
+
+export function getCampaignProductPageOptionSelections(
+  product: Product,
+  rawQuery: Record<string, string | string[] | undefined>,
+) {
+  const query = parseCampaignHandoffQuery(rawQuery);
+  if (query.unknownKeys.length > 0) {
+    return [];
+  }
+
+  const resolved = resolveHandoffOptionSelections(product, {
+    optionSelections: query.optionSelections.filter(
+      (selection) => selection.valueIds.length > 0,
+    ),
+    optionValueKeysByGroupKey: query.optionValueKeysByGroupKey,
+    optionTextByGroupKey: new Map(),
+  });
+
+  return resolved.ok ? resolved.selections : [];
 }
 
 export function evaluateCampaignHandoff(
@@ -382,10 +465,23 @@ export function evaluateCampaignHandoff(
     };
   }
 
+  const resolvedOptions = resolveHandoffOptionSelections(product, {
+    optionSelections: query.optionSelections,
+    optionValueKeysByGroupKey: query.optionValueKeysByGroupKey,
+    optionTextByGroupKey: query.optionTextByGroupKey,
+  });
+  if (!resolvedOptions.ok) {
+    return {
+      status: "invalid",
+      title: "Невалидна опция",
+      message: resolvedOptions.message,
+    };
+  }
+
   const optionValidation = validateProductOptionSelections(
     product.slug,
     product.optionGroups ?? [],
-    query.optionSelections,
+    resolvedOptions.selections,
   );
   if (!optionValidation.ok && optionValidation.code !== "required_option_missing") {
     return {
@@ -405,14 +501,18 @@ export function evaluateCampaignHandoff(
     product,
     colorResult.selected,
     personalizationResult.fields,
-    optionValidation.ok ? optionValidation.selections : query.optionSelections,
+    optionValidation.ok ? optionValidation.selections : resolvedOptions.selections,
   );
 
   if (hasOptionModel && missing.length > 0) {
     return {
       status: "needs_configuration",
       product,
-      redirectPath: buildCampaignProductRedirectPath(product, attribution),
+      redirectPath: buildCampaignProductRedirectPath(
+        product,
+        attribution,
+        resolvedOptions.selections,
+      ),
       missing,
     };
   }

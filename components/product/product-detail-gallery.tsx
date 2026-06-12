@@ -24,7 +24,7 @@ export function ProductDetailGallery({ images }: ProductDetailGalleryProps) {
             src={main.src}
             alt={main.alt}
             fill
-            priority
+            priority={safeIndex === 0}
             sizes="(max-width: 1024px) 100vw, 52vw"
             className="object-cover"
           />

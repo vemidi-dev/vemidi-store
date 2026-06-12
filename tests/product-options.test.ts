@@ -12,6 +12,7 @@ import type { Product } from "@/lib/catalog";
 import { formatOrderOptionLine, parseOrderOptionSelections } from "@/lib/order-option-display";
 import {
   buildDefaultOptionSelections,
+  getBooleanOptionValues,
   getVisibleOptionGroups,
   type ProductOptionGroup,
 } from "@/lib/product-options";
@@ -82,6 +83,40 @@ const baseProduct: Product = {
   images: [],
   optionGroups: [makeGroup()],
 };
+
+test("yes/no single option is recognized as a boolean toggle", () => {
+  const group = makeGroup({
+    key: "personalization",
+    isRequired: false,
+    minSelect: 0,
+    values: [
+      {
+        id: valueSmallId,
+        label: "Без персонализация",
+        key: "no",
+        priceDelta: 0,
+        isDefault: true,
+        isActive: true,
+        isSoldOut: false,
+        sortOrder: 0,
+      },
+      {
+        id: valueLargeId,
+        label: "Добави име",
+        key: "yes",
+        priceDelta: 2.5,
+        isDefault: false,
+        isActive: true,
+        isSoldOut: false,
+        sortOrder: 1,
+      },
+    ],
+  });
+
+  const values = getBooleanOptionValues(group);
+  assert.equal(values?.yes.key, "yes");
+  assert.equal(values?.no.key, "no");
+});
 
 test("single required option validates selection", () => {
   const result = validateProductOptionSelections(productId, baseProduct.optionGroups!, [

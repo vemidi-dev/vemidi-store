@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 
 import {
@@ -64,18 +65,17 @@ export function EventGalleryImageTile({
             <button
               type="button"
               aria-label={`Преглед на ${alt}`}
-              className="block h-full w-full"
+              className="relative block h-full w-full"
               onClick={() => setPreviewOpen(true)}
             >
-              <img
+              <Image
                 alt=""
-                className="h-full w-full object-cover"
-                decoding="async"
-                height={72}
+                src={image.image_url}
+                fill
+                sizes="80px"
                 loading="lazy"
                 onError={() => setBroken(true)}
-                src={image.image_url}
-                width={72}
+                className="object-cover"
               />
             </button>
           )}

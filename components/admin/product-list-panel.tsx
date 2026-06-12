@@ -7,11 +7,17 @@ import {
   updateProduct,
   updateProductMerchandising,
 } from "@/app/admin/actions";
+import { DUPLICATE_MISSING_IMAGES_NOTICE } from "@/lib/admin/duplicate-product";
+import { AdminAutoOpenProductEdit } from "@/components/admin/admin-auto-open-product-edit";
 import { AdminConfirmForm } from "@/components/admin/admin-confirm-form";
 import { AdminUnsavedChangesGuard } from "@/components/admin/admin-unsaved-changes-guard";
+import { ProductDuplicateButton } from "@/components/admin/product-duplicate-button";
 import { AdminListControls } from "@/components/admin/admin-list-controls";
 import { AdminOpenDetailsButton } from "@/components/admin/admin-open-details-button";
-import { ImageFileInput } from "@/components/admin/image-file-input";
+import { AdminFormPendingGuard } from "@/components/admin/admin-form-pending-guard";
+import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
+import { ProductGalleryAddForm } from "@/components/admin/product-gallery-add-form";
+import { ProductGalleryReplaceForm } from "@/components/admin/product-gallery-replace-form";
 import { ProductCardBadgeField } from "@/components/admin/product-card-badge-field";
 import { ProductColorFieldsEditor } from "@/components/admin/product-color-fields-editor";
 import { ProductOptionGroupsEditor } from "@/components/admin/product-option-groups-editor";
@@ -29,7 +35,13 @@ import { buildDependencyOptionsFromGroups } from "@/lib/admin/option-dependency-
 import { adminFormFields } from "@/lib/admin/form-fields";
 import type { CategoryRow } from "@/lib/admin/types";
 
-export function ProductListPanel({ data }: { data: AdminData }) {
+export function ProductListPanel({
+  data,
+  editProductId,
+}: {
+  data: AdminData;
+  editProductId?: string;
+}) {
   const {
     products,
     categories,
@@ -59,6 +71,7 @@ export function ProductListPanel({ data }: { data: AdminData }) {
 
   return (
     <article className={adminPanelClass}>
+      <AdminAutoOpenProductEdit productId={editProductId} />
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h2 className="font-heading text-2xl text-boutique-ink">Всички продукти</h2>
@@ -164,6 +177,7 @@ export function ProductListPanel({ data }: { data: AdminData }) {
                     type: field.field_type,
                     placeholder: field.placeholder ?? "",
                     maxLength: field.max_length,
+                    priceDelta: field.price_delta,
                     required: field.is_required,
                     allowsWishTemplates: field.allows_wish_templates,
                   }))
@@ -175,6 +189,7 @@ export function ProductListPanel({ data }: { data: AdminData }) {
                         type: "textarea" as const,
                         placeholder: "Въведете желания текст",
                         maxLength: 1000,
+                        priceDelta: 0,
                         required: false,
                         allowsWishTemplates: true,
                       },
@@ -220,6 +235,13 @@ export function ProductListPanel({ data }: { data: AdminData }) {
             const occasionCategoryIds = assignedCategories
               .filter((category) => category.category_type === "occasion")
               .map((category) => category.id);
+            const galleryImageCount =
+              productImages.length > 0
+                ? productImages.length
+                : product.image_url
+                  ? 1
+                  : 0;
+            const hasNoGalleryImages = galleryImageCount === 0;
             const thumbnailUrl =
               productImages.find((image) => image.is_primary)?.image_url ??
               productImages[0]?.image_url ??
@@ -282,6 +304,11 @@ export function ProductListPanel({ data }: { data: AdminData }) {
                     >
                       Редакция
                     </AdminOpenDetailsButton>
+                    <ProductDuplicateButton
+                      productId={product.id}
+                      productName={product.name}
+                      className="rounded-full border border-boutique-line px-2.5 py-1 text-[11px] font-semibold text-boutique-ink hover:border-boutique-sage-deep/40 disabled:opacity-60"
+                    />
                     <form action={toggleProductSoldOut} className="inline">
                       <input type="hidden" name={adminFormFields.common.tab} value="products" />
                       <input type="hidden" name={adminFormFields.common.id} value={product.id} />
@@ -344,6 +371,11 @@ export function ProductListPanel({ data }: { data: AdminData }) {
                     >
                       Редакция
                     </AdminOpenDetailsButton>
+                    <ProductDuplicateButton
+                      productId={product.id}
+                      productName={product.name}
+                      className="rounded-full border border-boutique-line px-2 py-1 text-[10px] font-semibold text-boutique-ink disabled:opacity-60"
+                    />
                     <form action={toggleProductSoldOut}>
                       <input type="hidden" name={adminFormFields.common.tab} value="products" />
                       <input type="hidden" name={adminFormFields.common.id} value={product.id} />
@@ -425,15 +457,6 @@ export function ProductListPanel({ data }: { data: AdminData }) {
                         className={`${adminFieldClass} resize-y`}
                       />
                     </label>
-
-                    <ImageFileInput
-                      name={adminFormFields.product.imageFiles}
-                      label="Добави снимки към галерията"
-                      multiple
-                      className={adminFieldClass}
-                      helperClassName={adminHelperClass}
-                      helperText="Изберете една или повече PNG, JPG или WEBP снимки до 5 MB."
-                    />
 
                     <fieldset className="rounded-lg border border-boutique-line/70 bg-boutique-bg p-3 md:col-span-2">
                       <legend className="px-1 text-sm font-medium text-boutique-ink">
@@ -553,13 +576,14 @@ export function ProductListPanel({ data }: { data: AdminData }) {
 
                     <div className="md:col-span-2">
                       <div className="flex flex-wrap items-center justify-between gap-3">
-                        <button
-                          type="submit"
-                          className="rounded-full bg-boutique-ink px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-boutique-paper transition hover:bg-boutique-accent"
+                        <AdminSubmitButton
+                          pendingLabel="Запазване…"
+                          className="rounded-full bg-boutique-ink px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-boutique-paper transition hover:bg-boutique-accent disabled:cursor-not-allowed disabled:opacity-70"
                         >
                           Запази промените
-                        </button>
+                        </AdminSubmitButton>
                       </div>
+                      <AdminFormPendingGuard />
                     </div>
                   </form>
 
@@ -578,14 +602,31 @@ export function ProductListPanel({ data }: { data: AdminData }) {
                     </button>
                   </AdminConfirmForm>
 
-                  {productImages.length > 0 ? (
-                    <section className="mt-5 border-t border-boutique-line/70 pt-5">
-                      <div>
-                        <h4 className="font-semibold text-boutique-ink">Галерия</h4>
-                        <p className="mt-1 text-xs text-boutique-muted">
-                          Изберете корица и подредете снимките за картата и продуктовата страница.
-                        </p>
-                      </div>
+                  <section className="mt-5 border-t border-boutique-line/70 pt-5">
+                    <div>
+                      <h4 className="font-semibold text-boutique-ink">Галерия</h4>
+                      <p className="mt-1 text-xs text-boutique-muted">
+                        Добавяйте, заменяйте или изтривайте отделни снимки. Промяната на
+                        настройките на продукта не засяга галерията.
+                      </p>
+                    </div>
+
+                    {hasNoGalleryImages ? (
+                      <p
+                        role="status"
+                        className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+                      >
+                        {DUPLICATE_MISSING_IMAGES_NOTICE}
+                      </p>
+                    ) : null}
+
+                    <ProductGalleryAddForm
+                      productId={product.id}
+                      productName={product.name}
+                      existingGalleryCount={galleryImageCount}
+                    />
+
+                    {productImages.length > 0 ? (
                       <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                         {productImages.map((image, index) => (
                           <article
@@ -667,11 +708,15 @@ export function ProductListPanel({ data }: { data: AdminData }) {
                                 </button>
                               </form>
                             </div>
+                            <ProductGalleryReplaceForm
+                              productId={product.id}
+                              imageId={image.id}
+                            />
                           </article>
                         ))}
                       </div>
-                    </section>
-                  ) : null}
+                    ) : null}
+                  </section>
                 </details>
 
                 <details className="mt-3 rounded-lg border border-boutique-line/70 bg-boutique-paper p-3">

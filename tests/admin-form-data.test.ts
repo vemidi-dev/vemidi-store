@@ -80,6 +80,7 @@ test("admin form field names stay aligned with product draft parsing", () => {
         field_type: "text",
         placeholder: "Мария",
         max_length: "50",
+        price_delta: "0",
         is_required: true,
         allows_wish_templates: false,
       },

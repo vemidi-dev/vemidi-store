@@ -24,6 +24,7 @@ type CreateProductDraftPayload = {
     field_type: string;
     placeholder: string;
     max_length: string;
+    price_delta: string;
     is_required: boolean;
     allows_wish_templates: boolean;
   }>;
@@ -156,6 +157,9 @@ export function makeCreateProductDraft(formData: FormData) {
   const personalizationMaxLengths = formData
     .getAll(adminFormFields.personalizationField.maxLengths)
     .map((value) => String(value ?? "").trim());
+  const personalizationPriceDeltas = formData
+    .getAll(adminFormFields.personalizationField.priceDeltas)
+    .map((value) => String(value ?? "").trim());
   const personalizationRequired = formData
     .getAll(adminFormFields.personalizationField.required)
     .map((value) => String(value) === "1");
@@ -168,6 +172,7 @@ export function makeCreateProductDraft(formData: FormData) {
     field_type: personalizationTypes[index] ?? "text",
     placeholder: personalizationPlaceholders[index] ?? "",
     max_length: personalizationMaxLengths[index] ?? "",
+    price_delta: personalizationPriceDeltas[index] ?? "0",
     is_required: personalizationRequired[index] ?? false,
     allows_wish_templates: personalizationAllowsWishes[index] ?? false,
   }));

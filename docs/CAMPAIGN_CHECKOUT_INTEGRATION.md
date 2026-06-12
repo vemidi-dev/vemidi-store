@@ -40,7 +40,32 @@ https://vemidi-crafts.com/campaign-checkout?product={PRODUCT_UUID}&campaign={CAM
 | `color_{FIELD_UUID}` | UUID на избрана цветова опция за конкретно поле |
 | `pf_{FIELD_KEY}` | Стойност за персонализация (само ако полето съществува за продукта) |
 
-#### Универсални опции (препоръчително за нови продукти)
+#### Универсални опции по ключ (препоръчително за landing страници)
+
+| Параметър | Описание |
+|-----------|----------|
+| `option_{GROUP_KEY}` | Един `value.key` (`single`) или няколко ключа, разделени със запетая (`multiple`) |
+| `option_text_{GROUP_KEY}` | Текст/дата за група от тип `text`, `textarea` или `date` |
+
+Примери:
+
+```
+option_kit_size=mini
+option_coloring=markers
+option_personalization=yes
+option_text_child_name=Мария
+```
+
+Формат на ключовете: малки латински букви, цифри и `_` (`^[a-z][a-z0-9_]{0,63}$`). Невалидни ключове се отхвърлят без автоматично „познаване“.
+
+Правила:
+
+- групата се търси по `product` + `group.key` + активна група за продукта;
+- стойността се търси по `value.key` + активна + неизчерпана стойност в същата група;
+- не подавайте едновременно `opt_{GROUP_UUID}` и `option_{GROUP_KEY}` за една и съща група;
+- не подавайте `option_{GROUP_KEY}` за текстова група или `option_text_{GROUP_KEY}` за изборна група.
+
+#### Универсални опции по UUID (обратна съвместимост)
 
 | Параметър | Описание |
 |-----------|----------|
@@ -70,7 +95,13 @@ https://vemidi-crafts.com/campaign-checkout?product=11111111-1111-1111-1111-1111
 https://vemidi-crafts.com/campaign-checkout?product=11111111-1111-1111-1111-111111111111&campaign=butterflies&color_22222222-2222-2222-2222-222222222222=44444444-4444-4444-4444-444444444444&pf_message=Честит%20рожден%20ден
 ```
 
-### Продукт с универсални опции
+### Продукт с универсални опции по ключ (препоръчително)
+
+```
+https://vemidi-crafts.com/campaign-checkout?product=11111111-1111-1111-1111-111111111111&campaign=butterflies&source=campaign-butterflies&landing=https%3A%2F%2Fspecial.vemidi-crafts.com%2Fvalshebni-peperudi&quantity=1&option_kit_size=mini&option_coloring=markers&option_personalization=no
+```
+
+### Продукт с универсални опции по UUID (legacy)
 
 ```
 https://vemidi-crafts.com/campaign-checkout?product=11111111-1111-1111-1111-111111111111&campaign=frames&opt_22222222-2222-2222-2222-222222222222=44444444-4444-4444-8444-444444444444&opt_33333333-3333-3333-8333-333333333333=55555555-5555-4555-8555-555555555555,66666666-6666-4666-8666-666666666666&opt_text_77777777-7777-4777-8777-777777777777=2026-06-15
@@ -78,6 +109,8 @@ https://vemidi-crafts.com/campaign-checkout?product=11111111-1111-1111-1111-1111
 
 Където:
 
+- `option_{GROUP_KEY}` съдържа стабилен `value.key` или списък за `multiple`;
+- `option_text_{GROUP_KEY}` съдържа URL-encoded текст или дата `YYYY-MM-DD`;
 - `opt_{GROUP_UUID}` съдържа UUID на избрана стойност или списък за `multiple`;
 - `opt_text_{GROUP_UUID}` съдържа URL-encoded текст или дата `YYYY-MM-DD`.
 

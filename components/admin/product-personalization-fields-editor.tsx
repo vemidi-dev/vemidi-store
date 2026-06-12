@@ -7,6 +7,7 @@ import type { ProductDraftPersonalizationField } from "@/lib/admin/types";
 
 type LocalField = ProductDraftPersonalizationField & {
   uid: string;
+  priceDeltaInput: string;
 };
 
 type Props = {
@@ -24,6 +25,8 @@ function makeField(): LocalField {
     type: "text",
     placeholder: "",
     maxLength: 100,
+    priceDelta: 0,
+    priceDeltaInput: "0",
     required: false,
     allowsWishTemplates: false,
   };
@@ -38,6 +41,7 @@ export function ProductPersonalizationFieldsEditor({
     initialFields.map((field) => ({
       ...field,
       uid: crypto.randomUUID(),
+      priceDeltaInput: field.priceDelta.toString(),
     })),
   );
 
@@ -190,6 +194,55 @@ export function ProductPersonalizationFieldsEditor({
                   value="10"
                 />
               ) : null}
+            </label>
+
+            <label className="text-sm font-medium text-boutique-ink">
+              Доплащане при попълване (€)
+              <input
+                name={adminFormFields.personalizationField.priceDeltas}
+                type="number"
+                min="0"
+                step="0.01"
+                value={field.priceDeltaInput}
+                onChange={(event) => {
+                  const priceDeltaInput = event.currentTarget.value;
+                  const parsed = Number(priceDeltaInput);
+                  setFields((current) =>
+                    current.map((item) =>
+                      item.uid === field.uid
+                        ? {
+                            ...item,
+                            priceDeltaInput,
+                            ...(priceDeltaInput.trim() && Number.isFinite(parsed)
+                              ? { priceDelta: Math.max(0, parsed) }
+                              : {}),
+                          }
+                        : item,
+                    ),
+                  );
+                }}
+                onBlur={() => {
+                  if (field.priceDeltaInput.trim()) {
+                    return;
+                  }
+                  setFields((current) =>
+                    current.map((item) =>
+                      item.uid === field.uid
+                        ? {
+                            ...item,
+                            priceDelta: 0,
+                            priceDeltaInput: "0",
+                          }
+                        : item,
+                    ),
+                  );
+                }}
+                className={fieldClassName}
+              />
+              <span className={`mt-1 block ${helperClassName}`}>
+                Въведете 0, ако няма доплащане. Цената се начислява само когато
+                клиентът попълни полето.
+              </span>
             </label>
           </div>
 

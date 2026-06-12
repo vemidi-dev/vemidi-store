@@ -65,7 +65,7 @@ export async function uploadAdminImage(
 
   return {
     path,
-    url: supabase.storage.from(IMAGE_BUCKET).getPublicUrl(path).data.publicUrl,
+    url: getPublicImageUrl(path),
   };
 }
 
@@ -82,6 +82,54 @@ export async function deleteProductImage(supabase: SupabaseClient, path: string)
   if (error) {
     throw new Error(error.message);
   }
+}
+
+export async function copyProductImageFromStorage(
+  supabase: SupabaseClient,
+  sourceUrl: string,
+): Promise<UploadedProductImage | null> {
+  const path = getProductImagePath(sourceUrl);
+  if (!path) {
+    return null;
+  }
+
+  const { data, error } = await supabase.storage.from(IMAGE_BUCKET).download(path);
+  if (error || !data) {
+    return null;
+  }
+
+  const extension = path.split(".").pop()?.toLowerCase() || "jpg";
+  const contentType =
+    extension === "png"
+      ? "image/png"
+      : extension === "webp"
+        ? "image/webp"
+        : "image/jpeg";
+  const file = new File(
+    [await data.arrayBuffer()],
+    `duplicate.${extension}`,
+    { type: contentType },
+  );
+
+  try {
+    return await uploadProductImage(supabase, file);
+  } catch {
+    return null;
+  }
+}
+
+export function getPublicImageUrl(path: string): string {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, "");
+  if (!supabaseUrl) {
+    throw new Error("Липсва конфигурация за публичните изображения.");
+  }
+
+  const encodedPath = path
+    .split("/")
+    .map((segment) => encodeURIComponent(segment))
+    .join("/");
+
+  return `${supabaseUrl}/storage/v1/object/public/${IMAGE_BUCKET}/${encodedPath}`;
 }
 
 export function getProductImagePath(imageUrl: string | null | undefined): string | null {

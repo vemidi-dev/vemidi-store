@@ -12,7 +12,11 @@ import {
 
 type InitialOptionGroup = ParsedOptionGroup;
 
-type LocalValue = ParsedOptionValue & { uid: string };
+type LocalValue = ParsedOptionValue & {
+  uid: string;
+  finalPriceInput: string;
+  priceDeltaInput: string;
+};
 type LocalGroup = Omit<ParsedOptionGroup, "values"> & {
   uid: string;
   values: LocalValue[];
@@ -55,9 +59,11 @@ function makeTechnicalKey(label: string, fallback: string) {
   return /^[a-z]/.test(transliterated) ? transliterated : fallback;
 }
 
-function makeEmptyValue(sortOrder: number): LocalValue {
+function makeEmptyValue(sortOrder: number, basePrice: number): LocalValue {
   return {
     uid: crypto.randomUUID(),
+    finalPriceInput: basePrice.toString(),
+    priceDeltaInput: "0",
     id: null,
     label: "",
     key: "",
@@ -70,7 +76,11 @@ function makeEmptyValue(sortOrder: number): LocalValue {
   };
 }
 
-function toLocalGroup(group: InitialOptionGroup, index: number): LocalGroup {
+function toLocalGroup(
+  group: InitialOptionGroup,
+  index: number,
+  basePrice: number,
+): LocalGroup {
   return {
     ...group,
     uid: group.id ?? crypto.randomUUID(),
@@ -78,12 +88,17 @@ function toLocalGroup(group: InitialOptionGroup, index: number): LocalGroup {
     values: group.values.map((value, valueIndex) => ({
       ...value,
       uid: value.id ?? crypto.randomUUID(),
+      finalPriceInput: calculateOptionFinalPrice(
+        basePrice,
+        value.priceDelta,
+      ).toString(),
+      priceDeltaInput: value.priceDelta.toString(),
       sortOrder: value.sortOrder ?? valueIndex,
     })),
   };
 }
 
-function makeEmptyGroup(sortOrder: number): LocalGroup {
+function makeEmptyGroup(sortOrder: number, basePrice: number): LocalGroup {
   return {
     uid: crypto.randomUUID(),
     id: null,
@@ -100,7 +115,7 @@ function makeEmptyGroup(sortOrder: number): LocalGroup {
     placeholder: null,
     maxLength: 200,
     textPriceDelta: 0,
-    values: [makeEmptyValue(0)],
+    values: [makeEmptyValue(0, basePrice)],
   };
 }
 
@@ -121,7 +136,9 @@ export function ProductOptionGroupsEditor({
   );
   const [groups, setGroups] = useState<LocalGroup[]>(
     initialGroups.length
-      ? initialGroups.map(toLocalGroup)
+      ? initialGroups.map((group, index) =>
+          toLocalGroup(group, index, initialBasePrice),
+        )
       : [],
   );
   const [openUid, setOpenUid] = useState<string | null>(null);
@@ -251,9 +268,19 @@ export function ProductOptionGroupsEditor({
                 name={adminFormFields.optionGroup.valuesJson}
                 value={JSON.stringify(
                   group.values.map((value) => {
-                    const { uid, ...rest } = value;
+                    const {
+                      uid,
+                      finalPriceInput,
+                      priceDeltaInput,
+                      ...rest
+                    } = value;
                     void uid;
-                    return rest;
+                    void finalPriceInput;
+                    void priceDeltaInput;
+                    return group.key === "personalization" &&
+                      rest.key === "no"
+                      ? { ...rest, priceDelta: 0 }
+                      : rest;
                   }),
                 )}
               />
@@ -533,31 +560,101 @@ export function ProductOptionGroupsEditor({
                           />
                         </label>
                         <label className="text-sm font-medium text-boutique-ink">
-                          Крайна цена (€)
+                          {group.key === "personalization" && value.key === "yes"
+                            ? "Доплащане (€)"
+                            : group.key === "personalization" && value.key === "no"
+                              ? "Цена"
+                              : "Крайна цена (€)"}
                           <input
                             type="number"
-                            min={basePrice}
+                            min={
+                              group.key === "personalization" &&
+                              value.key === "yes"
+                                ? 0
+                                : basePrice
+                            }
                             step="0.01"
                             className={fieldClassName}
-                            value={calculateOptionFinalPrice(basePrice, value.priceDelta)}
+                            disabled={
+                              group.key === "personalization" &&
+                              value.key === "no"
+                            }
+                            value={
+                              group.key === "personalization" &&
+                              value.key === "yes"
+                                ? value.priceDeltaInput
+                                : group.key === "personalization" &&
+                                    value.key === "no"
+                                  ? basePrice
+                                  : value.finalPriceInput
+                            }
                             onChange={(event) => {
-                              const finalPrice = Number(event.target.value);
+                              const rawInput = event.target.value;
+                              const parsedPrice = Number(rawInput);
+                              const isPersonalizationSurcharge =
+                                group.key === "personalization" &&
+                                value.key === "yes";
                               const nextValues = group.values.map((item) =>
                                 item.uid === value.uid
                                   ? {
                                       ...item,
-                                      priceDelta: calculatePriceDeltaFromFinalPrice(
-                                        basePrice,
-                                        finalPrice,
-                                      ),
+                                      ...(isPersonalizationSurcharge
+                                        ? { priceDeltaInput: rawInput }
+                                        : { finalPriceInput: rawInput }),
+                                      ...(rawInput.trim() &&
+                                      Number.isFinite(parsedPrice)
+                                        ? {
+                                            priceDelta:
+                                              isPersonalizationSurcharge
+                                                ? Math.max(0, parsedPrice)
+                                                : calculatePriceDeltaFromFinalPrice(
+                                                    basePrice,
+                                                    parsedPrice,
+                                                  ),
+                                          }
+                                        : {}),
                                     }
+                                  : item,
+                              );
+                              updateGroup(group.uid, { values: nextValues });
+                            }}
+                            onBlur={() => {
+                              const isPersonalizationSurcharge =
+                                group.key === "personalization" &&
+                                value.key === "yes";
+                              const currentInput = isPersonalizationSurcharge
+                                ? value.priceDeltaInput
+                                : value.finalPriceInput;
+                              if (currentInput.trim()) {
+                                return;
+                              }
+                              const nextValues = group.values.map((item) =>
+                                item.uid === value.uid
+                                  ? isPersonalizationSurcharge
+                                    ? {
+                                        ...item,
+                                        priceDeltaInput: item.priceDelta.toString(),
+                                      }
+                                    : {
+                                        ...item,
+                                        finalPriceInput: calculateOptionFinalPrice(
+                                          basePrice,
+                                          item.priceDelta,
+                                        ).toString(),
+                                      }
                                   : item,
                               );
                               updateGroup(group.uid, { values: nextValues });
                             }}
                           />
                           <span className="mt-1 block text-xs font-normal text-boutique-muted">
-                            Минимум {basePrice.toFixed(2).replace(".", ",")} €
+                            {group.key === "personalization" &&
+                            value.key === "yes"
+                              ? "Въведете само сумата, която се добавя към избрания вариант."
+                              : group.key === "personalization" &&
+                                  value.key === "no"
+                                ? "Без доплащане"
+                                : `Минимум ${basePrice.toFixed(2).replace(".", ",")} €`}
                           </span>
                         </label>
                         <button
@@ -669,7 +766,10 @@ export function ProductOptionGroupsEditor({
                     className="rounded-lg border border-boutique-line px-3 py-2 text-xs font-semibold"
                     onClick={() =>
                       updateGroup(group.uid, {
-                        values: [...group.values, makeEmptyValue(group.values.length)],
+                        values: [
+                          ...group.values,
+                          makeEmptyValue(group.values.length, basePrice),
+                        ],
                       })
                     }
                   >
@@ -685,7 +785,12 @@ export function ProductOptionGroupsEditor({
       <button
         type="button"
         className="rounded-lg border border-boutique-line px-4 py-2 text-sm font-semibold text-boutique-ink"
-        onClick={() => setGroups((current) => [...current, makeEmptyGroup(current.length)])}
+        onClick={() =>
+          setGroups((current) => [
+            ...current,
+            makeEmptyGroup(current.length, basePrice),
+          ])
+        }
       >
         + Добави нова опция
       </button>

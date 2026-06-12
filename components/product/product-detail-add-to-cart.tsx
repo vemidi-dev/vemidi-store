@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { useCart } from "@/components/cart/cart-provider";
 import { ProductOptionsSelector } from "@/components/product/product-options-selector";
@@ -9,19 +9,28 @@ import type { Product } from "@/lib/catalog";
 import type { ProductOptionSelection } from "@/lib/product-options";
 import { validateProductOptionSelections } from "@/lib/product-option-validation";
 import type { SelectedProductColor } from "@/lib/product-colors";
-import type {
-  ProductPersonalizationField,
-  ProductPersonalizationValue,
+import { formatPriceDelta } from "@/lib/product-option-pricing";
+import type { ProductPersonalizationField } from "@/lib/product-personalization";
+import {
+  buildPersonalizationFieldValues,
+  buildPersonalizationSummary,
+  calculatePersonalizationDelta,
+  enableOptionalPersonalizationField,
+  formatPersonalizationToggleLabel,
+  shouldShowPersonalizationInput,
+  usesPersonalizationToggle,
 } from "@/lib/product-personalization";
 
 type ProductDetailAddToCartProps = {
   product: Product;
   attribution?: CampaignAttribution;
+  initialOptionSelections?: ProductOptionSelection[];
 };
 
 export function ProductDetailAddToCart({
   product,
   attribution,
+  initialOptionSelections = [],
 }: ProductDetailAddToCartProps) {
   const { addProduct } = useCart();
   const fallbackFields: ProductPersonalizationField[] =
@@ -33,6 +42,7 @@ export function ProductDetailAddToCart({
           type: "textarea",
           placeholder: "Напишете име, дата или текст",
           maxLength: 1000,
+          priceDelta: 0,
           required: false,
           allowsWishTemplates: true,
         }]
@@ -41,12 +51,18 @@ export function ProductDetailAddToCart({
     ? product.personalizationFields
     : fallbackFields;
   const [values, setValues] = useState<Record<string, string>>({});
+  const [enabledOptionalFields, setEnabledOptionalFields] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const fieldInputRefs = useRef<Record<string, HTMLInputElement | HTMLTextAreaElement | null>>(
+    {},
+  );
   const [selectedByGroup, setSelectedByGroup] = useState<Record<string, string[]>>({});
   const [added, setAdded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [wishFieldId, setWishFieldId] = useState<string | null>(null);
-  const [optionSelections, setOptionSelections] = useState<ProductOptionSelection[]>([]);
-  const [estimatedPrice, setEstimatedPrice] = useState(product.price);
+  const [optionSelections, setOptionSelections] =
+    useState<ProductOptionSelection[]>(initialOptionSelections);
   const colorFields = product.colorFields ?? [];
   const optionGroups = product.optionGroups ?? [];
 
@@ -95,27 +111,51 @@ export function ProductDetailAddToCart({
     return null;
   };
 
-  const personalization = fields
-    .map((field) => {
-      const value = (values[field.id] ?? "").trim();
-      return value ? `${field.label}: ${value}` : "";
-    })
-    .filter(Boolean)
-    .join("\n")
-    .slice(0, 1000);
-  const personalizationFields: ProductPersonalizationValue[] = fields.flatMap(
-    (field) => {
-      const value = (values[field.id] ?? "").trim();
-      return value
-        ? [{
-            fieldId: field.id,
-            fieldKey: field.key,
-            label: field.label,
-            value,
-          }]
-        : [];
-    },
+  const personalizationFields = buildPersonalizationFieldValues(
+    fields,
+    values,
+    enabledOptionalFields,
   );
+  const personalization = buildPersonalizationSummary(
+    fields,
+    values,
+    enabledOptionalFields,
+  );
+  const personalizationDelta = calculatePersonalizationDelta(
+    fields,
+    personalizationFields,
+  );
+
+  const focusPersonalizationField = (fieldId: string) => {
+    requestAnimationFrame(() => {
+      fieldInputRefs.current[fieldId]?.focus();
+    });
+  };
+
+  const handleOptionalFieldToggle = (
+    field: ProductPersonalizationField,
+    enabled: boolean,
+  ) => {
+    if (enabled) {
+      setEnabledOptionalFields((current) =>
+        enableOptionalPersonalizationField(current, field.id),
+      );
+      focusPersonalizationField(field.id);
+      return;
+    }
+
+    setEnabledOptionalFields((currentEnabled) => {
+      const nextEnabled = new Set(currentEnabled);
+      nextEnabled.delete(field.id);
+      return nextEnabled;
+    });
+    setValues((currentValues) => {
+      const nextValues = { ...currentValues };
+      delete nextValues[field.id];
+      return nextValues;
+    });
+    setError(null);
+  };
 
   if (product.soldOut) {
     return (
@@ -137,8 +177,12 @@ export function ProductDetailAddToCart({
         <div className="grid gap-5 sm:grid-cols-2">
           {fields.map((field) => {
             const value = values[field.id] ?? "";
+            const showInput = shouldShowPersonalizationInput(field, enabledOptionalFields);
+            const panelId = `personalization-panel-${field.id}`;
+            const inputId = `personalization-${field.id}`;
+            const deltaLabel = formatPriceDelta(field.priceDelta ?? 0);
             const common = {
-              id: `personalization-${field.id}`,
+              id: inputId,
               value,
               required: field.required,
               maxLength: field.maxLength,
@@ -152,10 +196,101 @@ export function ProductDetailAddToCart({
                 })),
               className:
                 "mt-2 w-full rounded-xl border border-boutique-line bg-white px-4 py-3 text-sm text-boutique-ink outline-none focus:border-boutique-rose-deep",
+              ref: (element: HTMLInputElement | HTMLTextAreaElement | null) => {
+                fieldInputRefs.current[field.id] = element;
+              },
             };
+
+            if (usesPersonalizationToggle(field)) {
+              const enabled = enabledOptionalFields.has(field.id);
+              return (
+                <div
+                  key={field.id}
+                  className={field.type === "textarea" ? "sm:col-span-2" : ""}
+                >
+                  <label
+                    htmlFor={`personalization-toggle-${field.id}`}
+                    className="flex cursor-pointer items-center gap-4 rounded-2xl border border-boutique-line bg-boutique-bg px-5 py-4"
+                  >
+                    <input
+                      id={`personalization-toggle-${field.id}`}
+                      className="sr-only"
+                      type="checkbox"
+                      checked={enabled}
+                      aria-expanded={enabled}
+                      aria-controls={panelId}
+                      onChange={(event) =>
+                        handleOptionalFieldToggle(field, event.target.checked)
+                      }
+                    />
+                    <span
+                      aria-hidden="true"
+                      className={`relative h-7 w-12 shrink-0 rounded-full transition ${
+                        enabled ? "bg-boutique-sage" : "bg-boutique-line"
+                      }`}
+                    >
+                      <span
+                        className={`absolute left-1 top-1 h-5 w-5 rounded-full bg-white shadow-sm transition ${
+                          enabled ? "translate-x-5" : ""
+                        }`}
+                      />
+                    </span>
+                    <span className="min-w-0 flex-1 text-sm font-medium leading-relaxed text-boutique-ink">
+                      {formatPersonalizationToggleLabel(field)}
+                    </span>
+                  </label>
+                  <div
+                    id={panelId}
+                    aria-hidden={!showInput}
+                    className={`grid transition-[grid-template-rows,opacity,margin] duration-200 ease-out ${
+                      showInput
+                        ? "mt-3 grid-rows-[1fr] opacity-100"
+                        : "grid-rows-[0fr] opacity-0"
+                    }`}
+                  >
+                    <div className="overflow-hidden">
+                      <label
+                        htmlFor={inputId}
+                        className="block text-sm font-medium text-boutique-ink"
+                      >
+                        <span className="sr-only">{field.label}</span>
+                        {field.type === "textarea" ? (
+                          <textarea {...common} rows={4} tabIndex={showInput ? 0 : -1} />
+                        ) : (
+                          <input
+                            {...common}
+                            type={field.type}
+                            tabIndex={showInput ? 0 : -1}
+                          />
+                        )}
+                        {field.type === "textarea" ? (
+                          <span className="mt-1 flex items-center justify-between gap-3 text-xs text-boutique-muted">
+                            <span>
+                              {value.length}/{field.maxLength} знака
+                            </span>
+                            {field.allowsWishTemplates &&
+                            (product.wishTemplates?.length ?? 0) > 0 ? (
+                              <button
+                                type="button"
+                                onClick={() => setWishFieldId(field.id)}
+                                className="rounded-full border border-boutique-rose/40 px-3 py-1 text-xs font-semibold text-boutique-rose-deep"
+                              >
+                                ♡ Идеи за пожелание
+                              </button>
+                            ) : null}
+                          </span>
+                        ) : null}
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+
             return (
               <label
                 key={field.id}
+                htmlFor={inputId}
                 className={`text-sm font-medium text-boutique-ink ${
                   field.type === "textarea" ? "sm:col-span-2" : ""
                 }`}
@@ -164,6 +299,7 @@ export function ProductDetailAddToCart({
                   <span>
                     {field.label}
                     {field.required ? " *" : ""}
+                    {deltaLabel ? ` (${deltaLabel})` : ""}
                   </span>
                   {field.allowsWishTemplates && (product.wishTemplates?.length ?? 0) > 0 ? (
                     <button
@@ -188,21 +324,31 @@ export function ProductDetailAddToCart({
               </label>
             );
           })}
-          <p className="sm:col-span-2 text-xs leading-5 text-boutique-muted">
-            Прегледайте и редактирайте избраното пожелание спрямо получателя – име, пол,
-            възраст и конкретен повод.
-          </p>
+          {fields.some((field) => field.allowsWishTemplates) ? (
+            <p className="sm:col-span-2 text-xs leading-5 text-boutique-muted">
+              Прегледайте и редактирайте избраното пожелание спрямо получателя – име, пол,
+              възраст и конкретен повод.
+            </p>
+          ) : null}
         </div>
       ) : null}
 
       {optionGroups.length ? (
         <ProductOptionsSelector
-          basePrice={product.price}
+          basePrice={product.price + personalizationDelta}
           groups={optionGroups}
           value={optionSelections}
           onChange={setOptionSelections}
-          onEstimatedPriceChange={setEstimatedPrice}
         />
+      ) : null}
+
+      {!optionGroups.length && personalizationDelta > 0 ? (
+        <p className="mt-5 text-sm text-boutique-muted">
+          Ориентировъчна цена:{" "}
+          <strong className="text-boutique-ink">
+            {(product.price + personalizationDelta).toFixed(2).replace(".", ",")} €
+          </strong>
+        </p>
       ) : null}
 
       {colorFields.length ? (
@@ -255,7 +401,7 @@ export function ProductDetailAddToCart({
           const validationError = validate();
           if (validationError) return setError(validationError);
           addProduct(
-            { ...product, price: estimatedPrice },
+            product,
             1,
             personalization || undefined,
             flattenSelectedColors() || undefined,

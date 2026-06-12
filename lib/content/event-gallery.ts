@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 
-export const EVENT_GALLERY_PAGE_SIZE = 24;
+import { PUBLIC_EVENT_GALLERY_PAGE_SIZE } from "@/lib/images/constants";
+
+export const EVENT_GALLERY_PAGE_SIZE = PUBLIC_EVENT_GALLERY_PAGE_SIZE;
 
 export type EventGalleryImage = {
   id: string;

@@ -1,6 +1,8 @@
 import { createProduct } from "@/app/admin/actions";
 import { AdminUnsavedChangesGuard } from "@/components/admin/admin-unsaved-changes-guard";
-import { ImageFileInput } from "@/components/admin/image-file-input";
+import { AdminFormPendingGuard } from "@/components/admin/admin-form-pending-guard";
+import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
+import { ProductImageFileInput } from "@/components/admin/product-image-file-input";
 import { ProductColorFieldsEditor } from "@/components/admin/product-color-fields-editor";
 import { ProductOptionGroupsEditor } from "@/components/admin/product-option-groups-editor";
 import { ProductPersonalizationFieldsEditor } from "@/components/admin/product-personalization-fields-editor";
@@ -129,13 +131,12 @@ export function ProductCreatePanel({
             Визия и категория
           </legend>
           <div className="grid gap-5 md:grid-cols-2">
-            <ImageFileInput
+            <ProductImageFileInput
               name={adminFormFields.product.imageFiles}
               label="Снимки на продукта"
-              multiple
               className={adminFieldClass}
               helperClassName={adminHelperClass}
-              helperText="Може да изберете няколко PNG, JPG или WEBP файла. Първата снимка става основна."
+              helperText="Може да изберете няколко PNG, JPG или WEBP файла. Първата снимка става основна след оптимизация."
             />
 
             <fieldset className="rounded-lg border border-boutique-line/70 bg-boutique-bg p-3">
@@ -293,14 +294,15 @@ export function ProductCreatePanel({
                 Първо добави категория
               </a>
             ) : (
-              <button
-                type="submit"
-                className="rounded-full bg-boutique-ink px-6 py-3 text-xs font-semibold uppercase tracking-wider text-boutique-paper transition hover:bg-boutique-accent"
+              <AdminSubmitButton
+                pendingLabel="Обработване и качване…"
+                className="rounded-full bg-boutique-ink px-6 py-3 text-xs font-semibold uppercase tracking-wider text-boutique-paper transition hover:bg-boutique-accent disabled:cursor-not-allowed disabled:opacity-70"
               >
                 Добави продукт
-              </button>
+              </AdminSubmitButton>
             )}
           </div>
+          <AdminFormPendingGuard />
         </div>
       </form>
     </article>

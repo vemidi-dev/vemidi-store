@@ -31,6 +31,7 @@ begin
       field_type text,
       placeholder text,
       max_length integer,
+      price_delta numeric,
       is_required boolean,
       allows_wish_templates boolean,
       sort_order integer
@@ -42,6 +43,7 @@ begin
       or v_field.field_type not in ('text', 'textarea', 'date')
       or v_field.max_length < 1
       or v_field.max_length > 1000
+      or coalesce(v_field.price_delta, 0) < 0
       or v_field.field_key = any(v_keys)
     then
       raise exception 'invalid_personalization_field' using errcode = '22023';
@@ -56,6 +58,7 @@ begin
       field_type,
       placeholder,
       max_length,
+      price_delta,
       is_required,
       allows_wish_templates,
       sort_order
@@ -67,6 +70,7 @@ begin
       v_field.field_type,
       nullif(btrim(v_field.placeholder), ''),
       v_field.max_length,
+      coalesce(v_field.price_delta, 0),
       coalesce(v_field.is_required, false),
       coalesce(v_field.allows_wish_templates, false),
       coalesce(v_field.sort_order, 0)

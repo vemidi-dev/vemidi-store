@@ -1,5 +1,8 @@
 import { redirect } from "next/navigation";
 
+export const runtime = "nodejs";
+export const maxDuration = 60;
+
 import { AdminHeader } from "@/components/admin/admin-header";
 import { AdminNotices } from "@/components/admin/admin-notices";
 import { CategoryManagementPanel } from "@/components/admin/category-management-panel";
@@ -44,6 +47,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   const params = await searchParams;
   const success = firstValue(params.success);
   const error = firstValue(params.error);
+  const editProductId = firstValue(params.editProduct);
   const draft = parseProductCreateDraft(firstValue(params.draft));
   const activeTab = normalizeAdminTab(firstValue(params.tab));
   const ordersQuery = parseOrdersQuery({
@@ -465,7 +469,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                 wishOccasionLinks={data.wishTemplateOccasions}
                 draft={draft}
               />
-              <ProductListPanel data={data} />
+              <ProductListPanel data={data} editProductId={editProductId || undefined} />
             </>
           )}
         </div>

@@ -29,9 +29,12 @@ Apply the SQL files in this order for a new environment:
 25. `supabase/product_card_badge.sql`
 26. `supabase/campaign_order_attribution.sql`
 27. `supabase/universal_product_options.sql`
-28. `supabase/event_gallery_images.sql`
-29. `supabase/category_card_description.sql`
-30. `supabase/site_content_settings.sql`
+28. `supabase/personalization_field_price_delta.sql`
+29. `supabase/duplicate_product.sql`
+30. `supabase/product_gallery_import_replace.sql`
+31. `supabase/event_gallery_images.sql`
+32. `supabase/category_card_description.sql`
+33. `supabase/site_content_settings.sql`
 
 `supabase/migrate_product_color_rules_to_fields.sql` is needed only when upgrading an installation
 that already contains the older `product_color_rules` data. Run it after
@@ -173,6 +176,38 @@ Run `universal_product_options.sql` after `campaign_order_attribution.sql`. It a
 
 The migration is safe for existing products and orders. Legacy color fields and personalization
 fields are not migrated automatically.
+
+Run `personalization_field_price_delta.sql` after `universal_product_options.sql`. It adds an
+admin-managed surcharge to each legacy personalization field. A zero value remains free; a positive
+value is added server-side only when the customer fills that field.
+
+Run `duplicate_product.sql` after `personalization_field_price_delta.sql`. It adds
+`admin_duplicate_product(p_product_id uuid)`, which clones a product's saved configuration with fresh
+UUIDs for option groups, values, color fields, and personalization fields. Image files are copied
+separately in the application layer to avoid shared storage references.
+
+Run `product_gallery_import_replace.sql` after `duplicate_product.sql`. It adds
+`admin_import_product_images` for duplicate gallery copy with preserved order, alt text, and primary
+image metadata, plus `admin_replace_product_gallery_image` for safe single-image replacement after a
+new optimized file is uploaded in Storage.
+
+To verify the admin gallery RPCs exist without mutating data, run in the Supabase SQL editor:
+
+```sql
+select proname
+from pg_proc
+join pg_namespace on pg_namespace.oid = pg_proc.pronamespace
+where pg_namespace.nspname = 'public'
+  and proname in (
+    'admin_duplicate_product',
+    'admin_import_product_images',
+    'admin_replace_product_gallery_image'
+  )
+order by proname;
+```
+
+The smoke check script calls each RPC with the service role and expects `admin_required` (no
+authenticated admin session) or a not-found error — no rows are created or updated.
 
 Run `event_gallery_images.sql` after blog/events migrations. It stores ordered gallery images for past
 workshops, with admin upload/reorder support and public display on the events page.

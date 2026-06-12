@@ -10,6 +10,7 @@ import {
 import type { ProductOptionGroup, ProductOptionSelection } from "@/lib/product-options";
 import {
   buildDefaultOptionSelections,
+  getBooleanOptionValues,
   getVisibleOptionGroups,
   isChoiceOptionGroup,
   isTextOptionGroup,
@@ -95,6 +96,64 @@ export function ProductOptionsSelector({
         };
 
         if (isChoiceOptionGroup(group)) {
+          const booleanValues = getBooleanOptionValues(group);
+          if (booleanValues) {
+            const selected = selection.valueIds.includes(booleanValues.yes.id);
+            const deltaLabel = formatPriceDelta(booleanValues.yes.priceDelta);
+
+            return (
+              <fieldset key={group.id}>
+                <legend className="text-sm font-semibold text-boutique-ink">
+                  {group.name}
+                  {group.isRequired ? " *" : ""}
+                </legend>
+                <label
+                  className={`mt-3 flex items-center gap-4 rounded-2xl border border-boutique-line bg-boutique-bg px-5 py-4 ${
+                    booleanValues.yes.isSoldOut
+                      ? "cursor-not-allowed opacity-60"
+                      : "cursor-pointer"
+                  }`}
+                >
+                  <input
+                    className="sr-only"
+                    type="checkbox"
+                    checked={selected}
+                    disabled={booleanValues.yes.isSoldOut}
+                    onChange={(event) =>
+                      updateSelection(group.id, {
+                        groupId: group.id,
+                        valueIds: [
+                          event.target.checked
+                            ? booleanValues.yes.id
+                            : booleanValues.no.id,
+                        ],
+                      })
+                    }
+                  />
+                  <span
+                    className={`relative h-7 w-12 shrink-0 rounded-full transition ${
+                      selected ? "bg-boutique-sage" : "bg-boutique-line"
+                    }`}
+                  >
+                    <span
+                      className={`absolute left-1 top-1 h-5 w-5 rounded-full bg-white shadow-sm transition ${
+                        selected ? "translate-x-5" : ""
+                      }`}
+                    />
+                  </span>
+                  <span className="min-w-0 flex-1 font-medium leading-relaxed text-boutique-ink">
+                    {booleanValues.yes.label}
+                  </span>
+                  {deltaLabel ? (
+                    <span className="shrink-0 text-sm font-semibold text-boutique-accent">
+                      {deltaLabel}
+                    </span>
+                  ) : null}
+                </label>
+              </fieldset>
+            );
+          }
+
           return (
             <fieldset key={group.id}>
               <legend className="text-sm font-semibold text-boutique-ink">
