@@ -1,6 +1,7 @@
 import { createProduct } from "@/app/admin/actions";
 import { ImageFileInput } from "@/components/admin/image-file-input";
 import { ProductColorFieldsEditor } from "@/components/admin/product-color-fields-editor";
+import { ProductOptionGroupsEditor } from "@/components/admin/product-option-groups-editor";
 import { ProductPersonalizationFieldsEditor } from "@/components/admin/product-personalization-fields-editor";
 import { ProductCardBadgeField } from "@/components/admin/product-card-badge-field";
 import { ProductWishSelector } from "@/components/admin/product-wish-selector";
@@ -240,6 +241,20 @@ export function ProductCreatePanel({
             fieldClassName={adminFieldClass}
           />
         </fieldset>
+
+        <details className="border-t border-boutique-line/70 pt-6">
+          <summary className="cursor-pointer text-xs font-semibold uppercase tracking-[0.16em] text-boutique-muted">
+            Опции и ценообразуване
+          </summary>
+          <div className="mt-4">
+            <ProductOptionGroupsEditor
+              initialGroups={draft?.optionGroups}
+              allDependencyOptions={[]}
+              helperClassName={adminHelperClass}
+              fieldClassName={adminFieldClass}
+            />
+          </div>
+        </details>
 
         <fieldset className="space-y-4 border-t border-boutique-line/70 pt-6">
           <legend className="text-xs font-semibold uppercase tracking-[0.16em] text-boutique-muted">

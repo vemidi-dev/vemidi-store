@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 
 import { InformationPage, InformationSection } from "@/components/legal/information-page";
+import { splitLines, splitParagraphs } from "@/lib/content/format-content";
+import { getSiteContent } from "@/lib/content/site-content";
 
 export const metadata: Metadata = {
   title: "Доставка и плащане",
@@ -8,30 +10,37 @@ export const metadata: Metadata = {
   alternates: { canonical: "/delivery" },
 };
 
-export default function DeliveryPage() {
+export default async function DeliveryPage() {
+  const content = await getSiteContent();
+
   return (
-    <InformationPage eyebrow="Полезна информация" title="Доставка и плащане" description="Как подготвяме, потвърждаваме и изпращаме вашата поръчка.">
-      <p className="text-xs uppercase tracking-wider">Последна актуализация: 28 май 2026 г.</p>
-      <InformationSection title="Куриер и начин на доставка">
-        <p>Доставката се извършва чрез Еконт или Спиди според избора на клиента при завършване на поръчката.</p>
+    <InformationPage
+      eyebrow={content["delivery.hero_eyebrow"]}
+      title={content["delivery.hero_title"]}
+      description={content["delivery.hero_description"]}
+    >
+      <p className="text-xs uppercase tracking-wider">{content["delivery.updated_at"]}</p>
+      <InformationSection title={content["delivery.courier_title"]}>
+        <p>{content["delivery.courier_intro"]}</p>
         <ul className="list-disc space-y-1 pl-5">
-          <li>до офис на куриер;</li>
-          <li>до автомат на куриер, когато услугата е налична;</li>
-          <li>до посочен адрес.</li>
+          {splitLines(content["delivery.courier_items"]).map((item) => (
+            <li key={item}>{item}</li>
+          ))}
         </ul>
       </InformationSection>
-      <InformationSection title="Срокове">
-        <p>Обичайният срок за изработка е от 1 до 5 работни дни, освен ако в страницата на продукта не е посочено друго. Срокът за доставка зависи от графика и условията на избрания куриер.</p>
-        <p>При натоварени периоди, официални празници или изделия със сложна персонализация срокът се уточнява допълнително.</p>
+      <InformationSection title={content["delivery.timelines_title"]}>
+        {splitParagraphs(content["delivery.timelines_text"]).map((paragraph) => (
+          <p key={paragraph}>{paragraph}</p>
+        ))}
       </InformationSection>
-      <InformationSection title="Цена на доставката">
-        <p>Цената се определя по тарифата на избрания куриер и не е включена в цената на продуктите, освен ако изрично не е посочено друго.</p>
+      <InformationSection title={content["delivery.price_title"]}>
+        <p>{content["delivery.price_text"]}</p>
       </InformationSection>
-      <InformationSection title="Плащане">
-        <p>Плащането е само с наложен платеж при получаване на пратката. Магазинът не събира и не обработва данни за банкови карти.</p>
+      <InformationSection title={content["delivery.payment_title"]}>
+        <p>{content["delivery.payment_text"]}</p>
       </InformationSection>
-      <InformationSection title="Данни за доставка">
-        <p>Клиентът носи отговорност за правилно въведените име, телефон, населено място, адрес или офис. Неточни данни могат да доведат до забавяне или невъзможност за доставка.</p>
+      <InformationSection title={content["delivery.address_title"]}>
+        <p>{content["delivery.address_text"]}</p>
       </InformationSection>
     </InformationPage>
   );

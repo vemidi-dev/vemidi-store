@@ -8,6 +8,7 @@ import {
   DEFAULT_CATEGORY_CARD_DESCRIPTION,
   type ShopCategory,
 } from "@/lib/shop-categories";
+import { getSiteContent } from "@/lib/content/site-content";
 import { toShowcaseCategory } from "@/lib/storefront/mappers";
 import { getStorefrontCatalog } from "@/lib/storefront/repository";
 
@@ -35,38 +36,38 @@ function ProductCategoryCard({ category }: { category: CategoryWithCount }) {
   return (
     <Link
       href={getCategoryHref(category)}
-      className="group overflow-hidden rounded-2xl border border-boutique-line bg-white shadow-boutique-sm transition duration-300 hover:-translate-y-1 hover:border-boutique-sage/50 hover:shadow-boutique"
+      className="group overflow-hidden rounded-xl border border-boutique-line bg-white shadow-boutique-sm transition duration-300 hover:-translate-y-1 hover:border-boutique-sage/50 hover:shadow-boutique sm:rounded-2xl"
     >
-      <div className="relative aspect-[4/3] overflow-hidden bg-boutique-paper">
+      <div className="relative aspect-[5/4] overflow-hidden bg-boutique-paper sm:aspect-[4/3]">
         {category.imageSrc ? (
           <Image
             src={category.imageSrc}
             alt={category.imageAlt}
             fill
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 25vw"
             className="object-cover transition duration-500 group-hover:scale-105"
           />
         ) : (
           <MediaPlaceholder label="Снимка на категорията" />
         )}
-        <span className="absolute right-4 top-4 grid h-11 w-11 place-items-center rounded-full border border-boutique-line bg-white/90 font-heading text-lg text-boutique-sage-deep shadow-sm">
+        <span className="absolute right-2 top-2 hidden h-9 w-9 place-items-center rounded-full border border-boutique-line bg-white/90 font-heading text-sm text-boutique-sage-deep shadow-sm sm:grid sm:h-11 sm:w-11 sm:text-lg">
           {category.title.slice(0, 1)}
         </span>
       </div>
 
-      <div className="p-5">
-        <h2 className="font-heading text-2xl leading-tight text-boutique-ink">
+      <div className="p-2.5 sm:p-5">
+        <h2 className="line-clamp-2 font-heading text-sm leading-snug text-boutique-ink sm:text-2xl sm:leading-tight">
           {category.title}
         </h2>
         {category.productCount > 0 ? (
-          <p className="mt-1 text-xs font-medium text-boutique-sage-deep">
+          <p className="mt-0.5 text-[0.6875rem] font-medium text-boutique-sage-deep sm:mt-1 sm:text-xs">
             {getProductLabel(category.productCount)}
           </p>
         ) : null}
-        <p className="mt-3 min-h-10 text-sm leading-5 text-boutique-muted">
+        <p className="mt-2 hidden min-h-10 text-sm leading-5 text-boutique-muted sm:block">
           {category.cardDescription?.trim() || DEFAULT_CATEGORY_CARD_DESCRIPTION}
         </p>
-        <span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-boutique-sage-deep">
+        <span className="mt-1.5 inline-flex min-h-8 items-center gap-1 text-xs font-semibold text-boutique-sage-deep sm:mt-4 sm:min-h-0 sm:gap-2 sm:text-sm">
           Разгледай
           <span aria-hidden className="transition group-hover:translate-x-1">
             →
@@ -81,9 +82,9 @@ function OccasionCategoryLink({ category }: { category: CategoryWithCount }) {
   return (
     <Link
       href={getCategoryHref(category)}
-      className="group flex min-w-[13.5rem] items-center gap-3 rounded-xl border border-boutique-line bg-white px-4 py-3 transition hover:border-boutique-rose-deep/35 hover:bg-boutique-blush/35"
+      className="group flex items-center gap-2 rounded-xl border border-boutique-line bg-white px-2.5 py-2 transition hover:border-boutique-rose-deep/35 hover:bg-boutique-blush/35 sm:gap-3 sm:px-4 sm:py-3"
     >
-      <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full border border-boutique-line bg-boutique-paper">
+      <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full border border-boutique-line bg-boutique-paper sm:h-12 sm:w-12">
         {category.imageSrc ? (
           <Image
             src={category.imageSrc}
@@ -93,19 +94,21 @@ function OccasionCategoryLink({ category }: { category: CategoryWithCount }) {
             className="object-cover transition duration-300 group-hover:scale-110"
           />
         ) : (
-          <span className="grid h-full w-full place-items-center font-heading text-lg text-boutique-sage-deep">
+          <span className="grid h-full w-full place-items-center font-heading text-base text-boutique-sage-deep sm:text-lg">
             {category.title.slice(0, 1)}
           </span>
         )}
       </div>
-      <div>
-        <p className="font-heading text-lg leading-tight text-boutique-ink">{category.title}</p>
+      <div className="min-w-0 flex-1">
+        <p className="line-clamp-2 font-heading text-sm leading-snug text-boutique-ink sm:text-lg sm:leading-tight">
+          {category.title}
+        </p>
         {category.productCount > 0 ? (
-          <p className="mt-1 text-xs text-boutique-muted">
+          <p className="mt-0.5 text-[0.6875rem] text-boutique-muted sm:mt-1 sm:text-xs">
             {getProductLabel(category.productCount)}
           </p>
         ) : (
-          <p className="mt-1 text-xs text-boutique-muted">Разгледай идеи</p>
+          <p className="mt-0.5 text-[0.6875rem] text-boutique-muted sm:mt-1 sm:text-xs">Разгледай идеи</p>
         )}
       </div>
     </Link>
@@ -113,7 +116,10 @@ function OccasionCategoryLink({ category }: { category: CategoryWithCount }) {
 }
 
 export default async function CategoriesPage() {
-  const { categories, products } = await getStorefrontCatalog();
+  const [{ categories, products }, content] = await Promise.all([
+    getStorefrontCatalog(),
+    getSiteContent(),
+  ]);
   const counts = new Map<string, number>();
 
   products.forEach((product) => {
@@ -138,8 +144,8 @@ export default async function CategoriesPage() {
   return (
     <div>
       <section className="overflow-hidden border-b border-boutique-line bg-boutique-paper">
-        <div className="grid min-h-[19rem] lg:grid-cols-[0.8fr_1.2fr]">
-          <PageContainer className="flex items-center py-12 lg:pr-12">
+        <div className="grid lg:min-h-[19rem] lg:grid-cols-[0.8fr_1.2fr]">
+          <PageContainer className="flex items-center py-5 sm:py-12 lg:pr-12">
             <div className="max-w-xl">
               <p className="text-sm text-boutique-muted">
                 <Link href="/" className="transition hover:text-boutique-sage-deep">
@@ -148,18 +154,17 @@ export default async function CategoriesPage() {
                 <span className="mx-2" aria-hidden>
                   ›
                 </span>
-                Категории
+                {content["categories.hero_title"]}
               </p>
-              <h1 className="mt-5 font-heading text-5xl text-boutique-ink sm:text-6xl">
+              <h1 className="mt-3 font-heading text-4xl text-boutique-ink sm:mt-5 sm:text-6xl">
                 Категории
               </h1>
-              <p className="mt-5 max-w-lg text-base leading-7 text-boutique-muted">
-                Разгледайте нашите продукти, групирани по видове, за да намерите лесно
-                ръчно изработения подарък, който търсите.
+              <p className="mt-3 max-w-lg text-sm leading-6 text-boutique-muted sm:mt-5 sm:text-base sm:leading-7">
+                {content["categories.hero_description"]}
               </p>
             </div>
           </PageContainer>
-          <div className="relative min-h-64 lg:min-h-full">
+          <div className="relative min-h-44 sm:min-h-64 lg:min-h-full">
             <Image
               src="/assets/banner-categories.webp"
               alt="Ръчно изработени персонализирани подаръци по категории"
@@ -172,10 +177,10 @@ export default async function CategoriesPage() {
         </div>
       </section>
 
-      <section className="py-12 md:py-16">
+      <section className="py-6 md:py-16">
         <PageContainer>
           {productCategories.length > 0 ? (
-            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="grid grid-cols-2 gap-2 sm:gap-5 xl:grid-cols-4">
               {productCategories.map((category) => (
                 <ProductCategoryCard key={category.slug} category={category} />
               ))}
@@ -186,14 +191,14 @@ export default async function CategoriesPage() {
             </p>
           )}
 
-          <div className="mt-14">
-            <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+          <div className="mt-10 sm:mt-14">
+            <div className="mb-4 flex flex-wrap items-end justify-between gap-3 sm:mb-6 sm:gap-4">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-boutique-sage-deep">
-                  Още идеи
+                  {content["categories.occasions_eyebrow"]}
                 </p>
-                <h2 className="mt-2 font-heading text-3xl text-boutique-ink">
-                  Разгледай и по повод
+                <h2 className="mt-1.5 font-heading text-2xl text-boutique-ink sm:mt-2 sm:text-3xl">
+                  {content["categories.occasions_title"]}
                 </h2>
               </div>
               <Link
@@ -203,7 +208,7 @@ export default async function CategoriesPage() {
                 Всички поводи →
               </Link>
             </div>
-            <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-3">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-4">
               {occasionCategories.map((category) => (
                 <OccasionCategoryLink key={category.slug} category={category} />
               ))}
@@ -220,16 +225,16 @@ export default async function CategoriesPage() {
             </span>
             <div>
               <h2 className="font-heading text-2xl text-boutique-ink">
-                Разгледайте всички продукти
+                {content["categories.products_cta_title"]}
               </h2>
               <p className="mt-1 text-sm leading-6 text-boutique-muted">
-                Открийте още ръчно изработени подаръци, създадени с внимание и любов.
+                {content["categories.products_cta_text"]}
               </p>
               <Link
                 href="/shop"
                 className="mt-4 inline-flex rounded-lg bg-boutique-sage-deep px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-boutique-ink"
               >
-                Към всички продукти →
+                {content["categories.products_cta_button"]} →
               </Link>
             </div>
           </div>
@@ -240,16 +245,16 @@ export default async function CategoriesPage() {
             </span>
             <div>
               <h2 className="font-heading text-2xl text-boutique-ink">
-                Нуждаете се от нещо специално?
+                {content["categories.custom_cta_title"]}
               </h2>
               <p className="mt-1 text-sm leading-6 text-boutique-muted">
-                Свържете се с нас и ще обсъдим персонализиран подарък специално за Вас.
+                {content["categories.custom_cta_text"]}
               </p>
               <Link
                 href="/contact"
                 className="mt-4 inline-flex rounded-lg border border-boutique-sage-deep px-5 py-2.5 text-sm font-semibold text-boutique-sage-deep transition hover:bg-boutique-sage-deep hover:text-white"
               >
-                Свържете се с нас →
+                {content["categories.custom_cta_button"]} →
               </Link>
             </div>
           </div>

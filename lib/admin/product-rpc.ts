@@ -2,6 +2,7 @@ import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
 
 import type {
   ParsedColorField,
+  ParsedOptionGroup,
   ParsedPersonalizationField,
 } from "@/lib/admin/types";
 
@@ -19,6 +20,7 @@ export type ProductMutationInput = {
   colorFields: ParsedColorField[];
   personalizationFields: ParsedPersonalizationField[];
   wishTemplateIds: string[];
+  optionGroups: ParsedOptionGroup[];
 };
 
 function toColorFieldsPayload(fields: ParsedColorField[]) {
@@ -29,6 +31,36 @@ function toColorFieldsPayload(fields: ParsedColorField[]) {
     max_select: field.maxSelect,
     option_ids: field.optionIds,
     sort_order: field.sortOrder,
+  }));
+}
+
+function toOptionGroupsPayload(groups: ParsedOptionGroup[]) {
+  return groups.map((group) => ({
+    id: group.id,
+    name: group.name,
+    key: group.key,
+    input_type: group.inputType,
+    is_required: group.isRequired,
+    min_select: group.minSelect,
+    max_select: group.maxSelect,
+    sort_order: group.sortOrder,
+    is_active: group.isActive,
+    pricing_mode: group.pricingMode,
+    depends_on_option_id: group.dependsOnOptionId,
+    placeholder: group.placeholder,
+    max_length: group.maxLength,
+    text_price_delta: group.textPriceDelta,
+    values: group.values.map((value) => ({
+      id: value.id,
+      label: value.label,
+      key: value.key,
+      price_delta: value.priceDelta,
+      is_default: value.isDefault,
+      is_active: value.isActive,
+      is_sold_out: value.isSoldOut,
+      sku: value.sku,
+      sort_order: value.sortOrder,
+    })),
   }));
 }
 
@@ -56,6 +88,7 @@ function toRpcInput(input: ProductMutationInput) {
       sort_order: field.sortOrder,
     })),
     p_wish_template_ids: input.wishTemplateIds,
+    p_option_groups: toOptionGroupsPayload(input.optionGroups),
   };
 }
 
@@ -63,7 +96,7 @@ export async function createProductAtomic(
   supabase: SupabaseClient,
   input: ProductMutationInput,
 ) {
-  return supabase.rpc("admin_create_product_v3", toRpcInput(input));
+  return supabase.rpc("admin_create_product_v4", toRpcInput(input));
 }
 
 export async function updateProductAtomic(
@@ -71,7 +104,7 @@ export async function updateProductAtomic(
   productId: string,
   input: ProductMutationInput,
 ) {
-  return supabase.rpc("admin_update_product_v3", {
+  return supabase.rpc("admin_update_product_v4", {
     p_product_id: productId,
     ...toRpcInput(input),
   });
@@ -90,6 +123,10 @@ const rpcErrorMessages: Record<string, string> = {
   insufficient_color_options: "Цветовото поле няма достатъчно позволени опции.",
   invalid_color_option: "Избрана е невалидна цветова опция.",
   invalid_personalization_field: "Невалидни настройки на поле за персонализация.",
+  invalid_option_group: "Невалидни настройки на група опции.",
+  invalid_option_value: "Невалидна стойност на опция.",
+  invalid_option_dependency: "Невалидна зависимост между опции.",
+  invalid_option_dependency_cycle: "Циклична зависимост между опции.",
   invalid_wish_template: "Избрано е невалидно готово пожелание.",
   product_text_required: "Името и описанието са задължителни.",
   invalid_price: "Цената е невалидна.",

@@ -22,7 +22,13 @@ function CityOptionLabel({ city }: { city: EcontCity }) {
   );
 }
 
-export function CheckoutDeliveryFields() {
+export function CheckoutDeliveryFields({
+  eyebrow,
+  title,
+}: {
+  eyebrow: string;
+  title: string;
+}) {
   const [courier, setCourier] = useState<Courier>("");
   const [deliveryType, setDeliveryType] = useState<DeliveryType>("office");
   const [cityQuery, setCityQuery] = useState("");
@@ -195,10 +201,10 @@ export function CheckoutDeliveryFields() {
   return (
     <section className="rounded-2xl border border-boutique-line bg-boutique-paper p-6 shadow-boutique-sm md:p-8">
       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-boutique-accent">
-        02 · Доставка
+        {eyebrow}
       </p>
       <h2 className="mt-3 font-heading text-2xl text-boutique-ink">
-        Адрес и начин на доставка
+        {title}
       </h2>
 
       {useHiddenDeliveryFields ? (

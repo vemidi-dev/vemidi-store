@@ -3,17 +3,28 @@ import test from "node:test";
 
 import {
   buildOrdersCsv,
+  defaultOrderCsvColumns,
   filterOrders,
   getOrderCounts,
-  getOrderSource,
+  getOrderPersonalizationSummary,
+  getOrderShortId,
+  getOrderSourceFilterValue,
+  getOrderSourceKind,
+  getOrderSourceLabel,
+  normalizeOrderCsvColumns,
+  normalizeOrderPage,
+  normalizeOrderPageSize,
   normalizeOrderSource,
   normalizeOrderStatus,
+  paginateOrders,
+  parseStoreOrderItems,
+  sortOrders,
   type OrderRow,
 } from "@/lib/admin/orders";
 
 function makeOrder(overrides: Partial<OrderRow>): OrderRow {
   return {
-    id: "order",
+    id: "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
     created_at: "2026-06-09T10:00:00.000Z",
     status: "new",
     product_name: null,
@@ -43,21 +54,32 @@ function makeOrder(overrides: Partial<OrderRow>): OrderRow {
 
 const orders = [
   makeOrder({
-    id: "store",
+    id: "11111111-1111-1111-1111-111111111111",
     status: "confirmed",
+    created_at: "2026-06-10T10:00:00.000Z",
     raw_payload: {
       source: "vemidi-store",
       order: {
-        items: [{ name: "Плик за пари", quantity: 2 }],
+        items: [{ name: "Плик за пари", quantity: 2, unitPrice: 12.5 }],
       },
     },
   }),
   makeOrder({
-    id: "landing",
+    id: "22222222-2222-2222-2222-222222222222",
     status: "completed",
+    created_at: "2026-06-08T10:00:00.000Z",
     customer_name: "Иван Петров",
     customer_email: null,
     product_name: "Творчески комплект",
+    kit_name: "Комплект А",
+  }),
+  makeOrder({
+    id: "33333333-3333-3333-3333-333333333333",
+    status: "new",
+    created_at: "2026-06-01T10:00:00.000Z",
+    total_price: 5,
+    customer_name: "Без източник",
+    raw_payload: null,
   }),
 ];
 
@@ -66,44 +88,106 @@ test("order filters normalize unsupported values", () => {
   assert.equal(normalizeOrderStatus("unknown"), "");
   assert.equal(normalizeOrderSource("store"), "store");
   assert.equal(normalizeOrderSource("unknown"), "");
+  assert.equal(normalizeOrderPage("0"), 1);
+  assert.equal(normalizeOrderPageSize("500"), 100);
 });
 
-test("order source and combined filters are stable", () => {
-  assert.equal(getOrderSource(orders[0]), "store");
-  assert.equal(getOrderSource(orders[1]), "landing");
+test("order source labels avoid guessing when source is missing", () => {
+  assert.equal(getOrderSourceKind(orders[0]), "store");
+  assert.equal(getOrderSourceLabel(orders[0]), "Онлайн магазин");
+  assert.equal(getOrderSourceLabel(orders[2]), "Неуточнен");
+  assert.equal(getOrderSourceFilterValue(orders[1]), "landing");
+  assert.equal(getOrderSourceFilterValue(orders[2]), "unknown");
+});
+
+test("order filters combine status, source, period and search", () => {
   assert.deepEqual(
     filterOrders(orders, {
       status: "confirmed",
       source: "store",
       search: "плик",
+      dateFrom: "2026-06-09",
+      dateTo: "2026-06-11",
     }).map((order) => order.id),
-    ["store"],
+    ["11111111-1111-1111-1111-111111111111"],
   );
+
+  assert.deepEqual(
+    filterOrders(orders, {
+      status: "",
+      source: "unknown",
+      search: "",
+    }).map((order) => order.id),
+    ["33333333-3333-3333-3333-333333333333"],
+  );
+});
+
+test("order pagination and sorting helpers", () => {
+  const sorted = sortOrders(orders, "total-desc");
+  assert.equal(sorted[0]?.id, "11111111-1111-1111-1111-111111111111");
+
+  const page = paginateOrders(sorted, 2, 2);
+  assert.equal(page.length, 1);
+  assert.equal(page[0]?.id, "33333333-3333-3333-3333-333333333333");
 });
 
 test("order counters summarize workflow and source", () => {
   assert.deepEqual(getOrderCounts(orders), {
-    total: 2,
-    new: 0,
+    total: 3,
+    new: 1,
     active: 1,
     completed: 1,
     store: 1,
     landing: 1,
+    unknown: 1,
   });
 });
 
-test("order CSV includes filtered operational data and escapes formulas", () => {
-  const csv = buildOrdersCsv([
-    makeOrder({
-      customer_name: "=unsafe",
-      raw_payload: {
-        source: "vemidi-store",
-        order: { items: [{ name: "Плик за пари", quantity: 2 }] },
-      },
-    }),
-  ]);
+test("store order items use saved unit price from payload", () => {
+  const items = parseStoreOrderItems(orders[0]);
+  assert.equal(items[0]?.unitPrice, 12.5);
+  assert.equal(items[0]?.quantity, 2);
+});
 
-  assert.match(csv, /"created_at","source","status"/);
+test("order CSV uses Bulgarian headers, BOM-ready escaping and selected columns", () => {
+  const csv = buildOrdersCsv(
+    [
+      makeOrder({
+        customer_name: "=unsafe",
+        raw_payload: {
+          source: "vemidi-store",
+          order: {
+            items: [
+              {
+                name: "Плик за пари",
+                quantity: 2,
+                unitPrice: 12.5,
+                personalization: "Честит\nрожден ден",
+              },
+            ],
+          },
+        },
+      }),
+    ],
+    ["order_number", "customer_name", "personalization"],
+  );
+
+  assert.match(csv, /^"Номер","Име","Персонализация"/);
   assert.match(csv, /"'=unsafe"/);
-  assert.match(csv, /"2 x Плик за пари"/);
+  assert.match(csv, /Честит/);
+  assert.deepEqual(normalizeOrderCsvColumns(["bad", "status"]), ["status"]);
+  assert.deepEqual(normalizeOrderCsvColumns([]), defaultOrderCsvColumns);
+});
+
+test("order short id and personalization summary stay readable", () => {
+  assert.equal(getOrderShortId(orders[0]), "11111111");
+  assert.match(
+    getOrderPersonalizationSummary(
+      makeOrder({
+        personalization: true,
+        child_name: "Габи",
+      }),
+    ),
+    /Габи/,
+  );
 });

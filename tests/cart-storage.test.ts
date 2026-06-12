@@ -88,8 +88,10 @@ test("parseStoredCart safely ignores malformed or unsafe lines", () => {
     {
       slug: "valid-product",
       title: "Валиден продукт",
+      imageSrc: "/assets/product.webp",
       price: 12.5,
       quantity: 120,
+      campaign: "  Butterflies Summer  ",
       personalization: "  За Мария  ",
       personalizationFields: [
         {
@@ -113,6 +115,8 @@ test("parseStoredCart safely ignores malformed or unsafe lines", () => {
   assert.equal(lines.length, 1);
   assert.equal(lines[0].slug, "valid-product");
   assert.equal(lines[0].quantity, MAX_CART_QUANTITY);
+  assert.equal(lines[0].campaign, "butterflies-summer");
+  assert.equal(lines[0].imageSrc, "/assets/product.webp");
   assert.equal(lines[0].personalization, "За Мария");
   assert.deepEqual(lines[0].personalizationFields, [
     {

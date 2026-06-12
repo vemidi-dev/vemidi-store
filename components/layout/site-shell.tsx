@@ -2,6 +2,7 @@ import { Suspense, type ReactNode } from "react";
 
 import { Footer } from "@/components/layout/footer";
 import { Header } from "@/components/layout/header";
+import { ScrollToTop } from "@/components/layout/scroll-to-top";
 
 type SiteShellProps = {
   children: ReactNode;
@@ -39,6 +40,7 @@ export function SiteShell({ children }: SiteShellProps) {
       <main id="main-content" tabIndex={-1} className="flex-1 outline-none">
         {children}
       </main>
+      <ScrollToTop />
       <Footer />
     </div>
   );

@@ -2,8 +2,10 @@ import {
   formatOrderDate,
   formatOrderPrice,
   getPaymentMethodLabel,
+  parseStoreOrderItems,
   type OrderRow,
 } from "@/lib/admin/orders";
+import { formatOrderOptionLine } from "@/lib/order-option-display";
 import { siteConfig } from "@/config/site";
 
 export type StoreOrderEmailItem = {
@@ -15,6 +17,7 @@ export type StoreOrderEmailItem = {
     fieldLabel?: string;
     optionName?: string;
   }>;
+  optionLines: string[];
 };
 
 function escapeHtml(value: string) {
@@ -38,35 +41,14 @@ function labelDeliveryType(value: string | null) {
 }
 
 export function getStoreOrderEmailItems(order: OrderRow): StoreOrderEmailItem[] {
-  const items = order.raw_payload?.order?.items;
-  if (!Array.isArray(items)) {
-    return [];
-  }
-
-  return items.flatMap((value) => {
-    if (!value || typeof value !== "object") {
-      return [];
-    }
-
-    const item = value as Record<string, unknown>;
-    if (typeof item.name !== "string" || typeof item.quantity !== "number") {
-      return [];
-    }
-
-    return [{
-      name: item.name,
-      unitPrice: typeof item.unitPrice === "number" ? item.unitPrice : null,
-      quantity: item.quantity,
-      personalization:
-        typeof item.personalization === "string" ? item.personalization : null,
-      selectedColors: Array.isArray(item.selectedColors)
-        ? item.selectedColors.filter(
-            (color): color is StoreOrderEmailItem["selectedColors"][number] =>
-              Boolean(color) && typeof color === "object",
-          )
-        : [],
-    }];
-  });
+  return parseStoreOrderItems(order).map((item) => ({
+    name: item.name,
+    unitPrice: item.unitPrice,
+    quantity: item.quantity,
+    personalization: item.personalization,
+    selectedColors: item.selectedColors,
+    optionLines: item.optionSelections.map((group) => formatOrderOptionLine(group)),
+  }));
 }
 
 function renderItemsHtml(order: OrderRow) {
@@ -86,6 +68,9 @@ function renderItemsHtml(order: OrderRow) {
       const colorBlock = colors
         ? `<p style="margin:8px 0 0;color:#5e5a54;">${colors}</p>`
         : "";
+      const optionBlock = item.optionLines.length
+        ? `<p style="margin:8px 0 0;color:#5e5a54;">${item.optionLines.map((line) => escapeHtml(line)).join("<br />")}</p>`
+        : "";
 
       return `
         <div style="border:1px solid #e4ddd4;border-radius:12px;padding:16px;margin:0 0 12px;">
@@ -93,6 +78,7 @@ function renderItemsHtml(order: OrderRow) {
           <p style="margin:8px 0 0;color:#2a2824;">${item.quantity} × ${escapeHtml(formatOrderPrice(item.unitPrice, order.currency))}</p>
           ${personalization}
           ${colorBlock}
+          ${optionBlock}
         </div>
       `;
     })

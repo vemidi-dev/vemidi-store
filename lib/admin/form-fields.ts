@@ -30,6 +30,11 @@ export const adminFormFields = {
     imageId: "image_id",
     direction: "direction",
   },
+  merchandising: {
+    isFeatured: "is_featured",
+    homeSortOrder: "home_sort_order",
+    relatedProductIds: "related_product_ids",
+  },
   colorPalette: {
     groupId: "group_id",
     label: "label",
@@ -54,6 +59,22 @@ export const adminFormFields = {
     required: "personalization_required[]",
     allowsWishes: "personalization_allows_wishes[]",
   },
+  optionGroup: {
+    ids: "option_group_id[]",
+    names: "option_group_name[]",
+    keys: "option_group_key[]",
+    inputTypes: "option_group_input_type[]",
+    required: "option_group_required[]",
+    minSelects: "option_group_min_select[]",
+    maxSelects: "option_group_max_select[]",
+    sortOrders: "option_group_sort_order[]",
+    active: "option_group_active[]",
+    dependsOnOptionIds: "option_group_depends_on[]",
+    placeholders: "option_group_placeholder[]",
+    maxLengths: "option_group_max_length[]",
+    textPriceDeltas: "option_group_text_price_delta[]",
+    valuesJson: "option_group_values_json[]",
+  },
   eventGallery: {
     imageFiles: "event_gallery_files",
     defaultAlt: "event_gallery_default_alt",
@@ -69,5 +90,7 @@ export const adminFormFields = {
     startsAt: "starts_at",
     endsAt: "ends_at",
     isActive: "is_active",
+    productIds: "product_ids",
+    campaignId: "campaign_id",
   },
 } as const;

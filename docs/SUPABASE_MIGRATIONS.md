@@ -27,8 +27,11 @@ Apply the SQL files in this order for a new environment:
 23. `supabase/product_promotions.sql`
 24. `supabase/product_sold_out.sql`
 25. `supabase/product_card_badge.sql`
-26. `supabase/event_gallery_images.sql`
-27. `supabase/category_card_description.sql`
+26. `supabase/campaign_order_attribution.sql`
+27. `supabase/universal_product_options.sql`
+28. `supabase/event_gallery_images.sql`
+29. `supabase/category_card_description.sql`
+30. `supabase/site_content_settings.sql`
 
 `supabase/migrate_product_color_rules_to_fields.sql` is needed only when upgrading an installation
 that already contains the older `product_color_rules` data. Run it after
@@ -156,6 +159,20 @@ sold-out products during checkout, and updates the checkout RPC.
 
 Run `product_card_badge.sql` after `product_sold_out.sql`. It adds optional storefront card badges
 such as `new` or `bestseller`.
+
+Run `campaign_order_attribution.sql` after `product_card_badge.sql` on deployments that do not yet
+have the six-argument `create_store_order` function with campaign attribution.
+
+Run `universal_product_options.sql` after `campaign_order_attribution.sql`. It adds:
+
+- `product_option_groups` and `product_option_values`;
+- `upsert_product_option_groups` for atomic admin saves that preserve UUIDs;
+- `validate_product_option_selections` for server-side option validation and pricing;
+- `admin_create_product_v4` / `admin_update_product_v4`;
+- the latest `create_store_order` with universal option snapshots and option delta pricing.
+
+The migration is safe for existing products and orders. Legacy color fields and personalization
+fields are not migrated automatically.
 
 Run `event_gallery_images.sql` after blog/events migrations. It stores ordered gallery images for past
 workshops, with admin upload/reorder support and public display on the events page.

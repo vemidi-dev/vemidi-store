@@ -12,6 +12,7 @@ export type ProductPromotionSnapshot = {
 export type ProductPromotionRow = {
   id: string;
   product_id: string;
+  campaign_id?: string | null;
   name: string;
   discount_type: DiscountType;
   discount_value: number;
@@ -19,6 +20,17 @@ export type ProductPromotionRow = {
   ends_at: string;
   is_active: boolean;
   created_at: string;
+};
+
+export type PromotionCampaignRow = {
+  id: string;
+  name: string;
+  discount_percentage: number;
+  starts_at: string;
+  ends_at: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
 };
 
 export function isPromotionActive(

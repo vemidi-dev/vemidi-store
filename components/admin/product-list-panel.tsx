@@ -3,19 +3,28 @@ import {
   deleteProductGalleryImage,
   moveProductImage,
   setPrimaryProductImage,
+  toggleProductSoldOut,
   updateProduct,
+  updateProductMerchandising,
 } from "@/app/admin/actions";
+import { AdminConfirmForm } from "@/components/admin/admin-confirm-form";
+import { AdminListControls } from "@/components/admin/admin-list-controls";
+import { AdminOpenDetailsButton } from "@/components/admin/admin-open-details-button";
 import { ImageFileInput } from "@/components/admin/image-file-input";
 import { ProductCardBadgeField } from "@/components/admin/product-card-badge-field";
 import { ProductColorFieldsEditor } from "@/components/admin/product-color-fields-editor";
+import { ProductOptionGroupsEditor } from "@/components/admin/product-option-groups-editor";
 import { ProductPersonalizationFieldsEditor } from "@/components/admin/product-personalization-fields-editor";
+import { ProductMerchandisingFields } from "@/components/admin/product-merchandising-fields";
 import { ProductWishSelector } from "@/components/admin/product-wish-selector";
 import {
   adminFieldClass,
   adminHelperClass,
   adminPanelClass,
+  adminTableHeadClass,
 } from "@/components/admin/styles";
 import type { AdminData } from "@/lib/admin/data";
+import { buildDependencyOptionsFromGroups } from "@/lib/admin/option-dependency-options";
 import { adminFormFields } from "@/lib/admin/form-fields";
 import type { CategoryRow } from "@/lib/admin/types";
 
@@ -27,8 +36,6 @@ export function ProductListPanel({ data }: { data: AdminData }) {
     colorOptions,
     categoryById,
     categoryIdsByProductId,
-    colorGroupById,
-    colorOptionById,
     colorFieldsByProductId,
     selectedColorOptionIdsByFieldId,
     imagesByProductId,
@@ -36,21 +43,99 @@ export function ProductListPanel({ data }: { data: AdminData }) {
     wishTemplates,
     wishTemplateOccasions,
     wishTemplateIdsByProductId,
+    featuredProductById,
+    relatedProductIdsByProductId,
+    optionGroupsByProductId,
+    optionValuesByGroupId,
   } = data;
 
   const occasionCategories = categories.filter(
     (category) => category.category_type === "occasion",
   );
+  const productCategories = categories.filter(
+    (category) => category.category_type === "product",
+  );
 
   return (
     <article className={adminPanelClass}>
-      <h2 className="font-heading text-2xl text-boutique-ink">Всички продукти</h2>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h2 className="font-heading text-2xl text-boutique-ink">Всички продукти</h2>
+          <p className="mt-1 text-sm text-boutique-muted">
+            {products.length} продукта · компактен списък с търсене, филтри и пагинация
+          </p>
+        </div>
+      </div>
 
       {products.length === 0 ? (
         <p className="mt-5 text-sm text-boutique-muted">Няма добавени продукти.</p>
       ) : (
-        <ul className="mt-6 space-y-5">
-          {products.map((product) => {
+        <>
+          <AdminListControls
+            containerId="admin-product-list"
+            itemSelector="[data-admin-product]"
+            total={products.length}
+            searchPlaceholder="Име, категория или цена..."
+            filters={[
+              {
+                key: "status",
+                label: "Статус",
+                dataAttribute: "filterStatus",
+                options: [
+                  { value: "active", label: "Активни" },
+                  { value: "sold-out", label: "Изчерпани" },
+                  { value: "featured", label: "На началната" },
+                  { value: "customizable", label: "С персонализация" },
+                ],
+              },
+              {
+                key: "product",
+                label: "Категория",
+                dataAttribute: "productCats",
+                options: productCategories.map((category) => ({
+                  value: category.id,
+                  label: category.name,
+                })),
+              },
+              {
+                key: "occasion",
+                label: "Повод",
+                dataAttribute: "occasionCats",
+                options: occasionCategories.map((category) => ({
+                  value: category.id,
+                  label: category.name,
+                })),
+              },
+            ]}
+            sortOptions={[
+              { value: "order-desc", label: "Най-нови", attribute: "sortIndex", direction: "desc" },
+              { value: "order-asc", label: "Най-стари", attribute: "sortIndex", direction: "asc" },
+              { value: "name-asc", label: "Име А–Я", attribute: "sortName", direction: "asc" },
+              { value: "name-desc", label: "Име Я–А", attribute: "sortName", direction: "desc" },
+              { value: "price-asc", label: "Цена ↑", attribute: "sortPrice", direction: "asc" },
+              { value: "price-desc", label: "Цена ↓", attribute: "sortPrice", direction: "desc" },
+            ]}
+            defaultSort="order-desc"
+            pageSize={30}
+          />
+
+          <div
+            id="admin-product-list"
+            className="mt-4 overflow-hidden rounded-xl border border-boutique-line"
+          >
+            <div
+              className={`${adminTableHeadClass} hidden px-3 py-2 md:grid md:grid-cols-[2.5rem_minmax(0,2fr)_5rem_6rem_minmax(0,1.2fr)_auto] md:items-center md:gap-2`}
+              aria-hidden
+            >
+              <span />
+              <span>Име</span>
+              <span>Цена</span>
+              <span>Статус</span>
+              <span>Категории</span>
+              <span className="text-right">Действия</span>
+            </div>
+
+          {products.map((product, productIndex) => {
             const assignedIds = categoryIdsByProductId.get(product.id) ?? [];
             const assignedCategories = assignedIds
               .map((categoryId) => categoryById.get(categoryId))
@@ -58,19 +143,6 @@ export function ProductListPanel({ data }: { data: AdminData }) {
             const fields = (colorFieldsByProductId.get(product.id) ?? []).filter(
               (field) => field.enabled,
             );
-            const colorFieldsForProduct = fields.map((field) => {
-              const selectedOptionIds =
-                selectedColorOptionIdsByFieldId.get(field.id) ?? new Set<string>();
-              const selectedOptionLabels = [...selectedOptionIds]
-                .map((optionId) => colorOptionById.get(optionId)?.name)
-                .filter((name): name is string => Boolean(name));
-
-              return {
-                field,
-                groupLabel: colorGroupById.get(field.group_id)?.label ?? "Цветове",
-                selectedOptionLabels,
-              };
-            });
             const initialColorFields = fields.map((field) => ({
               label: field.label,
               groupId: field.group_id,
@@ -108,108 +180,192 @@ export function ProductListPanel({ data }: { data: AdminData }) {
                     ]
                   : [];
 
+            const storedOptionGroups = optionGroupsByProductId.get(product.id) ?? [];
+            const initialOptionGroups = storedOptionGroups.map((group) => ({
+              id: group.id,
+              name: group.name,
+              key: group.key,
+              inputType: group.input_type,
+              isRequired: group.is_required,
+              minSelect: group.min_select,
+              maxSelect: group.max_select,
+              sortOrder: group.sort_order,
+              isActive: group.is_active,
+              pricingMode: "delta" as const,
+              dependsOnOptionId: group.depends_on_option_id,
+              placeholder: group.placeholder,
+              maxLength: group.max_length,
+              textPriceDelta: Number(group.text_price_delta) || 0,
+              values: (optionValuesByGroupId.get(group.id) ?? []).map((value) => ({
+                id: value.id,
+                label: value.label,
+                key: value.key,
+                priceDelta: Number(value.price_delta) || 0,
+                isDefault: value.is_default,
+                isActive: value.is_active,
+                isSoldOut: value.is_sold_out,
+                sku: value.sku,
+                sortOrder: value.sort_order,
+              })),
+            }));
+            const productDependencyOptions =
+              buildDependencyOptionsFromGroups(initialOptionGroups).filter(
+                (option) => /^[0-9a-f-]{36}$/i.test(option.id),
+              );
+
+            const productCategoryIds = assignedCategories
+              .filter((category) => category.category_type === "product")
+              .map((category) => category.id);
+            const occasionCategoryIds = assignedCategories
+              .filter((category) => category.category_type === "occasion")
+              .map((category) => category.id);
+            const thumbnailUrl =
+              productImages.find((image) => image.is_primary)?.image_url ??
+              productImages[0]?.image_url ??
+              product.image_url;
+            const categoryLabel =
+              assignedCategories.length === 0
+                ? "Без категория"
+                : assignedCategories.map((category) => category.name).join(", ");
+
             return (
-              <li
+              <div
                 key={product.id}
-                className="rounded-xl border border-boutique-line/80 bg-boutique-bg p-4 md:p-5"
+                data-admin-product
+                data-search={`${product.name} ${product.price} ${assignedCategories
+                  .map((category) => category.name)
+                  .join(" ")}`}
+                data-filter-status={[
+                  product.is_sold_out ? "sold-out" : "active",
+                  featuredProductById.has(product.id) ? "featured" : "",
+                  product.is_customizable ? "customizable" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+                data-product-cats={productCategoryIds.join(" ")}
+                data-occasion-cats={occasionCategoryIds.join(" ")}
+                data-sort-name={product.name}
+                data-sort-price={product.price}
+                data-sort-index={productIndex}
+                className="border-b border-boutique-line/70 bg-white last:border-b-0"
               >
-                <div className="grid gap-4 md:grid-cols-[120px_1fr]">
-                  <div className="h-24 w-full overflow-hidden rounded-lg border border-boutique-line bg-white md:h-28">
-                    {productImages[0]?.image_url || product.image_url ? (
+                <div className="hidden px-3 py-2 md:grid md:grid-cols-[2.5rem_minmax(0,2fr)_5rem_6rem_minmax(0,1.2fr)_auto] md:items-center md:gap-2">
+                  <div className="h-10 w-10 overflow-hidden rounded-md border border-boutique-line bg-boutique-bg">
+                    {thumbnailUrl ? (
                       <div
                         className="h-full w-full bg-cover bg-center"
-                        style={{
-                          backgroundImage: `url(${
-                            productImages.find((image) => image.is_primary)?.image_url ??
-                            productImages[0]?.image_url ??
-                            product.image_url
-                          })`,
-                        }}
+                        style={{ backgroundImage: `url(${thumbnailUrl})` }}
+                        role="img"
+                        aria-label={product.name}
                       />
                     ) : (
-                      <div className="grid h-full w-full place-items-center text-xs text-boutique-muted">
-                        Няма снимка
+                      <div className="grid h-full w-full place-items-center text-[9px] text-boutique-muted">
+                        —
                       </div>
                     )}
                   </div>
-
-                  <div>
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="font-heading text-xl text-boutique-ink">{product.name}</h3>
-                        {product.is_sold_out ? (
-                          <span className="rounded-full bg-boutique-muted/15 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-boutique-muted">
-                            Изчерпан
-                          </span>
-                        ) : null}
-                      </div>
-                      <p className="font-medium text-boutique-ink">
-                        {Number(product.price).toFixed(2)} €
-                      </p>
-                    </div>
-
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {assignedCategories.length === 0 ? (
-                        <span className="rounded-full border border-boutique-line px-2.5 py-1 text-xs text-boutique-muted">
-                          Без категория
-                        </span>
-                      ) : (
-                        assignedCategories.map((category) => (
-                          <span
-                            key={`${product.id}-${category.id}`}
-                            className="rounded-full border border-boutique-line px-2.5 py-1 text-xs text-boutique-ink"
-                          >
-                            {category.name}
-                          </span>
-                        ))
-                      )}
-                    </div>
-
-                    {colorFieldsForProduct.length > 0 ? (
-                      <div className="mt-2 space-y-1 text-xs text-boutique-muted">
-                        {colorFieldsForProduct.map(
-                          ({ field, groupLabel, selectedOptionLabels }) => (
-                            <p key={`${product.id}-${field.id}`}>
-                              {field.label} ({groupLabel}): {field.min_select}-
-                              {field.max_select} избора
-                              {selectedOptionLabels.length > 0
-                                ? ` · ${selectedOptionLabels.join(", ")}`
-                                : ""}
-                            </p>
-                          ),
-                        )}
-                      </div>
-                    ) : null}
-
-                    <p className="mt-3 text-sm leading-relaxed text-boutique-muted">
-                      {product.description}
-                    </p>
-                    {product.additional_info ? (
-                      <p className="mt-2 text-sm leading-relaxed text-boutique-muted/90">
-                        {product.additional_info}
-                      </p>
-                    ) : null}
-                    {product.fulfillment_note ? (
-                      <p className="mt-2 text-xs leading-relaxed text-boutique-muted">
-                        {product.fulfillment_note}
-                      </p>
-                    ) : null}
-
-                    <form action={deleteProduct} className="mt-4">
+                  <p className="truncate font-medium text-boutique-ink">{product.name}</p>
+                  <p className="text-sm text-boutique-ink">
+                    {Number(product.price).toFixed(2)} €
+                  </p>
+                  <p className="text-xs text-boutique-muted">
+                    {product.is_sold_out ? "Изчерпан" : "Активен"}
+                  </p>
+                  <p className="line-clamp-2 text-xs text-boutique-muted" title={categoryLabel}>
+                    {categoryLabel}
+                  </p>
+                  <div className="flex flex-wrap justify-end gap-1">
+                    <AdminOpenDetailsButton
+                      detailsId={`product-edit-${product.id}`}
+                      className="rounded-full border border-boutique-line px-2.5 py-1 text-[11px] font-semibold text-boutique-ink hover:border-boutique-sage-deep/40"
+                    >
+                      Редакция
+                    </AdminOpenDetailsButton>
+                    <form action={toggleProductSoldOut} className="inline">
+                      <input type="hidden" name={adminFormFields.common.tab} value="products" />
+                      <input type="hidden" name={adminFormFields.common.id} value={product.id} />
+                      <input
+                        type="hidden"
+                        name="sold_out_target"
+                        value={product.is_sold_out ? "false" : "true"}
+                      />
+                      <button
+                        type="submit"
+                        className="rounded-full border border-boutique-line px-2.5 py-1 text-[11px] font-semibold text-boutique-ink hover:border-boutique-sage-deep/40"
+                      >
+                        {product.is_sold_out ? "Активирай" : "Изчерпан"}
+                      </button>
+                    </form>
+                    <AdminConfirmForm
+                      action={deleteProduct}
+                      confirmMessage={`Сигурни ли сте, че искате да изтриете „${product.name}"?`}
+                      className="inline"
+                    >
                       <input type="hidden" name={adminFormFields.common.tab} value="products" />
                       <input type="hidden" name={adminFormFields.common.id} value={product.id} />
                       <button
                         type="submit"
-                        className="rounded-full border border-red-300 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-red-700 transition hover:bg-red-50"
+                        className="rounded-full border border-red-200 px-2.5 py-1 text-[11px] font-semibold text-red-700 hover:bg-red-50"
                       >
                         Изтрий
+                      </button>
+                    </AdminConfirmForm>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 px-2 py-2 md:hidden">
+                  <div className="h-11 w-11 shrink-0 overflow-hidden rounded-md border border-boutique-line bg-boutique-bg">
+                    {thumbnailUrl ? (
+                      <div
+                        className="h-full w-full bg-cover bg-center"
+                        style={{ backgroundImage: `url(${thumbnailUrl})` }}
+                        role="img"
+                        aria-label={product.name}
+                      />
+                    ) : (
+                      <div className="grid h-full w-full place-items-center text-[9px] text-boutique-muted">
+                        —
+                      </div>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium text-boutique-ink">{product.name}</p>
+                    <p className="text-xs text-boutique-muted">
+                      {Number(product.price).toFixed(2)} € ·{" "}
+                      {product.is_sold_out ? "Изчерпан" : "Активен"}
+                    </p>
+                    <p className="line-clamp-1 text-[11px] text-boutique-muted">{categoryLabel}</p>
+                  </div>
+                  <div className="flex shrink-0 flex-col items-end gap-1">
+                    <AdminOpenDetailsButton
+                      detailsId={`product-edit-${product.id}`}
+                      className="rounded-full border border-boutique-sage-deep/30 px-2 py-1 text-[10px] font-semibold text-boutique-sage-deep"
+                    >
+                      Редакция
+                    </AdminOpenDetailsButton>
+                    <form action={toggleProductSoldOut}>
+                      <input type="hidden" name={adminFormFields.common.tab} value="products" />
+                      <input type="hidden" name={adminFormFields.common.id} value={product.id} />
+                      <input
+                        type="hidden"
+                        name="sold_out_target"
+                        value={product.is_sold_out ? "false" : "true"}
+                      />
+                      <button
+                        type="submit"
+                        className="rounded-full border border-boutique-line px-2 py-1 text-[10px] font-semibold"
+                      >
+                        {product.is_sold_out ? "Актив." : "Изчерп."}
                       </button>
                     </form>
                   </div>
                 </div>
 
-                <details className="mt-4 rounded-lg border border-boutique-line/70 bg-boutique-paper p-3">
-                  <summary className="cursor-pointer text-sm font-semibold text-boutique-ink">
+                <details
+                  id={`product-edit-${product.id}`}
+                  className="border-t border-boutique-line/60 bg-boutique-bg/40 px-3 py-2"
+                >
+                  <summary className="cursor-pointer text-xs font-semibold text-boutique-sage-deep">
                     Редактирай продукт
                   </summary>
                   <form action={updateProduct} className="mt-4 grid gap-4 md:grid-cols-2">
@@ -309,6 +465,20 @@ export function ProductListPanel({ data }: { data: AdminData }) {
                       )}
                     </fieldset>
 
+                    <details className="rounded-lg border border-boutique-line/70 bg-boutique-bg p-3 md:col-span-2">
+                      <summary className="cursor-pointer px-1 text-sm font-medium text-boutique-ink">
+                        Опции и ценообразуване
+                      </summary>
+                      <div className="mt-3">
+                        <ProductOptionGroupsEditor
+                          initialGroups={initialOptionGroups}
+                          allDependencyOptions={productDependencyOptions}
+                          helperClassName={adminHelperClass}
+                          fieldClassName={adminFieldClass}
+                        />
+                      </div>
+                    </details>
+
                     <fieldset className="space-y-3 rounded-lg border border-boutique-line/70 bg-boutique-bg p-3 md:col-span-2">
                       <legend className="px-1 text-sm font-medium text-boutique-ink">
                         Цветови настройки
@@ -373,14 +543,31 @@ export function ProductListPanel({ data }: { data: AdminData }) {
                     </label>
 
                     <div className="md:col-span-2">
-                      <button
-                        type="submit"
-                        className="rounded-full bg-boutique-ink px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-boutique-paper transition hover:bg-boutique-accent"
-                      >
-                        Запази промените
-                      </button>
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <button
+                          type="submit"
+                          className="rounded-full bg-boutique-ink px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-boutique-paper transition hover:bg-boutique-accent"
+                        >
+                          Запази промените
+                        </button>
+                      </div>
                     </div>
                   </form>
+
+                  <AdminConfirmForm
+                    action={deleteProduct}
+                    confirmMessage={`Сигурни ли сте, че искате да изтриете „${product.name}"?`}
+                    className="mt-5 border-t border-red-100 pt-4"
+                  >
+                    <input type="hidden" name={adminFormFields.common.tab} value="products" />
+                    <input type="hidden" name={adminFormFields.common.id} value={product.id} />
+                    <button
+                      type="submit"
+                      className="rounded-full border border-red-300 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-red-700 transition hover:bg-red-50"
+                    >
+                      Изтрий продукта
+                    </button>
+                  </AdminConfirmForm>
 
                   {productImages.length > 0 ? (
                     <section className="mt-5 border-t border-boutique-line/70 pt-5">
@@ -477,10 +664,42 @@ export function ProductListPanel({ data }: { data: AdminData }) {
                     </section>
                   ) : null}
                 </details>
-              </li>
+
+                <details className="mt-3 rounded-lg border border-boutique-line/70 bg-boutique-paper p-3">
+                  <summary className="cursor-pointer text-sm font-semibold text-boutique-ink">
+                    Витрина и свързани продукти
+                  </summary>
+                  <form action={updateProductMerchandising} className="mt-4">
+                    <input
+                      type="hidden"
+                      name={adminFormFields.common.id}
+                      value={product.id}
+                    />
+                    <ProductMerchandisingFields
+                      products={products
+                        .filter((option) => option.id !== product.id)
+                        .map((option) => ({ id: option.id, name: option.name }))}
+                      selectedRelatedIds={
+                        relatedProductIdsByProductId.get(product.id) ?? []
+                      }
+                      isFeatured={featuredProductById.has(product.id)}
+                      homeSortOrder={
+                        featuredProductById.get(product.id)?.sort_order ?? 0
+                      }
+                    />
+                    <button
+                      type="submit"
+                      className="mt-4 rounded-full bg-boutique-ink px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-boutique-paper transition hover:bg-boutique-accent"
+                    >
+                      Запази настройките
+                    </button>
+                  </form>
+                </details>
+              </div>
             );
           })}
-        </ul>
+          </div>
+        </>
       )}
     </article>
   );

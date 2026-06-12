@@ -4,12 +4,16 @@ import type {
   CategoryRow,
   ColorGroupRow,
   ColorOptionRow,
+  HomeFeaturedProductRow,
   ProductCategoryRow,
   ProductColorFieldOptionRow,
   ProductColorFieldRow,
   ProductRow,
   ProductImageRow,
+  ProductOptionGroupRow,
+  ProductOptionValueRow,
   ProductPersonalizationFieldRow,
+  RelatedProductRow,
   ProductWishTemplateRow,
   WishTemplateOccasionRow,
   WishTemplateRow,
@@ -30,9 +34,13 @@ export type AdminData = {
   selectedColorOptionIdsByFieldId: Map<string, Set<string>>;
   imagesByProductId: Map<string, ProductImageRow[]>;
   personalizationFieldsByProductId: Map<string, ProductPersonalizationFieldRow[]>;
+  optionGroupsByProductId: Map<string, ProductOptionGroupRow[]>;
+  optionValuesByGroupId: Map<string, ProductOptionValueRow[]>;
   wishTemplates: WishTemplateRow[];
   wishTemplateOccasions: WishTemplateOccasionRow[];
   wishTemplateIdsByProductId: Map<string, string[]>;
+  featuredProductById: Map<string, HomeFeaturedProductRow>;
+  relatedProductIdsByProductId: Map<string, string[]>;
   errors: {
     products: QueryError;
     categories: QueryError;
@@ -46,6 +54,10 @@ export type AdminData = {
     wishTemplates: QueryError;
     wishTemplateOccasions: QueryError;
     productWishTemplates: QueryError;
+    homeFeaturedProducts: QueryError;
+    relatedProducts: QueryError;
+    optionGroups: QueryError;
+    optionValues: QueryError;
   };
 };
 
@@ -63,6 +75,10 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
     wishTemplatesResult,
     wishTemplateOccasionsResult,
     productWishTemplatesResult,
+    homeFeaturedProductsResult,
+    relatedProductsResult,
+    optionGroupsResult,
+    optionValuesResult,
   ] = await Promise.all([
     supabase.from("products").select("*").order("id", { ascending: false }),
     supabase
@@ -104,6 +120,26 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
       .from("product_wish_templates")
       .select("product_id,wish_template_id,sort_order")
       .order("sort_order", { ascending: true }),
+    supabase
+      .from("home_featured_products")
+      .select("product_id,sort_order")
+      .order("sort_order", { ascending: true }),
+    supabase
+      .from("related_products")
+      .select("product_id,related_product_id,sort_order")
+      .order("sort_order", { ascending: true }),
+    supabase
+      .from("product_option_groups")
+      .select(
+        "id,product_id,name,key,input_type,is_required,min_select,max_select,sort_order,is_active,pricing_mode,depends_on_option_id,placeholder,max_length,text_price_delta",
+      )
+      .order("sort_order", { ascending: true }),
+    supabase
+      .from("product_option_values")
+      .select(
+        "id,group_id,label,key,price_delta,is_default,is_active,is_sold_out,sku,sort_order",
+      )
+      .order("sort_order", { ascending: true }),
   ]);
 
   const products = (productsResult.data ?? []) as ProductRow[];
@@ -122,6 +158,11 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
     []) as WishTemplateOccasionRow[];
   const productWishTemplates = (productWishTemplatesResult.data ??
     []) as ProductWishTemplateRow[];
+  const homeFeaturedProducts = (homeFeaturedProductsResult.data ??
+    []) as HomeFeaturedProductRow[];
+  const relatedProducts = (relatedProductsResult.data ?? []) as RelatedProductRow[];
+  const optionGroups = (optionGroupsResult.data ?? []) as ProductOptionGroupRow[];
+  const optionValues = (optionValuesResult.data ?? []) as ProductOptionValueRow[];
 
   const categoryById = new Map(categories.map((category) => [category.id, category]));
   const categoryIdsByProductId = new Map<string, string[]>();
@@ -135,6 +176,12 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
     ProductPersonalizationFieldRow[]
   >();
   const wishTemplateIdsByProductId = new Map<string, string[]>();
+  const featuredProductById = new Map(
+    homeFeaturedProducts.map((row) => [row.product_id, row]),
+  );
+  const relatedProductIdsByProductId = new Map<string, string[]>();
+  const optionGroupsByProductId = new Map<string, ProductOptionGroupRow[]>();
+  const optionValuesByGroupId = new Map<string, ProductOptionValueRow[]>();
 
   productCategories.forEach((row) => {
     const categoryIds = categoryIdsByProductId.get(row.product_id) ?? [];
@@ -183,6 +230,24 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
     wishTemplateIdsByProductId.set(link.product_id, ids);
   });
 
+  relatedProducts.forEach((link) => {
+    const ids = relatedProductIdsByProductId.get(link.product_id) ?? [];
+    ids.push(link.related_product_id);
+    relatedProductIdsByProductId.set(link.product_id, ids);
+  });
+
+  optionGroups.forEach((group) => {
+    const groups = optionGroupsByProductId.get(group.product_id) ?? [];
+    groups.push(group);
+    optionGroupsByProductId.set(group.product_id, groups);
+  });
+
+  optionValues.forEach((value) => {
+    const values = optionValuesByGroupId.get(value.group_id) ?? [];
+    values.push(value);
+    optionValuesByGroupId.set(value.group_id, values);
+  });
+
   return {
     products,
     categories,
@@ -196,9 +261,13 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
     selectedColorOptionIdsByFieldId,
     imagesByProductId,
     personalizationFieldsByProductId,
+    optionGroupsByProductId,
+    optionValuesByGroupId,
     wishTemplates,
     wishTemplateOccasions,
     wishTemplateIdsByProductId,
+    featuredProductById,
+    relatedProductIdsByProductId,
     errors: {
       products: productsResult.error,
       categories: categoriesResult.error,
@@ -212,6 +281,10 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
       wishTemplates: wishTemplatesResult.error,
       wishTemplateOccasions: wishTemplateOccasionsResult.error,
       productWishTemplates: productWishTemplatesResult.error,
+      homeFeaturedProducts: homeFeaturedProductsResult.error,
+      relatedProducts: relatedProductsResult.error,
+      optionGroups: optionGroupsResult.error,
+      optionValues: optionValuesResult.error,
     },
   };
 }

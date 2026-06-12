@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import { PageContainer } from "@/components/layout/page-container";
 import { MediaPlaceholder } from "@/components/ui/media-placeholder";
+import { getSiteContent } from "@/lib/content/site-content";
 import type { ShopCategory } from "@/lib/shop-categories";
 import { toShowcaseCategory } from "@/lib/storefront/mappers";
 import { getStorefrontCatalog } from "@/lib/storefront/repository";
@@ -39,15 +40,15 @@ function OccasionCard({ occasion }: { occasion: OccasionWithCount }) {
   return (
     <Link
       href={href}
-      className="group overflow-hidden rounded-2xl border border-boutique-line bg-white shadow-boutique-sm transition duration-300 hover:-translate-y-1 hover:border-boutique-rose-deep/35 hover:shadow-boutique"
+      className="group overflow-hidden rounded-xl border border-boutique-line bg-white shadow-boutique-sm transition duration-300 hover:-translate-y-1 hover:border-boutique-rose-deep/35 hover:shadow-boutique sm:rounded-2xl"
     >
-      <div className="relative aspect-[4/3] overflow-hidden bg-boutique-paper">
+      <div className="relative aspect-[5/4] overflow-hidden bg-boutique-paper sm:aspect-[4/3]">
         {occasion.imageSrc ? (
           <Image
             src={occasion.imageSrc}
             alt={occasion.imageAlt}
             fill
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 25vw"
             className="object-cover transition duration-500 group-hover:scale-105"
           />
         ) : (
@@ -55,12 +56,12 @@ function OccasionCard({ occasion }: { occasion: OccasionWithCount }) {
         )}
       </div>
 
-      <div className="flex min-h-24 items-center gap-4 border-t border-boutique-line bg-boutique-paper/80 px-5 py-4">
-        <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full border border-boutique-rose/30 bg-white font-heading text-lg text-boutique-rose-deep">
+      <div className="flex items-center gap-2 border-t border-boutique-line bg-boutique-paper/80 px-2.5 py-2 sm:min-h-24 sm:gap-4 sm:px-5 sm:py-4">
+        <span className="hidden h-12 w-12 shrink-0 place-items-center rounded-full border border-boutique-rose/30 bg-white font-heading text-lg text-boutique-rose-deep sm:grid">
           {occasionIcons[occasion.slug] ?? "♡"}
         </span>
         <div>
-          <h2 className="font-heading text-2xl leading-tight text-boutique-ink transition group-hover:text-boutique-rose-deep">
+          <h2 className="line-clamp-2 font-heading text-sm leading-snug text-boutique-ink transition group-hover:text-boutique-rose-deep sm:text-2xl sm:leading-tight">
             {occasion.title}
           </h2>
           {occasion.productCount > 0 ? (
@@ -77,7 +78,10 @@ function OccasionCard({ occasion }: { occasion: OccasionWithCount }) {
 }
 
 export default async function OccasionsPage() {
-  const { categories, products } = await getStorefrontCatalog();
+  const [{ categories, products }, content] = await Promise.all([
+    getStorefrontCatalog(),
+    getSiteContent(),
+  ]);
   const counts = new Map<string, number>();
 
   products.forEach((product) => {
@@ -98,19 +102,19 @@ export default async function OccasionsPage() {
   return (
     <div>
       <section className="overflow-hidden border-b border-boutique-line bg-boutique-paper">
-        <div className="grid min-h-[22rem] lg:grid-cols-[0.72fr_1.28fr]">
+        <div className="grid lg:min-h-[22rem] lg:grid-cols-[0.72fr_1.28fr]">
           <div className="flex items-center bg-[linear-gradient(135deg,#fdfcfa_0%,#ebe4db_100%)]">
-            <PageContainer className="py-14 text-center lg:pl-14 lg:pr-10">
+            <PageContainer className="py-5 text-center sm:py-14 lg:pl-14 lg:pr-10">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-boutique-rose-deep">
-                Подаръци за специалните моменти
+                {content["occasions.hero_eyebrow"]}
               </p>
-              <h1 className="mt-5 font-heading text-6xl leading-none text-boutique-ink sm:text-7xl">
-                По повод
+              <h1 className="mt-3 font-heading text-4xl leading-none text-boutique-ink sm:mt-5 sm:text-7xl">
+                {content["occasions.hero_title"]}
               </h1>
-              <p className="mx-auto mt-7 max-w-sm text-lg leading-7 text-boutique-muted">
-                Открийте перфектния подарък за всеки специален момент.
+              <p className="mx-auto mt-3 max-w-sm text-sm leading-6 text-boutique-muted sm:mt-7 sm:text-lg sm:leading-7">
+                {content["occasions.hero_description"]}
               </p>
-              <div className="mx-auto mt-7 flex max-w-64 items-center gap-4 text-boutique-rose-deep">
+              <div className="mx-auto mt-4 hidden max-w-64 items-center gap-4 text-boutique-rose-deep sm:mt-7 sm:flex">
                 <span className="h-px flex-1 bg-boutique-rose/50" />
                 <span className="font-heading text-2xl">♡</span>
                 <span className="h-px flex-1 bg-boutique-rose/50" />
@@ -118,7 +122,7 @@ export default async function OccasionsPage() {
             </PageContainer>
           </div>
 
-          <div className="relative min-h-72 overflow-hidden lg:min-h-full">
+          <div className="relative min-h-36 overflow-hidden sm:min-h-72 lg:min-h-full">
             <Image
               src="/assets/povodi.png"
               alt="Персонализирани подаръци за специални поводи"
@@ -131,10 +135,10 @@ export default async function OccasionsPage() {
         </div>
       </section>
 
-      <section className="py-12 md:py-16">
+      <section className="py-6 md:py-16">
         <PageContainer>
           {occasions.length > 0 ? (
-            <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="grid grid-cols-2 gap-2 sm:gap-6 xl:grid-cols-4">
               {occasions.map((occasion) => (
                 <OccasionCard key={occasion.slug} occasion={occasion} />
               ))}
@@ -151,21 +155,20 @@ export default async function OccasionsPage() {
         <PageContainer className="flex flex-col items-center justify-between gap-6 py-10 text-center md:flex-row md:text-left">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-boutique-rose-deep">
-              Не намирате Вашия повод?
+              {content["occasions.cta_eyebrow"]}
             </p>
             <h2 className="mt-2 font-heading text-3xl text-boutique-ink">
-              Ще създадем нещо лично за Вас
+              {content["occasions.cta_title"]}
             </h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-boutique-muted">
-              Разкажете ни за човека и момента, а ние ще Ви помогнем да изберете подходящ
-              персонализиран подарък.
+              {content["occasions.cta_text"]}
             </p>
           </div>
           <Link
             href="/contact"
             className="shrink-0 rounded-lg bg-boutique-rose-deep px-6 py-3 text-sm font-semibold text-white transition hover:bg-boutique-ink"
           >
-            Свържете се с нас
+            {content["occasions.cta_button"]}
           </Link>
         </PageContainer>
       </section>

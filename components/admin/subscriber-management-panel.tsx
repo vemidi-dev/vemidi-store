@@ -1,4 +1,4 @@
-import { updateSubscriber } from "@/app/admin/subscriber-actions";
+import { SubscriberTableView } from "@/components/admin/subscriber-table-view";
 import {
   SUBSCRIPTION_TOPICS,
   getSubscriberCounts,
@@ -7,14 +7,6 @@ import {
 } from "@/lib/admin/subscriptions";
 import type { NewsletterSubscriberRow } from "@/lib/admin/types";
 import { adminPanelClass } from "@/components/admin/styles";
-
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("bg-BG", {
-    dateStyle: "medium",
-    timeStyle: "short",
-    timeZone: "Europe/Sofia",
-  }).format(new Date(value));
-}
 
 export function SubscriberManagementPanel({
   subscribers,
@@ -39,11 +31,17 @@ export function SubscriberManagementPanel({
   if (topic !== "all") {
     exportParams.set("topic", topic);
   }
+  if (status !== "all") {
+    exportParams.set("status", status);
+  }
   const exportHref = `/admin/subscribers/export${
     exportParams.size ? `?${exportParams.toString()}` : ""
   }`;
-  const cards = [
-    ["Активни общо", counts.active],
+
+  const summaryCards = [
+    ["Общо записи", counts.total],
+    ["Активни", counts.active],
+    ["Неактивни", counts.inactive],
     ["Нови продукти", counts.products],
     ["Блог", counts.blog],
     ["Работилници", counts.events],
@@ -66,14 +64,14 @@ export function SubscriberManagementPanel({
           </p>
         </div>
 
-        <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {cards.map(([label, value]) => (
+        <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+          {summaryCards.map(([label, value]) => (
             <div
               key={label}
-              className="rounded-xl border border-boutique-line bg-boutique-bg p-4"
+              className="rounded-xl border border-boutique-line bg-boutique-bg p-3"
             >
               <p className="text-xs text-boutique-muted">{label}</p>
-              <p className="mt-2 font-heading text-3xl text-boutique-ink">{value}</p>
+              <p className="mt-1 font-heading text-2xl text-boutique-ink">{value}</p>
             </div>
           ))}
         </div>
@@ -137,84 +135,19 @@ export function SubscriberManagementPanel({
           <div>
             <h2 className="font-heading text-2xl text-boutique-ink">Абонати</h2>
             <p className="mt-1 text-sm text-boutique-muted">
-              Показани {subscribers.length} от {counts.total} записа.
+              Филтрирани {subscribers.length} от {counts.total} записа · сортирани по дата на обновяване
             </p>
           </div>
           <a
             href={exportHref}
             className="rounded-lg bg-boutique-sage-deep px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-boutique-ink"
+            aria-label="Експортирай показаните абонати като CSV"
           >
-            Експортирай активните CSV
+            Експортирай показаните CSV
           </a>
         </div>
 
-        {subscribers.length ? (
-          <div className="mt-6 space-y-3">
-            {subscribers.map((subscriber) => (
-              <form
-                key={subscriber.id}
-                action={updateSubscriber}
-                className="grid gap-4 rounded-xl border border-boutique-line bg-boutique-bg p-4 lg:grid-cols-[minmax(15rem,1fr)_minmax(22rem,1.4fr)_auto]"
-              >
-                <input type="hidden" name="id" value={subscriber.id} />
-                <div>
-                  <p className="break-all text-sm font-semibold text-boutique-ink">
-                    {subscriber.email}
-                  </p>
-                  <p className="mt-1 text-xs text-boutique-muted">
-                    Добавен: {formatDate(subscriber.created_at)}
-                  </p>
-                  <p className="mt-1 text-xs text-boutique-muted">
-                    Обновен: {formatDate(subscriber.updated_at)}
-                  </p>
-                </div>
-
-                <fieldset>
-                  <legend className="text-xs font-semibold text-boutique-ink">
-                    Избрани списъци
-                  </legend>
-                  <div className="mt-2 flex flex-wrap gap-3">
-                    {SUBSCRIPTION_TOPICS.map((item) => (
-                      <label
-                        key={item.value}
-                        className="flex items-center gap-2 text-xs text-boutique-muted"
-                      >
-                        <input
-                          type="checkbox"
-                          name="topics"
-                          value={item.value}
-                          defaultChecked={subscriber.topics.includes(item.value)}
-                          className="accent-boutique-rose-deep"
-                        />
-                        {item.shortLabel}
-                      </label>
-                    ))}
-                  </div>
-                  <label className="mt-4 flex items-center gap-2 text-xs font-semibold text-boutique-ink">
-                    <input
-                      type="checkbox"
-                      name="is_active"
-                      defaultChecked={subscriber.is_active}
-                      className="accent-boutique-sage-deep"
-                    />
-                    Активен абонамент
-                  </label>
-                </fieldset>
-
-                <button
-                  type="submit"
-                  className="self-center rounded-lg border border-boutique-sage-deep px-4 py-2.5 text-xs font-semibold text-boutique-sage-deep transition hover:bg-boutique-sage-deep hover:text-white"
-                >
-                  Запази
-                </button>
-              </form>
-            ))}
-          </div>
-        ) : (
-          <p className="mt-6 rounded-xl border border-dashed border-boutique-line p-8 text-center text-sm text-boutique-muted">
-            Няма абонати, които отговарят на избраните филтри.
-          </p>
-        )}
+        <SubscriberTableView subscribers={subscribers} />
       </section>
     </div>
   );

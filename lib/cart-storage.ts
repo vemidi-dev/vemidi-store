@@ -1,5 +1,11 @@
 import { makeCartLineId } from "@/lib/cart-line-id";
+import {
+  normalizeCampaignCode,
+  normalizeCampaignSource,
+  normalizeLandingUrl,
+} from "@/lib/campaign-attribution";
 import type { CartLine } from "@/lib/cart-types";
+import { sanitizeOptionSelectionsInput } from "@/lib/product-option-validation";
 import type { SelectedProductColor } from "@/lib/product-colors";
 import type { ProductPersonalizationValue } from "@/lib/product-personalization";
 
@@ -102,6 +108,10 @@ export function parseStoredCart(raw: string | null): CartLine[] {
       }
 
       const { slug, title, price } = value;
+      const imageSrc =
+        typeof value.imageSrc === "string" && value.imageSrc.trim()
+          ? value.imageSrc.trim().slice(0, 2000)
+          : undefined;
       const quantity =
         typeof value.quantity === "number" ? normalizeCartQuantity(value.quantity) : 0;
 
@@ -122,6 +132,11 @@ export function parseStoredCart(raw: string | null): CartLine[] {
         typeof value.personalization === "string"
           ? normalizePersonalization(value.personalization)
           : undefined;
+      const campaign = normalizeCampaignCode(value.campaign);
+      const source = normalizeCampaignSource(value.source);
+      const landingUrl = normalizeLandingUrl(
+        typeof value.landingUrl === "string" ? value.landingUrl : undefined,
+      );
       const personalizationFields = Array.isArray(value.personalizationFields)
         ? value.personalizationFields
             .slice(0, PERSONALIZATION_FIELD_MAX_COUNT)
@@ -139,6 +154,10 @@ export function parseStoredCart(raw: string | null): CartLine[] {
             .filter((color): color is SelectedProductColor => color !== null)
         : undefined;
       const normalizedColors = selectedColors?.length ? selectedColors : undefined;
+      const optionSelections = sanitizeOptionSelectionsInput(value.optionSelections);
+      const normalizedOptionSelections = optionSelections.length
+        ? optionSelections
+        : undefined;
 
       lines.push({
         lineId: makeCartLineId(
@@ -146,14 +165,20 @@ export function parseStoredCart(raw: string | null): CartLine[] {
           personalization,
           normalizedColors,
           normalizedPersonalizationFields,
+          normalizedOptionSelections,
         ),
         slug,
         title,
+        imageSrc,
         price,
         quantity,
+        campaign,
+        source,
+        landingUrl,
         personalization,
         personalizationFields: normalizedPersonalizationFields,
         selectedColors: normalizedColors,
+        optionSelections: normalizedOptionSelections,
       });
     }
 

@@ -7,6 +7,7 @@ import type {
   WishTemplate,
 } from "@/lib/product-personalization";
 import type { ProductPromotionRow } from "@/lib/product-pricing";
+import { mapProductOptionGroups } from "@/lib/storefront/option-groups";
 import {
   toProduct,
   type ProductImageRow,
@@ -22,6 +23,17 @@ import { createClient } from "@/lib/supabase/server";
 type ProductCategoryRow = {
   product_id: string;
   category_id: string;
+};
+
+type HomeFeaturedProductRow = {
+  product_id: string;
+  sort_order: number;
+};
+
+type RelatedProductRow = {
+  product_id: string;
+  related_product_id: string;
+  sort_order: number;
 };
 
 type ColorGroupRow = {
@@ -101,7 +113,12 @@ async function loadActivePromotions(
 export async function getStorefrontCatalog(): Promise<StorefrontCatalog> {
   const supabase = await getClient();
   if (!supabase) {
-    return { categories: [], products: [] };
+    return {
+      categories: [],
+      products: [],
+      featuredProductIds: [],
+      relatedProductIdsByProductId: new Map(),
+    };
   }
 
   const [
@@ -112,6 +129,8 @@ export async function getStorefrontCatalog(): Promise<StorefrontCatalog> {
     promotionsByProductId,
     colorFieldsResult,
     personalizationFieldsResult,
+    featuredProductsResult,
+    relatedProductsResult,
   ] = await Promise.all([
       supabase
         .from("products")
@@ -134,6 +153,14 @@ export async function getStorefrontCatalog(): Promise<StorefrontCatalog> {
         .select("product_id")
         .eq("enabled", true),
       supabase.from("product_personalization_fields").select("product_id"),
+      supabase
+        .from("home_featured_products")
+        .select("product_id,sort_order")
+        .order("sort_order", { ascending: true }),
+      supabase
+        .from("related_products")
+        .select("product_id,related_product_id,sort_order")
+        .order("sort_order", { ascending: true }),
     ]);
 
   const categories = (categoriesResult.data ?? []) as StorefrontCategory[];
@@ -145,6 +172,7 @@ export async function getStorefrontCatalog(): Promise<StorefrontCatalog> {
   const imagesByProductId = new Map<string, ProductImageRow[]>();
   const productIdsWithColorOptions = new Set<string>();
   const productIdsWithPersonalizationOptions = new Set<string>();
+  const relatedProductIdsByProductId = new Map<string, string[]>();
 
   relations.forEach((relation) => {
     const categorySlug = categorySlugById.get(relation.category_id);
@@ -188,7 +216,24 @@ export async function getStorefrontCatalog(): Promise<StorefrontCatalog> {
     }),
   );
 
-  return { categories, products };
+  ((relatedProductsResult.data ?? []) as RelatedProductRow[]).forEach((link) => {
+    const ids = relatedProductIdsByProductId.get(link.product_id) ?? [];
+    ids.push(link.related_product_id);
+    relatedProductIdsByProductId.set(link.product_id, ids);
+  });
+
+  const featuredProductIds = featuredProductsResult.error
+    ? products.slice(0, 6).map((product) => product.slug)
+    : ((featuredProductsResult.data ?? []) as HomeFeaturedProductRow[]).map(
+        (row) => row.product_id,
+      );
+
+  return {
+    categories,
+    products,
+    featuredProductIds,
+    relatedProductIdsByProductId,
+  };
 }
 
 export async function getStorefrontCategories(
@@ -315,8 +360,16 @@ export async function getStorefrontProduct(productId: string): Promise<Product |
     return null;
   }
 
-  const [imagesResult, colorFields, personalizationResult, wishesResult, linksResult, promotionsByProductId] =
-    await Promise.all([
+  const [
+    imagesResult,
+    colorFields,
+    personalizationResult,
+    wishesResult,
+    linksResult,
+    promotionsByProductId,
+    optionGroupsResult,
+    optionValuesResult,
+  ] = await Promise.all([
       supabase
         .from("product_images")
         .select("id,product_id,image_url,alt_text,sort_order,is_primary")
@@ -339,6 +392,21 @@ export async function getStorefrontProduct(productId: string): Promise<Product |
         .eq("product_id", productId)
         .order("sort_order"),
       loadActivePromotions(supabase),
+      supabase
+        .from("product_option_groups")
+        .select(
+          "id,name,key,input_type,is_required,min_select,max_select,sort_order,is_active,pricing_mode,depends_on_option_id,placeholder,max_length,text_price_delta",
+        )
+        .eq("product_id", productId)
+        .eq("is_active", true)
+        .order("sort_order"),
+      supabase
+        .from("product_option_values")
+        .select(
+          "id,group_id,label,key,price_delta,is_default,is_active,is_sold_out,sku,sort_order",
+        )
+        .eq("is_active", true)
+        .order("sort_order"),
     ]);
   const product = toProduct(
     data as ProductRow,
@@ -347,6 +415,15 @@ export async function getStorefrontProduct(productId: string): Promise<Product |
   );
 
   product.colorFields = colorFields;
+  const groupIds = (optionGroupsResult.data ?? []).map((group) => String(group.id));
+  const filteredValues = (optionValuesResult.data ?? []).filter((value) =>
+    groupIds.includes(String(value.group_id)),
+  );
+  product.optionGroups = mapProductOptionGroups(
+    optionGroupsResult.data ?? [],
+    filteredValues,
+  );
+  product.hasUniversalOptions = (product.optionGroups?.length ?? 0) > 0;
   product.personalizationFields = (personalizationResult.data ?? []).map(
     (field): ProductPersonalizationField => ({
       id: String(field.id),

@@ -4,6 +4,8 @@ import Link from "next/link";
 
 import { PageContainer } from "@/components/layout/page-container";
 import { PageHero } from "@/components/ui/page-hero";
+import { splitParagraphs } from "@/lib/content/format-content";
+import { getSiteContent } from "@/lib/content/site-content";
 
 export const metadata: Metadata = {
   title: "За нас",
@@ -12,36 +14,29 @@ export const metadata: Metadata = {
   alternates: { canonical: "/about" },
 };
 
-const sections = [
-  {
-    title: "Подаръци за важните моменти",
-    paragraphs: [
-      "При нас ще откриете подаръци за сватба, кръщене, рожден ден, юбилей, учител, бебе, нов дом и още много специални поводи. Всеки продукт може да бъде персонализиран с име, дата, послание или детайл, който да го направи наистина уникален.",
-      "Независимо дали търсите нежен плик за пари, кутия за спомени, рамка със скандинавски мъх, подарък за учител или творчески комплект за дете — нашата цел е подаръкът да бъде не просто красив, а запомнящ се.",
-    ],
-  },
-  {
-    title: "Ръчна изработка с отношение",
-    paragraphs: [
-      "Работим с естествени материали, най-често брезов шперплат, и комбинираме дърво, гравюра, цветове, панделки, мъх и други декоративни елементи. Обичаме изчистената визия, нежните цветове и малките детайли, които правят всеки продукт различен.",
-      "За нас е важно подаръкът да изглежда красиво, но и да носи лично усещане — като нещо създадено специално за човека, който ще го получи.",
-    ],
-  },
-  {
-    title: "Как поръчвате",
-    paragraphs: [
-      "Избирате продукт, добавяте желаната персонализация, а след това се свързваме с вас за потвърждение на детайлите и срока за изработка. Така сме сигурни, че всичко ще бъде подготвено точно както го искате.",
-    ],
-  },
-];
+export default async function AboutPage() {
+  const content = await getSiteContent();
+  const sections = [
+    {
+      title: content["about.section_1_title"],
+      paragraphs: splitParagraphs(content["about.section_1_text"]),
+    },
+    {
+      title: content["about.section_2_title"],
+      paragraphs: splitParagraphs(content["about.section_2_text"]),
+    },
+    {
+      title: content["about.section_3_title"],
+      paragraphs: splitParagraphs(content["about.section_3_text"]),
+    },
+  ];
 
-export default function AboutPage() {
   return (
     <div>
       <PageHero
-        eyebrow="VeMiDi crafts"
-        title="За нас"
-        description="Вярваме, че най-хубавите подаръци не са просто предмети — те носят спомен, емоция и лично послание."
+        eyebrow={content["about.hero_eyebrow"]}
+        title={content["about.hero_title"]}
+        description={content["about.hero_description"]}
       />
 
       <section className="py-14 md:py-20">
@@ -59,13 +54,10 @@ export default function AboutPage() {
 
           <div>
             <h2 className="font-heading text-3xl leading-tight text-boutique-ink sm:text-4xl">
-              Персонализирани подаръци с душа
+              {content["about.intro_title"]}
             </h2>
             <p className="mt-5 text-base leading-8 text-boutique-muted">
-              Създаваме персонализирани подаръци и декорации от дърво, изработени с
-              внимание към всеки детайл. Всеки продукт започва като идея, преминава през
-              прецизно лазерно изрязване и гравиране, а след това се довършва ръчно, за
-              да се превърне в нещо специално и лично.
+              {content["about.intro_text"]}
             </p>
           </div>
         </PageContainer>
@@ -96,16 +88,16 @@ export default function AboutPage() {
       <section className="py-14 md:py-20">
         <PageContainer className="mx-auto max-w-3xl text-center">
           <p className="text-base leading-8 text-boutique-muted">
-            Благодарим ви, че избирате ръчно изработени подаръци с душа.
+            {content["about.closing_text"]}
           </p>
           <p className="mt-4 font-heading text-2xl text-boutique-ink sm:text-3xl">
-            VeMiDi Crafts — Подари ми спомен
+            {content["about.closing_tagline"]}
           </p>
           <Link
             href="/shop"
             className="mt-8 inline-flex rounded-full bg-boutique-ink px-8 py-3 text-sm font-semibold text-boutique-paper transition hover:bg-boutique-accent"
           >
-            Разгледай продуктите
+            {content["about.cta_button"]}
           </Link>
         </PageContainer>
       </section>

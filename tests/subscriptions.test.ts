@@ -68,6 +68,7 @@ test("subscriber counts include only active topic memberships", () => {
   assert.deepEqual(getSubscriberCounts(subscribers), {
     total: 3,
     active: 2,
+    inactive: 1,
     products: 1,
     blog: 1,
     events: 1,
@@ -81,8 +82,10 @@ test("subscriber CSV contains topic columns and prevents spreadsheet formulas", 
       email: "=unsafe@example.com",
       topics: ["products", "blog"],
     },
+    subscribers[2],
   ]);
 
-  assert.match(csv, /"email","products","blog","events","created_at"/);
-  assert.match(csv, /"'=unsafe@example\.com","yes","yes","no"/);
+  assert.match(csv, /"имейл","продукти","блог","работилници","статус","добавен_на"/);
+  assert.match(csv, /"'=unsafe@example\.com","да","да","не","активен"/);
+  assert.match(csv, /"inactive@example\.com","да","да","да","неактивен"/);
 });

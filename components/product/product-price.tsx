@@ -14,8 +14,8 @@ const sizeClasses = {
     compare: "text-xs",
   },
   md: {
-    current: "text-lg",
-    compare: "text-sm",
+    current: "text-base sm:text-lg",
+    compare: "text-xs sm:text-sm",
   },
   lg: {
     current: "text-3xl sm:text-4xl",

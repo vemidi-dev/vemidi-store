@@ -13,6 +13,7 @@ import { CheckoutDeliveryFields } from "@/components/checkout/checkout-delivery-
 import { useCart } from "@/components/cart/cart-provider";
 import { PageContainer } from "@/components/layout/page-container";
 import { formatEur } from "@/lib/format-eur";
+import type { CheckoutPageContent } from "@/lib/content/site-content";
 
 const fieldClass =
   "mt-2 w-full rounded-xl border border-boutique-line bg-boutique-bg px-4 py-3 text-sm text-boutique-ink outline-none transition placeholder:text-boutique-muted/60 focus:border-boutique-accent/50 focus:ring-2 focus:ring-boutique-accent/10";
@@ -24,7 +25,13 @@ const initialState: CheckoutActionState = {
 
 const PURCHASE_STORAGE_KEY = "vemidi:last-purchase";
 
-function SubmitOrderButton({ ready }: { ready: boolean }) {
+function SubmitOrderButton({
+  ready,
+  label,
+}: {
+  ready: boolean;
+  label: string;
+}) {
   const { pending } = useFormStatus();
 
   return (
@@ -33,12 +40,12 @@ function SubmitOrderButton({ ready }: { ready: boolean }) {
       disabled={pending || !ready}
       className="mt-6 w-full rounded-full bg-boutique-ink px-6 py-3.5 text-sm font-semibold text-boutique-paper transition hover:bg-boutique-accent disabled:cursor-wait disabled:opacity-60"
     >
-      {pending ? "Изпращане..." : "Изпрати поръчката"}
+      {pending ? "Изпращане..." : label}
     </button>
   );
 }
 
-export function CheckoutPanel() {
+export function CheckoutPanel({ content }: { content: CheckoutPageContent }) {
   const { lines, subtotal, clear } = useCart();
   const router = useRouter();
   const [state, formAction] = useActionState(createStoreOrder, initialState);
@@ -74,16 +81,16 @@ export function CheckoutPanel() {
         <PageContainer>
           <div className="rounded-2xl border border-boutique-line bg-boutique-paper px-8 py-14 text-center shadow-boutique-sm">
             <h2 className="font-heading text-3xl text-boutique-ink">
-              Няма продукти за поръчка
+              {content["checkout.empty_title"]}
             </h2>
             <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-boutique-muted">
-              Добавете продукт в количката, преди да преминете към данните за доставка.
+              {content["checkout.empty_text"]}
             </p>
             <Link
               href="/shop"
               className="mt-8 inline-flex rounded-full bg-boutique-ink px-8 py-3 text-sm font-semibold text-boutique-paper transition hover:bg-boutique-accent"
             >
-              Към магазина
+              {content["checkout.empty_button"]}
             </Link>
           </div>
         </PageContainer>
@@ -115,9 +122,11 @@ export function CheckoutPanel() {
           <div className="space-y-8">
             <section className="rounded-2xl border border-boutique-line bg-boutique-paper p-6 shadow-boutique-sm md:p-8">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-boutique-accent">
-                01 · Контакт
+                {content["checkout.contact_eyebrow"]}
               </p>
-              <h2 className="mt-3 font-heading text-2xl text-boutique-ink">Вашите данни</h2>
+              <h2 className="mt-3 font-heading text-2xl text-boutique-ink">
+                {content["checkout.contact_title"]}
+              </h2>
               <div className="mt-6 grid gap-5 sm:grid-cols-2">
                 <label className="text-sm font-medium text-boutique-ink">
                   Име и фамилия
@@ -145,16 +154,21 @@ export function CheckoutPanel() {
               </div>
             </section>
 
-            <CheckoutDeliveryFields />
+            <CheckoutDeliveryFields
+              eyebrow={content["checkout.delivery_eyebrow"]}
+              title={content["checkout.delivery_title"]}
+            />
 
             <section className="rounded-2xl border border-boutique-line bg-boutique-paper p-6 shadow-boutique-sm md:p-8">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-boutique-accent">
-                03 · Плащане и бележка
+                {content["checkout.payment_eyebrow"]}
               </p>
               <div className="mt-5 rounded-xl border border-boutique-line bg-boutique-bg p-4">
-                <p className="font-semibold text-boutique-ink">Наложен платеж</p>
+                <p className="font-semibold text-boutique-ink">
+                  {content["checkout.payment_title"]}
+                </p>
                 <p className="mt-1 text-sm text-boutique-muted">
-                  Плащате на куриера при получаване на поръчката.
+                  {content["checkout.payment_text"]}
                 </p>
               </div>
               <label className="mt-5 block text-sm font-medium text-boutique-ink">
@@ -175,8 +189,7 @@ export function CheckoutPanel() {
                   className="mt-1 h-4 w-4 accent-boutique-ink"
                 />
                 <span>
-                  Съгласен/на съм данните ми да бъдат използвани за обработване и
-                  доставка на тази поръчка съгласно{" "}
+                  {content["checkout.privacy_consent"]}{" "}
                   <Link
                     href="/privacy"
                     target="_blank"
@@ -201,10 +214,10 @@ export function CheckoutPanel() {
 
           <aside className="h-fit rounded-2xl border border-boutique-line bg-boutique-paper p-6 shadow-boutique-sm lg:sticky lg:top-32">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-boutique-accent">
-              Обобщение
+              {content["checkout.summary_eyebrow"]}
             </p>
             <h2 className="mt-3 font-heading text-2xl text-boutique-ink">
-              Вашата поръчка
+              {content["checkout.summary_title"]}
             </h2>
             <ul className="mt-6 divide-y divide-boutique-line">
               {lines.map((line) => (
@@ -223,6 +236,18 @@ export function CheckoutPanel() {
                           {color.fieldLabel}: {color.optionName}
                         </p>
                       ))}
+                      {line.optionSelections?.map((selection) => (
+                        <p key={selection.groupId} className="mt-1 text-xs text-boutique-muted">
+                          {selection.textValue
+                            ? `Опция: ${selection.textValue}`
+                            : `Опция (${selection.valueIds.length} избора)`}
+                        </p>
+                      ))}
+                      {line.campaign ? (
+                        <p className="mt-1 text-xs text-boutique-muted">
+                          Кампания: {line.campaign}
+                        </p>
+                      ) : null}
                     </div>
                     <p className="shrink-0 font-medium text-boutique-ink">
                       {formatEur(line.price * line.quantity)}
@@ -238,14 +263,17 @@ export function CheckoutPanel() {
               </span>
             </div>
             <p className="mt-2 text-xs leading-relaxed text-boutique-muted">
-              Цената за доставка се заплаща отделно според тарифата на избрания куриер.
+              {content["checkout.delivery_price_note"]}
             </p>
-            <SubmitOrderButton ready={Boolean(idempotencyKey)} />
+            <SubmitOrderButton
+              ready={Boolean(idempotencyKey)}
+              label={content["checkout.submit_button"]}
+            />
             <Link
               href="/cart"
               className="mt-4 block text-center text-xs font-semibold uppercase tracking-wider text-boutique-muted hover:text-boutique-ink"
             >
-              Назад към количката
+              {content["checkout.back_to_cart"]}
             </Link>
           </aside>
         </form>

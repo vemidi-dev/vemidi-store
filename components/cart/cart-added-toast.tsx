@@ -1,14 +1,26 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import { formatEur } from "@/lib/format-eur";
+
 type CartAddedToastProps = {
   title: string;
+  imageSrc?: string;
+  price: number;
+  quantity: number;
   onDismiss: () => void;
 };
 
-export function CartAddedToast({ title, onDismiss }: CartAddedToastProps) {
+export function CartAddedToast({
+  title,
+  imageSrc,
+  price,
+  quantity,
+  onDismiss,
+}: CartAddedToastProps) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -18,42 +30,71 @@ export function CartAddedToast({ title, onDismiss }: CartAddedToastProps) {
 
   return (
     <div
-      className={`pointer-events-none fixed inset-x-0 bottom-6 z-[60] flex justify-center px-4 transition-all duration-300 ease-out sm:bottom-8 ${
+      className={`pointer-events-none fixed inset-x-0 bottom-4 z-[60] flex justify-center px-3 transition-all duration-300 ease-out sm:bottom-8 sm:justify-end sm:px-8 ${
         visible ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0"
       }`}
     >
       <div
         role="status"
         aria-live="polite"
-        className="pointer-events-auto flex w-full max-w-md items-start gap-3 rounded-2xl border border-boutique-sage/30 bg-boutique-paper px-4 py-3.5 shadow-boutique sm:px-5 sm:py-4"
+        className="pointer-events-auto w-full max-w-lg overflow-hidden rounded-2xl border border-boutique-sage/30 bg-boutique-paper shadow-[0_24px_60px_-18px_rgb(44_40_37_/0.35)]"
       >
-        <span
-          aria-hidden
-          className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full bg-boutique-sage/15 text-sm font-bold text-boutique-sage-deep"
-        >
-          ✓
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-boutique-ink">Добавено в количката</p>
-          <p className="mt-0.5 truncate text-sm text-boutique-muted">
-            {`„${title}"`}
+        <div className="flex items-center gap-3 border-b border-boutique-line px-4 py-3">
+          <span
+            aria-hidden
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-boutique-sage-deep text-sm font-bold text-boutique-on-sage"
+          >
+            ✓
+          </span>
+          <p className="flex-1 text-sm font-semibold text-boutique-ink">
+            Добавено в количката
           </p>
+          <button
+            type="button"
+            onClick={onDismiss}
+            aria-label="Затвори известието"
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-xl leading-none text-boutique-muted transition hover:bg-boutique-bg hover:text-boutique-ink"
+          >
+            ×
+          </button>
+        </div>
+
+        <div className="flex gap-4 p-4">
+          <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl border border-boutique-line bg-boutique-bg">
+            {imageSrc ? (
+              <Image src={imageSrc} alt="" fill sizes="80px" className="object-cover" />
+            ) : (
+              <span className="grid h-full w-full place-items-center text-2xl text-boutique-muted">
+                ◇
+              </span>
+            )}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="line-clamp-2 font-heading text-lg leading-snug text-boutique-ink">
+              {title}
+            </p>
+            <p className="mt-1 text-sm text-boutique-muted">
+              {quantity} бр. · {formatEur(price * quantity)}
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 px-4 pb-4">
+          <button
+            type="button"
+            onClick={onDismiss}
+            className="rounded-xl border border-boutique-line px-3 py-3 text-xs font-semibold text-boutique-ink transition hover:bg-white"
+          >
+            Продължи
+          </button>
           <Link
             href="/cart"
             onClick={onDismiss}
-            className="mt-2 inline-flex text-xs font-semibold text-boutique-sage-deep underline-offset-4 hover:underline"
+            className="rounded-xl bg-boutique-sage-deep px-3 py-3 text-center text-xs font-semibold text-boutique-on-sage transition hover:bg-boutique-ink"
           >
-            Към количката →
+            Към количката
           </Link>
         </div>
-        <button
-          type="button"
-          onClick={onDismiss}
-          aria-label="Затвори известието"
-          className="shrink-0 rounded-full px-2 py-1 text-lg leading-none text-boutique-muted transition hover:bg-boutique-bg hover:text-boutique-ink"
-        >
-          ×
-        </button>
       </div>
     </div>
   );

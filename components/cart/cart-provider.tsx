@@ -12,6 +12,12 @@ import {
 } from "react";
 
 import { CartAddedToast } from "@/components/cart/cart-added-toast";
+import {
+  buildCampaignAttribution,
+  mergeCampaignAttribution,
+  type CampaignAttribution,
+} from "@/lib/campaign-attribution";
+import { CAMPAIGN_ATTRIBUTION_SESSION_KEY } from "@/lib/cart-types";
 import type { Product } from "@/lib/catalog";
 import { makeCartLineId } from "@/lib/cart-line-id";
 import {
@@ -20,7 +26,11 @@ import {
   normalizePersonalization,
   parseStoredCart,
 } from "@/lib/cart-storage";
-import { CART_STORAGE_KEY, type CartLine } from "@/lib/cart-types";
+import {
+  calculateEstimatedUnitPrice,
+} from "@/lib/product-option-pricing";
+import type { ProductOptionSelection } from "@/lib/product-options";
+import { CART_STORAGE_KEY, LEGACY_CART_STORAGE_KEY, type CartLine } from "@/lib/cart-types";
 import type { SelectedProductColor } from "@/lib/product-colors";
 import type { ProductPersonalizationValue } from "@/lib/product-personalization";
 
@@ -34,6 +44,8 @@ type CartContextValue = {
     personalization?: string,
     selectedColors?: SelectedProductColor[],
     personalizationFields?: ProductPersonalizationValue[],
+    attribution?: CampaignAttribution,
+    optionSelections?: ProductOptionSelection[],
   ) => void;
   setQuantity: (lineId: string, quantity: number) => void;
   removeLine: (lineId: string) => void;
@@ -47,6 +59,9 @@ const CART_TOAST_DURATION_MS = 4500;
 type CartAddedToastState = {
   id: number;
   title: string;
+  imageSrc?: string;
+  price: number;
+  quantity: number;
 };
 
 function readStoredLines(): CartLine[] {
@@ -54,7 +69,17 @@ function readStoredLines(): CartLine[] {
     return [];
   }
 
-  return parseStoredCart(window.localStorage.getItem(CART_STORAGE_KEY));
+  const current = parseStoredCart(window.localStorage.getItem(CART_STORAGE_KEY));
+  if (current.length > 0) {
+    return current;
+  }
+
+  const legacy = parseStoredCart(window.localStorage.getItem(LEGACY_CART_STORAGE_KEY));
+  if (legacy.length > 0) {
+    window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(legacy));
+    window.localStorage.removeItem(LEGACY_CART_STORAGE_KEY);
+  }
+  return legacy;
 }
 
 export function CartProvider({ children }: { children: ReactNode }) {
@@ -92,19 +117,28 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setAddedToast(null);
   }, []);
 
-  const showAddedToast = useCallback((title: string) => {
-    const toastId = Date.now();
-    setAddedToast({ id: toastId, title });
+  const showAddedToast = useCallback(
+    (product: Pick<Product, "title" | "images" | "price">, quantity: number) => {
+      const toastId = Date.now();
+      setAddedToast({
+        id: toastId,
+        title: product.title,
+        imageSrc: product.images.find((image) => image.src)?.src,
+        price: product.price,
+        quantity,
+      });
 
-    if (toastTimerRef.current) {
-      clearTimeout(toastTimerRef.current);
-    }
+      if (toastTimerRef.current) {
+        clearTimeout(toastTimerRef.current);
+      }
 
-    toastTimerRef.current = setTimeout(() => {
-      setAddedToast((current) => (current?.id === toastId ? null : current));
-      toastTimerRef.current = null;
-    }, CART_TOAST_DURATION_MS);
-  }, []);
+      toastTimerRef.current = setTimeout(() => {
+        setAddedToast((current) => (current?.id === toastId ? null : current));
+        toastTimerRef.current = null;
+      }, CART_TOAST_DURATION_MS);
+    },
+    [],
+  );
 
   const addProduct = useCallback(
     (
@@ -113,6 +147,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
       personalization?: string,
       selectedColors?: SelectedProductColor[],
       personalizationFields?: ProductPersonalizationValue[],
+      attribution?: CampaignAttribution,
+      optionSelections?: ProductOptionSelection[],
     ) => {
       const normalizedQuantity = normalizeCartQuantity(quantity);
       if (normalizedQuantity === 0 || !Number.isFinite(product.price) || product.price < 0) {
@@ -124,21 +160,56 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const storedPersonalizationFields = personalizationFields?.length
         ? personalizationFields
         : undefined;
+      const storedOptionSelections = optionSelections?.length
+        ? optionSelections
+        : undefined;
+      const storedAttribution = buildCampaignAttribution(attribution ?? {});
+      if (storedAttribution && typeof window !== "undefined") {
+        window.sessionStorage.setItem(
+          CAMPAIGN_ATTRIBUTION_SESSION_KEY,
+          JSON.stringify(storedAttribution),
+        );
+      }
+      const estimatedPrice = product.optionGroups?.length
+        ? calculateEstimatedUnitPrice(
+            product.price,
+            product.optionGroups,
+            storedOptionSelections ?? [],
+          )
+        : product.price;
       const lineId = makeCartLineId(
         product.slug,
         storedPersonalization,
         storedColors,
         storedPersonalizationFields,
+        storedOptionSelections,
       );
 
       setLines((prev) => {
         const existing = prev.find((l) => l.lineId === lineId);
         if (existing) {
-          return prev.map((l) =>
-            l.lineId === lineId
-              ? { ...l, quantity: normalizeCartQuantity(l.quantity + normalizedQuantity) }
-              : l,
-          );
+          return prev.map((l) => {
+            if (l.lineId !== lineId) {
+              return l;
+            }
+
+            const mergedAttribution = mergeCampaignAttribution(
+              buildCampaignAttribution({
+                campaign: l.campaign,
+                source: l.source,
+                landingUrl: l.landingUrl,
+              }),
+              storedAttribution,
+            );
+
+            return {
+              ...l,
+              campaign: mergedAttribution?.campaign ?? l.campaign,
+              source: mergedAttribution?.source ?? l.source,
+              landingUrl: mergedAttribution?.landingUrl ?? l.landingUrl,
+              quantity: normalizeCartQuantity(l.quantity + normalizedQuantity),
+            };
+          });
         }
 
         return [
@@ -147,16 +218,21 @@ export function CartProvider({ children }: { children: ReactNode }) {
             lineId,
             slug: product.slug,
             title: product.title,
-            price: product.price,
+            imageSrc: product.images.find((image) => image.src)?.src,
+            price: estimatedPrice,
             quantity: normalizedQuantity,
+            campaign: storedAttribution?.campaign,
+            source: storedAttribution?.source,
+            landingUrl: storedAttribution?.landingUrl,
             personalization: storedPersonalization,
             personalizationFields: storedPersonalizationFields,
             selectedColors: storedColors,
+            optionSelections: storedOptionSelections,
           },
         ];
       });
 
-      showAddedToast(product.title);
+      showAddedToast(product, normalizedQuantity);
     },
     [showAddedToast],
   );
@@ -196,7 +272,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
     <CartContext.Provider value={value}>
       {children}
       {addedToast ? (
-        <CartAddedToast title={addedToast.title} onDismiss={dismissAddedToast} />
+        <CartAddedToast
+          title={addedToast.title}
+          imageSrc={addedToast.imageSrc}
+          price={addedToast.price}
+          quantity={addedToast.quantity}
+          onDismiss={dismissAddedToast}
+        />
       ) : null}
     </CartContext.Provider>
   );

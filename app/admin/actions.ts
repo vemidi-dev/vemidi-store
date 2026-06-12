@@ -19,6 +19,10 @@ import {
 import { adminFormFields } from "@/lib/admin/form-fields";
 import { normalizeProductCardBadge } from "@/lib/product-card";
 import {
+  detectDuplicateOptionWarnings,
+  parseProductOptionGroups,
+} from "@/lib/admin/parse-option-groups";
+import {
   createProductAtomic,
   deleteProductAtomic,
   getProductMutationErrorMessage,
@@ -377,6 +381,8 @@ export async function createProduct(formData: FormData) {
     fields: personalizationFields,
     error: personalizationFieldsError,
   } = parseProductPersonalizationFields(formData);
+  const { groups: optionGroups, error: optionGroupsError } =
+    parseProductOptionGroups(formData);
 
   if (!name || !description || price === null || categoryIds.length === 0) {
     redirectWith(
@@ -392,6 +398,14 @@ export async function createProduct(formData: FormData) {
   if (personalizationFieldsError) {
     redirectWith("error", personalizationFieldsError, activeTab, draft);
   }
+  if (optionGroupsError) {
+    redirectWith("error", optionGroupsError, activeTab, draft);
+  }
+  detectDuplicateOptionWarnings(
+    optionGroups,
+    colorFields.map((field) => field.label),
+    personalizationFields.map((field) => field.label),
+  );
 
   let uploadedImages: UploadedProductImage[] = [];
   if (imageFiles.length > 0) {
@@ -420,6 +434,7 @@ export async function createProduct(formData: FormData) {
     colorFields,
     personalizationFields,
     wishTemplateIds,
+    optionGroups,
   });
 
   if (mutationError || !productId) {
@@ -481,6 +496,8 @@ export async function updateProduct(formData: FormData) {
     fields: personalizationFields,
     error: personalizationFieldsError,
   } = parseProductPersonalizationFields(formData);
+  const { groups: optionGroups, error: optionGroupsError } =
+    parseProductOptionGroups(formData);
 
   if (!id || !name || !description || price === null || categoryIds.length === 0) {
     redirectWith("error", "Невалидни данни за редакция.", activeTab);
@@ -491,6 +508,14 @@ export async function updateProduct(formData: FormData) {
   if (personalizationFieldsError) {
     redirectWith("error", personalizationFieldsError, activeTab);
   }
+  if (optionGroupsError) {
+    redirectWith("error", optionGroupsError, activeTab);
+  }
+  detectDuplicateOptionWarnings(
+    optionGroups,
+    colorFields.map((field) => field.label),
+    personalizationFields.map((field) => field.label),
+  );
 
   let uploadedImages: UploadedProductImage[] = [];
   if (imageFiles.length > 0) {
@@ -522,6 +547,7 @@ export async function updateProduct(formData: FormData) {
       colorFields,
       personalizationFields,
       wishTemplateIds,
+      optionGroups,
     },
   );
 
@@ -551,6 +577,95 @@ export async function updateProduct(formData: FormData) {
 
   revalidateProductPaths(id);
   redirectWith("success", "Продуктът е обновен.", activeTab);
+}
+
+export async function updateProductMerchandising(formData: FormData) {
+  const supabase = await getAuthorizedClient();
+  const id = getString(formData, adminFormFields.common.id);
+  const isFeatured = isChecked(
+    formData,
+    adminFormFields.merchandising.isFeatured,
+  );
+  const rawSortOrder = Number(
+    getString(formData, adminFormFields.merchandising.homeSortOrder),
+  );
+  const homeSortOrder =
+    Number.isInteger(rawSortOrder) && rawSortOrder >= 0 ? rawSortOrder : 0;
+  const relatedProductIds = Array.from(
+    new Set(
+      formData
+        .getAll(adminFormFields.merchandising.relatedProductIds)
+        .map((value) => String(value ?? "").trim())
+        .filter((value) => value && value !== id),
+    ),
+  ).slice(0, 8);
+
+  if (!id) {
+    redirectWith("error", "Липсва продукт за настройване.", "products");
+  }
+
+  const { error } = await supabase.rpc(
+    "admin_replace_product_merchandising",
+    {
+      p_product_id: id,
+      p_is_featured: isFeatured,
+      p_home_sort_order: homeSortOrder,
+      p_related_product_ids: relatedProductIds,
+    },
+  );
+
+  if (error) {
+    const migrationMissing = error.message.includes(
+      "admin_replace_product_merchandising",
+    );
+    redirectWith(
+      "error",
+      migrationMissing
+        ? "Липсва миграцията product_merchandising.sql в Supabase."
+        : `Настройките не бяха запазени: ${error.message}`,
+      "products",
+    );
+  }
+
+  revalidateProductPaths(id);
+  redirectWith(
+    "success",
+    "Настройките за началната страница и свързаните продукти са запазени.",
+    "products",
+  );
+}
+
+export async function toggleProductSoldOut(formData: FormData) {
+  const supabase = await getAuthorizedClient();
+  const activeTab = getAdminTab(formData, "products");
+  const id = getString(formData, adminFormFields.common.id);
+  const soldOutTarget = getString(formData, "sold_out_target");
+  const soldOut =
+    soldOutTarget === "true"
+      ? true
+      : soldOutTarget === "false"
+        ? false
+        : isChecked(formData, adminFormFields.product.isSoldOut);
+
+  if (!id) {
+    redirectWith("error", "Липсва id за промяна.", activeTab);
+  }
+
+  const { error } = await supabase
+    .from("products")
+    .update({ is_sold_out: soldOut })
+    .eq("id", id);
+
+  if (error) {
+    redirectWith("error", "Статусът на продукта не беше обновен.", activeTab);
+  }
+
+  revalidateProductPaths(id);
+  redirectWith(
+    "success",
+    soldOut ? "Продуктът е маркиран като изчерпан." : "Продуктът е активиран отново.",
+    activeTab,
+  );
 }
 
 export async function deleteProduct(formData: FormData) {

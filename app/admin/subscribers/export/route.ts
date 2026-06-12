@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import {
   buildSubscriberCsv,
   filterSubscribers,
+  normalizeSubscriberStatus,
   normalizeSubscriberTopic,
 } from "@/lib/admin/subscriptions";
 import type { NewsletterSubscriberRow } from "@/lib/admin/types";
@@ -36,7 +37,6 @@ export async function GET(request: NextRequest) {
   const result = await supabase
     .from("newsletter_subscribers")
     .select("id,email,topics,is_active,created_at,updated_at")
-    .eq("is_active", true)
     .order("created_at", { ascending: true });
 
   if (result.error) {
@@ -53,7 +53,9 @@ export async function GET(request: NextRequest) {
       topic: normalizeSubscriberTopic(
         request.nextUrl.searchParams.get("topic") ?? "",
       ),
-      status: "active",
+      status: normalizeSubscriberStatus(
+        request.nextUrl.searchParams.get("status") ?? "all",
+      ),
     },
   );
   const csv = `\uFEFF${buildSubscriberCsv(subscribers)}`;

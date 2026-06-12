@@ -5,15 +5,18 @@ import { HomeHero } from "@/components/home/home-hero";
 import { HomeContentGrid } from "@/components/home/home-content-sections";
 import { HomeAtelier, HomeBenefits, HomeProcess } from "@/components/home/home-story";
 import { PageContainer } from "@/components/layout/page-container";
+import { ProductCard } from "@/components/product/product-card";
 import { getPublishedBlogPosts, getPublishedEvents } from "@/lib/content/repository";
+import { getSiteContent } from "@/lib/content/site-content";
 import { toShowcaseCategory } from "@/lib/storefront/mappers";
 import { getStorefrontCatalog } from "@/lib/storefront/repository";
 
 export default async function HomePage() {
-  const [{ categories }, blogPosts, events] = await Promise.all([
+  const [{ categories, products, featuredProductIds }, blogPosts, events, content] = await Promise.all([
     getStorefrontCatalog(),
     getPublishedBlogPosts(),
     getPublishedEvents(),
+    getSiteContent(),
   ]);
   const homeCategories = categories
     .filter((category) => category.show_on_home)
@@ -29,6 +32,11 @@ export default async function HomePage() {
   );
   const featuredProductCategories = productCategories.slice(0, 8).map(toShowcaseCategory);
   const featuredOccasionCategories = occasionCategories.slice(0, 6).map(toShowcaseCategory);
+  const productById = new Map(products.map((product) => [product.slug, product]));
+  const featuredProducts = featuredProductIds
+    .map((productId) => productById.get(productId))
+    .filter((product): product is (typeof products)[number] => Boolean(product))
+    .slice(0, 6);
   const latestPosts = blogPosts.slice(0, 3);
   const now = Date.now();
   const getEventTime = (event: (typeof events)[number]) =>
@@ -57,17 +65,49 @@ export default async function HomePage() {
 
   return (
     <div>
-      <HomeHero />
+      <HomeHero content={content} />
       <HomeBenefits />
 
-      <section className="border-b border-boutique-line bg-white py-14 md:py-16">
+      {featuredProducts.length ? (
+        <section className="border-b border-boutique-line bg-boutique-bg py-10 md:py-16">
+          <PageContainer>
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-boutique-accent">
+                  {content["home.featured_eyebrow"]}
+                </p>
+                <h2 className="mt-2 font-heading text-3xl text-boutique-ink md:text-4xl">
+                  {content["home.featured_title"]}
+                </h2>
+                <p className="mt-3 max-w-2xl text-sm leading-relaxed text-boutique-muted md:text-base">
+                  {content["home.featured_description"]}
+                </p>
+              </div>
+              <Link
+                href="/shop"
+                className="inline-flex w-fit items-center gap-3 rounded-lg bg-boutique-rose-deep px-5 py-3 text-sm font-semibold text-white transition hover:bg-boutique-ink"
+              >
+                {content["home.featured_button"]} <span aria-hidden>→</span>
+              </Link>
+            </div>
+
+            <div className="mt-7 grid grid-cols-2 gap-3 sm:gap-5 lg:mt-10 lg:grid-cols-3">
+              {featuredProducts.map((product) => (
+                <ProductCard key={product.slug} product={product} variant="catalog" />
+              ))}
+            </div>
+          </PageContainer>
+        </section>
+      ) : null}
+
+      <section className="border-b border-boutique-line bg-white py-9 md:py-16">
         <PageContainer>
           <div className="text-center">
-            <h2 className="font-heading text-3xl text-boutique-ink">
-              Пазарувай по повод <span className="text-boutique-rose-deep">♡</span>
+            <h2 className="font-heading text-2xl text-boutique-ink sm:text-3xl">
+              {content["home.occasions_title"]} <span className="text-boutique-rose-deep">♡</span>
             </h2>
           </div>
-          <div className="mt-9 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-[repeat(6,minmax(0,1fr))_7rem]">
+          <div className="mt-6 grid grid-cols-3 gap-2 sm:mt-9 sm:gap-3 lg:grid-cols-[repeat(6,minmax(0,1fr))_7rem]">
             {featuredOccasionCategories.map((category) => (
               <CategoryShowcaseCard
                 key={category.slug}
@@ -78,12 +118,12 @@ export default async function HomePage() {
             <Link
               href="/occasions"
               aria-label="Виж всички поводи"
-              className="group col-span-2 flex min-h-32 flex-col items-center justify-center rounded-xl border border-boutique-sage/30 bg-boutique-warm/55 px-4 text-center transition hover:-translate-y-1 hover:border-boutique-sage-deep/45 hover:bg-boutique-warm sm:col-span-1"
+              className="group col-span-3 flex min-h-16 items-center justify-center gap-3 rounded-xl border border-boutique-sage/30 bg-boutique-warm/55 px-4 text-center transition hover:-translate-y-1 hover:border-boutique-sage-deep/45 hover:bg-boutique-warm sm:col-span-1 sm:min-h-32 sm:flex-col sm:gap-0"
             >
-              <span className="grid h-14 w-14 place-items-center rounded-full bg-boutique-sage-deep text-2xl text-boutique-on-sage shadow-boutique-sm transition group-hover:bg-boutique-accent">
+              <span className="grid h-9 w-9 place-items-center rounded-full bg-boutique-sage-deep text-lg text-boutique-on-sage shadow-boutique-sm transition group-hover:bg-boutique-accent sm:h-14 sm:w-14 sm:text-2xl">
                 <span aria-hidden>→</span>
               </span>
-              <span className="mt-4 text-xs font-semibold leading-snug text-boutique-ink">
+              <span className="text-xs font-semibold leading-snug text-boutique-ink sm:mt-4">
                 Виж всички поводи
               </span>
             </Link>
@@ -96,14 +136,14 @@ export default async function HomePage() {
         </PageContainer>
       </section>
 
-      <section className="border-b border-boutique-line bg-boutique-paper py-14 md:py-16">
+      <section className="border-b border-boutique-line bg-boutique-paper py-9 md:py-16">
         <PageContainer>
           <div className="text-center">
-            <h2 className="font-heading text-3xl text-boutique-ink">
-              Пазарувай по вид продукт <span className="text-boutique-rose-deep">♡</span>
+            <h2 className="font-heading text-2xl text-boutique-ink sm:text-3xl">
+              {content["home.categories_title"]} <span className="text-boutique-rose-deep">♡</span>
             </h2>
           </div>
-          <div className="mt-10 grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-4 lg:grid-cols-8">
+          <div className="mt-7 grid grid-cols-4 gap-x-3 gap-y-5 sm:mt-10 sm:gap-x-4 sm:gap-y-8 lg:grid-cols-8">
             {featuredProductCategories.map((category) => (
               <CategoryShowcaseCard
                 key={category.slug}
@@ -128,8 +168,8 @@ export default async function HomePage() {
         </PageContainer>
       </section>
 
-      <HomeProcess />
-      <HomeAtelier />
+      <HomeProcess content={content} />
+      <HomeAtelier content={content} />
       <HomeContentGrid
         posts={latestPosts}
         upcomingEvents={upcomingEvents}

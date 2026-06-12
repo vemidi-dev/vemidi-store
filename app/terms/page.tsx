@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { InformationPage, InformationSection } from "@/components/legal/information-page";
 import { siteConfig } from "@/config/site";
+import { getSiteContent } from "@/lib/content/site-content";
 
 export const metadata: Metadata = {
   title: "Общи условия",
@@ -10,32 +11,58 @@ export const metadata: Metadata = {
   alternates: { canonical: "/terms" },
 };
 
-export default function TermsPage() {
+export default async function TermsPage() {
+  const content = await getSiteContent();
   const { business } = siteConfig;
+
   return (
-    <InformationPage eyebrow="Информация за клиента" title="Общи условия" description="Основни правила при поръчка на готови и персонализирани изделия.">
-      <p className="text-xs uppercase tracking-wider">Последна актуализация: 28 май 2026 г.</p>
-      <InformationSection title="Данни за търговеца">
+    <InformationPage
+      eyebrow={content["terms.hero_eyebrow"]}
+      title={content["terms.hero_title"]}
+      description={content["terms.hero_description"]}
+    >
+      <p className="text-xs uppercase tracking-wider">{content["terms.updated_at"]}</p>
+      <InformationSection title={content["terms.merchant_title"]}>
         <p><strong>Търговец:</strong> {business.legalName}</p>
         <p><strong>ЕИК/Булстат:</strong> {business.registrationNumber}</p>
-        <p><strong>Адрес:</strong> {business.address}</p>
-        <p><strong>Имейл:</strong> <a href={`mailto:${business.email}`}>{business.email}</a></p>
-        <p><strong>Телефон:</strong> <a href={`tel:${business.phoneHref}`}>{business.phoneDisplay}</a></p>
+        <p><strong>Адрес:</strong> {content["business.address"]}</p>
+        <p>
+          <strong>Имейл:</strong>{" "}
+          <a href={`mailto:${content["business.email"]}`}>{content["business.email"]}</a>
+        </p>
+        <p>
+          <strong>Телефон:</strong>{" "}
+          <a href={`tel:${content["business.phone_href"]}`}>
+            {content["business.phone_display"]}
+          </a>
+        </p>
       </InformationSection>
-      <InformationSection title="Поръчка и потвърждение">
-        <p>Изпращането на формата регистрира поръчка. При необходимост ще се свържем с клиента за уточняване на персонализацията, наличността, срока или данните за доставка.</p>
+      <InformationSection title={content["terms.order_title"]}>
+        <p>{content["terms.order_text"]}</p>
       </InformationSection>
-      <InformationSection title="Цени и плащане">
-        <p>Цените са обявени в евро (EUR). Курирската доставка не е включена, освен ако изрично не е посочено друго. Плащането е с наложен платеж при получаване.</p>
+      <InformationSection title={content["terms.pricing_title"]}>
+        <p>{content["terms.pricing_text"]}</p>
       </InformationSection>
-      <InformationSection title="Персонализирани изделия">
-        <p>Клиентът носи отговорност за точността на предоставените имена, дати и текстове. Преди изработка може да бъде поискано допълнително потвърждение.</p>
+      <InformationSection title={content["terms.personalized_title"]}>
+        <p>{content["terms.personalized_text"]}</p>
       </InformationSection>
-      <InformationSection title="Доставка">
-        <p>Поръчките се изпращат с Еконт или Спиди до офис, автомат или адрес според избора на клиента. Подробностите са публикувани в <Link className="font-semibold text-boutique-ink underline" href="/delivery">„Доставка и плащане“</Link>.</p>
+      <InformationSection title={content["terms.shipping_title"]}>
+        <p>
+          {content["terms.shipping_text"]}{" "}
+          <Link className="font-semibold text-boutique-ink underline" href="/delivery">
+            „Доставка и плащане“
+          </Link>
+          .
+        </p>
       </InformationSection>
-      <InformationSection title="Отказ, връщане и рекламации">
-        <p>Правилата и процедурата са описани в страницата <Link className="font-semibold text-boutique-ink underline" href="/returns">„Връщане и рекламации“</Link>.</p>
+      <InformationSection title={content["terms.returns_title"]}>
+        <p>
+          {content["terms.returns_text"]}{" "}
+          <Link className="font-semibold text-boutique-ink underline" href="/returns">
+            „Връщане и рекламации“
+          </Link>
+          .
+        </p>
       </InformationSection>
     </InformationPage>
   );

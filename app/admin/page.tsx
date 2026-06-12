@@ -8,9 +8,11 @@ import { ProductCreatePanel } from "@/components/admin/product-create-panel";
 import { ProductListPanel } from "@/components/admin/product-list-panel";
 import { OrdersPanel } from "@/components/admin/orders-panel";
 import { ContentManagementPanel } from "@/components/admin/content-management-panel";
+import { EventManagementPanel } from "@/components/admin/event-management-panel";
 import { EventGalleryManagementPanel } from "@/components/admin/event-gallery-management-panel";
 import { EventRegistrationsPanel } from "@/components/admin/event-registrations-panel";
 import { SubscriberManagementPanel } from "@/components/admin/subscriber-management-panel";
+import { SiteContentManagementPanel } from "@/components/admin/site-content-management-panel";
 import { PromotionManagementPanel } from "@/components/admin/promotion-management-panel";
 import { WishManagementPanel } from "@/components/admin/wish-management-panel";
 import { PageContainer } from "@/components/layout/page-container";
@@ -20,9 +22,10 @@ import {
   normalizeAdminTab,
   parseProductCreateDraft,
 } from "@/lib/admin/params";
+import { buildPromotionProductOptions } from "@/lib/promotion-admin";
 import { checkIsAdmin } from "@/lib/supabase/admin-auth";
 import { createClient } from "@/lib/supabase/server";
-import { loadOrders } from "@/lib/admin/orders";
+import { loadOrdersPage, parseOrdersQuery } from "@/lib/admin/orders";
 import {
   filterSubscribers,
   normalizeSubscriberStatus,
@@ -43,9 +46,18 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   const error = firstValue(params.error);
   const draft = parseProductCreateDraft(firstValue(params.draft));
   const activeTab = normalizeAdminTab(firstValue(params.tab));
-  const orderStatus = firstValue(params.status);
-  const orderSearch = firstValue(params.q);
-  const orderSource = firstValue(params.source);
+  const ordersQuery = parseOrdersQuery({
+    status: firstValue(params.status),
+    search: firstValue(params.q),
+    source: firstValue(params.source),
+    dateFrom: firstValue(params.date_from),
+    dateTo: firstValue(params.date_to),
+    payment: firstValue(params.payment),
+    delivery: firstValue(params.delivery),
+    sort: firstValue(params.sort),
+    page: firstValue(params.page),
+    pageSize: firstValue(params.page_size),
+  });
   const subscriberSearch = firstValue(params.subscriber_q);
   const subscriberTopic = normalizeSubscriberTopic(
     firstValue(params.subscriber_topic),
@@ -156,8 +168,43 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     );
   }
 
+  if (activeTab === "content") {
+    const result = await supabase
+      .from("site_content")
+      .select("key,value,label,section,sort_order,is_multiline")
+      .order("section", { ascending: true })
+      .order("sort_order", { ascending: true });
+
+    return (
+      <section className="pb-24 pt-10">
+        <PageContainer>
+          <div className="mx-auto max-w-6xl space-y-8">
+            <AdminHeader activeTab={activeTab} />
+            {success || error ? (
+              <div
+                className={`rounded-xl border px-4 py-3 text-sm ${
+                  error
+                    ? "border-red-200 bg-red-50 text-red-700"
+                    : "border-emerald-200 bg-emerald-50 text-emerald-700"
+                }`}
+              >
+                {error || success}
+              </div>
+            ) : null}
+            <SiteContentManagementPanel
+              fields={
+                (result.data ?? []) as import("@/lib/content/site-content").SiteContentRow[]
+              }
+              error={result.error?.message ?? null}
+            />
+          </div>
+        </PageContainer>
+      </section>
+    );
+  }
+
   if (activeTab === "orders") {
-    const ordersResult = await loadOrders(supabase, orderStatus, orderSearch, orderSource);
+    const ordersResult = await loadOrdersPage(supabase, ordersQuery);
 
     return (
       <section className="pb-24 pt-10">
@@ -177,10 +224,9 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             ) : null}
             <OrdersPanel
               orders={ordersResult.orders}
-              allOrders={ordersResult.allOrders}
-              status={orderStatus}
-              search={orderSearch}
-              source={orderSource}
+              total={ordersResult.total}
+              query={ordersQuery}
+              counts={ordersResult.counts}
               error={ordersResult.error}
             />
           </div>
@@ -190,15 +236,34 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   }
 
   if (activeTab === "promotions") {
-    const [productsResult, promotionsResult] = await Promise.all([
-      supabase.from("products").select("id,name,price").order("name"),
-      supabase
-        .from("product_promotions")
-        .select(
-          "id,product_id,name,discount_type,discount_value,starts_at,ends_at,is_active,created_at",
-        )
-        .order("created_at", { ascending: false }),
-    ]);
+    const [productsResult, categoriesResult, productCategoriesResult, campaignsResult] =
+      await Promise.all([
+        supabase
+          .from("products")
+          .select("id,name,price,image_url,is_sold_out")
+          .order("name"),
+        supabase.from("categories").select("id,name,category_type"),
+        supabase.from("product_categories").select("product_id,category_id"),
+        supabase
+          .from("promotion_campaigns")
+          .select(
+            "id,name,discount_percentage,starts_at,ends_at,is_active,created_at,updated_at",
+          )
+          .order("created_at", { ascending: false }),
+      ]);
+    const promotionsResult = campaignsResult.error
+      ? await supabase
+          .from("product_promotions")
+          .select(
+            "id,product_id,name,discount_type,discount_value,starts_at,ends_at,is_active,created_at",
+          )
+          .order("created_at", { ascending: false })
+      : await supabase
+          .from("product_promotions")
+          .select(
+            "id,product_id,campaign_id,name,discount_type,discount_value,starts_at,ends_at,is_active,created_at",
+          )
+          .order("created_at", { ascending: false });
 
     return (
       <section className="pb-24 pt-10">
@@ -223,10 +288,27 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               </div>
             ) : (
               <PromotionManagementPanel
-                products={(productsResult.data ?? []) as import("@/lib/admin/types").ProductRow[]}
+                products={buildPromotionProductOptions(
+                  productsResult.data ?? [],
+                  (categoriesResult.data ?? []).map((category) => ({
+                    id: String(category.id),
+                    name: String(category.name),
+                    category_type: category.category_type as "product" | "occasion",
+                  })),
+                  productCategoriesResult.data ?? [],
+                )}
+                categories={(categoriesResult.data ?? []).map((category) => ({
+                  id: String(category.id),
+                  name: String(category.name),
+                  categoryType: category.category_type as "product" | "occasion",
+                }))}
                 promotions={
                   (promotionsResult.data ?? []) as import("@/lib/product-pricing").ProductPromotionRow[]
                 }
+                campaigns={
+                  (campaignsResult.data ?? []) as import("@/lib/product-pricing").PromotionCampaignRow[]
+                }
+                campaignError={campaignsResult.error?.message ?? null}
               />
             )}
           </div>
@@ -333,8 +415,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               />
             ) : (
               <>
-                <ContentManagementPanel
-                  kind="events"
+                <EventManagementPanel
                   items={(result.data ?? []) as import("@/lib/admin/types").EventRow[]}
                   error={result.error}
                 />

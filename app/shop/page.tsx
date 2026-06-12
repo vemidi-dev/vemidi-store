@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import { ProductCard } from "@/components/product/product-card";
 import { PageContainer } from "@/components/layout/page-container";
 import { isProductOnPromotion } from "@/lib/product-pricing";
+import { getSiteContent } from "@/lib/content/site-content";
 import { getStorefrontCatalog } from "@/lib/storefront/repository";
 
 export const metadata: Metadata = {
@@ -54,7 +55,10 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
   const personalizationOnly = firstValue(params.personalization) === "only";
   const promotionsOnly = firstValue(params.promotions) === "only";
 
-  const { categories, products } = await getStorefrontCatalog();
+  const [{ categories, products }, content] = await Promise.all([
+    getStorefrontCatalog(),
+    getSiteContent(),
+  ]);
 
   const productCategoryFilters: FilterValue[] = categories
     .filter((category) => category.category_type === "product")
@@ -141,23 +145,12 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
   function FilterFields() {
     return (
       <>
-        <label className="block">
-          <span className="text-xs font-semibold uppercase tracking-[0.16em] text-boutique-muted">
-            Търсене
-          </span>
-          <input
-            name="q"
-            defaultValue={query}
-            type="search"
-            placeholder="Име или идея..."
-            className="mt-2 w-full rounded-lg border border-boutique-line bg-white px-3 py-2.5 text-sm text-boutique-ink outline-none focus:border-boutique-sage"
-          />
-        </label>
+        <input type="hidden" name="q" value={query} />
         <input type="hidden" name="sort" value={activeSort} />
 
-        <fieldset className="border-t border-boutique-line pt-5">
-          <legend className="font-heading text-lg text-boutique-ink">По повод</legend>
-          <div className="mt-3 space-y-2.5">
+        <fieldset className="border-t border-boutique-line pt-4 lg:pt-5">
+          <legend className="font-heading text-base text-boutique-ink lg:text-lg">По повод</legend>
+          <div className="mt-2.5 space-y-2 lg:mt-3 lg:space-y-2.5">
             <label className="flex items-center gap-2 text-sm text-boutique-muted">
               <input type="radio" name="occasion" value="" defaultChecked={!activeOccasion} />
               Всички поводи
@@ -177,9 +170,9 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
           </div>
         </fieldset>
 
-        <fieldset className="border-t border-boutique-line pt-5">
-          <legend className="font-heading text-lg text-boutique-ink">По вид продукт</legend>
-          <div className="mt-3 space-y-2.5">
+        <fieldset className="border-t border-boutique-line pt-4 lg:pt-5">
+          <legend className="font-heading text-base text-boutique-ink lg:text-lg">По вид продукт</legend>
+          <div className="mt-2.5 space-y-2 lg:mt-3 lg:space-y-2.5">
             <label className="flex items-center gap-2 text-sm text-boutique-muted">
               <input type="radio" name="product" value="" defaultChecked={!activeProductCategory} />
               Всички продукти
@@ -199,9 +192,9 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
           </div>
         </fieldset>
 
-        <fieldset className="border-t border-boutique-line pt-5">
-          <legend className="font-heading text-lg text-boutique-ink">Цена</legend>
-          <div className="mt-3 space-y-2.5">
+        <fieldset className="border-t border-boutique-line pt-4 lg:pt-5">
+          <legend className="font-heading text-base text-boutique-ink lg:text-lg">Цена</legend>
+          <div className="mt-2.5 space-y-2 lg:mt-3 lg:space-y-2.5">
             <label className="flex items-center gap-2 text-sm text-boutique-muted">
               <input type="radio" name="price" value="" defaultChecked={!activePrice} />
               Всички цени
@@ -221,7 +214,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
           </div>
         </fieldset>
 
-        <label className="flex items-start gap-2 border-t border-boutique-line pt-5 text-sm text-boutique-muted">
+        <label className="flex items-start gap-2 border-t border-boutique-line pt-4 text-sm text-boutique-muted lg:pt-5">
           <input
             type="checkbox"
             name="personalization"
@@ -246,13 +239,13 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
         <div className="flex gap-2">
           <button
             type="submit"
-            className="flex-1 rounded-lg bg-boutique-sage-deep px-4 py-3 text-sm font-semibold text-boutique-on-sage transition hover:bg-boutique-accent"
+            className="flex-1 rounded-lg bg-boutique-sage-deep px-4 py-2.5 text-sm font-semibold text-boutique-on-sage transition hover:bg-boutique-accent lg:py-3"
           >
             Приложи
           </button>
           <Link
             href="/shop#product-grid"
-            className="rounded-lg border border-boutique-line px-4 py-3 text-sm font-semibold text-boutique-ink"
+            className="rounded-lg border border-boutique-line px-4 py-2.5 text-sm font-semibold text-boutique-ink lg:py-3"
           >
             Изчисти
           </Link>
@@ -264,20 +257,21 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
   return (
     <div>
       <section className="border-b border-boutique-line bg-boutique-paper">
-        <div className="grid min-h-[18rem] lg:grid-cols-[0.72fr_1.28fr]">
-          <div className="flex items-center bg-[linear-gradient(135deg,#fdfcfa_0%,#ebe4db_100%)] px-6 py-12 sm:px-12 lg:pl-[max(3rem,calc((100vw-72rem)/2))]">
+        <div className="grid lg:min-h-[18rem] lg:grid-cols-[0.72fr_1.28fr]">
+          <div className="flex items-center bg-[linear-gradient(135deg,#fdfcfa_0%,#ebe4db_100%)] px-5 py-5 sm:px-12 sm:py-12 lg:pl-[max(3rem,calc((100vw-72rem)/2))]">
             <div className="max-w-lg">
               <p className="text-sm text-boutique-sage-deep">
                 <Link href="/" className="hover:underline">Начало</Link> <span className="px-2">›</span> Продукти
               </p>
-              <h1 className="mt-5 font-heading text-5xl text-boutique-ink">Продукти</h1>
-              <p className="mt-5 text-sm leading-7 text-boutique-muted">
-                Разгледайте нашите ръчно изработени подаръци, декорации и творчески комплекти
-                за специални моменти и любими хора.
+              <h1 className="mt-2 font-heading text-3xl text-boutique-ink sm:mt-5 sm:text-5xl">
+                {content["shop.hero_title"]}
+              </h1>
+              <p className="mt-2 text-sm leading-6 text-boutique-muted sm:mt-5 sm:leading-7">
+                {content["shop.hero_description"]}
               </p>
             </div>
           </div>
-          <div className="relative min-h-[18rem] overflow-hidden">
+          <div className="relative min-h-36 overflow-hidden sm:min-h-[18rem]">
             <Image
               src="/assets/products.png"
               alt="Ръчно изработени продукти от VeMiDi crafts"
@@ -292,11 +286,40 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
 
       <section id="product-grid" className="bg-white py-10 md:py-14">
         <PageContainer>
-          <details className="mb-6 rounded-xl border border-boutique-line bg-boutique-paper p-4 lg:hidden">
-            <summary className="cursor-pointer font-semibold text-boutique-ink">
+          <form className="mb-3 flex gap-2 sm:mb-6">
+            <input type="hidden" name="product" value={activeProductCategory} />
+            <input type="hidden" name="occasion" value={activeOccasion} />
+            <input type="hidden" name="price" value={activePrice} />
+            <input type="hidden" name="sort" value={activeSort} />
+            {personalizationOnly ? (
+              <input type="hidden" name="personalization" value="only" />
+            ) : null}
+            {promotionsOnly ? (
+              <input type="hidden" name="promotions" value="only" />
+            ) : null}
+            <label className="min-w-0 flex-1">
+              <span className="sr-only">Търсене на продукт</span>
+              <input
+                name="q"
+                defaultValue={query}
+                type="search"
+                placeholder={content["shop.search_placeholder"]}
+                className="w-full rounded-xl border border-boutique-line bg-boutique-paper px-3 py-2.5 text-sm text-boutique-ink shadow-boutique-sm outline-none transition focus:border-boutique-sage sm:px-4 sm:py-3"
+              />
+            </label>
+            <button
+              type="submit"
+              className="shrink-0 rounded-xl bg-boutique-sage-deep px-3 py-2.5 text-sm font-semibold text-boutique-on-sage transition hover:bg-boutique-ink sm:px-6 sm:py-3"
+            >
+              Търси
+            </button>
+          </form>
+
+          <details className="mb-4 rounded-xl border border-boutique-line bg-boutique-paper p-3 sm:mb-6 sm:p-4 lg:hidden">
+            <summary className="cursor-pointer py-0.5 font-semibold text-boutique-ink">
               Филтри
             </summary>
-            <form className="mt-5 space-y-5">
+            <form className="mt-4 space-y-4">
               <FilterFields />
             </form>
           </details>
@@ -315,7 +338,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
             </aside>
 
             <div>
-              <div className="flex flex-col justify-between gap-4 border-b border-boutique-line pb-5 sm:flex-row sm:items-center">
+              <div className="flex flex-col justify-between gap-3 border-b border-boutique-line pb-4 sm:flex-row sm:items-center sm:gap-4 sm:pb-5">
                 <div>
                   <p className="text-sm text-boutique-muted">
                     Показани <span className="font-semibold text-boutique-ink">{filtered.length}</span> от{" "}
@@ -331,19 +354,19 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
                     </div>
                   ) : null}
                 </div>
-                <form className="flex items-center gap-3">
+                <form className="flex flex-wrap items-center gap-2 sm:gap-3">
                   <input type="hidden" name="q" value={query} />
                   <input type="hidden" name="product" value={activeProductCategory} />
                   <input type="hidden" name="occasion" value={activeOccasion} />
                   <input type="hidden" name="price" value={activePrice} />
                   {personalizationOnly ? <input type="hidden" name="personalization" value="only" /> : null}
                   {promotionsOnly ? <input type="hidden" name="promotions" value="only" /> : null}
-                  <label className="text-sm text-boutique-muted">
-                    Сортиране:
+                  <label className="flex min-w-0 flex-1 items-center text-sm text-boutique-muted sm:flex-none">
+                    <span className="shrink-0">Сортиране:</span>
                     <select
                       name="sort"
                       defaultValue={activeSort}
-                      className="ml-2 rounded-lg border border-boutique-line bg-boutique-paper px-3 py-2 text-sm text-boutique-ink"
+                      className="ml-2 min-w-0 flex-1 rounded-lg border border-boutique-line bg-boutique-paper px-2 py-2 text-sm text-boutique-ink sm:flex-none sm:px-3"
                     >
                       <option value="featured">Най-нови</option>
                       <option value="price-asc">Цена: ниска към висока</option>
@@ -352,7 +375,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
                       <option value="name-desc">Име: Я-А</option>
                     </select>
                   </label>
-                  <button type="submit" className="rounded-lg bg-boutique-sage-deep px-3 py-2 text-xs font-semibold text-boutique-on-sage">
+                  <button type="submit" className="rounded-lg bg-boutique-sage-deep px-3 py-2.5 text-xs font-semibold text-boutique-on-sage sm:py-2">
                     Готово
                   </button>
                 </form>
@@ -363,7 +386,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
                   Няма продукти по избраните критерии.
                 </p>
               ) : (
-                <div className="mt-6 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                <div className="mt-4 grid grid-cols-2 gap-2 sm:mt-6 sm:gap-5 xl:grid-cols-3">
                   {filtered.map((product) => (
                     <ProductCard key={product.slug} product={product} variant="catalog" />
                   ))}

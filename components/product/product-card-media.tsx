@@ -85,7 +85,7 @@ export function ProductCardMedia({
 
   return (
     <div
-      className={`relative overflow-hidden ${compact ? "aspect-square" : "aspect-[4/5]"}`}
+      className={`relative overflow-hidden ${compact ? "aspect-[5/6] sm:aspect-square" : "aspect-[4/5]"}`}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
@@ -97,11 +97,13 @@ export function ProductCardMedia({
               src={cover.src}
               alt={cover.alt}
               fill
-              sizes="(max-width: 768px) 100vw, 33vw"
+              sizes="(max-width: 640px) 50vw, (max-width: 768px) 50vw, 33vw"
               className="object-cover transition duration-700 ease-out group-hover:scale-[1.04]"
             />
             <div
-              className="pointer-events-none absolute inset-0 bg-gradient-to-t from-boutique-ink/35 via-transparent to-transparent opacity-60 transition duration-500 group-hover:opacity-80"
+              className={`pointer-events-none absolute inset-0 bg-gradient-to-t from-boutique-ink/35 via-transparent to-transparent transition duration-500 group-hover:opacity-80 ${
+                compact ? "opacity-40 sm:opacity-60" : "opacity-60"
+              }`}
               aria-hidden
             />
           </>
@@ -116,7 +118,11 @@ export function ProductCardMedia({
             className="pointer-events-none absolute inset-0 z-[5] bg-boutique-ink/15"
             aria-hidden
           />
-          <span className="absolute right-2 top-2 z-10 rounded-full bg-boutique-muted px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm">
+          <span
+            className={`absolute right-1.5 top-1.5 z-10 rounded-full bg-boutique-muted font-bold uppercase tracking-wide text-white shadow-sm sm:right-2 sm:top-2 ${
+              compact ? "px-2 py-0.5 text-[9px]" : "px-2.5 py-1 text-[10px]"
+            }`}
+          >
             Изчерпан
           </span>
         </>
@@ -137,7 +143,7 @@ export function ProductCardMedia({
               showPrevious();
             }}
             aria-label="Предишна снимка"
-            className="absolute left-2 top-1/2 z-10 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-full bg-white/90 text-lg text-boutique-ink opacity-100 shadow-sm transition hover:bg-white sm:opacity-0 sm:group-hover:opacity-100"
+            className="absolute left-1.5 top-1/2 z-10 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full bg-white/90 text-base text-boutique-ink opacity-100 shadow-sm transition hover:bg-white sm:left-2 sm:h-9 sm:w-9 sm:text-lg sm:opacity-0 sm:group-hover:opacity-100"
           >
             ‹
           </button>
@@ -148,11 +154,15 @@ export function ProductCardMedia({
               showNext();
             }}
             aria-label="Следваща снимка"
-            className="absolute right-2 top-1/2 z-10 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-full bg-white/90 text-lg text-boutique-ink opacity-100 shadow-sm transition hover:bg-white sm:opacity-0 sm:group-hover:opacity-100"
+            className="absolute right-1.5 top-1/2 z-10 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full bg-white/90 text-base text-boutique-ink opacity-100 shadow-sm transition hover:bg-white sm:right-2 sm:h-9 sm:w-9 sm:text-lg sm:opacity-0 sm:group-hover:opacity-100"
           >
             ›
           </button>
-          <div className="absolute inset-x-0 bottom-3 z-10 flex justify-center gap-1.5">
+          <div
+            className={`absolute inset-x-0 z-10 flex justify-center ${
+              compact ? "bottom-2 gap-1" : "bottom-3 gap-1.5"
+            }`}
+          >
             {images.map((image, index) => (
               <button
                 key={`${image.src}-${index}`}
@@ -163,10 +173,16 @@ export function ProductCardMedia({
                 }}
                 aria-label={`Покажи снимка ${index + 1}`}
                 aria-current={index === safeImageIndex ? "true" : undefined}
-                className={`h-1.5 rounded-full transition ${
+                className={`rounded-full transition ${
+                  compact ? "h-1" : "h-1.5"
+                } ${
                   index === safeImageIndex
-                    ? "w-5 bg-white"
-                    : "w-1.5 bg-white/65 hover:bg-white"
+                    ? compact
+                      ? "w-3.5 bg-white"
+                      : "w-5 bg-white"
+                    : compact
+                      ? "w-1 bg-white/65 hover:bg-white"
+                      : "w-1.5 bg-white/65 hover:bg-white"
                 }`}
               />
             ))}

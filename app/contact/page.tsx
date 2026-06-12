@@ -4,101 +4,174 @@ import type { ReactNode } from "react";
 import { PageContainer } from "@/components/layout/page-container";
 import { SocialLinks } from "@/components/layout/social-links";
 import { siteConfig } from "@/config/site";
+import { getSiteContent } from "@/lib/content/site-content";
 
 export const metadata: Metadata = {
   title: "Контакти",
-  description: "Контакти, социални профили и данни за търговеца VeMiDi crafts.",
+  description:
+    "Контакти, социални профили и данни за търговеца VeMiDi crafts.",
   alternates: { canonical: "/contact" },
 };
 
-type ContactCardProps = {
-  title: string;
+function ContactIcon({
+  children,
+}: {
   children: ReactNode;
-  className?: string;
-};
-
-function ContactCard({ title, children, className = "" }: ContactCardProps) {
+}) {
   return (
-    <article
-      className={`rounded-2xl border border-boutique-line/80 bg-boutique-paper p-5 shadow-boutique-sm sm:p-6 ${className}`}
-    >
-      <h2 className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-boutique-rose-deep">
-        {title}
-      </h2>
-      <div className="mt-3 text-sm leading-relaxed text-boutique-ink">{children}</div>
-    </article>
+    <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-boutique-warm text-lg text-boutique-sage-deep">
+      {children}
+    </span>
   );
 }
 
-export default function ContactPage() {
-  const { business } = siteConfig;
-  const hasAddress = Boolean(business.address?.trim());
+function ContactMethod({
+  icon,
+  label,
+  value,
+  href,
+}: {
+  icon: ReactNode;
+  label: string;
+  value: string;
+  href?: string;
+}) {
+  const content = (
+    <>
+      <ContactIcon>{icon}</ContactIcon>
+      <span className="min-w-0">
+        <span className="block text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-boutique-muted">
+          {label}
+        </span>
+        <span className="mt-1 block break-words font-semibold text-boutique-ink">
+          {value}
+        </span>
+      </span>
+    </>
+  );
+
+  return href ? (
+    <a
+      href={href}
+      className="flex items-center gap-4 rounded-2xl border border-boutique-line bg-white p-4 shadow-boutique-sm transition hover:-translate-y-0.5 hover:border-boutique-sage/45"
+    >
+      {content}
+    </a>
+  ) : (
+    <div className="flex items-center gap-4 rounded-2xl border border-boutique-line bg-white p-4 shadow-boutique-sm">
+      {content}
+    </div>
+  );
+}
+
+export default async function ContactPage() {
+  const content = await getSiteContent();
+  const email = content["business.email"];
+  const phoneDisplay = content["business.phone_display"];
+  const phoneHref = content["business.phone_href"];
+  const address = content["business.address"];
 
   return (
-    <div>
-      <section className="border-b border-boutique-line bg-boutique-paper">
-        <PageContainer className="py-10 text-center md:py-12">
-          <h1 className="font-heading text-3xl leading-tight tracking-tight text-boutique-ink sm:text-4xl">
-            Свържете се с нас
-          </h1>
-          <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-boutique-muted sm:text-base">
-            Пишете ни за въпроси, персонализирани поръчки или идеи за специален подарък.
-          </p>
+    <div className="bg-boutique-bg">
+      <section className="relative overflow-hidden border-b border-boutique-line bg-boutique-paper">
+        <div
+          aria-hidden
+          className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-boutique-warm/70 blur-3xl"
+        />
+        <div
+          aria-hidden
+          className="absolute -bottom-32 -left-20 h-72 w-72 rounded-full bg-boutique-rose/15 blur-3xl"
+        />
+        <PageContainer className="relative py-12 md:py-20">
+          <div className="max-w-3xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-boutique-accent">
+              {content["contact.eyebrow"]}
+            </p>
+            <h1 className="mt-4 font-heading text-4xl leading-tight text-boutique-ink sm:text-5xl md:text-6xl">
+              {content["contact.hero_title"]}
+            </h1>
+            <p className="mt-5 max-w-2xl text-base leading-8 text-boutique-muted md:text-lg">
+              {content["contact.hero_description"]}
+            </p>
+          </div>
         </PageContainer>
       </section>
 
-      <section className="pb-20 pt-10 md:pb-24">
-        <PageContainer className="mx-auto max-w-3xl space-y-8">
-          <article className="rounded-2xl border border-boutique-line bg-boutique-bg/60 px-5 py-7 text-center sm:px-8 sm:py-8">
-            <h2 className="font-heading text-xl text-boutique-ink sm:text-2xl">
-              Най-бърз начин за връзка
-            </h2>
-            <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-boutique-muted">
-              Най-бързо ще получите отговор през социалните ни мрежи.
+      <section className="py-10 md:py-16">
+        <PageContainer className="grid gap-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(20rem,0.95fr)] lg:gap-8">
+          <article className="rounded-3xl border border-boutique-line bg-boutique-paper p-6 shadow-boutique-sm sm:p-8">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-boutique-accent">
+              Бърза връзка
             </p>
-            <div className="mt-6">
+            <h2 className="mt-3 font-heading text-3xl text-boutique-ink">
+              {content["contact.social_title"]}
+            </h2>
+            <p className="mt-4 max-w-xl text-sm leading-7 text-boutique-muted">
+              {content["contact.social_description"]}
+            </p>
+            <div className="mt-7 flex justify-start">
               <SocialLinks variant="contact" />
             </div>
+            <p className="mt-6 border-t border-boutique-line pt-5 text-sm font-medium text-boutique-sage-deep">
+              {content["contact.response_note"]}
+            </p>
           </article>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <ContactCard title="Телефон">
-              <a
-                href={`tel:${business.phoneHref}`}
-                className="font-medium text-boutique-sage-deep transition hover:text-boutique-accent"
-              >
-                {business.phoneDisplay}
-              </a>
-            </ContactCard>
-
-            <ContactCard title="Имейл">
-              <a
-                href={`mailto:${business.email}`}
-                className="break-all font-medium text-boutique-sage-deep transition hover:text-boutique-accent"
-              >
-                {business.email}
-              </a>
-            </ContactCard>
-
-            {hasAddress ? (
-              <ContactCard title="Ателие" className="sm:col-span-2">
-                <p>{business.address}</p>
-              </ContactCard>
+          <div className="grid gap-3">
+            <ContactMethod
+              icon={<span aria-hidden>✉</span>}
+              label="Имейл"
+              value={email}
+              href={`mailto:${email}`}
+            />
+            <ContactMethod
+              icon={<span aria-hidden>☎</span>}
+              label="Телефон"
+              value={phoneDisplay}
+              href={`tel:${phoneHref}`}
+            />
+            {address ? (
+              <ContactMethod
+                icon={<span aria-hidden>⌂</span>}
+                label="Ателие"
+                value={address}
+              />
             ) : null}
           </div>
+        </PageContainer>
+      </section>
 
-          <div className="rounded-xl border border-boutique-line/60 bg-boutique-bg/40 px-5 py-4 text-center">
-            <p className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-boutique-muted">
-              Данни за търговеца
-            </p>
-            <p className="mt-2 text-xs leading-relaxed text-boutique-muted">
-              {business.legalName}
-              <span aria-hidden className="mx-2 text-boutique-line">
-                ·
-              </span>
-              ЕИК {business.registrationNumber}
-            </p>
+      <section className="border-y border-boutique-line bg-white py-10 md:py-14">
+        <PageContainer>
+          <div className="grid gap-6 rounded-3xl bg-boutique-sage-deep px-6 py-8 text-boutique-on-sage shadow-boutique md:grid-cols-[1fr_auto] md:items-center md:px-10">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-boutique-on-sage/70">
+                Идея по поръчка
+              </p>
+              <h2 className="mt-3 font-heading text-3xl">
+                {content["contact.custom_order_title"]}
+              </h2>
+              <p className="mt-3 max-w-2xl text-sm leading-7 text-boutique-on-sage/80">
+                {content["contact.custom_order_text"]}
+              </p>
+            </div>
+            <a
+              href={`mailto:${email}?subject=${encodeURIComponent("Запитване за персонална поръчка")}`}
+              className="inline-flex w-fit rounded-full bg-white px-6 py-3 text-sm font-semibold text-boutique-sage-deep transition hover:bg-boutique-warm"
+            >
+              Изпрати запитване
+            </a>
           </div>
+        </PageContainer>
+      </section>
+
+      <section className="py-8">
+        <PageContainer className="text-center">
+          <p className="text-xs leading-relaxed text-boutique-muted">
+            {siteConfig.business.legalName}
+            <span aria-hidden className="mx-2">·</span>
+            ЕИК {siteConfig.business.registrationNumber}
+          </p>
         </PageContainer>
       </section>
     </div>

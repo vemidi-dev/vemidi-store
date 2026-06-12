@@ -6,12 +6,18 @@ import { ProductDetailAddToCart } from "@/components/product/product-detail-add-
 import { ProductDetailGallery } from "@/components/product/product-detail-gallery";
 import { PageContainer } from "@/components/layout/page-container";
 import { ProductPrice } from "@/components/product/product-price";
+import { ProductCard } from "@/components/product/product-card";
 import { isProductOnPromotion } from "@/lib/product-pricing";
-import { getStorefrontProduct } from "@/lib/storefront/repository";
+import {
+  getStorefrontCatalog,
+  getStorefrontProduct,
+} from "@/lib/storefront/repository";
 import { getSiteUrl } from "@/lib/site-url";
+import { buildCampaignAttribution } from "@/lib/campaign-attribution";
 
 type ProductPageProps = {
   params: Promise<{ slug: string }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
 export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
@@ -48,15 +54,42 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
   };
 }
 
-export default async function ProductDetailPage({ params }: ProductPageProps) {
+export default async function ProductDetailPage({
+  params,
+  searchParams,
+}: ProductPageProps) {
   const { slug } = await params;
-  const product = await getStorefrontProduct(slug);
+  const query = searchParams ? await searchParams : {};
+  const attribution = buildCampaignAttribution({
+    campaign: Array.isArray(query.campaign) ? query.campaign[0] : query.campaign,
+    source: Array.isArray(query.source) ? query.source[0] : query.source,
+    landingUrl: Array.isArray(query.landing) ? query.landing[0] : query.landing,
+  });
+  const [product, catalog] = await Promise.all([
+    getStorefrontProduct(slug),
+    getStorefrontCatalog(),
+  ]);
 
   if (!product) {
     notFound();
   }
 
   const productUrl = new URL(`/products/${slug}`, getSiteUrl()).toString();
+  const productById = new Map(
+    catalog.products.map((catalogProduct) => [
+      catalogProduct.slug,
+      catalogProduct,
+    ]),
+  );
+  const relatedProducts = (
+    catalog.relatedProductIdsByProductId.get(slug) ?? []
+  )
+    .map((productId) => productById.get(productId))
+    .filter(
+      (related): related is (typeof catalog.products)[number] =>
+        Boolean(related),
+    )
+    .slice(0, 4);
   const productImage = product.images.find((item) => item.src)?.src;
   const onPromotion = isProductOnPromotion(product);
   const structuredData = {
@@ -147,7 +180,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
                 </p>
               ) : null}
 
-              <ProductDetailAddToCart product={product} />
+              <ProductDetailAddToCart attribution={attribution} product={product} />
 
               <div className="mt-14 grid gap-3 md:mt-16">
                 <article className="rounded-2xl border border-boutique-line bg-boutique-bg p-5">
@@ -189,6 +222,38 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
           </div>
         </PageContainer>
       </section>
+
+      {relatedProducts.length ? (
+        <section className="border-b border-boutique-line bg-boutique-bg py-10 md:py-16">
+          <PageContainer>
+            <div className="flex items-end justify-between gap-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-boutique-accent">
+                  Още идеи
+                </p>
+                <h2 className="mt-2 font-heading text-3xl text-boutique-ink">
+                  Може да ви харесат
+                </h2>
+              </div>
+              <Link
+                href="/shop"
+                className="hidden text-sm font-semibold text-boutique-sage-deep underline-offset-4 hover:underline sm:inline-flex"
+              >
+                Виж всички
+              </Link>
+            </div>
+            <div className="mt-7 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
+              {relatedProducts.map((related) => (
+                <ProductCard
+                  key={related.slug}
+                  product={related}
+                  variant="catalog"
+                />
+              ))}
+            </div>
+          </PageContainer>
+        </section>
+      ) : null}
     </div>
   );
 }

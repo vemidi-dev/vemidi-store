@@ -25,7 +25,7 @@ export default function CategoryShowcaseCard({
         href={href}
         className="group block text-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-boutique-rose-deep"
       >
-        <div className="relative mx-auto aspect-square w-full max-w-32 overflow-hidden rounded-full border-2 border-boutique-rose/35 bg-boutique-paper p-1 transition group-hover:-translate-y-1 group-hover:border-boutique-rose-deep/50">
+        <div className="relative mx-auto aspect-square w-full max-w-[4.25rem] overflow-hidden rounded-full border-2 border-boutique-rose/35 bg-boutique-paper p-1 transition group-hover:-translate-y-1 group-hover:border-boutique-rose-deep/50 sm:max-w-32">
           <div className="relative h-full w-full overflow-hidden rounded-full">
             {category.imageSrc ? (
               <Image
@@ -40,7 +40,7 @@ export default function CategoryShowcaseCard({
             )}
           </div>
         </div>
-        <p className="mx-auto mt-4 max-w-32 font-heading text-sm leading-snug text-boutique-ink transition group-hover:text-boutique-rose-deep sm:text-base">
+        <p className="mx-auto mt-1.5 line-clamp-2 max-w-[4.25rem] font-heading text-[0.6875rem] leading-snug text-boutique-ink transition group-hover:text-boutique-rose-deep sm:mt-4 sm:max-w-32 sm:text-base">
           {category.title}
         </p>
       </Link>
@@ -66,7 +66,7 @@ export default function CategoryShowcaseCard({
             <MediaPlaceholder label="Снимка за повод" />
           )}
         </div>
-        <p className="border-t border-boutique-rose/15 px-3 py-3 text-center font-heading text-base text-boutique-ink">
+        <p className="line-clamp-2 border-t border-boutique-rose/15 px-2 py-1.5 text-center font-heading text-[0.6875rem] leading-snug text-boutique-ink sm:px-3 sm:py-3 sm:text-base sm:leading-tight">
           {category.title}
         </p>
       </Link>

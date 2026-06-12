@@ -4,9 +4,16 @@ import { revalidatePath } from "next/cache";
 
 import type { OrderRow } from "@/lib/admin/orders";
 import {
+  normalizeCampaignCode,
+  resolveOrderAttributionFromLines,
+} from "@/lib/campaign-attribution";
+import {
   validatePersonalizationFields,
   type PersonalizationFieldDefinition,
 } from "@/lib/checkout-personalization";
+import type { ProductOptionGroup } from "@/lib/product-options";
+import { validateProductOptionSelections } from "@/lib/product-option-validation";
+import { mapProductOptionGroups } from "@/lib/storefront/option-groups";
 import { sendOrderNotifications } from "@/lib/orders/send-order-notifications";
 import { getRequestFingerprint } from "@/lib/request-fingerprint";
 import { createServiceClient } from "@/lib/supabase/service";
@@ -27,6 +34,11 @@ type SubmittedCartItem = {
   personalization?: unknown;
   personalizationFields?: unknown;
   selectedColors?: unknown;
+  optionSelections?: unknown;
+  price?: unknown;
+  campaign?: unknown;
+  source?: unknown;
+  landingUrl?: unknown;
 };
 
 const checkoutErrorMessages: Record<string, string> = {
@@ -52,6 +64,17 @@ const checkoutErrorMessages: Record<string, string> = {
   product_not_customizable: "Избран продукт не поддържа персонализация.",
   invalid_color_count: "Изберете необходимия брой цветове за продукта.",
   invalid_color_selection: "Някой от избраните цветове вече не е наличен.",
+  invalid_option_selections: "Изборът на опции е невалиден.",
+  invalid_option_group: "Подадена е непозволена група опции.",
+  duplicate_option_group: "Дублирана група опции.",
+  duplicate_option_value: "Една и съща стойност на опция е подадена повече от веднъж.",
+  invalid_option_value: "Подадена е непозволена стойност на опция.",
+  invalid_option_count: "Броят избрани опции не е валиден.",
+  required_option_missing: "Попълнете всички задължителни опции.",
+  option_dependency_not_met: "Условната опция не е достъпна.",
+  option_value_sold_out: "Избраната опция е изчерпана.",
+  option_text_too_long: "Текстът в опцията е твърде дълъг.",
+  invalid_option_date: "Въведете валидна дата в опцията.",
   invalid_idempotency_key: "Заявката за поръчка е невалидна. Презаредете страницата и опитайте отново.",
   order_request_in_progress: "Поръчката вече се обработва. Изчакайте момент и опитайте отново.",
   rate_limit_exceeded: "Направени са твърде много опити. Изчакайте 15 минути и опитайте отново.",
@@ -155,15 +178,46 @@ export async function createStoreOrder(
     return { ok: false, message: checkoutErrorMessages.invalid_order_item };
   }
 
-  const { data: fieldRows, error: fieldError } = await supabase
-    .from("product_personalization_fields")
-    .select("id,product_id,label,field_key,field_type,max_length,is_required")
-    .in("product_id", productIds);
+  const [
+    { data: fieldRows, error: fieldError },
+    { data: optionGroupRows, error: optionGroupError },
+  ] = await Promise.all([
+    supabase
+      .from("product_personalization_fields")
+      .select("id,product_id,label,field_key,field_type,max_length,is_required")
+      .in("product_id", productIds),
+    supabase
+      .from("product_option_groups")
+      .select(
+        "id,product_id,name,key,input_type,is_required,min_select,max_select,sort_order,is_active,pricing_mode,depends_on_option_id,placeholder,max_length,text_price_delta",
+      )
+      .in("product_id", productIds)
+      .eq("is_active", true),
+  ]);
 
-  if (fieldError) {
+  if (fieldError || optionGroupError) {
     return {
       ok: false,
       message: "Магазинът временно не може да провери персонализацията.",
+    };
+  }
+
+  const optionGroupIds = (optionGroupRows ?? []).map((group) => String(group.id));
+  const { data: optionValueRows, error: optionValueError } =
+    optionGroupIds.length > 0
+      ? await supabase
+          .from("product_option_values")
+          .select(
+            "id,group_id,label,key,price_delta,is_default,is_active,is_sold_out,sku,sort_order",
+          )
+          .in("group_id", optionGroupIds)
+          .eq("is_active", true)
+      : { data: [], error: null };
+
+  if (optionValueError) {
+    return {
+      ok: false,
+      message: "Магазинът временно не може да провери продуктовите опции.",
     };
   }
 
@@ -172,6 +226,26 @@ export async function createStoreOrder(
     const definitions = fieldsByProduct.get(field.product_id) ?? [];
     definitions.push(field);
     fieldsByProduct.set(field.product_id, definitions);
+  });
+
+  const optionGroupsByProduct = new Map<string, ProductOptionGroup[]>();
+  const groupsByProductId = new Map<string, typeof optionGroupRows>();
+  (optionGroupRows ?? []).forEach((group) => {
+    const productId = String(group.product_id);
+    const rows = groupsByProductId.get(productId) ?? [];
+    rows.push(group);
+    groupsByProductId.set(productId, rows);
+  });
+  productIds.forEach((productId) => {
+    const groups = groupsByProductId.get(productId) ?? [];
+    const groupIds = new Set(groups.map((group) => String(group.id)));
+    const values = (optionValueRows ?? []).filter((value) =>
+      groupIds.has(String(value.group_id)),
+    );
+    optionGroupsByProduct.set(
+      productId,
+      mapProductOptionGroups(groups, values),
+    );
   });
 
   const customer = {
@@ -188,6 +262,7 @@ export async function createStoreOrder(
   };
 
   const rpcItems = [];
+  const campaigns = new Set<string>();
   for (const item of items) {
     const productId = typeof item.slug === "string" ? item.slug : "";
     const definitions = fieldsByProduct.get(productId) ?? [];
@@ -203,10 +278,29 @@ export async function createStoreOrder(
       };
     }
 
+    const optionGroups = optionGroupsByProduct.get(productId) ?? [];
+    const optionValidated = validateProductOptionSelections(
+      productId,
+      optionGroups,
+      item.optionSelections,
+    );
+    if (!optionValidated.ok) {
+      return {
+        ok: false,
+        message:
+          checkoutErrorMessages[optionValidated.code] ?? optionValidated.message,
+      };
+    }
+
     const legacyPersonalization =
       definitions.length === 0 && typeof item.personalization === "string"
         ? item.personalization.trim().slice(0, 1000) || null
         : null;
+
+    const campaign = normalizeCampaignCode(item.campaign);
+    if (campaign) {
+      campaigns.add(campaign);
+    }
 
     rpcItems.push({
       productId,
@@ -214,16 +308,42 @@ export async function createStoreOrder(
       personalization: validated.summary ?? legacyPersonalization,
       personalizationFields: validated.fields,
       selectedColors: Array.isArray(item.selectedColors) ? item.selectedColors : [],
+      optionSelections: optionValidated.selections,
     });
   }
 
-  const { data, error } = await supabase.rpc("create_store_order", {
+  const orderAttribution = resolveOrderAttributionFromLines(
+    items.map((item) => ({
+      campaign: normalizeCampaignCode(item.campaign),
+      source: typeof item.source === "string" ? item.source : undefined,
+      landingUrl: typeof item.landingUrl === "string" ? item.landingUrl : undefined,
+    })),
+  );
+
+  const rpcPayload: Record<string, unknown> = {
     p_customer: customer,
     p_delivery: delivery,
     p_items: rpcItems,
-    p_note: text(formData, "note", 1000) || null,
+    p_note:
+      [
+        campaigns.size ? `Кампания: ${Array.from(campaigns).join(", ")}` : "",
+        text(formData, "note", 900),
+      ]
+        .filter(Boolean)
+        .join("\n")
+        .slice(0, 1000) || null,
     p_idempotency_key: idempotencyKey,
-  });
+  };
+
+  if (orderAttribution) {
+    rpcPayload.p_attribution = {
+      source: orderAttribution.source,
+      campaign: orderAttribution.campaign ?? null,
+      landingUrl: orderAttribution.landingUrl ?? null,
+    };
+  }
+
+  const { data, error } = await supabase.rpc("create_store_order", rpcPayload);
 
   if (error) {
     return { ok: false, message: mapCheckoutError(error.message) };

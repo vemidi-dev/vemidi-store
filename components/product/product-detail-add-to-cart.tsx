@@ -3,16 +3,26 @@
 import { useState } from "react";
 
 import { useCart } from "@/components/cart/cart-provider";
+import { ProductOptionsSelector } from "@/components/product/product-options-selector";
+import type { CampaignAttribution } from "@/lib/campaign-attribution";
 import type { Product } from "@/lib/catalog";
+import type { ProductOptionSelection } from "@/lib/product-options";
+import { validateProductOptionSelections } from "@/lib/product-option-validation";
 import type { SelectedProductColor } from "@/lib/product-colors";
 import type {
   ProductPersonalizationField,
   ProductPersonalizationValue,
 } from "@/lib/product-personalization";
 
-type ProductDetailAddToCartProps = { product: Product };
+type ProductDetailAddToCartProps = {
+  product: Product;
+  attribution?: CampaignAttribution;
+};
 
-export function ProductDetailAddToCart({ product }: ProductDetailAddToCartProps) {
+export function ProductDetailAddToCart({
+  product,
+  attribution,
+}: ProductDetailAddToCartProps) {
   const { addProduct } = useCart();
   const fallbackFields: ProductPersonalizationField[] =
     product.customizable && !(product.personalizationFields?.length)
@@ -35,7 +45,10 @@ export function ProductDetailAddToCart({ product }: ProductDetailAddToCartProps)
   const [added, setAdded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [wishFieldId, setWishFieldId] = useState<string | null>(null);
+  const [optionSelections, setOptionSelections] = useState<ProductOptionSelection[]>([]);
+  const [estimatedPrice, setEstimatedPrice] = useState(product.price);
   const colorFields = product.colorFields ?? [];
+  const optionGroups = product.optionGroups ?? [];
 
   const flattenSelectedColors = (): SelectedProductColor[] => {
     const out: SelectedProductColor[] = [];
@@ -70,6 +83,14 @@ export function ProductDetailAddToCart({ product }: ProductDetailAddToCartProps)
       if (count < field.minSelect || count > field.maxSelect) {
         return `Изберете ${field.minSelect === field.maxSelect ? field.minSelect : `${field.minSelect}–${field.maxSelect}`} цвята за „${field.label}“.`;
       }
+    }
+    const optionValidation = validateProductOptionSelections(
+      product.slug,
+      optionGroups,
+      optionSelections,
+    );
+    if (!optionValidation.ok) {
+      return optionValidation.message;
     }
     return null;
   };
@@ -174,6 +195,16 @@ export function ProductDetailAddToCart({ product }: ProductDetailAddToCartProps)
         </div>
       ) : null}
 
+      {optionGroups.length ? (
+        <ProductOptionsSelector
+          basePrice={product.price}
+          groups={optionGroups}
+          value={optionSelections}
+          onChange={setOptionSelections}
+          onEstimatedPriceChange={setEstimatedPrice}
+        />
+      ) : null}
+
       {colorFields.length ? (
         <div className="mt-7 grid gap-5 sm:grid-cols-2">
           {colorFields.map((field) => (
@@ -224,11 +255,13 @@ export function ProductDetailAddToCart({ product }: ProductDetailAddToCartProps)
           const validationError = validate();
           if (validationError) return setError(validationError);
           addProduct(
-            product,
+            { ...product, price: estimatedPrice },
             1,
             personalization || undefined,
             flattenSelectedColors() || undefined,
             personalizationFields,
+            attribution,
+            optionSelections.length ? optionSelections : undefined,
           );
           setError(null);
           setAdded(true);

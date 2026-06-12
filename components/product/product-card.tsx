@@ -18,7 +18,7 @@ export function ProductCard({ product, variant = "default" }: ProductCardProps) 
   const statusLabel = resolveProductCardStatusLabel(product);
   const ctaLabel = getProductCardCtaLabel(product);
   const ctaClassName = compact
-    ? "mt-3 inline-flex text-xs font-semibold text-boutique-sage-deep underline-offset-4 hover:underline"
+    ? "mt-1.5 inline-flex min-h-9 items-center text-xs font-semibold text-boutique-sage-deep underline-offset-4 hover:underline sm:mt-2"
     : "mt-4 block w-full rounded-full bg-boutique-ink py-3.5 text-center text-sm font-semibold tracking-wide text-boutique-paper shadow-sm transition duration-300 hover:bg-boutique-accent hover:shadow-md";
 
   return (
@@ -37,20 +37,28 @@ export function ProductCard({ product, variant = "default" }: ProductCardProps) 
         compact={compact}
       />
 
-      <div className={`flex flex-1 flex-col ${compact ? "p-4" : "p-6 sm:p-7"}`}>
+      <div className={`flex flex-1 flex-col ${compact ? "p-2.5 sm:p-4" : "p-6 sm:p-7"}`}>
         {statusLabel ? (
-          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-boutique-accent">
+          <p
+            className={`font-semibold uppercase tracking-[0.22em] text-boutique-accent ${
+              compact
+                ? "hidden text-[0.6rem] tracking-[0.18em] sm:block"
+                : "text-[0.65rem]"
+            }`}
+          >
             {statusLabel}
           </p>
         ) : null}
 
         <Link
           href={`/products/${product.slug}`}
-          className={`block focus:outline-none ${statusLabel ? "mt-2" : ""}`}
+          className={`block focus:outline-none ${statusLabel && !compact ? "mt-2" : compact && statusLabel ? "sm:mt-2" : ""}`}
         >
           <h2
-            className={`font-heading leading-snug text-boutique-ink transition duration-300 group-hover:text-boutique-sage-deep ${
-              compact ? "text-base" : "text-xl"
+            className={`font-heading text-boutique-ink transition duration-300 group-hover:text-boutique-sage-deep ${
+              compact
+                ? "line-clamp-2 text-[0.8125rem] leading-snug sm:text-base"
+                : "text-xl leading-snug"
             }`}
           >
             {product.title}
@@ -63,7 +71,7 @@ export function ProductCard({ product, variant = "default" }: ProductCardProps) 
           </p>
         ) : null}
 
-        <div className={compact ? "mt-4" : "mt-6 border-t border-boutique-line/80 pt-5"}>
+        <div className={compact ? "mt-2 sm:mt-4" : "mt-6 border-t border-boutique-line/80 pt-5"}>
           <ProductPrice product={product} size={compact ? "md" : "lg"} />
           {product.soldOut ? (
             <p className="mt-3 text-xs font-semibold uppercase tracking-[0.16em] text-boutique-muted">

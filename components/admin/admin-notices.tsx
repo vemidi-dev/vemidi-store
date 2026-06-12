@@ -19,6 +19,10 @@ const errorLabels: Record<keyof AdminData["errors"], string> = {
   wishTemplates: "готови пожелания",
   wishTemplateOccasions: "поводи за пожелания",
   productWishTemplates: "пожелания към продуктите",
+  homeFeaturedProducts: "избрани продукти за началната страница",
+  relatedProducts: "свързани продукти",
+  optionGroups: "универсални опции",
+  optionValues: "стойности на опции",
 };
 
 export function AdminNotices({ success, error, errors }: AdminNoticesProps) {

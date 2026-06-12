@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import { InformationPage, InformationSection } from "@/components/legal/information-page";
-import { siteConfig } from "@/config/site";
+import { getSiteContent } from "@/lib/content/site-content";
 
 export const metadata: Metadata = {
   title: "Политика за бисквитки",
@@ -9,21 +9,30 @@ export const metadata: Metadata = {
   alternates: { canonical: "/cookies" },
 };
 
-export default function CookiesPage() {
+export default async function CookiesPage() {
+  const content = await getSiteContent();
+
   return (
-    <InformationPage eyebrow="Настройки на сайта" title="Политика за бисквитки" description="Какви технически механизми използва магазинът и защо са необходими.">
-      <p className="text-xs uppercase tracking-wider">Последна актуализация: 28 май 2026 г.</p>
-      <InformationSection title="Какво са бисквитките">
-        <p>Бисквитките и сходните технологии са малки записи в браузъра, които помагат на сайта да работи правилно и да запази необходимото състояние.</p>
+    <InformationPage
+      eyebrow={content["cookies.hero_eyebrow"]}
+      title={content["cookies.hero_title"]}
+      description={content["cookies.hero_description"]}
+    >
+      <p className="text-xs uppercase tracking-wider">{content["cookies.updated_at"]}</p>
+      <InformationSection title={content["cookies.what_title"]}>
+        <p>{content["cookies.what_text"]}</p>
       </InformationSection>
-      <InformationSection title="Какво използва магазинът">
-        <p>В момента се използват технически необходими механизми, включително за администраторска сесия, сигурност и запазване на количката в браузъра.</p>
+      <InformationSection title={content["cookies.usage_title"]}>
+        <p>{content["cookies.usage_text"]}</p>
       </InformationSection>
-      <InformationSection title="Аналитика и реклама">
-        <p>Към момента не са активирани рекламни или аналитични бисквитки като Meta Pixel или Google Analytics. Преди включването им тази политика и управлението на съгласието ще бъдат актуализирани.</p>
+      <InformationSection title={content["cookies.analytics_title"]}>
+        <p>{content["cookies.analytics_text"]}</p>
       </InformationSection>
-      <InformationSection title="Контакт">
-        <p>При въпроси пишете на <a href={`mailto:${siteConfig.business.email}`}>{siteConfig.business.email}</a>.</p>
+      <InformationSection title={content["cookies.contact_title"]}>
+        <p>
+          {content["cookies.contact_text"]}{" "}
+          <a href={`mailto:${content["business.email"]}`}>{content["business.email"]}</a>.
+        </p>
       </InformationSection>
     </InformationPage>
   );

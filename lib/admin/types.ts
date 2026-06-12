@@ -7,7 +7,8 @@ export type AdminTab =
   | "blog"
   | "events"
   | "wishes"
-  | "subscribers";
+  | "subscribers"
+  | "content";
 
 export type SubscriptionTopic = "blog" | "products" | "events";
 
@@ -160,6 +161,17 @@ export type ProductCategoryRow = {
   category_id: string;
 };
 
+export type HomeFeaturedProductRow = {
+  product_id: string;
+  sort_order: number;
+};
+
+export type RelatedProductRow = {
+  product_id: string;
+  related_product_id: string;
+  sort_order: number;
+};
+
 export type ColorGroupRow = {
   id: string;
   key: string;
@@ -222,6 +234,7 @@ export type ProductCreateDraft = {
   colorFields: ProductDraftColorField[];
   personalizationFields: ProductDraftPersonalizationField[];
   wishTemplateIds: string[];
+  optionGroups?: ProductDraftOptionGroup[];
 };
 
 export type ParsedColorField = {
@@ -237,3 +250,66 @@ export type ParsedPersonalizationField =
   ProductDraftPersonalizationField & {
     sortOrder: number;
   };
+
+export type ProductOptionGroupRow = {
+  id: string;
+  product_id: string;
+  name: string;
+  key: string;
+  input_type: "single" | "multiple" | "text" | "textarea" | "date";
+  is_required: boolean;
+  min_select: number;
+  max_select: number;
+  sort_order: number;
+  is_active: boolean;
+  pricing_mode: string;
+  depends_on_option_id: string | null;
+  placeholder: string | null;
+  max_length: number | null;
+  text_price_delta: number;
+};
+
+export type ProductOptionValueRow = {
+  id: string;
+  group_id: string;
+  label: string;
+  key: string;
+  price_delta: number;
+  is_default: boolean;
+  is_active: boolean;
+  is_sold_out: boolean;
+  sku: string | null;
+  sort_order: number;
+};
+
+export type ParsedOptionValue = {
+  id: string | null;
+  label: string;
+  key: string;
+  priceDelta: number;
+  isDefault: boolean;
+  isActive: boolean;
+  isSoldOut: boolean;
+  sku: string | null;
+  sortOrder: number;
+};
+
+export type ParsedOptionGroup = {
+  id: string | null;
+  name: string;
+  key: string;
+  inputType: "single" | "multiple" | "text" | "textarea" | "date";
+  isRequired: boolean;
+  minSelect: number;
+  maxSelect: number;
+  sortOrder: number;
+  isActive: boolean;
+  pricingMode: "delta";
+  dependsOnOptionId: string | null;
+  placeholder: string | null;
+  maxLength: number | null;
+  textPriceDelta: number;
+  values: ParsedOptionValue[];
+};
+
+export type ProductDraftOptionGroup = ParsedOptionGroup;

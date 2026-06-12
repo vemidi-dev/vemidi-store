@@ -58,9 +58,12 @@ export function filterSubscribers(
 }
 
 export function getSubscriberCounts(subscribers: NewsletterSubscriberRow[]) {
+  const active = subscribers.filter((subscriber) => subscriber.is_active).length;
+
   return {
     total: subscribers.length,
-    active: subscribers.filter((subscriber) => subscriber.is_active).length,
+    active,
+    inactive: subscribers.length - active,
     products: subscribers.filter(
       (subscriber) => subscriber.is_active && subscriber.topics.includes("products"),
     ).length,
@@ -80,17 +83,19 @@ function escapeCsvCell(value: string) {
 
 export function buildSubscriberCsv(subscribers: NewsletterSubscriberRow[]) {
   const header = [
-    "email",
-    "products",
-    "blog",
-    "events",
-    "created_at",
+    "имейл",
+    "продукти",
+    "блог",
+    "работилници",
+    "статус",
+    "добавен_на",
   ];
   const rows = subscribers.map((subscriber) => [
     subscriber.email,
-    subscriber.topics.includes("products") ? "yes" : "no",
-    subscriber.topics.includes("blog") ? "yes" : "no",
-    subscriber.topics.includes("events") ? "yes" : "no",
+    subscriber.topics.includes("products") ? "да" : "не",
+    subscriber.topics.includes("blog") ? "да" : "не",
+    subscriber.topics.includes("events") ? "да" : "не",
+    subscriber.is_active ? "активен" : "неактивен",
     subscriber.created_at,
   ]);
 

@@ -3,8 +3,9 @@ import { NextResponse } from "next/server";
 
 import {
   buildOrdersCsv,
-  filterOrders,
-  type OrderRow,
+  loadOrdersForExport,
+  normalizeOrderCsvColumns,
+  parseOrdersQuery,
 } from "@/lib/admin/orders";
 import { checkIsAdmin } from "@/lib/supabase/admin-auth";
 import { createClient } from "@/lib/supabase/server";
@@ -35,34 +36,47 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const result = await supabase
-    .from("orders")
-    .select("*")
-    .order("created_at", { ascending: false });
+  const params = request.nextUrl.searchParams;
+  const query = parseOrdersQuery({
+    status: params.get("status") ?? "",
+    search: params.get("q") ?? "",
+    source: params.get("source") ?? "",
+    dateFrom: params.get("date_from") ?? "",
+    dateTo: params.get("date_to") ?? "",
+    payment: params.get("payment") ?? "",
+    delivery: params.get("delivery") ?? "",
+    sort: params.get("sort") ?? "",
+  });
 
-  if (result.error) {
+  const scope = params.get("scope");
+  const selectedIds = params.getAll("ids");
+  const exportScope =
+    scope === "selected" || scope === "page" ? scope : "filtered";
+
+  try {
+    const orders = await loadOrdersForExport(supabase, query, {
+      scope: exportScope,
+      selectedIds,
+      pageOrderIds: selectedIds,
+    });
+    const columns = normalizeOrderCsvColumns(params.getAll("columns"));
+    const csv = `\uFEFF${buildOrdersCsv(orders, columns)}`;
+    const date = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Europe/Sofia",
+    }).format(new Date());
+
+    return new NextResponse(csv, {
+      headers: {
+        "Cache-Control": "private, no-store",
+        "Content-Disposition": `attachment; filename="vemidi-orders-${date}.csv"`,
+        "Content-Type": "text/csv; charset=utf-8",
+        "X-Content-Type-Options": "nosniff",
+      },
+    });
+  } catch {
     return NextResponse.json(
       { error: "Поръчките не могат да бъдат експортирани." },
       { status: 500 },
     );
   }
-
-  const orders = filterOrders((result.data ?? []) as OrderRow[], {
-    status: request.nextUrl.searchParams.get("status") ?? "",
-    source: request.nextUrl.searchParams.get("source") ?? "",
-    search: request.nextUrl.searchParams.get("q") ?? "",
-  });
-  const csv = `\uFEFF${buildOrdersCsv(orders)}`;
-  const date = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Europe/Sofia",
-  }).format(new Date());
-
-  return new NextResponse(csv, {
-    headers: {
-      "Cache-Control": "private, no-store",
-      "Content-Disposition": `attachment; filename="vemidi-orders-${date}.csv"`,
-      "Content-Type": "text/csv; charset=utf-8",
-      "X-Content-Type-Options": "nosniff",
-    },
-  });
 }

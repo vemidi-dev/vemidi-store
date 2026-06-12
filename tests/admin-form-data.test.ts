@@ -8,6 +8,7 @@ import {
   getWishTemplateIds,
   makeCreateProductDraft,
 } from "@/lib/admin/form-data";
+import { parseProductOptionGroups } from "@/lib/admin/parse-option-groups";
 
 test("admin form field names stay aligned with product draft parsing", () => {
   const formData = new FormData();
@@ -100,6 +101,7 @@ test("all current admin tabs are accepted", () => {
     "events",
     "wishes",
     "subscribers",
+    "content",
   ] as const) {
     formData.set(adminFormFields.common.tab, tab);
     assert.equal(getAdminTab(formData, "products"), tab);
@@ -107,4 +109,78 @@ test("all current admin tabs are accepted", () => {
 
   formData.set(adminFormFields.common.tab, "unknown");
   assert.equal(getAdminTab(formData, "orders"), "orders");
+});
+
+test("mixed product option groups keep their row values aligned", () => {
+  const formData = new FormData();
+  const appendRow = (values: {
+    name: string;
+    key: string;
+    inputType: string;
+    required: string;
+    min: string;
+    max: string;
+    placeholder: string;
+    maxLength: string;
+    textPriceDelta: string;
+    valuesJson: string;
+  }) => {
+    formData.append(adminFormFields.optionGroup.ids, "");
+    formData.append(adminFormFields.optionGroup.names, values.name);
+    formData.append(adminFormFields.optionGroup.keys, values.key);
+    formData.append(adminFormFields.optionGroup.inputTypes, values.inputType);
+    formData.append(adminFormFields.optionGroup.required, values.required);
+    formData.append(adminFormFields.optionGroup.minSelects, values.min);
+    formData.append(adminFormFields.optionGroup.maxSelects, values.max);
+    formData.append(adminFormFields.optionGroup.sortOrders, "0");
+    formData.append(adminFormFields.optionGroup.active, "on");
+    formData.append(adminFormFields.optionGroup.dependsOnOptionIds, "");
+    formData.append(adminFormFields.optionGroup.placeholders, values.placeholder);
+    formData.append(adminFormFields.optionGroup.maxLengths, values.maxLength);
+    formData.append(adminFormFields.optionGroup.textPriceDeltas, values.textPriceDelta);
+    formData.append(adminFormFields.optionGroup.valuesJson, values.valuesJson);
+  };
+
+  appendRow({
+    name: "Размер",
+    key: "size",
+    inputType: "single",
+    required: "on",
+    min: "1",
+    max: "1",
+    placeholder: "",
+    maxLength: "",
+    textPriceDelta: "0",
+    valuesJson: JSON.stringify([
+      {
+        label: "Мини",
+        key: "mini",
+        priceDelta: 0,
+        isDefault: true,
+        isActive: true,
+        isSoldOut: false,
+      },
+    ]),
+  });
+  appendRow({
+    name: "Име",
+    key: "name",
+    inputType: "text",
+    required: "off",
+    min: "0",
+    max: "0",
+    placeholder: "Въведете име",
+    maxLength: "50",
+    textPriceDelta: "3",
+    valuesJson: "[]",
+  });
+
+  const parsed = parseProductOptionGroups(formData);
+  assert.equal(parsed.error, null);
+  assert.equal(parsed.groups[0]?.name, "Размер");
+  assert.equal(parsed.groups[0]?.values[0]?.label, "Мини");
+  assert.equal(parsed.groups[1]?.name, "Име");
+  assert.equal(parsed.groups[1]?.placeholder, "Въведете име");
+  assert.equal(parsed.groups[1]?.maxLength, 50);
+  assert.equal(parsed.groups[1]?.textPriceDelta, 3);
 });

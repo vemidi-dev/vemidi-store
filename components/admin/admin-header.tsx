@@ -2,6 +2,41 @@ import { adminLogout } from "@/app/admin/login/actions";
 import { makeAdminTabHref } from "@/lib/admin/params";
 import type { AdminTab } from "@/lib/admin/types";
 
+const managementTabs: Array<{ tab: AdminTab; label: string }> = [
+  { tab: "products", label: "Продукти" },
+  { tab: "categories", label: "Категории" },
+  { tab: "colors", label: "Цветове" },
+  { tab: "promotions", label: "Промоции" },
+  { tab: "blog", label: "Блог" },
+  { tab: "events", label: "Събития" },
+  { tab: "wishes", label: "Пожелания" },
+  { tab: "subscribers", label: "Абонаменти" },
+  { tab: "content", label: "Текстове" },
+];
+
+function AdminTabLink({
+  activeTab,
+  label,
+  tab,
+}: {
+  activeTab: AdminTab;
+  label: string;
+  tab: AdminTab;
+}) {
+  return (
+    <a
+      className={`rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-wider transition ${
+        activeTab === tab
+          ? "bg-boutique-ink text-boutique-paper"
+          : "text-boutique-ink hover:bg-boutique-bg"
+      }`}
+      href={makeAdminTabHref(tab)}
+    >
+      {label}
+    </a>
+  );
+}
+
 export function AdminHeader({ activeTab }: { activeTab: AdminTab }) {
   return (
     <>
@@ -13,8 +48,8 @@ export function AdminHeader({ activeTab }: { activeTab: AdminTab }) {
           <h1 className="font-heading text-3xl text-boutique-ink">Админ панел</h1>
           <form action={adminLogout}>
             <button
-              type="submit"
               className="rounded-full border border-boutique-line px-4 py-2 text-xs font-semibold uppercase tracking-wider text-boutique-ink transition hover:border-boutique-accent/40"
+              type="submit"
             >
               Изход
             </button>
@@ -22,101 +57,43 @@ export function AdminHeader({ activeTab }: { activeTab: AdminTab }) {
         </div>
       </div>
 
-      <nav
-        aria-label="Админ секции"
-        className="flex w-full flex-wrap gap-1 rounded-2xl border border-boutique-line bg-boutique-paper p-1 sm:w-fit sm:rounded-full"
-      >
-        <a
-          href={makeAdminTabHref("products")}
-          className={`rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-wider transition ${
-            activeTab === "products"
-              ? "bg-boutique-ink text-boutique-paper"
-              : "text-boutique-ink hover:bg-boutique-bg"
-          }`}
+      <div className="space-y-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+          <p className="shrink-0 text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-boutique-sage-deep">
+            Продажби
+          </p>
+          <div
+            aria-hidden
+            className="hidden h-px flex-1 bg-boutique-line sm:block"
+          />
+        </div>
+        <nav
+          aria-label="Продажби"
+          className="flex w-full flex-wrap gap-1 rounded-2xl border border-boutique-sage-deep/30 bg-boutique-sage-deep/10 p-1 sm:w-fit sm:rounded-full"
         >
-          Управление на продукти
-        </a>
-        <a
-          href={makeAdminTabHref("categories")}
-          className={`rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-wider transition ${
-            activeTab === "categories"
-              ? "bg-boutique-ink text-boutique-paper"
-              : "text-boutique-ink hover:bg-boutique-bg"
-          }`}
+          <AdminTabLink activeTab={activeTab} label="Поръчки" tab="orders" />
+        </nav>
+      </div>
+
+      <div className="space-y-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+          <p className="shrink-0 text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-boutique-muted">
+            Съдържание
+          </p>
+          <div
+            aria-hidden
+            className="hidden h-px flex-1 bg-boutique-line sm:block"
+          />
+        </div>
+        <nav
+          aria-label="Управление на съдържанието"
+          className="flex w-full flex-wrap gap-1 rounded-2xl border border-boutique-line bg-boutique-paper p-1"
         >
-          Управление на категории
-        </a>
-        <a
-          href={makeAdminTabHref("colors")}
-          className={`rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-wider transition ${
-            activeTab === "colors"
-              ? "bg-boutique-ink text-boutique-paper"
-              : "text-boutique-ink hover:bg-boutique-bg"
-          }`}
-        >
-          Цветове
-        </a>
-        <a
-          href={makeAdminTabHref("promotions")}
-          className={`rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-wider transition ${
-            activeTab === "promotions"
-              ? "bg-boutique-ink text-boutique-paper"
-              : "text-boutique-ink hover:bg-boutique-bg"
-          }`}
-        >
-          Промоции
-        </a>
-        <a
-          href={makeAdminTabHref("orders")}
-          className={`rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-wider transition ${
-            activeTab === "orders"
-              ? "bg-boutique-ink text-boutique-paper"
-              : "text-boutique-ink hover:bg-boutique-bg"
-          }`}
-        >
-          Поръчки
-        </a>
-        <a
-          href={makeAdminTabHref("blog")}
-          className={`rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-wider transition ${
-            activeTab === "blog"
-              ? "bg-boutique-ink text-boutique-paper"
-              : "text-boutique-ink hover:bg-boutique-bg"
-          }`}
-        >
-          Блог
-        </a>
-        <a
-          href={makeAdminTabHref("events")}
-          className={`rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-wider transition ${
-            activeTab === "events"
-              ? "bg-boutique-ink text-boutique-paper"
-              : "text-boutique-ink hover:bg-boutique-bg"
-          }`}
-        >
-          Събития
-        </a>
-        <a
-          href={makeAdminTabHref("wishes")}
-          className={`rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-wider transition ${
-            activeTab === "wishes"
-              ? "bg-boutique-ink text-boutique-paper"
-              : "text-boutique-ink hover:bg-boutique-bg"
-          }`}
-        >
-          Пожелания
-        </a>
-        <a
-          href={makeAdminTabHref("subscribers")}
-          className={`rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-wider transition ${
-            activeTab === "subscribers"
-              ? "bg-boutique-ink text-boutique-paper"
-              : "text-boutique-ink hover:bg-boutique-bg"
-          }`}
-        >
-          Абонаменти
-        </a>
-      </nav>
+          {managementTabs.map((item) => (
+            <AdminTabLink activeTab={activeTab} key={item.tab} {...item} />
+          ))}
+        </nav>
+      </div>
     </>
   );
 }

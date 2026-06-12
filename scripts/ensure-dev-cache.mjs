@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, rmSync } from "node:fs";
 import path from "node:path";
 
-const nextDir = ".next";
+const nextDir = ".next-dev";
 const devCssPath = path.join(nextDir, "static", "css", "app", "layout.css");
 const prodCssDir = path.join(nextDir, "static", "css");
 
@@ -15,13 +15,7 @@ function hasProductionCssArtifacts() {
   );
 }
 
-function cleanNextCaches() {
-  for (const dir of [".next", ".next-local", ".next-dev"]) {
-    rmSync(dir, { recursive: true, force: true });
-  }
-}
-
 if (existsSync(nextDir) && hasProductionCssArtifacts() && !existsSync(devCssPath)) {
-  console.log("Stale production cache detected. Cleaning .next before dev...");
-  cleanNextCaches();
+  console.log("Stale development cache detected. Cleaning .next-dev before dev...");
+  rmSync(nextDir, { recursive: true, force: true });
 }

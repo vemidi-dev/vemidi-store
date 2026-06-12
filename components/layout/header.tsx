@@ -1,23 +1,27 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import { HeaderActions } from "@/components/layout/header-actions";
 import { MobileNav } from "@/components/layout/mobile-nav";
-import { NavCartLink } from "@/components/layout/nav-cart-link";
 import { PageContainer } from "@/components/layout/page-container";
+import { SocialLinks } from "@/components/layout/social-links";
 import { siteConfig } from "@/config/site";
+import { getSiteContent } from "@/lib/content/site-content";
 
 const navLinkClass =
   "relative rounded-sm text-sm font-medium text-boutique-muted transition-colors duration-200 after:pointer-events-none after:absolute after:-bottom-1 after:left-0 after:h-px after:w-full after:origin-left after:scale-x-0 after:bg-boutique-rose-deep after:transition-transform after:duration-300 hover:text-boutique-rose-deep hover:after:scale-x-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-boutique-rose-deep";
 
 export async function Header() {
+  const content = await getSiteContent();
+
   return (
     <div className="sticky top-0 z-50 shadow-[0_1px_0_rgb(44_40_37_/0.05)]">
       <header className="border-b border-boutique-line/70 bg-white/95 backdrop-blur-sm">
       <PageContainer>
-        <div className="flex items-center justify-between gap-6 py-3.5">
+        <div className="flex items-center justify-between gap-2 py-3.5 sm:gap-6">
           <Link
             href="/"
-            className="group flex shrink-0 items-center gap-3 rounded-lg pr-2 transition-colors duration-200"
+            className="group flex min-w-0 shrink items-center gap-2 rounded-lg pr-1 transition-colors duration-200 sm:shrink-0 sm:gap-3 sm:pr-2"
           >
             <span className="grid h-10 w-10 place-items-center overflow-hidden rounded-full border border-boutique-rose/25 bg-boutique-paper transition-colors duration-200 group-hover:border-boutique-rose-deep/40">
               <Image
@@ -28,18 +32,18 @@ export async function Header() {
                 className="h-8 w-8 object-contain"
               />
             </span>
-            <span className="leading-tight">
-              <span className="block font-heading text-lg tracking-tight text-boutique-ink transition-colors duration-200 group-hover:text-boutique-rose-deep sm:text-xl">
+            <span className="min-w-0 leading-tight">
+              <span className="block truncate font-heading text-base tracking-tight text-boutique-ink transition-colors duration-200 group-hover:text-boutique-rose-deep sm:text-xl">
                 VeMiDi crafts
               </span>
-              <span className="mt-0.5 block text-[0.68rem] font-medium uppercase tracking-[0.18em] text-boutique-muted">
-                Подари ми спомен
+              <span className="mt-0.5 hidden text-[0.68rem] font-medium uppercase tracking-[0.18em] text-boutique-muted min-[390px]:block">
+                {content["header.tagline"]}
               </span>
             </span>
           </Link>
 
           <nav aria-label="Основна навигация" className="hidden flex-1 justify-center xl:flex">
-            <ul className="flex items-center gap-6">
+            <ul className="flex items-center gap-5">
               {siteConfig.navigation.map((item) => (
                 <li key={item.href}>
                   <Link href={item.href} className={navLinkClass}>
@@ -47,19 +51,17 @@ export async function Header() {
                   </Link>
                 </li>
               ))}
-              <li>
-                <NavCartLink />
-              </li>
             </ul>
           </nav>
 
-          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-            <Link
-              href="/shop"
-              className="rounded-lg border border-boutique-rose-deep/25 bg-boutique-rose-deep px-4 py-2 text-xs font-medium text-white transition-colors duration-200 hover:bg-boutique-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-boutique-rose-deep"
-            >
-              Разгледай
-            </Link>
+          <div className="flex shrink-0 items-center gap-2">
+            <div className="hidden 2xl:block">
+              <SocialLinks
+                networks={["instagram", "facebook", "tiktok"]}
+                showHeading={false}
+              />
+            </div>
+            <HeaderActions />
             <MobileNav />
           </div>
         </div>
@@ -77,9 +79,6 @@ export async function Header() {
               </Link>
             </li>
           ))}
-          <li>
-            <NavCartLink />
-          </li>
         </ul>
       </nav>
     </header>

@@ -1,5 +1,21 @@
+import type { ProductOptionSelection } from "@/lib/product-options";
 import type { SelectedProductColor } from "@/lib/product-colors";
 import type { ProductPersonalizationValue } from "@/lib/product-personalization";
+
+function serializeOptionSelections(optionSelections?: ProductOptionSelection[]) {
+  if (!optionSelections?.length) {
+    return "";
+  }
+
+  return [...optionSelections]
+    .sort((a, b) => a.groupId.localeCompare(b.groupId))
+    .map((selection) => {
+      const values = [...selection.valueIds].sort().join(",");
+      const text = selection.textValue?.trim() ?? "";
+      return `${selection.groupId}:${values}:${text}`;
+    })
+    .join("|");
+}
 
 function serializeColors(selectedColors?: SelectedProductColor[]) {
   if (!selectedColors || selectedColors.length === 0) {
@@ -37,11 +53,13 @@ export function makeCartLineId(
   personalization?: string,
   selectedColors?: SelectedProductColor[],
   personalizationFields?: ProductPersonalizationValue[],
+  optionSelections?: ProductOptionSelection[],
 ): string {
   const p =
     serializePersonalizationFields(personalizationFields) ||
     personalization?.trim() ||
     "";
   const colors = serializeColors(selectedColors);
-  return `${slug}::${p}::${colors}`;
+  const options = serializeOptionSelections(optionSelections);
+  return `${slug}::${p}::${colors}::${options}`;
 }

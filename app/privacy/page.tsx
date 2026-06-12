@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 
 import { InformationPage, InformationSection } from "@/components/legal/information-page";
 import { siteConfig } from "@/config/site";
+import { splitLines } from "@/lib/content/format-content";
+import { getSiteContent } from "@/lib/content/site-content";
 
 export const metadata: Metadata = {
   title: "Политика за поверителност",
@@ -9,35 +11,51 @@ export const metadata: Metadata = {
   alternates: { canonical: "/privacy" },
 };
 
-export default function PrivacyPage() {
+export default async function PrivacyPage() {
+  const content = await getSiteContent();
   const { business } = siteConfig;
+
   return (
-    <InformationPage eyebrow="Лични данни" title="Политика за поверителност" description="Използваме само информацията, необходима за поръчки, записвания и комуникация.">
-      <p className="text-xs uppercase tracking-wider">Последна актуализация: 28 май 2026 г.</p>
-      <InformationSection title="Администратор на данните">
-        <p><strong>{business.legalName}</strong>, {business.address}</p>
-        <p>Контакт: <a href={`mailto:${business.email}`}>{business.email}</a>, <a href={`tel:${business.phoneHref}`}>{business.phoneDisplay}</a></p>
+    <InformationPage
+      eyebrow={content["privacy.hero_eyebrow"]}
+      title={content["privacy.hero_title"]}
+      description={content["privacy.hero_description"]}
+    >
+      <p className="text-xs uppercase tracking-wider">{content["privacy.updated_at"]}</p>
+      <InformationSection title={content["privacy.controller_title"]}>
+        <p>
+          <strong>{business.legalName}</strong>, {content["business.address"]}
+        </p>
+        <p>
+          Контакт:{" "}
+          <a href={`mailto:${content["business.email"]}`}>{content["business.email"]}</a>,{" "}
+          <a href={`tel:${content["business.phone_href"]}`}>
+            {content["business.phone_display"]}
+          </a>
+        </p>
       </InformationSection>
-      <InformationSection title="Какви данни получаваме">
+      <InformationSection title={content["privacy.data_title"]}>
         <ul className="list-disc space-y-1 pl-5">
-          <li>име, телефон и предоставен имейл;</li>
-          <li>населено място, адрес или офис и избран куриер;</li>
-          <li>данни и бележки за поръчка или персонализация;</li>
-          <li>данни, изпратени при записване за събитие или абонамент.</li>
+          {splitLines(content["privacy.data_items"]).map((item) => (
+            <li key={item}>{item}</li>
+          ))}
         </ul>
       </InformationSection>
-      <InformationSection title="За какво ги използваме">
-        <p>За обработване, изработка, потвърждение и доставка на поръчки, управление на записвания, отговор на запитвания и изпълнение на законови задължения.</p>
+      <InformationSection title={content["privacy.usage_title"]}>
+        <p>{content["privacy.usage_text"]}</p>
       </InformationSection>
-      <InformationSection title="Съхранение и достъп">
-        <p>Данните за магазина се съхраняват в инфраструктурата на Supabase и са достъпни само за нуждите на магазина. На куриер се предоставят единствено данните, необходими за доставката.</p>
+      <InformationSection title={content["privacy.storage_title"]}>
+        <p>{content["privacy.storage_text"]}</p>
       </InformationSection>
-      <InformationSection title="Срок за съхранение">
-        <p>Информацията се пази за срок, необходим за изпълнение на поръчката, рекламации, счетоводни и други законови задължения.</p>
+      <InformationSection title={content["privacy.retention_title"]}>
+        <p>{content["privacy.retention_text"]}</p>
       </InformationSection>
-      <InformationSection title="Вашите права">
-        <p>Можете да поискате достъп, корекция, ограничаване, изтриване или преносимост на данните и да възразите срещу обработването им в предвидените от закона случаи.</p>
-        <p>Изпратете искането си на <a href={`mailto:${business.email}`}>{business.email}</a>.</p>
+      <InformationSection title={content["privacy.rights_title"]}>
+        <p>{content["privacy.rights_text"]}</p>
+        <p>
+          Изпратете искането си на{" "}
+          <a href={`mailto:${content["business.email"]}`}>{content["business.email"]}</a>.
+        </p>
       </InformationSection>
     </InformationPage>
   );

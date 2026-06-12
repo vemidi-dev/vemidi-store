@@ -1,10 +1,8 @@
+import { createCategory } from "@/app/admin/actions";
+import { CategoryManagementView } from "@/components/admin/category-management-view";
 import {
-  createCategory,
-  deleteCategory,
-  moveCategory,
-  updateCategory,
-} from "@/app/admin/actions";
-import {
+  adminAccordionClass,
+  adminAccordionSummaryClass,
   adminFieldClass,
   adminPanelClass,
 } from "@/components/admin/styles";
@@ -12,229 +10,96 @@ import { adminFormFields } from "@/lib/admin/form-fields";
 import type { CategoryRow } from "@/lib/admin/types";
 
 export function CategoryManagementPanel({ categories }: { categories: CategoryRow[] }) {
-  const categoryGroups = [
-    {
-      type: "product" as const,
-      title: "Продуктови категории",
-      description: "Видове изделия и продуктови линии, например декорации, пликове или фигурки.",
-    },
-    {
-      type: "occasion" as const,
-      title: "Категории по повод",
-      description: "Поводи, за които се търси подарък, например сватба, юбилей или рожден ден.",
-    },
-  ];
-
   return (
     <article className={adminPanelClass}>
       <h2 className="font-heading text-2xl text-boutique-ink">
         Управление на категории
       </h2>
       <p className="mt-2 text-sm text-boutique-muted">
-        Категориите са разделени на видове продукти и поводи. Един продукт може да бъде включен в повече от една категория.
+        Компактен списък с табове за продуктови категории и поводи. Пренареждането важи
+        в рамките на активния таб.
       </p>
 
-      <form action={createCategory} className="mt-6 grid gap-4 md:grid-cols-[1fr_1fr_1fr_auto]">
-        <input type="hidden" name={adminFormFields.common.tab} value="categories" />
-        <label className="text-sm font-medium text-boutique-ink">
-          Име на категория
-          <input name={adminFormFields.category.name} required placeholder="Напр. Сватба" className={adminFieldClass} />
-        </label>
-        <label className="text-sm font-medium text-boutique-ink">
-          Slug
-          <input name={adminFormFields.category.slug} required placeholder="napr-svatba" className={adminFieldClass} />
-        </label>
-        <label className="text-sm font-medium text-boutique-ink">
-          Тип категория
-          <select name={adminFormFields.category.type} required defaultValue="product" className={adminFieldClass}>
-            <option value="product">Продуктова категория</option>
-            <option value="occasion">Повод</option>
-          </select>
-        </label>
-        <label className="text-sm font-medium text-boutique-ink md:col-span-3">
-          Кратък текст за картата
-          <textarea
-            name={adminFormFields.category.cardDescription}
-            rows={2}
-            placeholder="Кратко описание, което се показва под името на категорията"
-            className={`${adminFieldClass} min-h-20 resize-y`}
-          />
-        </label>
-        <label className="inline-flex items-center gap-2 text-sm font-medium text-boutique-ink md:col-span-3">
-          <input
-            name={adminFormFields.category.showOnHome}
-            type="checkbox"
-            defaultChecked
-            className="h-4 w-4 rounded border-boutique-line text-boutique-accent"
-          />
-          Показвай на началната страница
-        </label>
-        <div className="self-end">
-          <button
-            type="submit"
-            className="rounded-full bg-boutique-ink px-5 py-3 text-xs font-semibold uppercase tracking-wider text-boutique-paper transition hover:bg-boutique-accent"
-          >
-            Добави категория
-          </button>
-        </div>
-      </form>
+      <details className={`${adminAccordionClass} mt-6`}>
+        <summary
+          className={adminAccordionSummaryClass}
+          aria-label="Добави нова категория — формуляр"
+        >
+          <span className="font-heading text-lg text-boutique-ink">Добави нова категория</span>
+          <span className="text-sm font-normal text-boutique-muted" aria-hidden>
+            Формуляр
+          </span>
+        </summary>
+        <form
+          action={createCategory}
+          className="border-t border-boutique-line/80 px-4 pb-4 pt-4 sm:px-5 sm:pb-5"
+        >
+          <div className="grid gap-4 md:grid-cols-[1fr_1fr_1fr_auto]">
+            <input type="hidden" name={adminFormFields.common.tab} value="categories" />
+            <label className="text-sm font-medium text-boutique-ink">
+              Име на категория
+              <input
+                name={adminFormFields.category.name}
+                required
+                placeholder="Напр. Сватба"
+                className={adminFieldClass}
+              />
+            </label>
+            <label className="text-sm font-medium text-boutique-ink">
+              Slug
+              <input
+                name={adminFormFields.category.slug}
+                required
+                placeholder="napr-svatba"
+                className={adminFieldClass}
+              />
+            </label>
+            <label className="text-sm font-medium text-boutique-ink">
+              Тип категория
+              <select
+                name={adminFormFields.category.type}
+                required
+                defaultValue="product"
+                className={adminFieldClass}
+              >
+                <option value="product">Продуктова категория</option>
+                <option value="occasion">Повод</option>
+              </select>
+            </label>
+            <label className="text-sm font-medium text-boutique-ink md:col-span-3">
+              Кратък текст за картата
+              <textarea
+                name={adminFormFields.category.cardDescription}
+                rows={2}
+                placeholder="Кратко описание под името на категорията"
+                className={`${adminFieldClass} min-h-16 resize-y`}
+              />
+            </label>
+            <label className="inline-flex items-center gap-2 text-sm font-medium text-boutique-ink md:col-span-3">
+              <input
+                name={adminFormFields.category.showOnHome}
+                type="checkbox"
+                defaultChecked
+                className="h-4 w-4 rounded border-boutique-line text-boutique-accent"
+              />
+              Показвай на началната страница
+            </label>
+            <div className="self-end">
+              <button
+                type="submit"
+                className="rounded-full bg-boutique-ink px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-boutique-paper transition hover:bg-boutique-accent"
+              >
+                Добави
+              </button>
+            </div>
+          </div>
+        </form>
+      </details>
 
       {categories.length === 0 ? (
         <p className="mt-5 text-sm text-boutique-muted">Все още няма категории.</p>
       ) : (
-        <div className="mt-8 space-y-8">
-          {categoryGroups.map((group) => {
-            const groupedCategories = categories
-              .filter((category) => category.category_type === group.type)
-              .sort((a, b) => {
-                const positionDifference = a.home_sort_order - b.home_sort_order;
-                return positionDifference || a.name.localeCompare(b.name, "bg");
-              });
-
-            return (
-              <section key={group.type}>
-                <h3 className="font-heading text-xl text-boutique-ink">{group.title}</h3>
-                <p className="mt-1 text-sm text-boutique-muted">{group.description}</p>
-                {groupedCategories.length === 0 ? (
-                  <p className="mt-4 rounded-lg border border-dashed border-boutique-line px-4 py-3 text-sm text-boutique-muted">
-                    Няма добавени категории в тази група.
-                  </p>
-                ) : (
-                  <ul className="mt-4 space-y-3">
-                    {groupedCategories.map((category) => (
-                      <li
-                        key={category.id}
-                        className="rounded-lg border border-boutique-line/70 bg-boutique-bg p-4"
-                      >
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="font-medium text-boutique-ink">{category.name}</p>
-                  <p className="text-xs text-boutique-muted">Slug: {category.slug}</p>
-                  {category.card_description ? (
-                    <p className="mt-1 text-xs text-boutique-muted line-clamp-2">
-                      {category.card_description}
-                    </p>
-                  ) : null}
-                  <p className="mt-1 text-xs text-boutique-muted">
-                    {category.show_on_home
-                      ? "Показва се на началната страница"
-                      : "Скрита от началната страница"}
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <form action={moveCategory}>
-                    <input type="hidden" name={adminFormFields.common.tab} value="categories" />
-                    <input type="hidden" name={adminFormFields.common.id} value={category.id} />
-                    <input type="hidden" name={adminFormFields.category.direction} value="up" />
-                    <button
-                      type="submit"
-                      disabled={groupedCategories[0]?.id === category.id}
-                      className="rounded-full border border-boutique-line px-3 py-2 text-xs font-semibold text-boutique-ink disabled:cursor-not-allowed disabled:opacity-35"
-                    >
-                      Нагоре
-                    </button>
-                  </form>
-                  <form action={moveCategory}>
-                    <input type="hidden" name={adminFormFields.common.tab} value="categories" />
-                    <input type="hidden" name={adminFormFields.common.id} value={category.id} />
-                    <input type="hidden" name={adminFormFields.category.direction} value="down" />
-                    <button
-                      type="submit"
-                      disabled={groupedCategories.at(-1)?.id === category.id}
-                      className="rounded-full border border-boutique-line px-3 py-2 text-xs font-semibold text-boutique-ink disabled:cursor-not-allowed disabled:opacity-35"
-                    >
-                      Надолу
-                    </button>
-                  </form>
-                  <form action={deleteCategory}>
-                    <input type="hidden" name={adminFormFields.common.tab} value="categories" />
-                    <input type="hidden" name={adminFormFields.common.id} value={category.id} />
-                    <button
-                      type="submit"
-                      className="rounded-full border border-red-300 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-red-700 transition hover:bg-red-50"
-                    >
-                      Изтрий
-                    </button>
-                  </form>
-                </div>
-              </div>
-
-              <details className="mt-3 rounded-lg border border-boutique-line/70 bg-boutique-paper p-3">
-                <summary className="cursor-pointer text-sm font-semibold text-boutique-ink">
-                  Редактирай категория
-                </summary>
-                <form
-                  action={updateCategory}
-                  className="mt-4 grid gap-4 md:grid-cols-[1fr_1fr_1fr_auto]"
-                >
-                  <input type="hidden" name={adminFormFields.common.tab} value="categories" />
-                  <input type="hidden" name={adminFormFields.common.id} value={category.id} />
-                  <label className="text-sm font-medium text-boutique-ink">
-                    Име на категория
-                    <input
-                      name={adminFormFields.category.name}
-                      required
-                      defaultValue={category.name}
-                      className={adminFieldClass}
-                    />
-                  </label>
-                  <label className="text-sm font-medium text-boutique-ink">
-                    Slug
-                    <input
-                      name={adminFormFields.category.slug}
-                      required
-                      defaultValue={category.slug}
-                      className={adminFieldClass}
-                    />
-                  </label>
-                  <label className="text-sm font-medium text-boutique-ink">
-                    Тип категория
-                    <select
-                      name={adminFormFields.category.type}
-                      defaultValue={category.category_type}
-                      className={adminFieldClass}
-                    >
-                      <option value="product">Продуктова категория</option>
-                      <option value="occasion">Повод</option>
-                    </select>
-                  </label>
-                  <label className="text-sm font-medium text-boutique-ink md:col-span-3">
-                    Кратък текст за картата
-                    <textarea
-                      name={adminFormFields.category.cardDescription}
-                      rows={2}
-                      defaultValue={category.card_description ?? ""}
-                      placeholder="Кратко описание, което се показва под името на категорията"
-                      className={`${adminFieldClass} min-h-20 resize-y`}
-                    />
-                  </label>
-                  <label className="inline-flex items-center gap-2 text-sm font-medium text-boutique-ink md:col-span-3">
-                    <input
-                      name={adminFormFields.category.showOnHome}
-                      type="checkbox"
-                      defaultChecked={category.show_on_home}
-                      className="h-4 w-4 rounded border-boutique-line text-boutique-accent"
-                    />
-                    Показвай на началната страница
-                  </label>
-                  <div className="self-end">
-                    <button
-                      type="submit"
-                      className="rounded-full bg-boutique-ink px-5 py-3 text-xs font-semibold uppercase tracking-wider text-boutique-paper transition hover:bg-boutique-accent"
-                    >
-                      Запази
-                    </button>
-                  </div>
-                </form>
-              </details>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </section>
-            );
-          })}
-        </div>
+        <CategoryManagementView categories={categories} />
       )}
     </article>
   );
