@@ -32,6 +32,7 @@ type ProductCreatePanelProps = {
   wishes: WishTemplateRow[];
   wishOccasionLinks: WishTemplateOccasionRow[];
   draft: ProductCreateDraft | null;
+  imageReselectWarning?: boolean;
 };
 
 export function ProductCreatePanel({
@@ -41,6 +42,7 @@ export function ProductCreatePanel({
   wishes,
   wishOccasionLinks,
   draft,
+  imageReselectWarning = false,
 }: ProductCreatePanelProps) {
   const productCategories = categories.filter(
     (category) => category.category_type === "product",
@@ -131,6 +133,17 @@ export function ProductCreatePanel({
           initialSlug={draft?.slug ?? ""}
           mode="create"
         />
+
+        {imageReselectWarning ? (
+          <div
+            role="alert"
+            className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+          >
+            Предишното качване на снимки не успя. Продуктът може да е запазен без изображения —
+            изберете снимките отново преди повторно изпращане, или ги добавете от галерията при
+            редакция на продукта.
+          </div>
+        ) : null}
 
         <fieldset className="space-y-4 border-t border-boutique-line/70 pt-6">
           <legend className="text-xs font-semibold uppercase tracking-[0.16em] text-boutique-muted">

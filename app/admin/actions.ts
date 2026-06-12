@@ -506,9 +506,13 @@ export async function createProduct(formData: FormData) {
         0,
       );
     } catch (error) {
-      await deleteProductAtomic(supabase, newProductId);
       const message = error instanceof Error ? error.message : "Неуспешно качване на изображението.";
-      redirectWith("error", `Грешка при качване на изображение: ${message}`, activeTab, draft);
+      await revalidateProductPaths(supabase, newProductId);
+      redirectWithProductEdit(
+        "error",
+        `Продуктът е създаден, но снимките не бяха качени: ${message}. Изберете ги отново в секцията „Галерия“ по-долу.`,
+        newProductId,
+      );
     }
   }
 
@@ -520,12 +524,14 @@ export async function createProduct(formData: FormData) {
   );
   if (galleryError) {
     await deleteUploadedImagesBestEffort(supabase, uploadedImages);
-    await deleteProductAtomic(supabase, newProductId);
-    redirectWith(
+    await revalidateProductPaths(supabase, newProductId);
+    const migrationMissing = galleryError.message.includes("admin_attach_product_images");
+    redirectWithProductEdit(
       "error",
-      "Продуктът не беше добавен, защото галерията не можа да бъде записана. Изпълнете product_image_gallery.sql.",
-      activeTab,
-      draft,
+      migrationMissing
+        ? "Продуктът е създаден, но галерията не беше записана. Изпълнете product_image_gallery.sql и добавете снимките от секцията „Галерия“."
+        : "Продуктът е създаден, но снимките не бяха записани в галерията. Опитайте отново от секцията „Галерия“.",
+      newProductId,
     );
   }
 

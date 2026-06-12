@@ -41,7 +41,7 @@ export function ProductImageFileInput({
   const defaultHelper = useMemo(
     () =>
       helperText ??
-      `PNG, JPG или WEBP до ${formatMegabytes(PRODUCT_IMAGE_MAX_INPUT_BYTES)}. Максимум ${PRODUCT_IMAGE_MAX_PER_PRODUCT} снимки на продукт. Снимките се оптимизират автоматично преди качване.`,
+      `PNG, JPG или WEBP до ${formatMegabytes(PRODUCT_IMAGE_MAX_INPUT_BYTES)}. Максимум ${PRODUCT_IMAGE_MAX_PER_PRODUCT} снимки на продукт. Снимките се оптимизират автоматично преди качване. При грешка при изпращане изберете файловете отново — браузърът не ги запазва автоматично.`,
     [helperText],
   );
   const [message, setMessage] = useState(defaultHelper);

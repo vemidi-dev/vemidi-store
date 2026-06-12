@@ -22,6 +22,7 @@ const supabaseRemotePattern = getSupabaseRemotePattern();
 
 const nextConfig: NextConfig = {
   distDir: process.env.NODE_ENV === "development" ? ".next-dev" : ".next",
+  serverExternalPackages: ["sharp"],
   outputFileTracingIncludes: {
     "/*": [
       "./node_modules/@img/sharp-linux-x64/**/*",

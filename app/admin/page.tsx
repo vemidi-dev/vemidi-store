@@ -49,6 +49,11 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   const error = firstValue(params.error);
   const editProductId = firstValue(params.editProduct);
   const draft = parseProductCreateDraft(firstValue(params.draft));
+  const imageReselectWarning = Boolean(
+    error &&
+      (/качване на изображение/i.test(error) ||
+        /снимките не бяха качени/i.test(error)),
+  );
   const activeTab = normalizeAdminTab(firstValue(params.tab));
   const ordersQuery = parseOrdersQuery({
     status: firstValue(params.status),
@@ -468,6 +473,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                 wishes={data.wishTemplates}
                 wishOccasionLinks={data.wishTemplateOccasions}
                 draft={draft}
+                imageReselectWarning={imageReselectWarning}
               />
               <ProductListPanel data={data} editProductId={editProductId || undefined} />
             </>

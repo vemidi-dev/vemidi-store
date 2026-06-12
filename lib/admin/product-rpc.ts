@@ -168,6 +168,17 @@ export function getProductMutationErrorMessage(
     return "Липсват права за запис. Изпълнете restore_admin_product_write_grants.sql в Supabase.";
   }
 
+  if (error?.code === "23502") {
+    const columnMatch = message.match(/column "([^"]+)"/i);
+    const column = columnMatch?.[1];
+    if (column === "slug" || column === "product_code") {
+      return "Липсва slug или продуктов код. Изпълнете product_slug_admin_rpc_hotfix.sql в Supabase и redeploy-нете последния app код.";
+    }
+    return column
+      ? `Липсва задължителна стойност за „${column}“. (${error.code})`
+      : `Липсва задължителна стойност в базата. (${error.code})`;
+  }
+
   const knownError = Object.entries(rpcErrorMessages).find(([code]) =>
     message.includes(code),
   );

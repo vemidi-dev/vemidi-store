@@ -223,6 +223,7 @@ Run `product_slug_and_code.sql` after `site_content_settings.sql`. The file is w
   grants `EXECUTE` only to `authenticated`, and keeps the sequence owner-only;
 - slug helpers (`slugify_product_name`, `reserve_unique_product_slug`, etc.);
 - `admin_create_product_v5` / `admin_update_product_v5` with server-side slug validation;
+- `admin_create_product_v4` wrapper that delegates to v5 (for older app builds);
 - updated `admin_duplicate_product` with fresh slug and product code;
 - updated `create_store_order` snapshots with `productCode` and `productSlug`.
 
@@ -240,6 +241,11 @@ Safe apply order for migration #34:
 5. deploy to Production only after Preview passes.
 
 UUID product URLs continue to work via application redirects after deploy.
+
+If product create fails with PostgreSQL error `23502` after migration #34, run
+`supabase/product_slug_admin_rpc_hotfix.sql` in the SQL editor. That replaces
+`admin_create_product_v5` (SECURITY DEFINER + inline `nextval`) and redefines
+`admin_create_product_v4` as a wrapper to v5.
 
 To verify the new admin RPCs exist without mutating data, run in the Supabase SQL editor:
 

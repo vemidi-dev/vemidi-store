@@ -401,7 +401,7 @@ create or replace function public.admin_create_product_v5(
 )
 returns uuid
 language plpgsql
-security invoker
+security definer
 set search_path = public
 as $$
 declare
@@ -409,6 +409,7 @@ declare
   v_slug text;
   v_product_code text;
   v_slug_base text;
+  v_next_code bigint;
   v_attempt integer;
   v_inserted boolean := false;
 begin
@@ -425,7 +426,8 @@ begin
     nullif(btrim(p_slug), ''),
     public.slugify_product_name(p_name)
   );
-  v_product_code := public.next_product_code();
+  v_next_code := nextval('public.product_code_seq');
+  v_product_code := 'VM-' || lpad(v_next_code::text, 6, '0');
 
   for v_attempt in 1..5 loop
     v_slug := public.reserve_unique_product_slug(v_slug_base);
@@ -569,6 +571,56 @@ grant execute on function public.admin_update_product_v5(
   uuid, text, text, text, text, numeric, text, boolean, boolean, text, text, uuid[], jsonb, jsonb, uuid[], jsonb
 ) to authenticated;
 
+-- Backward-compatible wrappers for older app builds still calling v4 RPCs.
+create or replace function public.admin_create_product_v4(
+  p_name text,
+  p_description text,
+  p_additional_info text,
+  p_fulfillment_note text,
+  p_price numeric,
+  p_image_url text,
+  p_is_customizable boolean,
+  p_is_sold_out boolean,
+  p_card_badge text,
+  p_category_ids uuid[],
+  p_color_fields jsonb,
+  p_personalization_fields jsonb,
+  p_wish_template_ids uuid[],
+  p_option_groups jsonb default '[]'::jsonb
+)
+returns uuid
+language plpgsql
+security invoker
+set search_path = public
+as $$
+begin
+  return public.admin_create_product_v5(
+    p_name,
+    p_description,
+    p_additional_info,
+    p_fulfillment_note,
+    p_price,
+    p_image_url,
+    p_is_customizable,
+    p_is_sold_out,
+    p_card_badge,
+    '',
+    p_category_ids,
+    p_color_fields,
+    p_personalization_fields,
+    p_wish_template_ids,
+    p_option_groups
+  );
+end;
+$$;
+
+revoke all on function public.admin_create_product_v4(
+  text, text, text, text, numeric, text, boolean, boolean, text, uuid[], jsonb, jsonb, uuid[], jsonb
+) from public;
+grant execute on function public.admin_create_product_v4(
+  text, text, text, text, numeric, text, boolean, boolean, text, uuid[], jsonb, jsonb, uuid[], jsonb
+) to authenticated;
+
 -- ---------------------------------------------------------------------------
 -- Duplicate product with fresh slug and product code
 -- ---------------------------------------------------------------------------
@@ -578,7 +630,7 @@ create or replace function public.admin_duplicate_product(
 )
 returns uuid
 language plpgsql
-security invoker
+security definer
 set search_path = public
 as $$
 declare
@@ -595,6 +647,7 @@ declare
   v_color_field record;
   v_new_slug text;
   v_new_product_code text;
+  v_next_code bigint;
   v_attempt integer;
 begin
   perform public.assert_admin();
@@ -608,7 +661,8 @@ begin
     raise exception 'product_not_found' using errcode = 'P0002';
   end if;
 
-  v_new_product_code := public.next_product_code();
+  v_next_code := nextval('public.product_code_seq');
+  v_new_product_code := 'VM-' || lpad(v_next_code::text, 6, '0');
 
   for v_attempt in 1..5 loop
     v_new_slug := public.reserve_unique_product_slug(
