@@ -388,7 +388,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
               ) : (
                 <div className="mt-4 grid grid-cols-2 gap-2 sm:mt-6 sm:gap-5 xl:grid-cols-3">
                   {filtered.map((product) => (
-                    <ProductCard key={product.slug} product={product} variant="catalog" />
+                    <ProductCard key={product.id} product={product} variant="catalog" />
                   ))}
                 </div>
               )}

@@ -7,6 +7,8 @@ import {
   filterOrders,
   getOrderCounts,
   getOrderPersonalizationSummary,
+  getLegacyProductOrderCode,
+  getOrderItemProductCode,
   getOrderShortId,
   getOrderSourceFilterValue,
   getOrderSourceKind,
@@ -60,7 +62,14 @@ const orders = [
     raw_payload: {
       source: "vemidi-store",
       order: {
-        items: [{ name: "Плик за пари", quantity: 2, unitPrice: 12.5 }],
+        items: [
+          {
+            productId: "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee",
+            name: "Плик за пари",
+            quantity: 2,
+            unitPrice: 12.5,
+          },
+        ],
       },
     },
   }),
@@ -145,8 +154,29 @@ test("order counters summarize workflow and source", () => {
 
 test("store order items use saved unit price from payload", () => {
   const items = parseStoreOrderItems(orders[0]);
+  assert.equal(
+    items[0]?.productId,
+    "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee",
+  );
   assert.equal(items[0]?.unitPrice, 12.5);
   assert.equal(items[0]?.quantity, 2);
+});
+
+test("legacy product order code keeps the complete unique product id", () => {
+  assert.equal(
+    getLegacyProductOrderCode("aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee"),
+    "PRD-AAAAAAAABBBB4CCC8DDDEEEEEEEEEEEE",
+  );
+});
+
+test("order item product code prefers VM snapshot code", () => {
+  assert.equal(
+    getOrderItemProductCode({
+      productId: "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee",
+      productCode: "VM-000321",
+    }),
+    "VM-000321",
+  );
 });
 
 test("order CSV uses Bulgarian headers, BOM-ready escaping and selected columns", () => {

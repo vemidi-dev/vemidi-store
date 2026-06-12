@@ -76,7 +76,9 @@ function makeGroup(overrides: Partial<ProductOptionGroup> = {}): ProductOptionGr
 }
 
 const baseProduct: Product = {
-  slug: productId,
+  id: productId,
+  slug: "primern-produkt",
+  productCode: "VM-000001",
   title: "Примерен продукт",
   description: "Описание",
   price: 20,
@@ -522,7 +524,7 @@ test("product with both legacy and universal options", () => {
   assert.ok(product.personalizationFields?.length);
 });
 
-test("cart storage migrates v8 key shape without options", () => {
+test("cart storage migrates legacy uuid slug lines to productId identity", () => {
   const legacy = JSON.stringify([
     {
       lineId: makeCartLineId(productId),
@@ -534,6 +536,7 @@ test("cart storage migrates v8 key shape without options", () => {
   ]);
   const lines = parseStoredCart(legacy);
   assert.equal(lines.length, 1);
+  assert.equal(lines[0]?.productId, productId);
   assert.equal(lines[0]?.slug, productId);
-  assert.equal(CART_STORAGE_KEY.includes("v9"), true);
+  assert.equal(CART_STORAGE_KEY.includes("v10"), true);
 });

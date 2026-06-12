@@ -18,6 +18,10 @@ import type {
   StorefrontCategory,
   StorefrontProduct,
 } from "@/lib/storefront/types";
+import {
+  resolveProductRoute,
+  type ProductRouteResolution,
+} from "@/lib/product-route";
 import { createClient } from "@/lib/supabase/server";
 
 type ProductCategoryRow = {
@@ -135,7 +139,7 @@ export async function getStorefrontCatalog(): Promise<StorefrontCatalog> {
       supabase
         .from("products")
         .select(
-          "id,name,description,price,image_url,is_customizable,is_sold_out,card_badge,created_at",
+          "id,slug,product_code,name,description,price,image_url,is_customizable,is_sold_out,card_badge,created_at",
         )
         .order("created_at", { ascending: false }),
       supabase
@@ -223,7 +227,7 @@ export async function getStorefrontCatalog(): Promise<StorefrontCatalog> {
   });
 
   const featuredProductIds = featuredProductsResult.error
-    ? products.slice(0, 6).map((product) => product.slug)
+    ? products.slice(0, 6).map((product) => product.id)
     : ((featuredProductsResult.data ?? []) as HomeFeaturedProductRow[]).map(
         (row) => row.product_id,
       );
@@ -342,16 +346,14 @@ async function getProductColorFields(
     .filter((field): field is ProductColorField => field !== null);
 }
 
-export async function getStorefrontProduct(productId: string): Promise<Product | null> {
-  const supabase = await getClient();
-  if (!supabase) {
-    return null;
-  }
-
+async function loadStorefrontProductDetails(
+  supabase: SupabaseClient,
+  productId: string,
+): Promise<Product | null> {
   const { data, error } = await supabase
     .from("products")
     .select(
-      "id,name,description,additional_info,fulfillment_note,price,image_url,is_customizable,is_sold_out,card_badge",
+      "id,slug,product_code,name,description,additional_info,fulfillment_note,price,image_url,is_customizable,is_sold_out,card_badge",
     )
     .eq("id", productId)
     .maybeSingle();
@@ -450,4 +452,38 @@ export async function getStorefrontProduct(productId: string): Promise<Product |
     },
   );
   return product;
+}
+
+/** Load a product by internal UUID (campaign checkout, admin, orders). */
+export async function getStorefrontProduct(productId: string): Promise<Product | null> {
+  const supabase = await getClient();
+  if (!supabase) {
+    return null;
+  }
+  return loadStorefrontProductDetails(supabase, productId);
+}
+
+export async function getStorefrontProductPage(
+  routeParam: string,
+): Promise<ProductRouteResolution> {
+  const supabase = await getClient();
+  if (!supabase) {
+    return { kind: "not_found" };
+  }
+
+  const route = await resolveProductRoute(supabase, routeParam);
+  if (route.kind !== "page") {
+    return route;
+  }
+
+  const product = await loadStorefrontProductDetails(supabase, route.product.id);
+  if (!product) {
+    return { kind: "not_found" };
+  }
+
+  return {
+    kind: "page",
+    product,
+    canonicalSlug: product.slug,
+  };
 }

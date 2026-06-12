@@ -86,6 +86,7 @@ test("normalizeCartQuantity rejects invalid values and applies cart limits", () 
 test("parseStoredCart safely ignores malformed or unsafe lines", () => {
   const stored = JSON.stringify([
     {
+      productId: "11111111-1111-4111-8111-111111111111",
       slug: "valid-product",
       title: "Валиден продукт",
       imageSrc: "/assets/product.webp",
@@ -104,8 +105,20 @@ test("parseStoredCart safely ignores malformed or unsafe lines", () => {
       ],
       selectedColors: [blue, { optionId: "missing-fields" }],
     },
-    { slug: "negative-price", title: "Невалиден", price: -1, quantity: 1 },
-    { slug: "zero-quantity", title: "Невалиден", price: 10, quantity: 0 },
+    {
+      productId: "22222222-2222-4222-8222-222222222222",
+      slug: "negative-price",
+      title: "Невалиден",
+      price: -1,
+      quantity: 1,
+    },
+    {
+      productId: "33333333-3333-4333-8333-333333333333",
+      slug: "zero-quantity",
+      title: "Невалиден",
+      price: 10,
+      quantity: 0,
+    },
     { slug: "", title: "Невалиден", price: 10, quantity: 1 },
     null,
   ]);
@@ -113,6 +126,7 @@ test("parseStoredCart safely ignores malformed or unsafe lines", () => {
   const lines = parseStoredCart(stored);
 
   assert.equal(lines.length, 1);
+  assert.equal(lines[0].productId, "11111111-1111-4111-8111-111111111111");
   assert.equal(lines[0].slug, "valid-product");
   assert.equal(lines[0].quantity, MAX_CART_QUANTITY);
   assert.equal(lines[0].campaign, "butterflies-summer");
@@ -130,7 +144,7 @@ test("parseStoredCart safely ignores malformed or unsafe lines", () => {
   assert.equal(
     lines[0].lineId,
     makeCartLineId(
-      "valid-product",
+      "11111111-1111-4111-8111-111111111111",
       "За Мария",
       [blue],
       lines[0].personalizationFields,
@@ -148,6 +162,7 @@ test("getCartTotals calculates item count and subtotal", () => {
   const lines: CartLine[] = [
     {
       lineId: "one",
+      productId: "11111111-1111-4111-8111-111111111111",
       slug: "one",
       title: "Първи продукт",
       price: 12.5,
@@ -155,6 +170,7 @@ test("getCartTotals calculates item count and subtotal", () => {
     },
     {
       lineId: "two",
+      productId: "22222222-2222-4222-8222-222222222222",
       slug: "two",
       title: "Втори продукт",
       price: 8,

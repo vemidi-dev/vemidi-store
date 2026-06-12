@@ -8,6 +8,7 @@ import type {
 
 export type ProductMutationInput = {
   name: string;
+  slug: string;
   description: string;
   additionalInfo: string | null;
   fulfillmentNote: string | null;
@@ -67,6 +68,7 @@ function toOptionGroupsPayload(groups: ParsedOptionGroup[]) {
 function toRpcInput(input: ProductMutationInput) {
   return {
     p_name: input.name,
+    p_slug: input.slug,
     p_description: input.description,
     p_additional_info: input.additionalInfo ?? "",
     p_fulfillment_note: input.fulfillmentNote ?? "",
@@ -97,7 +99,7 @@ export async function createProductAtomic(
   supabase: SupabaseClient,
   input: ProductMutationInput,
 ) {
-  return supabase.rpc("admin_create_product_v4", toRpcInput(input));
+  return supabase.rpc("admin_create_product_v5", toRpcInput(input));
 }
 
 export async function updateProductAtomic(
@@ -105,7 +107,7 @@ export async function updateProductAtomic(
   productId: string,
   input: ProductMutationInput,
 ) {
-  return supabase.rpc("admin_update_product_v4", {
+  return supabase.rpc("admin_update_product_v5", {
     p_product_id: productId,
     ...toRpcInput(input),
   });
@@ -141,6 +143,9 @@ const rpcErrorMessages: Record<string, string> = {
   product_text_required: "Името и описанието са задължителни.",
   invalid_price: "Цената е невалидна.",
   product_not_found: "Продуктът не е намерен.",
+  invalid_product_slug: "SEO адресът е невалиден.",
+  slug_taken: "Този SEO адрес вече се използва.",
+  slug_unavailable: "Неуспешно генериране на уникален SEO адрес.",
 };
 
 export function getProductMutationErrorMessage(

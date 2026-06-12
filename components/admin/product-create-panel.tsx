@@ -7,6 +7,7 @@ import { ProductColorFieldsEditor } from "@/components/admin/product-color-field
 import { ProductOptionGroupsEditor } from "@/components/admin/product-option-groups-editor";
 import { ProductPersonalizationFieldsEditor } from "@/components/admin/product-personalization-fields-editor";
 import { ProductCardBadgeField } from "@/components/admin/product-card-badge-field";
+import { ProductSeoFields } from "@/components/admin/product-seo-fields";
 import { ProductWishSelector } from "@/components/admin/product-wish-selector";
 import {
   adminFieldClass,
@@ -125,6 +126,11 @@ export function ProductCreatePanel({
             </label>
           </div>
         </fieldset>
+
+        <ProductSeoFields
+          initialSlug={draft?.slug ?? ""}
+          mode="create"
+        />
 
         <fieldset className="space-y-4 border-t border-boutique-line/70 pt-6">
           <legend className="text-xs font-semibold uppercase tracking-[0.16em] text-boutique-muted">

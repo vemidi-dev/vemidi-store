@@ -95,7 +95,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         <section>
           <h2 className="font-heading text-2xl text-boutique-ink">Подходящи продукти</h2>
           <div className="mt-5 grid gap-6 sm:grid-cols-2">
-            {relatedProducts.map((product) => <ProductCard key={product.slug} product={product} />)}
+            {relatedProducts.map((product) => <ProductCard key={product.id} product={product} />)}
           </div>
         </section>
       ) : null}

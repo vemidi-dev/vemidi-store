@@ -185,7 +185,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
           storedPersonalizationFields,
         );
       const lineId = makeCartLineId(
-        product.slug,
+        product.id,
         storedPersonalization,
         storedColors,
         storedPersonalizationFields,
@@ -223,6 +223,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
           ...prev,
           {
             lineId,
+            productId: product.id,
             slug: product.slug,
             title: product.title,
             imageSrc: product.images.find((image) => image.src)?.src,

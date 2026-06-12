@@ -55,6 +55,12 @@ import type {
   ParsedColorField,
   ParsedPersonalizationField,
 } from "@/lib/admin/types";
+import {
+  productSlugErrorMessages,
+  slugifyProductName,
+  validateProductSlug,
+} from "@/lib/product-slug";
+import { getProductPath } from "@/lib/product-url";
 import { checkIsAdmin } from "@/lib/supabase/admin-auth";
 import { createClient } from "@/lib/supabase/server";
 
@@ -73,15 +79,43 @@ function redirectWith(
   redirect(`${ADMIN_PATH}?${params.toString()}`);
 }
 
-function revalidateProductPaths(productId?: string) {
+async function revalidateProductPaths(
+  supabase: NonNullable<Awaited<ReturnType<typeof createClient>>>,
+  productId?: string,
+) {
   revalidatePath(ADMIN_PATH);
   revalidatePath("/");
   revalidatePath("/shop");
   revalidatePath("/products");
   revalidatePath("/categories");
-  if (productId) {
-    revalidatePath(`/products/${productId}`);
+
+  if (!productId) {
+    return;
   }
+
+  const { data } = await supabase
+    .from("products")
+    .select("slug")
+    .eq("id", productId)
+    .maybeSingle();
+
+  if (data?.slug) {
+    revalidatePath(getProductPath(String(data.slug)));
+  }
+  revalidatePath(`/products/${productId}`);
+}
+
+function parseSubmittedProductSlug(formData: FormData, productName: string) {
+  const rawSlug = getString(formData, adminFormFields.product.slug);
+  const candidate = rawSlug || slugifyProductName(productName);
+  const validated = validateProductSlug(candidate);
+  if (!validated.ok) {
+    return {
+      slug: null,
+      error: productSlugErrorMessages[validated.code],
+    };
+  }
+  return { slug: validated.slug, error: null };
 }
 
 function redirectAfterDuplicate(newProductId: string, message: string): never {
@@ -387,6 +421,7 @@ export async function createProduct(formData: FormData) {
   const cardBadge = normalizeProductCardBadge(
     getOptionalString(formData, adminFormFields.product.cardBadge),
   );
+  const { slug, error: slugError } = parseSubmittedProductSlug(formData, name);
   const imageFiles = getFiles(formData, adminFormFields.product.imageFiles);
   const galleryUploadError = validateProductImageUploadBatch(imageFiles, 0);
   const price = getPrice(formData);
@@ -402,6 +437,10 @@ export async function createProduct(formData: FormData) {
   } = parseProductPersonalizationFields(formData);
   const { groups: optionGroups, error: optionGroupsError } =
     parseProductOptionGroups(formData);
+
+  if (slugError) {
+    redirectWith("error", slugError, activeTab, draft);
+  }
 
   if (!name || !description || price === null || categoryIds.length === 0) {
     redirectWith(
@@ -431,6 +470,7 @@ export async function createProduct(formData: FormData) {
 
   const { data: productId, error: mutationError } = await createProductAtomic(supabase, {
     name,
+    slug: slug!,
     description,
     additionalInfo,
     fulfillmentNote,
@@ -489,7 +529,7 @@ export async function createProduct(formData: FormData) {
     );
   }
 
-  revalidateProductPaths(newProductId);
+  await revalidateProductPaths(supabase,newProductId);
   const optimizationSummary =
     uploadedImages.length > 0
       ? ` Оптимизирани ${uploadedImages.length} снимки.`
@@ -514,6 +554,7 @@ export async function updateProduct(formData: FormData) {
   const cardBadge = normalizeProductCardBadge(
     getOptionalString(formData, adminFormFields.product.cardBadge),
   );
+  const { slug, error: slugError } = parseSubmittedProductSlug(formData, name);
   const price = getPrice(formData);
   const imageFiles = getFiles(formData, adminFormFields.product.imageFiles);
   const existingGalleryCount = id ? await getProductGalleryImageCount(supabase, id) : 0;
@@ -531,6 +572,10 @@ export async function updateProduct(formData: FormData) {
   } = parseProductPersonalizationFields(formData);
   const { groups: optionGroups, error: optionGroupsError } =
     parseProductOptionGroups(formData);
+
+  if (slugError) {
+    redirectWithProductEdit("error", slugError, id);
+  }
 
   if (!id || !name || !description || price === null || categoryIds.length === 0) {
     redirectWith("error", "Невалидни данни за редакция.", activeTab);
@@ -558,6 +603,7 @@ export async function updateProduct(formData: FormData) {
     id,
     {
       name,
+      slug: slug!,
       description,
       additionalInfo,
       fulfillmentNote,
@@ -615,7 +661,7 @@ export async function updateProduct(formData: FormData) {
     }
   }
 
-  revalidateProductPaths(id);
+  await revalidateProductPaths(supabase,id);
   const optimizationSummary =
     uploadedImages.length > 0 ? ` Качени ${uploadedImages.length} оптимизирани снимки.` : "";
   redirectWithProductEdit("success", `Продуктът е обновен.${optimizationSummary}`, id);
@@ -669,7 +715,7 @@ export async function addProductGalleryImages(formData: FormData) {
     );
   }
 
-  revalidateProductPaths(id);
+  await revalidateProductPaths(supabase,id);
   redirectWithProductEdit(
     "success",
     `Добавени ${uploadedImages.length} оптимизирани снимки към галерията.`,
@@ -745,7 +791,7 @@ export async function replaceProductGalleryImage(formData: FormData) {
     const adapter = createSupabaseProductImageStorageAdapter(supabase);
     const cleanup = await deleteStoragePathsBestEffort(adapter, [oldStoragePath]);
     if (cleanup.errorMessage) {
-      revalidateProductPaths(productId);
+      await revalidateProductPaths(supabase,productId);
       redirectWithProductEdit(
         "error",
         `Снимката е заменена, но ${cleanup.errorMessage}`,
@@ -754,7 +800,7 @@ export async function replaceProductGalleryImage(formData: FormData) {
     }
   }
 
-  revalidateProductPaths(productId);
+  await revalidateProductPaths(supabase,productId);
   redirectWithProductEdit("success", "Снимката е заменена успешно.", productId);
 }
 
@@ -806,7 +852,7 @@ export async function updateProductMerchandising(formData: FormData) {
     );
   }
 
-  revalidateProductPaths(id);
+  await revalidateProductPaths(supabase,id);
   redirectWith(
     "success",
     "Настройките за началната страница и свързаните продукти са запазени.",
@@ -839,7 +885,7 @@ export async function toggleProductSoldOut(formData: FormData) {
     redirectWith("error", "Статусът на продукта не беше обновен.", activeTab);
   }
 
-  revalidateProductPaths(id);
+  await revalidateProductPaths(supabase,id);
   redirectWith(
     "success",
     soldOut ? "Продуктът е маркиран като изчерпан." : "Продуктът е активиран отново.",
@@ -894,7 +940,7 @@ export async function duplicateProduct(formData: FormData) {
     }
   }
 
-  revalidateProductPaths(newId);
+  await revalidateProductPaths(supabase,newId);
   redirectAfterDuplicate(
     newId,
     buildDuplicateSuccessMessage(imageWarning, { copyImagesRequested: copyImages }),
@@ -931,7 +977,7 @@ export async function deleteProduct(formData: FormData) {
   const adapter = createSupabaseProductImageStorageAdapter(supabase);
   const cleanup = await deleteProductScopedStoragePaths(adapter, id, legacyPaths);
   if (cleanup.errorMessage) {
-    revalidateProductPaths(id);
+    await revalidateProductPaths(supabase,id);
     redirectWith(
       "error",
       `Продуктът е изтрит от каталога, но ${cleanup.errorMessage}`,
@@ -939,7 +985,7 @@ export async function deleteProduct(formData: FormData) {
     );
   }
 
-  revalidateProductPaths(id);
+  await revalidateProductPaths(supabase,id);
   redirectWith("success", "Продуктът е изтрит.", activeTab);
 }
 
@@ -962,7 +1008,7 @@ export async function setPrimaryProductImage(formData: FormData) {
     redirectWith("error", "Основната снимка не беше променена.", "products");
   }
 
-  revalidateProductPaths(image?.product_id ? String(image.product_id) : undefined);
+  await revalidateProductPaths(supabase,image?.product_id ? String(image.product_id) : undefined);
   redirectWith("success", "Основната снимка е променена.", "products");
 }
 
@@ -990,7 +1036,7 @@ export async function moveProductImage(formData: FormData) {
     redirectWith("success", "Снимката вече е в края на галерията.", "products");
   }
 
-  revalidateProductPaths(image?.product_id ? String(image.product_id) : undefined);
+  await revalidateProductPaths(supabase,image?.product_id ? String(image.product_id) : undefined);
   redirectWith("success", "Редът на снимките е променен.", "products");
 }
 
@@ -1020,12 +1066,12 @@ export async function deleteProductGalleryImage(formData: FormData) {
     const adapter = createSupabaseProductImageStorageAdapter(supabase);
     const cleanup = await deleteStoragePathsBestEffort(adapter, [storagePath]);
     if (cleanup.errorMessage) {
-      revalidateProductPaths(productId ?? undefined);
+      await revalidateProductPaths(supabase,productId ?? undefined);
       redirectWith("error", cleanup.errorMessage, "products");
     }
   }
 
-  revalidateProductPaths(productId ?? undefined);
+  await revalidateProductPaths(supabase,productId ?? undefined);
   redirectWith("success", "Снимката е изтрита.", "products");
 }
 

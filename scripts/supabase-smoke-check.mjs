@@ -25,21 +25,29 @@ const localEnv = readLocalEnv();
 const supabaseUrl =
   process.env.NEXT_PUBLIC_SUPABASE_URL || localEnv.NEXT_PUBLIC_SUPABASE_URL;
 const secretKey = process.env.SUPABASE_SECRET_KEY || localEnv.SUPABASE_SECRET_KEY;
+const anonKey =
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || localEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !secretKey) {
   console.error("Missing Supabase URL or secret key.");
   process.exit(1);
 }
 
-const supabase = createClient(supabaseUrl, secretKey, {
+const clientOptions = {
   auth: {
     autoRefreshToken: false,
     persistSession: false,
   },
-});
+};
+
+const supabase = createClient(supabaseUrl, secretKey, clientOptions);
+const anonSupabase = anonKey
+  ? createClient(supabaseUrl, anonKey, clientOptions)
+  : null;
 
 const tableChecks = [
-  ["products", "id"],
+  ["products", "id, slug, product_code"],
+  ["product_slug_history", "id"],
   ["categories", "id"],
   ["product_categories", "product_id"],
   ["product_images", "id"],
@@ -79,6 +87,49 @@ const rpcChecks = [
     ["empty_order", "invalid_customer_name"],
   ],
   [
+    "admin_create_product_v5",
+    {
+      p_name: "",
+      p_description: "",
+      p_additional_info: "",
+      p_fulfillment_note: "",
+      p_price: 0,
+      p_image_url: "",
+      p_is_customizable: false,
+      p_is_sold_out: false,
+      p_card_badge: "",
+      p_slug: "",
+      p_category_ids: [],
+      p_color_fields: [],
+      p_personalization_fields: [],
+      p_wish_template_ids: [],
+      p_option_groups: [],
+    },
+    ["admin_required", "product_text_required"],
+  ],
+  [
+    "admin_update_product_v5",
+    {
+      p_product_id: "00000000-0000-4000-8000-000000000001",
+      p_name: "",
+      p_description: "",
+      p_additional_info: "",
+      p_fulfillment_note: "",
+      p_price: 0,
+      p_image_url: "",
+      p_is_customizable: false,
+      p_is_sold_out: false,
+      p_card_badge: "",
+      p_slug: "",
+      p_category_ids: [],
+      p_color_fields: [],
+      p_personalization_fields: [],
+      p_wish_template_ids: [],
+      p_option_groups: [],
+    },
+    ["admin_required", "product_text_required", "product_not_found"],
+  ],
+  [
     "admin_duplicate_product",
     { p_product_id: "00000000-0000-4000-8000-000000000001" },
     ["admin_required", "product_not_found"],
@@ -111,6 +162,46 @@ for (const [table, column] of tableChecks) {
   } else {
     console.log(`Table check passed: ${table}`);
   }
+}
+
+if (anonSupabase) {
+  const { error } = await anonSupabase
+    .from("product_slug_history")
+    .select("slug, product_id")
+    .limit(1);
+  if (error) {
+    failed = true;
+    console.error(`Anon read check failed: product_slug_history - ${error.message}`);
+  } else {
+    console.log("Anon read check passed: product_slug_history");
+  }
+} else {
+  console.log("Anon read check skipped: NEXT_PUBLIC_SUPABASE_ANON_KEY is not configured.");
+}
+
+const { data: sampleProducts, error: sampleProductsError } = await supabase
+  .from("products")
+  .select("id, slug, product_code")
+  .limit(5);
+
+if (sampleProductsError) {
+  failed = true;
+  console.error(`Product slug/code check failed: ${sampleProductsError.message}`);
+} else if ((sampleProducts ?? []).length > 0) {
+  const invalidProduct = (sampleProducts ?? []).find(
+    (product) =>
+      !String(product.slug ?? "").trim() || !String(product.product_code ?? "").trim(),
+  );
+  if (invalidProduct) {
+    failed = true;
+    console.error(
+      `Product slug/code check failed: product ${invalidProduct.id} is missing slug or product_code`,
+    );
+  } else {
+    console.log("Product slug/code check passed: sample products have slug and product_code");
+  }
+} else {
+  console.log("Product slug/code check skipped: no products in catalog");
 }
 
 for (const [name, args, expectedErrorFragments = []] of rpcChecks) {

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 
 import { ProductDetailAddToCart } from "@/components/product/product-detail-add-to-cart";
 import { ProductDetailGallery } from "@/components/product/product-detail-gallery";
@@ -10,11 +10,15 @@ import { ProductCard } from "@/components/product/product-card";
 import { isProductOnPromotion } from "@/lib/product-pricing";
 import {
   getStorefrontCatalog,
-  getStorefrontProduct,
+  getStorefrontProductPage,
 } from "@/lib/storefront/repository";
 import { getSiteUrl } from "@/lib/site-url";
 import { buildCampaignAttribution } from "@/lib/campaign-attribution";
 import { getCampaignProductPageOptionSelections } from "@/lib/campaign-handoff";
+import {
+  buildCanonicalProductRedirectPath,
+  getProductPath,
+} from "@/lib/product-url";
 
 type ProductPageProps = {
   params: Promise<{ slug: string }>;
@@ -23,27 +27,35 @@ type ProductPageProps = {
 
 export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const product = await getStorefrontProduct(slug);
+  const resolution = await getStorefrontProductPage(slug);
 
-  if (!product) {
+  if (resolution.kind === "redirect") {
+    return {
+      robots: { index: false, follow: false },
+    };
+  }
+
+  if (resolution.kind === "not_found") {
     return {
       title: "Продуктът не е намерен",
       robots: { index: false, follow: false },
     };
   }
 
+  const product = resolution.product;
   const description = product.description.slice(0, 160);
   const image = product.images.find((item) => item.src)?.src;
+  const canonicalPath = getProductPath(resolution.canonicalSlug);
 
   return {
     title: product.title,
     description,
-    alternates: { canonical: `/products/${slug}` },
+    alternates: { canonical: canonicalPath },
     openGraph: {
       type: "website",
       title: product.title,
       description,
-      url: `/products/${slug}`,
+      url: canonicalPath,
       images: image ? [{ url: image, alt: product.title }] : undefined,
     },
     twitter: {
@@ -61,33 +73,41 @@ export default async function ProductDetailPage({
 }: ProductPageProps) {
   const { slug } = await params;
   const query = searchParams ? await searchParams : {};
+  const resolution = await getStorefrontProductPage(slug);
+
+  if (resolution.kind === "redirect") {
+    permanentRedirect(
+      buildCanonicalProductRedirectPath(resolution.targetSlug, query),
+    );
+  }
+
+  if (resolution.kind === "not_found") {
+    notFound();
+  }
+
+  const product = resolution.product;
   const attribution = buildCampaignAttribution({
     campaign: Array.isArray(query.campaign) ? query.campaign[0] : query.campaign,
     source: Array.isArray(query.source) ? query.source[0] : query.source,
     landingUrl: Array.isArray(query.landing) ? query.landing[0] : query.landing,
   });
-  const [product, catalog] = await Promise.all([
-    getStorefrontProduct(slug),
-    getStorefrontCatalog(),
-  ]);
-
-  if (!product) {
-    notFound();
-  }
-
+  const catalog = await getStorefrontCatalog();
   const initialOptionSelections = getCampaignProductPageOptionSelections(
     product,
     query,
   );
-  const productUrl = new URL(`/products/${slug}`, getSiteUrl()).toString();
+  const productUrl = new URL(
+    getProductPath(product.slug),
+    getSiteUrl(),
+  ).toString();
   const productById = new Map(
     catalog.products.map((catalogProduct) => [
-      catalogProduct.slug,
+      catalogProduct.id,
       catalogProduct,
     ]),
   );
   const relatedProducts = (
-    catalog.relatedProductIdsByProductId.get(slug) ?? []
+    catalog.relatedProductIdsByProductId.get(product.id) ?? []
   )
     .map((productId) => productById.get(productId))
     .filter(
@@ -104,6 +124,7 @@ export default async function ProductDetailPage({
     description: product.description,
     image: productImage ? [productImage] : undefined,
     url: productUrl,
+    sku: product.productCode,
     brand: {
       "@type": "Brand",
       name: "VeMiDi crafts",
@@ -254,7 +275,7 @@ export default async function ProductDetailPage({
             <div className="mt-7 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
               {relatedProducts.map((related) => (
                 <ProductCard
-                  key={related.slug}
+                  key={related.id}
                   product={related}
                   variant="catalog"
                 />

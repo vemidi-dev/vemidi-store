@@ -5,6 +5,8 @@ import { toProduct, type ProductRow } from "@/lib/storefront/mappers";
 
 const productRow: ProductRow = {
   id: "product-1",
+  slug: "podarachna-kutiya",
+  product_code: "VM-000001",
   name: "Подаръчна кутия",
   description: "Описание",
   price: 29.9,

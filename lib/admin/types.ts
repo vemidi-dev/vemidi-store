@@ -127,6 +127,8 @@ export type EventRegistrationRow = {
 
 export type ProductRow = {
   id: string;
+  slug: string;
+  product_code: string;
   name: string;
   description: string;
   additional_info: string | null;
@@ -225,6 +227,7 @@ export type ProductDraftPersonalizationField = {
 
 export type ProductCreateDraft = {
   name: string;
+  slug: string;
   description: string;
   additionalInfo: string;
   fulfillmentNote: string;

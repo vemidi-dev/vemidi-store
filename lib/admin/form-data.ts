@@ -3,6 +3,7 @@ import { adminFormFields } from "@/lib/admin/form-fields";
 
 type CreateProductDraftPayload = {
   name: string;
+  slug: string;
   description: string;
   additional_info: string;
   fulfillment_note: string;
@@ -179,6 +180,7 @@ export function makeCreateProductDraft(formData: FormData) {
 
   const draft: CreateProductDraftPayload = {
     name: getString(formData, adminFormFields.product.name),
+    slug: getString(formData, adminFormFields.product.slug),
     description: getString(formData, adminFormFields.product.description),
     additional_info: getString(formData, adminFormFields.product.additionalInfo),
     fulfillment_note: getString(formData, adminFormFields.product.fulfillmentNote),

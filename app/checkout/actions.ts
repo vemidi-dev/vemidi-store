@@ -16,6 +16,7 @@ import { validateProductOptionSelections } from "@/lib/product-option-validation
 import { mapProductOptionGroups } from "@/lib/storefront/option-groups";
 import { sendOrderNotifications } from "@/lib/orders/send-order-notifications";
 import { getRequestFingerprint } from "@/lib/request-fingerprint";
+import { isUuid } from "@/lib/is-uuid";
 import { createServiceClient } from "@/lib/supabase/service";
 
 export type CheckoutActionState = {
@@ -32,6 +33,7 @@ export type CheckoutActionState = {
 };
 
 type SubmittedCartItem = {
+  productId?: unknown;
   slug?: unknown;
   title?: unknown;
   quantity?: unknown;
@@ -205,17 +207,18 @@ export async function createStoreOrder(
     return { ok: false, message: checkoutErrorMessages.rate_limit_exceeded };
   }
 
+  const resolveSubmittedProductId = (item: SubmittedCartItem) => {
+    if (typeof item.productId === "string" && isUuid(item.productId)) {
+      return item.productId;
+    }
+    if (typeof item.slug === "string" && isUuid(item.slug)) {
+      return item.slug;
+    }
+    return "";
+  };
+
   const productIds = Array.from(
-    new Set(
-      items.flatMap((item) =>
-        typeof item.slug === "string" &&
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-          item.slug,
-        )
-          ? [item.slug]
-          : [],
-      ),
-    ),
+    new Set(items.map(resolveSubmittedProductId).filter(Boolean)),
   );
   if (productIds.length === 0) {
     return { ok: false, message: checkoutErrorMessages.invalid_order_item };
@@ -302,7 +305,7 @@ export async function createStoreOrder(
   const rpcItems = [];
   const campaigns = new Set<string>();
   for (const item of items) {
-    const productId = typeof item.slug === "string" ? item.slug : "";
+    const productId = resolveSubmittedProductId(item);
     const definitions = fieldsByProduct.get(productId) ?? [];
     const validated = validatePersonalizationFields(
       item.personalizationFields,

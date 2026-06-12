@@ -9,7 +9,12 @@ export type ProductImage = {
 };
 
 export type Product = {
+  /** Internal UUID primary key — used for cart, checkout, and orders. */
+  id: string;
+  /** Public SEO slug for storefront URLs. */
   slug: string;
+  /** Human-readable product code, e.g. VM-000123. */
+  productCode: string;
   title: string;
   description: string;
   additionalInfo?: string | null;

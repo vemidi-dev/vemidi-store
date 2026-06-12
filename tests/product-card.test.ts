@@ -10,7 +10,9 @@ import {
 } from "@/lib/product-card";
 
 const baseProduct: Product = {
+  id: "11111111-1111-4111-8111-111111111111",
   slug: "gift-box",
+  productCode: "VM-000099",
   title: "Подаръчна кутия",
   description: "Описание",
   price: 29.9,

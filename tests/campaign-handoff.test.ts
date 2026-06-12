@@ -12,7 +12,9 @@ import type { Product } from "@/lib/catalog";
 const productId = "11111111-1111-4111-8111-111111111111";
 
 const simpleProduct: Product = {
-  slug: productId,
+  id: productId,
+  slug: "peperuda",
+  productCode: "VM-000010",
   title: "Пеперуда",
   description: "Описание",
   price: 19.5,

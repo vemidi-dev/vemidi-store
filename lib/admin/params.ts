@@ -49,6 +49,7 @@ export function parseProductCreateDraft(raw: string): ProductCreateDraft | null 
   try {
     const parsed = JSON.parse(raw) as {
       name?: unknown;
+      slug?: unknown;
       description?: unknown;
       additional_info?: unknown;
       fulfillment_note?: unknown;
@@ -180,6 +181,7 @@ export function parseProductCreateDraft(raw: string): ProductCreateDraft | null 
 
     return {
       name: typeof parsed.name === "string" ? parsed.name : "",
+      slug: typeof parsed.slug === "string" ? parsed.slug : "",
       description: typeof parsed.description === "string" ? parsed.description : "",
       additionalInfo: typeof parsed.additional_info === "string" ? parsed.additional_info : "",
       fulfillmentNote:

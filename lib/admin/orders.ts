@@ -1,5 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { getProductPath } from "@/lib/product-url";
+
 import type { ProductOptionSelectionSnapshot } from "@/lib/product-options";
 import { formatOrderOptionLine, parseOrderOptionSelections } from "@/lib/order-option-display";
 
@@ -89,6 +91,9 @@ export const orderStatusLabels: Record<OrderStatus, string> = {
 export const riskyOrderStatuses: OrderStatus[] = ["cancelled"];
 
 export type StoreOrderItem = {
+  productId: string | null;
+  productCode: string | null;
+  productSlug: string | null;
   name: string;
   unitPrice: number | null;
   quantity: number;
@@ -356,6 +361,27 @@ export function getOrderShortId(order: Pick<OrderRow, "id">) {
   return order.id.slice(0, 8).toUpperCase();
 }
 
+export function getLegacyProductOrderCode(productId: string) {
+  return `PRD-${productId.replaceAll("-", "").toUpperCase()}`;
+}
+
+export function getOrderItemProductCode(item: Pick<StoreOrderItem, "productCode" | "productId">) {
+  if (item.productCode?.trim()) {
+    return item.productCode.trim();
+  }
+  if (item.productId) {
+    return getLegacyProductOrderCode(item.productId);
+  }
+  return null;
+}
+
+export function getOrderItemProductPath(item: Pick<StoreOrderItem, "productSlug" | "productId">) {
+  if (item.productSlug?.trim()) {
+    return getProductPath(item.productSlug.trim());
+  }
+  return null;
+}
+
 export function parseStoreOrderItems(order: OrderRow): StoreOrderItem[] {
   const items = order.raw_payload?.order?.items;
   if (!Array.isArray(items)) {
@@ -373,6 +399,18 @@ export function parseStoreOrderItems(order: OrderRow): StoreOrderItem[] {
     }
 
     return [{
+      productId:
+        typeof item.productId === "string" && item.productId.trim()
+          ? item.productId.trim()
+          : null,
+      productCode:
+        typeof item.productCode === "string" && item.productCode.trim()
+          ? item.productCode.trim()
+          : null,
+      productSlug:
+        typeof item.productSlug === "string" && item.productSlug.trim()
+          ? item.productSlug.trim()
+          : null,
       name: item.name,
       unitPrice: typeof item.unitPrice === "number" ? item.unitPrice : null,
       quantity: item.quantity,

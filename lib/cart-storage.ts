@@ -1,3 +1,4 @@
+import { isUuid } from "@/lib/is-uuid";
 import { makeCartLineId } from "@/lib/cart-line-id";
 import {
   normalizeCampaignCode,
@@ -107,7 +108,17 @@ export function parseStoredCart(raw: string | null): CartLine[] {
         continue;
       }
 
-      const { slug, title, price } = value;
+      const legacySlug =
+        typeof value.slug === "string" ? value.slug.trim() : "";
+      const explicitProductId =
+        typeof value.productId === "string" ? value.productId.trim() : "";
+      const productId =
+        explicitProductId || (isUuid(legacySlug) ? legacySlug : "");
+      const slug =
+        typeof value.slug === "string" && value.slug.trim() && !isUuid(value.slug)
+          ? value.slug.trim()
+          : legacySlug;
+      const { title, price } = value;
       const imageSrc =
         typeof value.imageSrc === "string" && value.imageSrc.trim()
           ? value.imageSrc.trim().slice(0, 2000)
@@ -116,8 +127,8 @@ export function parseStoredCart(raw: string | null): CartLine[] {
         typeof value.quantity === "number" ? normalizeCartQuantity(value.quantity) : 0;
 
       if (
-        typeof slug !== "string" ||
-        !slug ||
+        !productId ||
+        !isUuid(productId) ||
         typeof title !== "string" ||
         !title ||
         typeof price !== "number" ||
@@ -161,13 +172,14 @@ export function parseStoredCart(raw: string | null): CartLine[] {
 
       lines.push({
         lineId: makeCartLineId(
-          slug,
+          productId,
           personalization,
           normalizedColors,
           normalizedPersonalizationFields,
           normalizedOptionSelections,
         ),
-        slug,
+        productId,
+        slug: slug || productId,
         title,
         imageSrc,
         price,

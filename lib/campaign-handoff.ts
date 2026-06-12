@@ -334,7 +334,7 @@ function getMissingRequirements(
   }
 
   const optionValidation = validateProductOptionSelections(
-    product.slug,
+    product.id,
     product.optionGroups ?? [],
     optionSelections,
   );
@@ -479,7 +479,7 @@ export function evaluateCampaignHandoff(
   }
 
   const optionValidation = validateProductOptionSelections(
-    product.slug,
+    product.id,
     product.optionGroups ?? [],
     resolvedOptions.selections,
   );
@@ -538,7 +538,7 @@ export function evaluateCampaignHandoff(
 
 export function buildCampaignHandoffSignature(result: CampaignHandoffSuccess) {
   return [
-    result.product.slug,
+    result.product.id,
     result.quantity,
     result.attribution.source,
     result.attribution.campaign ?? "",

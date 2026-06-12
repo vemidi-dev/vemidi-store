@@ -35,6 +35,7 @@ Apply the SQL files in this order for a new environment:
 31. `supabase/event_gallery_images.sql`
 32. `supabase/category_card_description.sql`
 33. `supabase/site_content_settings.sql`
+34. `supabase/product_slug_and_code.sql`
 
 `supabase/migrate_product_color_rules_to_fields.sql` is needed only when upgrading an installation
 that already contains the older `product_color_rules` data. Run it after
@@ -211,3 +212,45 @@ authenticated admin session) or a not-found error — no rows are created or upd
 
 Run `event_gallery_images.sql` after blog/events migrations. It stores ordered gallery images for past
 workshops, with admin upload/reorder support and public display on the events page.
+
+Run `product_slug_and_code.sql` after `site_content_settings.sql`. The file is wrapped in
+`begin;` / `commit;` so a failed step rolls back the whole migration. It adds:
+
+- `products.slug` and `products.product_code` with unique indexes;
+- `product_slug_history` with public read RLS for storefront redirects and admin-only insert;
+- `product_code_seq` and `next_product_code()` for atomic `VM-000001` style codes;
+  `next_product_code()` is `SECURITY DEFINER`, calls `assert_admin()` before `nextval()`,
+  grants `EXECUTE` only to `authenticated`, and keeps the sequence owner-only;
+- slug helpers (`slugify_product_name`, `reserve_unique_product_slug`, etc.);
+- `admin_create_product_v5` / `admin_update_product_v5` with server-side slug validation;
+- updated `admin_duplicate_product` with fresh slug and product code;
+- updated `create_store_order` snapshots with `productCode` and `productSlug`.
+
+Existing products are backfilled deterministically: codes by `created_at, id`, slugs from transliterated
+names with uniqueness suffixes. Re-running the migration does not overwrite existing slug or product_code
+values. An empty `products` table is supported: the sequence is initialized with
+`setval(seq, 1, false)` so the first new code is `VM-000001`.
+
+Safe apply order for migration #34:
+
+1. export `products`, `product_images`, and `orders` from Supabase;
+2. run the complete `supabase/product_slug_and_code.sql` file in the SQL editor;
+3. run `npm run supabase:check` locally;
+4. deploy to a Vercel Preview and run the smoke test from `docs/DEPLOYMENT.md`;
+5. deploy to Production only after Preview passes.
+
+UUID product URLs continue to work via application redirects after deploy.
+
+To verify the new admin RPCs exist without mutating data, run in the Supabase SQL editor:
+
+```sql
+select proname
+from pg_proc
+join pg_namespace on pg_namespace.oid = pg_proc.pronamespace
+where pg_namespace.nspname = 'public'
+  and proname in (
+    'admin_create_product_v5',
+    'admin_update_product_v5'
+  )
+order by proname;
+```

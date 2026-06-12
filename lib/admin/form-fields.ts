@@ -5,6 +5,7 @@ export const adminFormFields = {
   },
   product: {
     name: "name",
+    slug: "slug",
     description: "description",
     additionalInfo: "additional_info",
     fulfillmentNote: "fulfillment_note",

@@ -5,6 +5,9 @@ import type { ProductPersonalizationValue } from "@/lib/product-personalization"
 
 export type CartLine = {
   lineId: string;
+  /** Stable UUID identity for checkout and cart merging. */
+  productId: Product["id"];
+  /** Current SEO slug for storefront links. */
   slug: Product["slug"];
   title: string;
   imageSrc?: string;
@@ -22,9 +25,9 @@ export type CartLine = {
 export type CartLineAttribution = Pick<CartLine, "campaign" | "source" | "landingUrl">;
 
 /** Bump when cart shape / currency changes. */
-export const CART_STORAGE_KEY = "lumaforge-cart-v9-eur";
+export const CART_STORAGE_KEY = "lumaforge-cart-v10-eur";
 
 /** Previous cart key — parsed on first load for backward-compatible migration. */
-export const LEGACY_CART_STORAGE_KEY = "lumaforge-cart-v8-eur";
+export const LEGACY_CART_STORAGE_KEY = "lumaforge-cart-v9-eur";
 
 export const CAMPAIGN_ATTRIBUTION_SESSION_KEY = "vemidi:campaign-attribution-v1";

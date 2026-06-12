@@ -32,7 +32,7 @@ export default async function HomePage() {
   );
   const featuredProductCategories = productCategories.slice(0, 8).map(toShowcaseCategory);
   const featuredOccasionCategories = occasionCategories.slice(0, 6).map(toShowcaseCategory);
-  const productById = new Map(products.map((product) => [product.slug, product]));
+  const productById = new Map(products.map((product) => [product.id, product]));
   const featuredProducts = featuredProductIds
     .map((productId) => productById.get(productId))
     .filter((product): product is (typeof products)[number] => Boolean(product))
@@ -93,7 +93,7 @@ export default async function HomePage() {
 
             <div className="mt-7 grid grid-cols-2 gap-3 sm:gap-5 lg:mt-10 lg:grid-cols-3">
               {featuredProducts.map((product) => (
-                <ProductCard key={product.slug} product={product} variant="catalog" />
+                <ProductCard key={product.id} product={product} variant="catalog" />
               ))}
             </div>
           </PageContainer>

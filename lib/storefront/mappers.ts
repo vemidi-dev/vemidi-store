@@ -16,6 +16,8 @@ export const DEFAULT_CATEGORY_IMAGE =
 
 export type ProductRow = {
   id: string;
+  slug: string;
+  product_code: string;
   name: string;
   description: string;
   additional_info?: string | null;
@@ -57,7 +59,9 @@ export function toProduct(
   const pricing = resolveProductPricing(basePrice, promotion ?? null);
 
   return {
-    slug: row.id,
+    id: row.id,
+    slug: row.slug,
+    productCode: row.product_code,
     title: row.name,
     description: row.description,
     additionalInfo: row.additional_info,

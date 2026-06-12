@@ -1,9 +1,13 @@
+import Link from "next/link";
+
 import {
   formatOrderDate,
   formatOrderPrice,
   getCourierLabel,
   getDeliveryTypeLabel,
   getOrderItemCount,
+  getOrderItemProductCode,
+  getOrderItemProductPath,
   getOrderPersonalizationSummary,
   getOrderProductSummary,
   getOrderShortId,
@@ -74,52 +78,81 @@ export function OrderDetailsSection({ order }: { order: OrderRow }) {
             Артикули от магазина
           </h4>
           <div className="mt-3 space-y-3">
-            {storeItems.map((item, index) => (
-              <div
-                key={`${item.name}-${index}`}
-                className="rounded-lg border border-boutique-line bg-boutique-bg p-3"
-              >
-                <div className="flex flex-wrap justify-between gap-2">
-                  <p className="font-semibold text-boutique-ink">{item.name}</p>
-                  <p className="text-boutique-ink">
-                    {item.quantity} × {formatOrderPrice(item.unitPrice, order.currency)}
-                  </p>
+            {storeItems.map((item, index) => {
+              const productCode = getOrderItemProductCode(item);
+              const productPath = getOrderItemProductPath(item);
+
+              return (
+                <div
+                  key={`${item.productId ?? item.name}-${index}`}
+                  className="rounded-lg border border-boutique-line bg-boutique-bg p-3"
+                >
+                  <div className="flex flex-wrap justify-between gap-2">
+                    <p className="font-semibold text-boutique-ink">{item.name}</p>
+                    <p className="text-boutique-ink">
+                      {item.quantity} × {formatOrderPrice(item.unitPrice, order.currency)}
+                    </p>
+                  </div>
+                  {productCode ? (
+                    <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
+                      <span
+                        className="break-all font-mono text-boutique-muted"
+                        title={item.productId ?? undefined}
+                      >
+                        Код: {productCode}
+                      </span>
+                      {productPath ? (
+                        <Link
+                          href={productPath}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="font-semibold text-boutique-accent underline decoration-boutique-accent/40 underline-offset-4 hover:text-boutique-ink"
+                        >
+                          Отвори продукта
+                        </Link>
+                      ) : (
+                        <span className="text-boutique-muted">
+                          Продуктът вече не е наличен
+                        </span>
+                      )}
+                    </div>
+                  ) : null}
+                  {item.lineTotal != null ? (
+                    <p className="mt-1 text-xs text-boutique-muted">
+                      Ред общо: {formatOrderPrice(item.lineTotal, order.currency)}
+                    </p>
+                  ) : null}
+                  {item.personalization ? (
+                    <p className="mt-2 whitespace-pre-wrap break-words text-xs text-boutique-muted">
+                      Персонализация: {item.personalization}
+                    </p>
+                  ) : null}
+                  {item.personalizationFields.map((field, fieldIndex) => (
+                    <p
+                      key={fieldIndex}
+                      className="mt-1 whitespace-pre-wrap break-words text-xs text-boutique-muted"
+                    >
+                      {field.label || "Поле"}: {field.value || "—"}
+                    </p>
+                  ))}
+                  {item.selectedColors.map((color, colorIndex) => (
+                    <p key={colorIndex} className="mt-1 text-xs text-boutique-muted">
+                      {color.fieldLabel || "Цвят"}: {color.optionName || "—"}
+                    </p>
+                  ))}
+                  {item.optionSelections.map((group, groupIndex) => (
+                    <p key={groupIndex} className="mt-1 text-xs text-boutique-muted">
+                      {formatOrderOptionLine(group)}
+                    </p>
+                  ))}
+                  {item.optionDelta != null && item.optionDelta > 0 ? (
+                    <p className="mt-1 text-xs text-boutique-muted">
+                      Доплащане опции: {formatOrderPrice(item.optionDelta, order.currency)}
+                    </p>
+                  ) : null}
                 </div>
-                {item.lineTotal != null ? (
-                  <p className="mt-1 text-xs text-boutique-muted">
-                    Ред общо: {formatOrderPrice(item.lineTotal, order.currency)}
-                  </p>
-                ) : null}
-                {item.personalization ? (
-                  <p className="mt-2 whitespace-pre-wrap break-words text-xs text-boutique-muted">
-                    Персонализация: {item.personalization}
-                  </p>
-                ) : null}
-                {item.personalizationFields.map((field, fieldIndex) => (
-                  <p
-                    key={fieldIndex}
-                    className="mt-1 whitespace-pre-wrap break-words text-xs text-boutique-muted"
-                  >
-                    {field.label || "Поле"}: {field.value || "—"}
-                  </p>
-                ))}
-                {item.selectedColors.map((color, colorIndex) => (
-                  <p key={colorIndex} className="mt-1 text-xs text-boutique-muted">
-                    {color.fieldLabel || "Цвят"}: {color.optionName || "—"}
-                  </p>
-                ))}
-                {item.optionSelections.map((group, groupIndex) => (
-                  <p key={groupIndex} className="mt-1 text-xs text-boutique-muted">
-                    {formatOrderOptionLine(group)}
-                  </p>
-                ))}
-                {item.optionDelta != null && item.optionDelta > 0 ? (
-                  <p className="mt-1 text-xs text-boutique-muted">
-                    Доплащане опции: {formatOrderPrice(item.optionDelta, order.currency)}
-                  </p>
-                ) : null}
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
       ) : (
@@ -127,28 +160,9 @@ export function OrderDetailsSection({ order }: { order: OrderRow }) {
           <h4 className="text-xs font-semibold uppercase tracking-wider text-boutique-muted">
             Продукт
           </h4>
-          <dl className="mt-3 grid gap-3 sm:grid-cols-2">
-            {[
-              ["Продукт", valueOrDash(order.kit_name || order.product_name)],
-              ["Размер", valueOrDash(order.kit_size)],
-              ["Оцветяване", valueOrDash(order.coloring)],
-              [
-                "Персонализация",
-                order.personalization
-                  ? valueOrDash(order.child_name)
-                  : getOrderPersonalizationSummary(order) || "Не",
-              ],
-            ].map(([label, value]) => (
-              <div key={label}>
-                <dt className="text-xs font-semibold uppercase tracking-wider text-boutique-muted">
-                  {label}
-                </dt>
-                <dd className="mt-1 whitespace-pre-wrap break-words text-boutique-ink">
-                  {value}
-                </dd>
-              </div>
-            ))}
-          </dl>
+          <p className="mt-2 text-boutique-ink">
+            {getOrderProductSummary(order) || "—"}
+          </p>
         </section>
       )}
 
@@ -160,33 +174,37 @@ export function OrderDetailsSection({ order }: { order: OrderRow }) {
           {[
             ["Куриер", getCourierLabel(order.courier)],
             ["Доставка", getDeliveryTypeLabel(order.delivery_type)],
-            ["Град", valueOrDash(order.city)],
-            ["Офис", valueOrDash(order.office_name)],
-            ["Адрес на офис", valueOrDash(order.office_address)],
-            ["Адрес / детайли", valueOrDash(order.delivery_details)],
             ["Плащане", getPaymentMethodLabel(order.payment_method)],
-            ["Продукти (обобщение)", getOrderProductSummary(order) || "—"],
+            ["Населено място", valueOrDash(order.city)],
+            ["Адрес / офис", valueOrDash(order.delivery_details || order.office_name)],
           ].map(([label, value]) => (
             <div key={label}>
               <dt className="text-xs font-semibold uppercase tracking-wider text-boutique-muted">
                 {label}
               </dt>
-              <dd className="mt-1 whitespace-pre-wrap break-words text-boutique-ink">
-                {value}
-              </dd>
+              <dd className="mt-1 break-words text-boutique-ink">{value}</dd>
             </div>
           ))}
         </dl>
       </section>
+
+      {getOrderPersonalizationSummary(order) ? (
+        <section>
+          <h4 className="text-xs font-semibold uppercase tracking-wider text-boutique-muted">
+            Персонализация
+          </h4>
+          <p className="mt-2 whitespace-pre-wrap break-words text-boutique-ink">
+            {getOrderPersonalizationSummary(order)}
+          </p>
+        </section>
+      ) : null}
 
       {order.note ? (
         <section>
           <h4 className="text-xs font-semibold uppercase tracking-wider text-boutique-muted">
             Бележка
           </h4>
-          <p className="mt-2 whitespace-pre-wrap break-words text-boutique-ink">
-            {order.note}
-          </p>
+          <p className="mt-2 whitespace-pre-wrap break-words text-boutique-ink">{order.note}</p>
         </section>
       ) : null}
     </div>

@@ -64,6 +64,18 @@ Apply new SQL files before deploying code that requires them. Follow `docs/SUPAB
 For changes that remove public permissions, add the required Vercel server secret and redeploy first
 to avoid checkout downtime.
 
+### Migration #34 (`product_slug_and_code.sql`)
+
+Apply this migration before deploying SEO slug / product code application changes:
+
+1. export `products`, `product_images`, and `orders` from Supabase;
+2. run the complete `supabase/product_slug_and_code.sql` file in the SQL editor;
+3. run `npm run supabase:check` locally and confirm slug/code checks pass;
+4. deploy to a Vercel Preview branch;
+5. run the production smoke test checklist below on Preview;
+6. deploy to Production only after Preview passes;
+7. keep the export until the production smoke test is complete.
+
 Before a destructive schema change:
 
 1. export the affected tables from Supabase;

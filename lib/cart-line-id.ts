@@ -49,7 +49,7 @@ function serializePersonalizationFields(
 
 /** Stable id for merging cart lines (same product + same options). */
 export function makeCartLineId(
-  slug: string,
+  productId: string,
   personalization?: string,
   selectedColors?: SelectedProductColor[],
   personalizationFields?: ProductPersonalizationValue[],
@@ -61,5 +61,5 @@ export function makeCartLineId(
     "";
   const colors = serializeColors(selectedColors);
   const options = serializeOptionSelections(optionSelections);
-  return `${slug}::${p}::${colors}::${options}`;
+  return `${productId}::${p}::${colors}::${options}`;
 }

@@ -24,6 +24,7 @@ import { ProductColorFieldsEditor } from "@/components/admin/product-color-field
 import { ProductOptionGroupsEditor } from "@/components/admin/product-option-groups-editor";
 import { ProductPersonalizationFieldsEditor } from "@/components/admin/product-personalization-fields-editor";
 import { ProductMerchandisingFields } from "@/components/admin/product-merchandising-fields";
+import { ProductSeoFields } from "@/components/admin/product-seo-fields";
 import { ProductWishSelector } from "@/components/admin/product-wish-selector";
 import {
   adminFieldClass,
@@ -458,6 +459,16 @@ export function ProductListPanel({
                         className={`${adminFieldClass} resize-y`}
                       />
                     </label>
+
+                    <div className="md:col-span-2">
+                      <ProductSeoFields
+                        initialSlug={product.slug}
+                        productCode={product.product_code}
+                        mode="edit"
+                        helperClassName={adminHelperClass}
+                        fieldClassName={adminFieldClass}
+                      />
+                    </div>
 
                     <fieldset className="rounded-lg border border-boutique-line/70 bg-boutique-bg p-3 md:col-span-2">
                       <legend className="px-1 text-sm font-medium text-boutique-ink">
