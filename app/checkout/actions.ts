@@ -389,6 +389,14 @@ export async function createStoreOrder(
   const { data, error } = await supabase.rpc("create_store_order", rpcPayload);
 
   if (error) {
+    console.error("Store checkout RPC failed", {
+      code: error.code,
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+      itemCount: rpcItems.length,
+      hasAttribution: Boolean(orderAttribution),
+    });
     return { ok: false, message: mapCheckoutError(error.message) };
   }
 
