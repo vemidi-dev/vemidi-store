@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 
-import sharp from "sharp";
+import type sharp from "sharp";
 
 import { IMAGE_ACCEPTED_MIME_TYPES } from "@/lib/images/constants";
 import {
@@ -59,7 +59,8 @@ export async function processImageBuffer(
   const profile = getImageProfile(profileId);
   validateImageInputSize(originalSize, profileId);
 
-  const sharpFactory = deps.sharpFactory ?? sharp;
+  const sharpFactory =
+    deps.sharpFactory ?? (await import("sharp")).default;
   const imageId = randomUUID();
   const maxPixels = getMaxInputPixels(profileId);
 

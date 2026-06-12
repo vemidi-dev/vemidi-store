@@ -22,6 +22,12 @@ const supabaseRemotePattern = getSupabaseRemotePattern();
 
 const nextConfig: NextConfig = {
   distDir: process.env.NODE_ENV === "development" ? ".next-dev" : ".next",
+  outputFileTracingIncludes: {
+    "/*": [
+      "./node_modules/@img/sharp-linux-x64/**/*",
+      "./node_modules/@img/sharp-libvips-linux-x64/**/*",
+    ],
+  },
   experimental: {
     serverActions: {
       bodySizeLimit: "16mb",
