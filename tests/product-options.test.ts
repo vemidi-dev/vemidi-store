@@ -468,6 +468,24 @@ test("legacy product without universal options", () => {
   assert.equal(result.ok && result.optionDelta, 0);
 });
 
+test("legacy cart line without option selections remains valid", () => {
+  const result = validateProductOptionSelections(productId, [], undefined);
+  assert.equal(result.ok, true);
+  assert.equal(result.ok && result.optionDelta, 0);
+});
+
+test("missing selections still fail when a required option exists", () => {
+  const result = validateProductOptionSelections(
+    productId,
+    [makeGroup({ isRequired: true })],
+    undefined,
+  );
+  assert.equal(result.ok, false);
+  if (!result.ok) {
+    assert.equal(result.code, "required_option_missing");
+  }
+});
+
 test("product with both legacy and universal options", () => {
   const product: Product = {
     ...baseProduct,

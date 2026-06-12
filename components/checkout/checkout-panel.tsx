@@ -50,6 +50,11 @@ export function CheckoutPanel({ content }: { content: CheckoutPageContent }) {
   const router = useRouter();
   const [state, formAction] = useActionState(createStoreOrder, initialState);
   const [idempotencyKey, setIdempotencyKey] = useState("");
+  const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [customerEmail, setCustomerEmail] = useState("");
+  const [note, setNote] = useState("");
+  const [privacyConsent, setPrivacyConsent] = useState(false);
 
   useEffect(() => {
     setIdempotencyKey(crypto.randomUUID());
@@ -130,26 +135,79 @@ export function CheckoutPanel({ content }: { content: CheckoutPageContent }) {
               <div className="mt-6 grid gap-5 sm:grid-cols-2">
                 <label className="text-sm font-medium text-boutique-ink">
                   Име и фамилия
-                  <input name="customer_name" required maxLength={120} className={fieldClass} />
+                  <input
+                    name="customer_name"
+                    value={customerName}
+                    required
+                    maxLength={120}
+                    aria-invalid={Boolean(state.fieldErrors?.customer_name)}
+                    aria-describedby={
+                      state.fieldErrors?.customer_name
+                        ? "customer-name-error"
+                        : undefined
+                    }
+                    className={fieldClass}
+                    onChange={(event) => setCustomerName(event.target.value)}
+                  />
+                  {state.fieldErrors?.customer_name ? (
+                    <span
+                      id="customer-name-error"
+                      className="mt-2 block text-xs font-normal text-red-700"
+                    >
+                      {state.fieldErrors.customer_name}
+                    </span>
+                  ) : null}
                 </label>
                 <label className="text-sm font-medium text-boutique-ink">
                   Телефон
                   <input
                     name="customer_phone"
                     type="tel"
+                    value={customerPhone}
                     required
                     maxLength={30}
+                    aria-invalid={Boolean(state.fieldErrors?.customer_phone)}
+                    aria-describedby={
+                      state.fieldErrors?.customer_phone
+                        ? "customer-phone-error"
+                        : undefined
+                    }
                     className={fieldClass}
+                    onChange={(event) => setCustomerPhone(event.target.value)}
                   />
+                  {state.fieldErrors?.customer_phone ? (
+                    <span
+                      id="customer-phone-error"
+                      className="mt-2 block text-xs font-normal text-red-700"
+                    >
+                      {state.fieldErrors.customer_phone}
+                    </span>
+                  ) : null}
                 </label>
                 <label className="text-sm font-medium text-boutique-ink sm:col-span-2">
                   Имейл
                   <input
                     name="customer_email"
                     type="email"
+                    value={customerEmail}
                     maxLength={160}
+                    aria-invalid={Boolean(state.fieldErrors?.customer_email)}
+                    aria-describedby={
+                      state.fieldErrors?.customer_email
+                        ? "customer-email-error"
+                        : undefined
+                    }
                     className={fieldClass}
+                    onChange={(event) => setCustomerEmail(event.target.value)}
                   />
+                  {state.fieldErrors?.customer_email ? (
+                    <span
+                      id="customer-email-error"
+                      className="mt-2 block text-xs font-normal text-red-700"
+                    >
+                      {state.fieldErrors.customer_email}
+                    </span>
+                  ) : null}
                 </label>
               </div>
             </section>
@@ -175,18 +233,22 @@ export function CheckoutPanel({ content }: { content: CheckoutPageContent }) {
                 Допълнителна информация
                 <textarea
                   name="note"
+                  value={note}
                   rows={4}
                   maxLength={1000}
                   className={`${fieldClass} resize-y`}
                   placeholder="Срок, специално пожелание или друго уточнение..."
+                  onChange={(event) => setNote(event.target.value)}
                 />
               </label>
               <label className="mt-5 flex items-start gap-3 text-sm leading-relaxed text-boutique-muted">
                 <input
                   type="checkbox"
                   name="privacy_consent"
+                  checked={privacyConsent}
                   required
                   className="mt-1 h-4 w-4 accent-boutique-ink"
+                  onChange={(event) => setPrivacyConsent(event.target.checked)}
                 />
                 <span>
                   {content["checkout.privacy_consent"]}{" "}

@@ -66,6 +66,10 @@ export function validateProductOptionSelections(
   rawSelections: unknown,
   options?: { productIds?: Map<string, string> },
 ): OptionValidationResult {
+  if (rawSelections == null) {
+    rawSelections = [];
+  }
+
   if (!Array.isArray(rawSelections)) {
     return fail("invalid_option_selections");
   }

@@ -21,6 +21,9 @@ import { createServiceClient } from "@/lib/supabase/service";
 export type CheckoutActionState = {
   ok: boolean;
   message: string;
+  fieldErrors?: Partial<
+    Record<"customer_name" | "customer_phone" | "customer_email", string>
+  >;
   purchase?: {
     value: number;
     currency: string;
@@ -30,6 +33,7 @@ export type CheckoutActionState = {
 
 type SubmittedCartItem = {
   slug?: unknown;
+  title?: unknown;
   quantity?: unknown;
   personalization?: unknown;
   personalizationFields?: unknown;
@@ -124,6 +128,45 @@ export async function createStoreOrder(
   const idempotencyKey = text(formData, "idempotency_key", 36);
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(idempotencyKey)) {
     return { ok: false, message: checkoutErrorMessages.invalid_idempotency_key };
+  }
+
+  const customer = {
+    name: text(formData, "customer_name", 120),
+    phone: text(formData, "customer_phone", 30),
+    email: text(formData, "customer_email", 160),
+  };
+
+  if (customer.name.length < 2) {
+    return {
+      ok: false,
+      message: checkoutErrorMessages.invalid_customer_name,
+      fieldErrors: {
+        customer_name: checkoutErrorMessages.invalid_customer_name,
+      },
+    };
+  }
+
+  if (customer.phone.length < 6) {
+    return {
+      ok: false,
+      message: checkoutErrorMessages.invalid_customer_phone,
+      fieldErrors: {
+        customer_phone: checkoutErrorMessages.invalid_customer_phone,
+      },
+    };
+  }
+
+  if (
+    customer.email &&
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customer.email)
+  ) {
+    return {
+      ok: false,
+      message: checkoutErrorMessages.invalid_customer_email,
+      fieldErrors: {
+        customer_email: checkoutErrorMessages.invalid_customer_email,
+      },
+    };
   }
 
   const supabase = createServiceClient();
@@ -248,11 +291,6 @@ export async function createStoreOrder(
     );
   });
 
-  const customer = {
-    name: text(formData, "customer_name", 120),
-    phone: text(formData, "customer_phone", 30),
-    email: text(formData, "customer_email", 160),
-  };
   const delivery = {
     courier: text(formData, "courier", 20),
     type: text(formData, "delivery_type", 20),
@@ -285,10 +323,15 @@ export async function createStoreOrder(
       item.optionSelections,
     );
     if (!optionValidated.ok) {
+      const productTitle =
+        typeof item.title === "string" && item.title.trim()
+          ? item.title.trim().slice(0, 160)
+          : "продукта";
       return {
         ok: false,
-        message:
-          checkoutErrorMessages[optionValidated.code] ?? optionValidated.message,
+        message: `Проверете избраните опции за „${productTitle}“: ${
+          checkoutErrorMessages[optionValidated.code] ?? optionValidated.message
+        } Върнете се в количката и отворете продукта отново.`,
       };
     }
 
