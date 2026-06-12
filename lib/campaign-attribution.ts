@@ -103,12 +103,12 @@ export function normalizeLandingUrl(value: unknown) {
   try {
     const url = trimmed.startsWith("http")
       ? new URL(trimmed)
-      : new URL(trimmed, "https://promo.vemidi-crafts.com");
+      : new URL(trimmed, "https://special.vemidi-crafts.com");
 
     const allowedHosts = new Set([
       "vemidi-crafts.com",
       "www.vemidi-crafts.com",
-      "promo.vemidi-crafts.com",
+      "special.vemidi-crafts.com",
     ]);
 
     if (!allowedHosts.has(url.hostname.toLowerCase())) {

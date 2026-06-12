@@ -7,7 +7,7 @@ Landing страниците и кампанийните поддомейни **
 | Роля | Домейн |
 |------|--------|
 | Магазин + checkout | `https://vemidi-crafts.com` |
-| Временни кампании | `https://promo.vemidi-crafts.com/{campaign}` |
+| Специални продуктови страници | `https://special.vemidi-crafts.com/{product-page}` |
 | Handoff вход | `https://vemidi-crafts.com/campaign-checkout` |
 
 ## Каноничен URL формат
@@ -28,7 +28,7 @@ https://vemidi-crafts.com/campaign-checkout?product={PRODUCT_UUID}&campaign={CAM
 |-----------|----------|
 | `campaign` | Slug на кампанията (напр. `butterflies-summer`) |
 | `source` | Нормализиран източник (напр. `campaign-butterflies`). Ако липсва, се извежда от `campaign`. |
-| `landing` | HTTPS URL само към одобрени домейни (`promo.vemidi-crafts.com`, `vemidi-crafts.com`) |
+| `landing` | HTTPS URL само към одобрени домейни (`special.vemidi-crafts.com`, `vemidi-crafts.com`) |
 | `quantity` / `qty` | Количество (1–99) |
 
 ### Опционални продуктови опции
@@ -85,7 +85,7 @@ https://vemidi-crafts.com/campaign-checkout?product=11111111-1111-1111-1111-1111
 
 ```html
 <a
-  href="https://vemidi-crafts.com/campaign-checkout?product=PRODUCT_UUID&campaign=butterflies&landing=https%3A%2F%2Fpromo.vemidi-crafts.com%2Fbutterflies"
+  href="https://vemidi-crafts.com/campaign-checkout?product=PRODUCT_UUID&campaign=butterflies&landing=https%3A%2F%2Fspecial.vemidi-crafts.com%2Fvalshebni-peperudi"
 >
   Поръчай сега
 </a>
@@ -151,7 +151,7 @@ alter table public.products
   add constraint products_landing_page_url_https_check
   check (
     landing_page_url is null
-    or landing_page_url ~ '^https://(promo\.)?vemidi-crafts\.com/'
+    or landing_page_url ~ '^https://(special\.)?vemidi-crafts\.com/'
   );
 ```
 

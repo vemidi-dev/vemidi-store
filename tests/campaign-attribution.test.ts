@@ -26,8 +26,8 @@ test("campaign source values are allowlisted and derived from campaign slug", ()
 
 test("landing urls are restricted to approved hosts without credentials", () => {
   assert.equal(
-    normalizeLandingUrl("https://promo.vemidi-crafts.com/butterflies"),
-    "https://promo.vemidi-crafts.com/butterflies",
+    normalizeLandingUrl("https://special.vemidi-crafts.com/valshebni-peperudi"),
+    "https://special.vemidi-crafts.com/valshebni-peperudi",
   );
   assert.equal(normalizeLandingUrl("https://evil.example/phish"), undefined);
   assert.equal(normalizeLandingUrl("javascript:alert(1)"), undefined);
@@ -44,7 +44,7 @@ test("order attribution merges cart line campaign metadata", () => {
     {
       campaign: "butterflies",
       source: "campaign-butterflies",
-      landingUrl: "https://promo.vemidi-crafts.com/butterflies",
+      landingUrl: "https://special.vemidi-crafts.com/valshebni-peperudi",
     },
   ]);
 
@@ -52,7 +52,7 @@ test("order attribution merges cart line campaign metadata", () => {
     buildCampaignAttribution({
       campaign: "butterflies",
       source: "campaign-butterflies",
-      landingUrl: "https://promo.vemidi-crafts.com/butterflies",
+      landingUrl: "https://special.vemidi-crafts.com/valshebni-peperudi",
     }),
     attribution,
   );

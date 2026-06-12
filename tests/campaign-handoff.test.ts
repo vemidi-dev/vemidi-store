@@ -57,7 +57,7 @@ test("campaign handoff accepts valid simple product configuration", () => {
     product: productId,
     campaign: "butterflies",
     source: "campaign-butterflies",
-    landing: "https://promo.vemidi-crafts.com/butterflies",
+    landing: "https://special.vemidi-crafts.com/valshebni-peperudi",
     quantity: "2",
   });
 
@@ -67,7 +67,10 @@ test("campaign handoff accepts valid simple product configuration", () => {
     assert.equal(result.quantity, 2);
     assert.equal(result.attribution.source, "campaign-butterflies");
     assert.equal(result.attribution.campaign, "butterflies");
-    assert.match(result.attribution.landingUrl ?? "", /promo\.vemidi-crafts\.com\/butterflies/);
+    assert.match(
+      result.attribution.landingUrl ?? "",
+      /special\.vemidi-crafts\.com\/valshebni-peperudi/,
+    );
     assert.equal(result.product.price, 19.5);
   }
 });
