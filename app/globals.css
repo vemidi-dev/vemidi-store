@@ -6,7 +6,7 @@
   --color-boutique-paper: #fdfcfa;
   --color-boutique-ink: #2a2824;
   --color-boutique-muted: #5e5a54;
-  --color-boutique-accent: #b8926a;
+  --color-boutique-accent: #8a6748;
   --color-boutique-line: #e4ddd4;
   --color-boutique-warm: #ebe4db;
   --color-boutique-sage: #8a9a86;
@@ -43,6 +43,30 @@ body {
 a {
   color: inherit;
   text-decoration: none;
+}
+
+a.bg-boutique-rose-deep,
+button.bg-boutique-rose-deep,
+a.bg-boutique-sage-deep,
+button.bg-boutique-sage-deep,
+a.bg-boutique-ink,
+button.bg-boutique-ink {
+  color: #fff;
+}
+
+a.bg-boutique-rose-deep:hover,
+a.bg-boutique-rose-deep:focus-visible,
+button.bg-boutique-rose-deep:hover,
+button.bg-boutique-rose-deep:focus-visible,
+a.bg-boutique-sage-deep:hover,
+a.bg-boutique-sage-deep:focus-visible,
+button.bg-boutique-sage-deep:hover,
+button.bg-boutique-sage-deep:focus-visible,
+a.bg-boutique-ink:hover,
+a.bg-boutique-ink:focus-visible,
+button.bg-boutique-ink:hover,
+button.bg-boutique-ink:focus-visible {
+  color: #fff;
 }
 
 :where(button, input, select, textarea, summary, a):focus-visible {

@@ -239,7 +239,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
         <div className="flex gap-2">
           <button
             type="submit"
-            className="flex-1 rounded-lg bg-boutique-sage-deep px-4 py-2.5 text-sm font-semibold text-boutique-on-sage transition hover:bg-boutique-accent lg:py-3"
+            className="flex-1 rounded-lg bg-boutique-sage-deep px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-boutique-accent lg:py-3"
           >
             Приложи
           </button>
@@ -295,7 +295,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
             </label>
             <button
               type="submit"
-              className="shrink-0 rounded-xl bg-boutique-sage-deep px-3 py-2.5 text-sm font-semibold text-boutique-on-sage transition hover:bg-boutique-ink sm:px-6 sm:py-3"
+              className="shrink-0 rounded-xl bg-boutique-sage-deep px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-boutique-ink sm:px-6 sm:py-3"
             >
               Търси
             </button>
@@ -361,7 +361,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
                       <option value="name-desc">Име: Я-А</option>
                     </select>
                   </label>
-                  <button type="submit" className="rounded-lg bg-boutique-sage-deep px-3 py-2.5 text-xs font-semibold text-boutique-on-sage sm:py-2">
+                  <button type="submit" className="rounded-lg bg-boutique-sage-deep px-3 py-2.5 text-xs font-semibold text-white sm:py-2">
                     Готово
                   </button>
                 </form>

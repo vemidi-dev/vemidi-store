@@ -200,7 +200,7 @@ export function CartPanel({ content }: { content: CartPageContent }) {
             </p>
             <Link
               href="/checkout"
-              className="mt-6 flex w-full justify-center rounded-xl bg-boutique-sage-deep px-5 py-3.5 text-sm font-semibold text-boutique-on-sage transition hover:bg-boutique-ink"
+              className="mt-6 flex w-full justify-center rounded-xl bg-boutique-sage-deep px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-boutique-ink"
             >
               {content["cart.checkout_button"]}
             </Link>

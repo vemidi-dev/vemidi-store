@@ -42,7 +42,7 @@ export function CartAddedToast({
         <div className="flex items-center gap-3 border-b border-boutique-line px-4 py-3">
           <span
             aria-hidden
-            className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-boutique-sage-deep text-sm font-bold text-boutique-on-sage"
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-boutique-sage-deep text-sm font-bold text-white"
           >
             ✓
           </span>
@@ -90,7 +90,7 @@ export function CartAddedToast({
           <Link
             href="/cart"
             onClick={onDismiss}
-            className="rounded-xl bg-boutique-sage-deep px-3 py-3 text-center text-xs font-semibold text-boutique-on-sage transition hover:bg-boutique-ink"
+            className="rounded-xl bg-boutique-sage-deep px-3 py-3 text-center text-xs font-semibold text-white transition hover:bg-boutique-ink"
           >
             Към количката
           </Link>

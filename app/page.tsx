@@ -160,7 +160,7 @@ export default async function HomePage() {
           <div className="mt-12 text-center">
             <Link
               href="/categories"
-              className="inline-flex rounded-xl bg-boutique-rose-deep px-7 py-3.5 text-sm font-semibold !text-boutique-on-sage shadow-boutique-sm transition hover:-translate-y-0.5 hover:bg-boutique-ink"
+              className="inline-flex rounded-xl bg-boutique-rose-deep px-7 py-3.5 text-sm font-semibold text-white shadow-boutique-sm transition hover:-translate-y-0.5 hover:bg-boutique-ink"
             >
               Виж всички продукти
             </Link>
