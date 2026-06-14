@@ -19,6 +19,7 @@ const categories: StorefrontCategory[] = [
     show_on_home: true,
     home_sort_order: 1,
     card_description: null,
+    createdAt: null,
   },
   {
     id: "child",
@@ -29,6 +30,7 @@ const categories: StorefrontCategory[] = [
     show_on_home: false,
     home_sort_order: 1,
     card_description: null,
+    createdAt: null,
   },
   {
     id: "empty",
@@ -39,6 +41,7 @@ const categories: StorefrontCategory[] = [
     show_on_home: false,
     home_sort_order: 2,
     card_description: null,
+    createdAt: null,
   },
 ];
 

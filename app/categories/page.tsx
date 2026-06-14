@@ -14,6 +14,7 @@ import {
   getCategoryFamilySlugs,
   getCategoryProductCount,
 } from "@/lib/category-hierarchy";
+import { getCategoryListingHref } from "@/lib/category-url";
 import { toShowcaseCategory } from "@/lib/storefront/mappers";
 import { getStorefrontCatalog } from "@/lib/storefront/repository";
 
@@ -29,9 +30,10 @@ type CategoryWithCount = ShopCategory & {
 };
 
 function getCategoryHref(category: ShopCategory) {
-  return category.categoryType === "product"
-    ? `/categories/${encodeURIComponent(category.slug)}`
-    : `/shop?occasion=${encodeURIComponent(category.slug)}#product-grid`;
+  return getCategoryListingHref({
+    slug: category.slug,
+    category_type: category.categoryType,
+  });
 }
 
 function getProductLabel(count: number) {

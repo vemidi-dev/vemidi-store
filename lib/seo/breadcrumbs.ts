@@ -1,4 +1,4 @@
-import { getCategoryPath } from "@/lib/category-url";
+import { getCategoryPath, getOccasionPath } from "@/lib/category-url";
 import { getChildCategories } from "@/lib/category-hierarchy";
 import { getProductPath } from "@/lib/product-url";
 import type { StorefrontCategory } from "@/lib/storefront/types";
@@ -117,6 +117,16 @@ export function buildProductBreadcrumbItems(
       : []),
     { name: category.name, path: getCategoryPath(category.slug) },
     { name: product.title, path: getProductPath(product.slug) },
+  ]);
+}
+
+export function buildOccasionBreadcrumbItems(
+  occasion: Pick<StorefrontCategory, "name" | "slug">,
+): BreadcrumbItem[] {
+  return dedupeBreadcrumbItems([
+    buildHomeBreadcrumb(),
+    { name: "По повод", path: "/occasions" },
+    { name: occasion.name, path: getOccasionPath(occasion.slug) },
   ]);
 }
 

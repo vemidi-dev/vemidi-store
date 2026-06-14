@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 
 import CategoryShowcaseCard from "@/components/category/category-showcase-card";
 import { HomeHero } from "@/components/home/home-hero";
@@ -10,6 +11,9 @@ import { getPublishedBlogPosts, getPublishedEvents } from "@/lib/content/reposit
 import { getSiteContent } from "@/lib/content/site-content";
 import { toShowcaseCategory } from "@/lib/storefront/mappers";
 import { getStorefrontCatalog } from "@/lib/storefront/repository";
+import { buildHomePageMetadata } from "@/lib/seo/page-metadata";
+
+export const metadata: Metadata = buildHomePageMetadata();
 
 export default async function HomePage() {
   const [{ categories, products, featuredProductIds }, blogPosts, events, content] = await Promise.all([

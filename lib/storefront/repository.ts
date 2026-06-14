@@ -29,6 +29,32 @@ type ProductCategoryRow = {
   category_id: string;
 };
 
+type CategoryRow = {
+  id: string;
+  name: string;
+  slug: string;
+  category_type: "product" | "occasion";
+  parent_id: string | null;
+  show_on_home: boolean;
+  home_sort_order: number;
+  card_description: string | null;
+  created_at: string | null;
+};
+
+function mapStorefrontCategory(row: CategoryRow): StorefrontCategory {
+  return {
+    id: row.id,
+    name: row.name,
+    slug: row.slug,
+    category_type: row.category_type,
+    parent_id: row.parent_id,
+    show_on_home: row.show_on_home,
+    home_sort_order: row.home_sort_order,
+    card_description: row.card_description,
+    createdAt: row.created_at ?? null,
+  };
+}
+
 type HomeFeaturedProductRow = {
   product_id: string;
   sort_order: number;
@@ -139,12 +165,12 @@ export async function getStorefrontCatalog(): Promise<StorefrontCatalog> {
       supabase
         .from("products")
         .select(
-          "id,slug,product_code,name,description,price,image_url,is_customizable,is_sold_out,fulfillment_type,stock_quantity,card_badge,created_at",
+          "id,slug,product_code,name,description,price,image_url,is_customizable,is_sold_out,fulfillment_type,stock_quantity,card_badge,created_at,updated_at",
         )
         .order("created_at", { ascending: false }),
       supabase
         .from("categories")
-        .select("id,name,slug,category_type,parent_id,show_on_home,home_sort_order,card_description")
+        .select("id,name,slug,category_type,parent_id,show_on_home,home_sort_order,card_description,created_at")
         .order("name", { ascending: true }),
       supabase.from("product_categories").select("product_id,category_id"),
       supabase
@@ -167,7 +193,9 @@ export async function getStorefrontCatalog(): Promise<StorefrontCatalog> {
         .order("sort_order", { ascending: true }),
     ]);
 
-  const categories = (categoriesResult.data ?? []) as StorefrontCategory[];
+  const categories = ((categoriesResult.data ?? []) as CategoryRow[]).map(
+    mapStorefrontCategory,
+  );
   const relations = (relationsResult.data ?? []) as ProductCategoryRow[];
   const categorySlugById = new Map(
     categories.map((category) => [category.id, category.slug]),
@@ -215,6 +243,8 @@ export async function getStorefrontCatalog(): Promise<StorefrontCatalog> {
         promotionsByProductId.get(row.id) ?? null,
       ),
       categorySlugs: categorySlugsByProductId.get(row.id) ?? [],
+      updatedAt: row.updated_at ?? null,
+      createdAt: row.created_at ?? null,
       hasColorOptions: productIdsWithColorOptions.has(row.id),
       hasPersonalizationOptions: productIdsWithPersonalizationOptions.has(row.id),
     }),
@@ -250,7 +280,7 @@ export async function getStorefrontCategories(
 
   let query = supabase
     .from("categories")
-    .select("id,name,slug,category_type,parent_id,show_on_home,home_sort_order,card_description")
+    .select("id,name,slug,category_type,parent_id,show_on_home,home_sort_order,card_description,created_at")
     .order("name", { ascending: true });
 
   if (categoryType) {
@@ -258,7 +288,9 @@ export async function getStorefrontCategories(
   }
 
   const { data, error } = await query;
-  return error ? [] : ((data ?? []) as StorefrontCategory[]);
+  return error
+    ? []
+    : ((data ?? []) as CategoryRow[]).map(mapStorefrontCategory);
 }
 
 async function getProductColorFields(

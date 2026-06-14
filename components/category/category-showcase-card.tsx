@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import type { ShopCategory } from "@/lib/shop-categories";
+import { getCategoryListingHref } from "@/lib/category-url";
 import { MediaPlaceholder } from "@/components/ui/media-placeholder";
 
 type CategoryShowcaseCardProps = {
@@ -16,11 +17,10 @@ export default function CategoryShowcaseCard({
   compact = false,
   presentation = "default",
 }: CategoryShowcaseCardProps) {
-  const filterName = category.categoryType === "occasion" ? "occasion" : "product";
-  const href =
-    category.categoryType === "product"
-      ? `/categories/${encodeURIComponent(category.slug)}`
-      : `/shop?${filterName}=${encodeURIComponent(category.slug)}#product-grid`;
+  const href = getCategoryListingHref({
+    slug: category.slug,
+    category_type: category.categoryType,
+  });
 
   if (presentation === "product") {
     return (

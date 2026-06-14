@@ -4,6 +4,14 @@ import {
   filterIndexableProductCategories,
   getProductCategorySlugs,
 } from "@/lib/seo/category-indexability";
+import { filterIndexableOccasions } from "@/lib/seo/occasion-indexability";
+import {
+  buildCategoryLastModifiedBySlug,
+  buildSitemapEntry,
+  parseSitemapTimestamp,
+  resolveCategoryLastModified,
+  resolveProductLastModified,
+} from "@/lib/seo/sitemap-last-modified";
 import { getStorefrontCatalog } from "@/lib/storefront/repository";
 import { getSiteUrl } from "@/lib/site-url";
 import { getPublishedBlogPosts, getPublishedEvents } from "@/lib/content/repository";
@@ -15,11 +23,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     getPublishedBlogPosts(),
     getPublishedEvents(),
   ]);
-  const now = new Date();
   const productCategorySlugs = getProductCategorySlugs(products);
   const indexableCategories = filterIndexableProductCategories(
     categories,
     productCategorySlugs,
+  );
+  const indexableOccasions = filterIndexableOccasions(
+    categories,
+    productCategorySlugs,
+  );
+  const categoryLastModifiedBySlug = buildCategoryLastModifiedBySlug(
+    categories,
+    products,
   );
 
   const staticRoutes = [
@@ -39,35 +54,53 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   return [
-    ...staticRoutes.map((route) => ({
-      url: new URL(route.path || "/", siteUrl).toString(),
-      lastModified: now,
-      changeFrequency: route.changeFrequency,
-      priority: route.priority,
-    })),
-    ...products.map((product) => ({
-      url: new URL(`/products/${product.slug}`, siteUrl).toString(),
-      lastModified: now,
-      changeFrequency: "weekly" as const,
-      priority: 0.7,
-    })),
-    ...indexableCategories.map((category) => ({
-      url: new URL(`/categories/${category.slug}`, siteUrl).toString(),
-      lastModified: now,
-      changeFrequency: "weekly" as const,
-      priority: category.parent_id ? 0.6 : 0.7,
-    })),
-    ...blogPosts.map((post) => ({
-      url: new URL(`/blog/${post.slug}`, siteUrl).toString(),
-      lastModified: new Date(post.updated_at),
-      changeFrequency: "monthly" as const,
-      priority: 0.6,
-    })),
-    ...events.map((event) => ({
-      url: new URL(`/events/${event.slug}`, siteUrl).toString(),
-      lastModified: new Date(event.updated_at),
-      changeFrequency: "weekly" as const,
-      priority: 0.6,
-    })),
+    ...staticRoutes.map((route) =>
+      buildSitemapEntry(
+        new URL(route.path || "/", siteUrl).toString(),
+        undefined,
+        route.changeFrequency,
+        route.priority,
+      ),
+    ),
+    ...products.map((product) =>
+      buildSitemapEntry(
+        new URL(`/products/${product.slug}`, siteUrl).toString(),
+        resolveProductLastModified(product),
+        "weekly",
+        0.7,
+      ),
+    ),
+    ...indexableCategories.map((category) =>
+      buildSitemapEntry(
+        new URL(`/categories/${category.slug}`, siteUrl).toString(),
+        resolveCategoryLastModified(category, categoryLastModifiedBySlug),
+        "weekly",
+        category.parent_id ? 0.6 : 0.7,
+      ),
+    ),
+    ...indexableOccasions.map((occasion) =>
+      buildSitemapEntry(
+        new URL(`/occasions/${occasion.slug}`, siteUrl).toString(),
+        resolveCategoryLastModified(occasion, categoryLastModifiedBySlug),
+        "weekly",
+        0.7,
+      ),
+    ),
+    ...blogPosts.map((post) =>
+      buildSitemapEntry(
+        new URL(`/blog/${post.slug}`, siteUrl).toString(),
+        parseSitemapTimestamp(post.updated_at),
+        "monthly",
+        0.6,
+      ),
+    ),
+    ...events.map((event) =>
+      buildSitemapEntry(
+        new URL(`/events/${event.slug}`, siteUrl).toString(),
+        parseSitemapTimestamp(event.updated_at),
+        "weekly",
+        0.6,
+      ),
+    ),
   ];
 }

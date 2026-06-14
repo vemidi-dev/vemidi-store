@@ -1,6 +1,9 @@
 import Link from "next/link";
 
 import { PageContainer } from "@/components/layout/page-container";
+import { notFoundPageMetadata } from "@/lib/seo/page-metadata";
+
+export const metadata = notFoundPageMetadata;
 
 export default function NotFound() {
   return (

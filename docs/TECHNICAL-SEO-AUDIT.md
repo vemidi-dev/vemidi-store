@@ -3,9 +3,10 @@
 **Project:** `D:\Cursor\src`
 **Audit date:** 2026-06-14
 **Phase 1 implementation:** 2026-06-14 (commit `0b28884`, pushed)
-**Phase 2 implementation:** 2026-06-14 (rich results + indexability — code only, no commit/deploy)
+**Phase 2 implementation:** 2026-06-14 (commit `f34dacd`, pushed)
+**Phase 3 implementation:** 2026-06-14 (content & URL strategy — code only, no commit/deploy)
 **Branch:** `main`
-**Scope:** Read-only audit + Phase 1/2 SEO fixes (local validation only)
+**Scope:** Read-only audit + Phase 1–3 SEO fixes (local validation only)
 
 ---
 
@@ -45,7 +46,25 @@
 | `npm run build` | ✅ Pass |
 | `git diff --check` | ✅ Pass |
 
-### Phase 1 validation (post-implementation)
+### Phase 3 implementation status (content & URL strategy)
+
+| ID | Issue | Status | Notes |
+|---|---|---|---|
+| MEDIUM-03 | Occasion landing URL strategy | ✅ Done | `/occasions/[slug]` indexable landings; 308 from sole `?occasion=` / legacy `?category=`; sitemap + internal links updated |
+| MEDIUM-05 | Product Open Graph metadata | ✅ Partial | Enhanced OG/Twitter with real title, description, image, canonical; `type: website` (Next.js Metadata API has no `product` type) |
+| MEDIUM-06 | Homepage explicit metadata | ✅ Done | `buildHomePageMetadata()` with absolute title; avoids layout template duplication |
+| MEDIUM-08 | Sitemap real `lastModified` | ✅ Done | Products use `updated_at ?? created_at`; product categories use max timestamp from direct + child assignments; occasions keep direct assignment only; static routes omit `lastModified` |
+| HIGH-01 | `not-found.tsx` metadata | ✅ Done | `noindex, nofollow` via `notFoundPageMetadata` export |
+
+### Phase 3 validation (post-implementation)
+
+| Check | Result |
+|---|---|
+| `npm run typecheck` | ✅ Pass |
+| `npm run lint` | ✅ Pass (2 pre-existing warnings) |
+| `npm test` | ✅ Pass (333 tests, 0 failures) |
+| `npm run build` | ✅ Pass |
+| `git diff --check` | ✅ Pass |
 
 | Check | Result |
 |---|---|
@@ -78,7 +97,7 @@ The **biggest gaps** are:
 4. ~~**Missing rich-result schemas**~~ — Phase 2 adds `BreadcrumbList`, `Organization`/`WebSite`, `Article`, and `Event` JSON-LD.
 5. **Migration verification** — `category_hierarchy.sql` confirmed applied in Supabase (2026-06-14).
 
-**Phase 1 complete.** **Phase 2 complete (local, uncommitted).** Remaining gaps: occasion landing URLs, homepage metadata, product OG type, sitemap timestamps, CWV tuning — see Phase 3 below.
+**Phase 1 complete.** **Phase 2 complete** (commit `f34dacd`). **Phase 3 complete locally** — occasion landings, homepage/product metadata, sitemap timestamps, not-found metadata. Remaining: CWV tuning — see Phase 4 below.
 
 ---
 
@@ -588,16 +607,11 @@ The **biggest gaps** are:
 6. ~~**MEDIUM-07** — robots.txt utility disallow~~ ✅
 7. ~~**LOW-01** — Login/account noindex~~ ✅
 
-## Recommended after launch (Phase 3)
+## Recommended after launch (Phase 4 — performance)
 
-1. **MEDIUM-03** — Occasion landing URL strategy (`/occasions/[slug]` or equivalent)
-2. **MEDIUM-05** — Product Open Graph type `product`
-3. **MEDIUM-06** — Homepage explicit metadata export
-4. **MEDIUM-08** — Sitemap real `lastModified` timestamps (products/categories)
-5. **HIGH-01** (residual) — Explicit `not-found.tsx` metadata export (defense in depth)
-6. **LOW-02** — Product card carousel server/client split
-7. **LOW-03** — LCP priority tuning (single candidate per page)
-8. **LOW-06** — CartProvider scope reduction
+1. **LOW-02** — Product card carousel server/client split
+2. **LOW-03** — LCP priority tuning (single candidate per page)
+3. **LOW-06** — CartProvider scope reduction
 
 ---
 
@@ -607,7 +621,7 @@ The **biggest gaps** are:
 |---|---|---|
 | **1 — Launch blockers** | CRITICAL-01, CRITICAL-02, HIGH-01, HIGH-03, migration verify | 1–2 days |
 | **2 — Rich results + indexability** ✅ | HIGH-04, HIGH-05, MEDIUM-01, MEDIUM-02, MEDIUM-04, MEDIUM-07, LOW-01 | Done (local) |
-| **3 — Content & URL strategy** | MEDIUM-03, MEDIUM-05, MEDIUM-06, MEDIUM-08 | 1–2 days |
+| **3 — Content & URL strategy** ✅ | MEDIUM-03, MEDIUM-05, MEDIUM-06, MEDIUM-08, not-found metadata | Done (local) |
 | **4 — Performance polish** | LOW-02, LOW-03, LOW-06 | 2+ days |
 
 ---
@@ -716,4 +730,20 @@ where pg_namespace.nspname = 'public' and proname = 'validate_category_hierarchy
 - `app/account/page.tsx` — explicit noindex
 - `docs/TECHNICAL-SEO-AUDIT.md` — Phase 2 status
 
-*Phase 2 complete locally. Awaiting review before commit/deploy.*
+*Phase 3 complete locally. Awaiting review before commit/deploy.*
+
+### Phase 3 changed files (uncommitted)
+
+**New:** `app/occasions/[slug]/page.tsx`, `lib/seo/occasion-indexability.ts`, `lib/seo/occasion-metadata.ts`, `lib/seo/page-metadata.ts`, `lib/seo/product-metadata.ts`, `lib/seo/sitemap-last-modified.ts`, `tests/occasion-metadata.test.ts`, `tests/page-metadata.test.ts`, `tests/product-metadata.test.ts`, `tests/sitemap-last-modified.test.ts`
+
+**Modified:** `app/categories/page.tsx`, `app/not-found.tsx`, `app/occasions/page.tsx`, `app/page.tsx`, `app/products/[slug]/page.tsx`, `app/shop/page.tsx`, `app/sitemap.ts`, `components/category/category-showcase-card.tsx`, `lib/category-url.ts`, `lib/seo/breadcrumbs.ts`, `lib/seo/shop-route.ts`, `lib/storefront/repository.ts`, `lib/storefront/types.ts`, `lib/storefront/mappers.ts`, test files, `docs/TECHNICAL-SEO-AUDIT.md`
+
+#### Sitemap timestamp rules (Phase 3 corrective review)
+
+| Entity | `lastModified` source |
+|---|---|
+| Product | `products.updated_at ?? products.created_at` |
+| Product category | Latest product timestamp from direct assignments **and** all child subcategories (`getCategoryFamilySlugs`) |
+| Occasion category | Direct product assignments only (unchanged) |
+| Static routes | Omitted |
+| Blog / event | `updated_at` from content tables |

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { PageContainer } from "@/components/layout/page-container";
 import { VisualPageHero } from "@/components/layout/visual-page-hero";
 import { MediaPlaceholder } from "@/components/ui/media-placeholder";
+import { getCategoryListingHref } from "@/lib/category-url";
 import { getSiteContent } from "@/lib/content/site-content";
 import type { ShopCategory } from "@/lib/shop-categories";
 import { toShowcaseCategory } from "@/lib/storefront/mappers";
@@ -36,7 +37,10 @@ function getProductLabel(count: number) {
 }
 
 function OccasionCard({ occasion }: { occasion: OccasionWithCount }) {
-  const href = `/shop?occasion=${encodeURIComponent(occasion.slug)}#product-grid`;
+  const href = getCategoryListingHref({
+    slug: occasion.slug,
+    category_type: "occasion",
+  });
 
   return (
     <Link

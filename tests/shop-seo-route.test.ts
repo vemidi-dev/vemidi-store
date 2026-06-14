@@ -6,6 +6,7 @@ import {
   isShopFaceted,
   parseShopSearchParams,
   resolveProductsPageRedirect,
+  resolveShopOccasionRedirect,
   resolveShopProductCategoryRedirect,
 } from "@/lib/seo/shop-route";
 import type { StorefrontCategory } from "@/lib/storefront/types";
@@ -20,6 +21,7 @@ const categories: StorefrontCategory[] = [
     show_on_home: true,
     home_sort_order: 1,
     card_description: null,
+    createdAt: null,
   },
   {
     id: "cat-2",
@@ -30,6 +32,7 @@ const categories: StorefrontCategory[] = [
     show_on_home: true,
     home_sort_order: 2,
     card_description: null,
+    createdAt: null,
   },
 ];
 
@@ -59,12 +62,46 @@ test("empty shop query params are noindex", () => {
   }
 });
 
-test("shop occasion filter is noindex", () => {
+test("valid sole occasion selector is not faceted because it redirects", () => {
   const params = { occasion: "svatba" };
+  const parsed = parseShopSearchParams(params);
+  assert.equal(isShopFaceted(params, parsed, categories), false);
   assert.equal(
-    isShopFaceted(params, parseShopSearchParams(params), categories),
-    true,
+    resolveShopOccasionRedirect(params, parsed, categories),
+    "/occasions/svatba",
   );
+});
+
+test("only valid occasion redirects to /occasions/{slug}", () => {
+  const params = { occasion: "svatba" };
+  const parsed = parseShopSearchParams(params);
+  assert.equal(
+    resolveShopOccasionRedirect(params, parsed, categories),
+    "/occasions/svatba",
+  );
+});
+
+test("legacy occasion category redirects to /occasions/{slug}", () => {
+  const params = { category: "svatba" };
+  const parsed = parseShopSearchParams(params);
+  assert.equal(
+    resolveShopOccasionRedirect(params, parsed, categories),
+    "/occasions/svatba",
+  );
+});
+
+test("invalid occasion slug does not redirect", () => {
+  const params = { occasion: "missing-slug" };
+  const parsed = parseShopSearchParams(params);
+  assert.equal(resolveShopOccasionRedirect(params, parsed, categories), null);
+  assert.equal(isShopFaceted(params, parsed, categories), true);
+});
+
+test("occasion with extra filters does not redirect", () => {
+  const params = { occasion: "svatba", sort: "price-asc" };
+  const parsed = parseShopSearchParams(params);
+  assert.equal(resolveShopOccasionRedirect(params, parsed, categories), null);
+  assert.equal(isShopFaceted(params, parsed, categories), true);
 });
 
 test("shop sort filter is noindex", () => {
@@ -122,11 +159,10 @@ test("product category with extra filters does not redirect", () => {
   assert.equal(isShopFaceted(params, parsed, categories), true);
 });
 
-test("legacy occasion category stays on faceted shop", () => {
+test("legacy occasion category is not treated as product redirect", () => {
   const params = { category: "svatba" };
   const parsed = parseShopSearchParams(params);
   assert.equal(resolveShopProductCategoryRedirect(params, parsed, categories), null);
-  assert.equal(isShopFaceted(params, parsed, categories), true);
 });
 
 test("products page redirects product categories to /categories/{slug}", () => {
@@ -143,10 +179,10 @@ test("products page redirects legacy product categories to /categories/{slug}", 
   );
 });
 
-test("products page keeps occasion filters on /shop", () => {
+test("products page redirects occasion filters to /occasions/{slug}", () => {
   assert.equal(
     resolveProductsPageRedirect({ occasion: "svatba" }, categories),
-    "/shop?occasion=svatba#product-grid",
+    "/occasions/svatba",
   );
 });
 

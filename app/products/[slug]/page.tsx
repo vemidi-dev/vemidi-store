@@ -25,6 +25,7 @@ import {
   buildBreadcrumbListSchema,
   buildProductBreadcrumbItems,
 } from "@/lib/seo/breadcrumbs";
+import { buildProductPageMetadata } from "@/lib/seo/product-metadata";
 
 type ProductPageProps = {
   params: Promise<{ slug: string }>;
@@ -48,29 +49,7 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
     };
   }
 
-  const product = resolution.product;
-  const description = product.description.slice(0, 160);
-  const image = product.images.find((item) => item.src)?.src;
-  const canonicalPath = getProductPath(resolution.canonicalSlug);
-
-  return {
-    title: product.title,
-    description,
-    alternates: { canonical: canonicalPath },
-    openGraph: {
-      type: "website",
-      title: product.title,
-      description,
-      url: canonicalPath,
-      images: image ? [{ url: image, alt: product.title }] : undefined,
-    },
-    twitter: {
-      card: image ? "summary_large_image" : "summary",
-      title: product.title,
-      description,
-      images: image ? [image] : undefined,
-    },
-  };
+  return buildProductPageMetadata(resolution.product, resolution.canonicalSlug);
 }
 
 export default async function ProductDetailPage({

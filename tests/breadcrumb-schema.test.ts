@@ -5,6 +5,7 @@ import {
   buildBlogPostBreadcrumbItems,
   buildBreadcrumbListSchema,
   buildCategoryBreadcrumbItems,
+  buildOccasionBreadcrumbItems,
   buildProductBreadcrumbItems,
   dedupeBreadcrumbItems,
 } from "@/lib/seo/breadcrumbs";
@@ -22,6 +23,7 @@ const categories: StorefrontCategory[] = [
     show_on_home: true,
     home_sort_order: 1,
     card_description: null,
+    createdAt: null,
   },
   {
     id: "earrings",
@@ -32,6 +34,7 @@ const categories: StorefrontCategory[] = [
     show_on_home: false,
     home_sort_order: 1,
     card_description: null,
+    createdAt: null,
   },
 ];
 
@@ -71,6 +74,18 @@ test("breadcrumb schema uses absolute urls and sequential positions", () => {
   assert.equal(schema.itemListElement.length, 3);
   assert.equal(schema.itemListElement[0]?.position, 1);
   assert.equal(schema.itemListElement[2]?.item, `${siteUrl.origin}/blog/idei-za-podarak`);
+});
+
+test("occasion breadcrumb uses /occasions landing path", () => {
+  const items = buildOccasionBreadcrumbItems({
+    name: "Сватба",
+    slug: "svatba",
+  });
+
+  assert.deepEqual(
+    items.map((item) => item.path),
+    ["/", "/occasions", "/occasions/svatba"],
+  );
 });
 
 test("dedupe breadcrumb removes duplicate entries", () => {

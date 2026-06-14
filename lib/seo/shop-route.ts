@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { getCategoryPath } from "@/lib/category-url";
+import { getCategoryPath, getOccasionPath } from "@/lib/category-url";
 import {
   buildFacetedNoindexMetadata,
   buildIndexableMetadata,
@@ -75,6 +75,50 @@ function findProductCategoryBySlug(
   );
 }
 
+function findOccasionBySlug(
+  categories: StorefrontCategory[],
+  slug: string,
+) {
+  return categories.find(
+    (category) => category.category_type === "occasion" && category.slug === slug,
+  );
+}
+
+export function isOnlyOccasionSelector(
+  params: Record<string, string | string[] | undefined>,
+  parsed: ParsedShopParams,
+): boolean {
+  const keys = Object.keys(params);
+  if (keys.length !== 1) {
+    return false;
+  }
+
+  const onlyKey = keys[0];
+  if (onlyKey === "occasion" && parsed.occasion) {
+    return true;
+  }
+
+  if (onlyKey === "category" && parsed.legacyCategory) {
+    return true;
+  }
+
+  return false;
+}
+
+export function resolveShopOccasionRedirect(
+  params: Record<string, string | string[] | undefined>,
+  parsed: ParsedShopParams,
+  categories: StorefrontCategory[],
+): string | null {
+  if (!isOnlyOccasionSelector(params, parsed)) {
+    return null;
+  }
+
+  const slug = parsed.occasion || parsed.legacyCategory;
+  const occasion = findOccasionBySlug(categories, slug);
+  return occasion ? getOccasionPath(occasion.slug) : null;
+}
+
 export function isOnlyProductCategorySelector(
   params: Record<string, string | string[] | undefined>,
   parsed: ParsedShopParams,
@@ -114,6 +158,17 @@ export function resolveShopProductCategoryRedirect(
   return category ? getCategoryPath(category.slug) : null;
 }
 
+export function resolveShopCategoryRedirect(
+  params: Record<string, string | string[] | undefined>,
+  parsed: ParsedShopParams,
+  categories: StorefrontCategory[],
+): string | null {
+  return (
+    resolveShopProductCategoryRedirect(params, parsed, categories) ??
+    resolveShopOccasionRedirect(params, parsed, categories)
+  );
+}
+
 export function isShopFaceted(
   params: Record<string, string | string[] | undefined>,
   parsed: ParsedShopParams,
@@ -123,7 +178,7 @@ export function isShopFaceted(
     return false;
   }
 
-  if (resolveShopProductCategoryRedirect(params, parsed, categories)) {
+  if (resolveShopCategoryRedirect(params, parsed, categories)) {
     return false;
   }
 
@@ -184,6 +239,16 @@ export function resolveProductsPageRedirect(
     return categoryRedirect;
   }
 
+  const occasionRedirect = resolveShopOccasionRedirect(
+    params,
+    parsed,
+    categories,
+  );
+
+  if (occasionRedirect) {
+    return occasionRedirect;
+  }
+
   return `/shop${buildShopQueryString(parsed)}`;
 }
 
@@ -193,7 +258,7 @@ export function buildShopMetadata(
 ): Metadata {
   const parsed = parseShopSearchParams(params);
 
-  if (resolveShopProductCategoryRedirect(params, parsed, categories)) {
+  if (resolveShopCategoryRedirect(params, parsed, categories)) {
     return {
       robots: { index: false, follow: true },
     };

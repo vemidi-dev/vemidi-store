@@ -15,7 +15,7 @@ import {
 import {
   buildShopMetadata,
   parseShopSearchParams,
-  resolveShopProductCategoryRedirect,
+  resolveShopCategoryRedirect,
 } from "@/lib/seo/shop-route";
 import { getStorefrontCatalog } from "@/lib/storefront/repository";
 
@@ -64,7 +64,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
     getSiteContent(),
   ]);
 
-  const categoryRedirect = resolveShopProductCategoryRedirect(
+  const categoryRedirect = resolveShopCategoryRedirect(
     params,
     parsed,
     categories,
