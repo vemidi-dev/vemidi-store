@@ -19,6 +19,7 @@ import {
   buildCanonicalProductRedirectPath,
   getProductPath,
 } from "@/lib/product-url";
+import { resolveSchemaOrgProductAvailability } from "@/lib/seo/product-schema-availability";
 
 type ProductPageProps = {
   params: Promise<{ slug: string }>;
@@ -117,6 +118,14 @@ export default async function ProductDetailPage({
     .slice(0, 4);
   const productImage = product.images.find((item) => item.src)?.src;
   const onPromotion = isProductOnPromotion(product);
+  const schemaAvailability = resolveSchemaOrgProductAvailability({
+    soldOut: product.soldOut,
+    fulfillmentType: product.fulfillmentType,
+    stockQuantity:
+      product.fulfillmentType === "stocked"
+        ? (product.maxCartQuantity ?? (product.orderable ? 1 : 0))
+        : null,
+  });
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -144,7 +153,7 @@ export default async function ProductDetailPage({
         ? { priceValidUntil: product.promotion.endsAt }
         : {}),
       url: productUrl,
-      availability: "https://schema.org/PreOrder",
+      availability: schemaAvailability,
       itemCondition: "https://schema.org/NewCondition",
     },
   };

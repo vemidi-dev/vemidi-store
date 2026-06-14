@@ -28,7 +28,10 @@ export async function generateMetadata({
   );
 
   if (!category) {
-    return {};
+    return {
+      title: "Категорията не е намерена",
+      robots: { index: false, follow: true },
+    };
   }
 
   const imageCategory = category.parent_id

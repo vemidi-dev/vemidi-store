@@ -7,19 +7,18 @@ import { PageContainer } from "@/components/layout/page-container";
 import { VisualPageHero } from "@/components/layout/visual-page-hero";
 import { MediaPlaceholder } from "@/components/ui/media-placeholder";
 import type { BlogPostRow } from "@/lib/admin/types";
+import { getCategoryListingHref } from "@/lib/category-url";
 import { getPublishedBlogPosts } from "@/lib/content/repository";
+import { buildBlogMetadata } from "@/lib/seo/blog-route";
 import { getStorefrontCatalog } from "@/lib/storefront/repository";
-
-export const metadata: Metadata = {
-  title: "Блог",
-  description:
-    "Идеи за подаръци, детско творчество, полезни съвети и истории от ателието на VeMiDi.",
-  alternates: { canonical: "/blog" },
-};
 
 type Props = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
+
+export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
+  return buildBlogMetadata(await searchParams);
+}
 
 const first = (value: string | string[] | undefined) =>
   Array.isArray(value) ? value[0] ?? "" : value ?? "";
@@ -130,9 +129,7 @@ export default async function BlogPage({ searchParams }: Props) {
     const ctaCategory = post.cta_category_id
       ? categoryById.get(post.cta_category_id)
       : null;
-    return ctaCategory
-      ? `/shop?product=${encodeURIComponent(ctaCategory.slug)}#product-grid`
-      : null;
+    return ctaCategory ? getCategoryListingHref(ctaCategory) : null;
   };
   const filtered = posts
     .filter((post) => {

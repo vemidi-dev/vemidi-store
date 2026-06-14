@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { permanentRedirect } from "next/navigation";
 
 import { ProductCard } from "@/components/product/product-card";
 import { PageContainer } from "@/components/layout/page-container";
@@ -11,18 +12,24 @@ import {
   getCategoryFamilySlugs,
   sortCategoriesForDisplay,
 } from "@/lib/category-hierarchy";
+import {
+  buildShopMetadata,
+  parseShopSearchParams,
+  resolveShopProductCategoryRedirect,
+} from "@/lib/seo/shop-route";
 import { getStorefrontCatalog } from "@/lib/storefront/repository";
-
-export const metadata: Metadata = {
-  title: "Продукти",
-  description:
-    "Разгледайте ръчно изработени и персонализирани подаръци от VeMiDi crafts.",
-  alternates: { canonical: "/shop" },
-};
 
 type ShopPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
+
+export async function generateMetadata({
+  searchParams,
+}: ShopPageProps): Promise<Metadata> {
+  const params = await searchParams;
+  const { categories } = await getStorefrontCatalog();
+  return buildShopMetadata(params, categories);
+}
 
 type FilterValue = {
   id: string;
@@ -51,19 +58,29 @@ function getPriceBucket(price: number): FilterValue["id"] {
 
 export default async function ShopPage({ searchParams }: ShopPageProps) {
   const params = await searchParams;
-  const query = firstValue(params.q).trim();
-  const legacyCategory = firstValue(params.category);
-  const requestedProductCategory = firstValue(params.product);
-  const requestedOccasion = firstValue(params.occasion);
-  const activePrice = firstValue(params.price);
-  const activeSort = firstValue(params.sort) || "featured";
-  const personalizationOnly = firstValue(params.personalization) === "only";
-  const promotionsOnly = firstValue(params.promotions) === "only";
-
+  const parsed = parseShopSearchParams(params);
   const [{ categories, products }, content] = await Promise.all([
     getStorefrontCatalog(),
     getSiteContent(),
   ]);
+
+  const categoryRedirect = resolveShopProductCategoryRedirect(
+    params,
+    parsed,
+    categories,
+  );
+  if (categoryRedirect) {
+    permanentRedirect(categoryRedirect);
+  }
+
+  const query = parsed.q;
+  const legacyCategory = parsed.legacyCategory;
+  const requestedProductCategory = parsed.product;
+  const requestedOccasion = parsed.occasion;
+  const activePrice = parsed.price;
+  const activeSort = parsed.sort || "featured";
+  const personalizationOnly = parsed.personalizationOnly;
+  const promotionsOnly = parsed.promotionsOnly;
 
   const productCategoryFilters: FilterValue[] = sortCategoriesForDisplay(
     categories.filter((category) => category.category_type === "product"),

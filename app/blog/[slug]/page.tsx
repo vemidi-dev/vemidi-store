@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { ContentDetail } from "@/components/content/content-detail";
 import { ContentImage } from "@/components/content/content-image";
 import { ProductCard } from "@/components/product/product-card";
+import { getCategoryListingHref } from "@/lib/category-url";
 import {
   getPublishedBlogPost,
   getPublishedBlogPosts,
@@ -83,7 +84,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
             Разгледайте подбраните предложения от категория „{ctaCategory.name}“.
           </p>
           <Link
-            href={`/shop?product=${encodeURIComponent(ctaCategory.slug)}#product-grid`}
+            href={getCategoryListingHref(ctaCategory)}
             className="mt-5 inline-flex rounded-full bg-boutique-ink px-7 py-3 text-sm font-semibold text-boutique-paper transition hover:bg-boutique-accent"
           >
             {post.cta_link_label}
