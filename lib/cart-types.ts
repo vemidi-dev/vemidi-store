@@ -20,6 +20,8 @@ export type CartLine = {
   personalizationFields?: ProductPersonalizationValue[];
   selectedColors?: SelectedProductColor[];
   optionSelections?: ProductOptionSelection[];
+  /** Snapshot of stocked quantity limit when the line was added. */
+  maxCartQuantity?: number;
 };
 
 export type CartLineAttribution = Pick<CartLine, "campaign" | "source" | "landingUrl">;

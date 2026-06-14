@@ -23,7 +23,7 @@ function CartIcon() {
 }
 
 const iconButtonClass =
-  "relative grid h-10 w-10 place-items-center rounded-lg border border-boutique-line/80 bg-white text-boutique-ink transition hover:border-boutique-sage/45 hover:bg-boutique-paper focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-boutique-accent";
+  "relative grid h-11 w-11 place-items-center rounded-lg border border-boutique-line/80 bg-white text-boutique-ink transition hover:border-boutique-sage/45 hover:bg-boutique-paper";
 
 export function HeaderActions() {
   const { itemCount } = useCart();

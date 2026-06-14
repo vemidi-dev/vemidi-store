@@ -219,8 +219,8 @@ Run `product_slug_and_code.sql` after `site_content_settings.sql`. The file is w
 - `products.slug` and `products.product_code` with unique indexes;
 - `product_slug_history` with public read RLS for storefront redirects and admin-only insert;
 - `product_code_seq` and `next_product_code()` for atomic `VM-000001` style codes;
-  `next_product_code()` is `SECURITY DEFINER`, calls `assert_admin()` before `nextval()`,
-  grants `EXECUTE` only to `authenticated`, and keeps the sequence owner-only;
+`next_product_code()` is `SECURITY DEFINER`, calls `assert_admin()` before `nextval()`,
+grants `EXECUTE` only to `authenticated`, and keeps the sequence owner-only;
 - slug helpers (`slugify_product_name`, `reserve_unique_product_slug`, etc.);
 - `admin_create_product_v5` / `admin_update_product_v5` with server-side slug validation;
 - `admin_create_product_v4` wrapper that delegates to v5 (for older app builds);
@@ -247,7 +247,73 @@ If product create fails with PostgreSQL error `23502` after migration #34, run
 `admin_create_product_v5` (SECURITY DEFINER + inline `nextval`) and redefines
 `admin_create_product_v4` as a wrapper to v5.
 
+Run `product_inventory_fulfillment.sql` after `product_slug_and_code.sql` (and the hotfix if applied).
+Migration #35 adds product fulfillment modes and optional stock tracking:
+
+- `products.fulfillment_type` — `made_to_order` (default), `stocked`, or `unavailable`;
+- `products.stock_quantity` — nullable integer, required and `>= 0` only when `fulfillment_type = stocked`;
+- CHECK constraints for mode/stock consistency and non-negative quantities;
+- backfill of all existing products to `made_to_order` with `stock_quantity = null`;
+- `validate_product_fulfillment_fields()` helper;
+- `admin_create_product_v6` / `admin_update_product_v6` with server-side fulfillment validation;
+- v5 wrappers preserved for backward compatibility;
+- updated `admin_duplicate_product` — inherits `fulfillment_type`, resets `stock_quantity` to `0` for `stocked` duplicates (never copies source warehouse qty);
+- updated `create_store_order` — aggregates cart demand per product, `FOR UPDATE` row locks, atomic stock decrement for `stocked`, stable `insufficient_stock` / `product_unavailable` errors, order snapshots with `fulfillmentType`, `stockQuantityBefore`, `stockQuantityAfter`.
+
+**Duplicate safe behavior:** cloned product keeps the parent's fulfillment mode; if mode is `stocked`, stock starts at `0` so the admin must set quantity before sales.
+
+**Future work (not in this migration):** release stock when an order is cancelled.
+
+Safe apply order for migration #35:
+
+1. export `products` and `orders` from Supabase;
+2. run the complete `supabase/product_inventory_fulfillment.sql` file in the SQL editor;
+3. run `npm run supabase:check` locally;
+4. deploy to a Vercel Preview and smoke-test checkout for both `made_to_order` and `stocked` products;
+5. deploy to Production only after Preview passes.
+
+`is_sold_out` remains supported alongside fulfillment modes until fully replaced in a later phase.
+
+Run `product_inventory_checkout_hardening.sql` after `product_inventory_fulfillment.sql`. Migration #36 hardens `create_store_order`:
+
+- locks every ordered product row with `FOR UPDATE` in stable `product_id` order;
+- checks `is_sold_out` before `unavailable` and stock validation;
+- returns `product_sold_out` when the manual sold-out flag is set, even if stock is zero;
+- keeps aggregated demand, atomic decrement, idempotent retries, and order snapshots from #35.
+
+Safe apply order for migrations #35 and #36:
+
+1. export `products` and `orders` from Supabase;
+2. run `supabase/product_inventory_fulfillment.sql` in the SQL editor;
+3. run `supabase/product_inventory_checkout_hardening.sql` in the SQL editor;
+4. run `npm run supabase:check` locally;
+5. configure `SUPABASE_TEST_URL` + `SUPABASE_TEST_SECRET_KEY` on a separate test project, apply the same migrations there, then run `npm run test:integration`;
+6. deploy to a Vercel Preview and smoke-test checkout for `made_to_order` and `stocked` products;
+7. deploy to Production only after Preview and integration tests pass.
+
+Rollback (app + database):
+
+1. redeploy the previous app build that calls `admin_create_product_v5` / `admin_update_product_v5`;
+2. in Supabase SQL editor, redeploy the previous `create_store_order` from `product_slug_and_code.sql` (or the last known-good checkout migration);
+3. optional: keep `fulfillment_type` / `stock_quantity` columns in place — they are nullable/default-safe and do not break v5 RPC wrappers;
+4. do not drop v5 functions; #35 keeps them as wrappers for rollback.
+
 To verify the new admin RPCs exist without mutating data, run in the Supabase SQL editor:
+
+```sql
+select proname
+from pg_proc
+join pg_namespace on pg_namespace.oid = pg_proc.pronamespace
+where pg_namespace.nspname = 'public'
+  and proname in (
+    'admin_create_product_v6',
+    'admin_update_product_v6',
+    'validate_product_fulfillment_fields'
+  )
+order by proname;
+```
+
+Migration #34 admin RPC verification (still supported via v5 wrappers):
 
 ```sql
 select proname
@@ -260,3 +326,4 @@ where pg_namespace.nspname = 'public'
   )
 order by proname;
 ```
+

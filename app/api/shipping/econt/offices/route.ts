@@ -35,7 +35,8 @@ export async function GET(request: Request) {
     const offices = await getEcontOfficesForDelivery(cityId, deliveryType);
     return NextResponse.json({ offices });
   } catch (error) {
-    console.error("Econt office search failed:", error);
+    const message = error instanceof Error ? error.message : "unknown";
+    console.error("Econt office search failed:", message);
     return NextResponse.json(
       { error: "Неуспешно зареждане на офиси от Еконт." },
       { status: 502 },

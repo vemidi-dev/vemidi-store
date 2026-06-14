@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useCart } from "@/components/cart/cart-provider";
 import { ProductOptionsSelector } from "@/components/product/product-options-selector";
@@ -10,6 +10,7 @@ import type { ProductOptionSelection } from "@/lib/product-options";
 import { validateProductOptionSelections } from "@/lib/product-option-validation";
 import type { SelectedProductColor } from "@/lib/product-colors";
 import { formatPriceDelta } from "@/lib/product-option-pricing";
+import { formatEur } from "@/lib/format-eur";
 import type { ProductPersonalizationField } from "@/lib/product-personalization";
 import {
   buildPersonalizationFieldValues,
@@ -33,6 +34,7 @@ export function ProductDetailAddToCart({
   initialOptionSelections = [],
 }: ProductDetailAddToCartProps) {
   const { addProduct } = useCart();
+  const configuratorRef = useRef<HTMLDivElement | null>(null);
   const fallbackFields: ProductPersonalizationField[] =
     product.customizable && !(product.personalizationFields?.length)
       ? [{
@@ -63,6 +65,8 @@ export function ProductDetailAddToCart({
   const [wishFieldId, setWishFieldId] = useState<string | null>(null);
   const [optionSelections, setOptionSelections] =
     useState<ProductOptionSelection[]>(initialOptionSelections);
+  const [estimatedUnitPrice, setEstimatedUnitPrice] = useState(product.price);
+  const [showMobileBar, setShowMobileBar] = useState(false);
   const colorFields = product.colorFields ?? [];
   const optionGroups = product.optionGroups ?? [];
 
@@ -135,6 +139,23 @@ export function ProductDetailAddToCart({
     personalizationFields,
     enabledOptionalFields,
   );
+  const displayedUnitPrice = optionGroups.length
+    ? estimatedUnitPrice
+    : product.price + personalizationDelta;
+
+  useEffect(() => {
+    const configurator = configuratorRef.current;
+    if (!configurator) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setShowMobileBar(entry.isIntersecting),
+      { threshold: 0.01 },
+    );
+    observer.observe(configurator);
+    return () => observer.disconnect();
+  }, []);
 
   const focusPersonalizationField = (fieldId: string) => {
     requestAnimationFrame(() => {
@@ -167,22 +188,55 @@ export function ProductDetailAddToCart({
     setError(null);
   };
 
-  if (product.soldOut) {
+  const handleAddToCart = () => {
+    const validationError = validate();
+    if (validationError) {
+      setError(validationError);
+      document
+        .getElementById("product-configurator")
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+
+    addProduct(
+      product,
+      1,
+      personalization || undefined,
+      flattenSelectedColors() || undefined,
+      personalizationFields,
+      attribution,
+      optionSelections.length ? optionSelections : undefined,
+    );
+    setError(null);
+    setAdded(true);
+    setTimeout(() => setAdded(false), 2200);
+  };
+
+  if (!product.orderable) {
+    const message =
+      product.fulfillmentType === "unavailable"
+        ? "Този продукт временно не може да бъде поръчан."
+        : product.availabilityLabel === "Изчерпан"
+          ? "Този продукт временно не е наличен за поръчка. Можете да се свържете с нас за алтернатива или срок."
+          : "Този продукт не може да бъде поръчан в момента.";
+
     return (
       <div className="mt-8 rounded-xl border border-boutique-line bg-boutique-bg px-5 py-5">
         <p className="text-sm font-semibold uppercase tracking-[0.16em] text-boutique-muted">
-          Изчерпан
+          {product.availabilityLabel}
         </p>
-        <p className="mt-2 text-sm leading-relaxed text-boutique-muted">
-          Този продукт временно не е наличен за поръчка. Можете да се свържете с нас за
-          алтернатива или срок.
-        </p>
+        <p className="mt-2 text-sm leading-relaxed text-boutique-muted">{message}</p>
       </div>
     );
   }
 
   return (
-    <div className="mt-8 rounded-2xl border border-boutique-line bg-boutique-paper p-4 sm:p-5">
+    <>
+    <div
+      id="product-configurator"
+      ref={configuratorRef}
+      className="mt-8 scroll-mt-28 rounded-2xl border border-boutique-line bg-boutique-paper p-4 sm:p-5"
+    >
       {fields.length ? (
         <div className="grid gap-4">
           {fields.map((field) => {
@@ -344,9 +398,11 @@ export function ProductDetailAddToCart({
       {optionGroups.length ? (
         <ProductOptionsSelector
           basePrice={product.price + personalizationDelta}
+          variantDisplayBasePrice={product.price}
           groups={optionGroups}
           value={optionSelections}
           onChange={setOptionSelections}
+          onEstimatedPriceChange={setEstimatedUnitPrice}
         />
       ) : null}
 
@@ -405,22 +461,7 @@ export function ProductDetailAddToCart({
       <button
         type="button"
         aria-live="polite"
-        onClick={() => {
-          const validationError = validate();
-          if (validationError) return setError(validationError);
-          addProduct(
-            product,
-            1,
-            personalization || undefined,
-            flattenSelectedColors() || undefined,
-            personalizationFields,
-            attribution,
-            optionSelections.length ? optionSelections : undefined,
-          );
-          setError(null);
-          setAdded(true);
-          setTimeout(() => setAdded(false), 2200);
-        }}
+        onClick={handleAddToCart}
         className={`mt-5 w-full rounded-xl px-8 py-3.5 text-sm font-semibold text-white transition ${
           added
             ? "bg-boutique-sage shadow-boutique-sm"
@@ -479,5 +520,34 @@ export function ProductDetailAddToCart({
         </div>
       ) : null}
     </div>
+    {showMobileBar ? (
+      <div
+        className="fixed inset-x-0 bottom-0 z-50 border-t border-boutique-line bg-boutique-paper/95 px-4 py-3 shadow-[0_-10px_30px_-20px_rgb(44_40_37_/0.45)] backdrop-blur sm:hidden"
+        aria-label="Бързо добавяне в количката"
+      >
+        <div className="mx-auto flex max-w-xl items-center gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-boutique-muted">
+              Ориентировъчна цена
+            </p>
+            <p className="font-heading text-xl text-boutique-ink">
+              {formatEur(displayedUnitPrice)}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleAddToCart}
+            className={`min-h-12 shrink-0 rounded-xl px-5 text-sm font-semibold text-white transition ${
+              added
+                ? "bg-boutique-sage shadow-boutique-sm"
+                : "bg-boutique-sage-deep hover:bg-boutique-ink"
+            }`}
+          >
+            {added ? "✓ Добавено" : "Добави"}
+          </button>
+        </div>
+      </div>
+    ) : null}
+    </>
   );
 }

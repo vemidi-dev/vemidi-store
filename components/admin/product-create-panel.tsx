@@ -6,6 +6,7 @@ import { ProductImageFileInput } from "@/components/admin/product-image-file-inp
 import { ProductColorFieldsEditor } from "@/components/admin/product-color-fields-editor";
 import { ProductOptionGroupsEditor } from "@/components/admin/product-option-groups-editor";
 import { ProductPersonalizationFieldsEditor } from "@/components/admin/product-personalization-fields-editor";
+import { ProductFulfillmentFields } from "@/components/admin/product-fulfillment-fields";
 import { ProductCardBadgeField } from "@/components/admin/product-card-badge-field";
 import { ProductSeoFields } from "@/components/admin/product-seo-fields";
 import { ProductWishSelector } from "@/components/admin/product-wish-selector";
@@ -240,6 +241,11 @@ export function ProductCreatePanel({
           </label>
 
           <ProductCardBadgeField defaultValue={draft?.cardBadge} />
+
+          <ProductFulfillmentFields
+            initialFulfillmentType={draft?.fulfillmentType}
+            initialStockQuantity={draft?.stockQuantity}
+          />
 
           <label className="inline-flex items-center gap-2 text-sm font-medium text-boutique-ink">
             <input

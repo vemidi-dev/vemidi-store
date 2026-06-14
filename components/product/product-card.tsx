@@ -32,7 +32,7 @@ export function ProductCard({ product, variant = "default" }: ProductCardProps) 
       <ProductCardMedia
         slug={product.slug}
         images={product.images}
-        soldOut={product.soldOut}
+        soldOut={!product.orderable}
         promotion={product.promotion}
         compact={compact}
       />
@@ -73,9 +73,9 @@ export function ProductCard({ product, variant = "default" }: ProductCardProps) 
 
         <div className={compact ? "mt-3 sm:mt-5" : "mt-6 border-t border-boutique-line/80 pt-5"}>
           <ProductPrice product={product} size={compact ? "md" : "lg"} />
-          {product.soldOut ? (
+          {!product.orderable ? (
             <p className="mt-3 text-xs font-semibold uppercase tracking-[0.16em] text-boutique-muted">
-              Изчерпан
+              {product.availabilityLabel}
             </p>
           ) : (
             <Link href={`/products/${product.slug}`} className={ctaClassName}>

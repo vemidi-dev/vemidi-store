@@ -4,6 +4,13 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import {
+  createProductAtomic,
+  deleteProductAtomic,
+  duplicateProductAtomic,
+  getProductMutationErrorMessage,
+  updateProductAtomic,
+} from "@/lib/admin/product-rpc";
+import {
   getAdminTab,
   getCategoryIds,
   getFiles,
@@ -14,6 +21,7 @@ import {
   isChecked,
   makeCreateProductDraft,
   normalizeSlug,
+  parseProductFulfillmentFromFormData,
   parseSelectLimit,
 } from "@/lib/admin/form-data";
 import { adminFormFields } from "@/lib/admin/form-fields";
@@ -29,13 +37,6 @@ import {
   getDuplicateProductErrorMessage,
   shouldCopyDuplicateImages,
 } from "@/lib/admin/duplicate-product";
-import {
-  createProductAtomic,
-  deleteProductAtomic,
-  duplicateProductAtomic,
-  getProductMutationErrorMessage,
-  updateProductAtomic,
-} from "@/lib/admin/product-rpc";
 import {
   createSupabaseProductImageStorageAdapter,
   deleteProductScopedStoragePaths,
@@ -418,6 +419,11 @@ export async function createProduct(formData: FormData) {
   const fulfillmentNote = getOptionalString(formData, adminFormFields.product.fulfillmentNote);
   const isCustomizable = isChecked(formData, adminFormFields.product.isCustomizable);
   const isSoldOut = isChecked(formData, adminFormFields.product.isSoldOut);
+  const {
+    fulfillmentType,
+    stockQuantity,
+    error: fulfillmentError,
+  } = parseProductFulfillmentFromFormData(formData);
   const cardBadge = normalizeProductCardBadge(
     getOptionalString(formData, adminFormFields.product.cardBadge),
   );
@@ -459,6 +465,9 @@ export async function createProduct(formData: FormData) {
   if (optionGroupsError) {
     redirectWith("error", optionGroupsError, activeTab, draft);
   }
+  if (fulfillmentError) {
+    redirectWith("error", fulfillmentError, activeTab, draft);
+  }
   if (galleryUploadError) {
     redirectWith("error", galleryUploadError, activeTab, draft);
   }
@@ -478,6 +487,8 @@ export async function createProduct(formData: FormData) {
     imageUrl: null,
     isCustomizable: isCustomizable || personalizationFields.length > 0,
     isSoldOut,
+    fulfillmentType,
+    stockQuantity,
     cardBadge,
     categoryIds,
     colorFields,
@@ -557,6 +568,11 @@ export async function updateProduct(formData: FormData) {
   const wishTemplateIds = getWishTemplateIds(formData);
   const isCustomizable = isChecked(formData, adminFormFields.product.isCustomizable);
   const isSoldOut = isChecked(formData, adminFormFields.product.isSoldOut);
+  const {
+    fulfillmentType,
+    stockQuantity,
+    error: fulfillmentError,
+  } = parseProductFulfillmentFromFormData(formData);
   const cardBadge = normalizeProductCardBadge(
     getOptionalString(formData, adminFormFields.product.cardBadge),
   );
@@ -598,6 +614,9 @@ export async function updateProduct(formData: FormData) {
   if (optionGroupsError) {
     redirectWith("error", optionGroupsError, activeTab);
   }
+  if (fulfillmentError) {
+    redirectWithProductEdit("error", fulfillmentError, id);
+  }
   detectDuplicateOptionWarnings(
     optionGroups,
     colorFields.map((field) => field.label),
@@ -617,6 +636,8 @@ export async function updateProduct(formData: FormData) {
       imageUrl: existingImageUrl,
       isCustomizable: isCustomizable || personalizationFields.length > 0,
       isSoldOut,
+      fulfillmentType,
+      stockQuantity,
       cardBadge,
       categoryIds,
       colorFields,

@@ -185,15 +185,49 @@ export default async function ProductDetailPage({
 
                 <div className="flex flex-wrap items-center gap-3">
                   <ProductPrice product={product} size="lg" />
-                  {product.soldOut ? (
-                    <span className="rounded-full bg-boutique-muted/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-boutique-muted">
-                      Изчерпан
-                    </span>
-                  ) : product.promotion ? (
+                  {product.promotion ? (
                     <span className="rounded-full bg-boutique-accent/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-boutique-accent">
                       {product.promotion.label}
                     </span>
                   ) : null}
+                  {product.availabilityLabel !== "В наличност" ? (
+                    <span className="rounded-full bg-boutique-muted/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-boutique-muted">
+                      {product.availabilityLabel}
+                    </span>
+                  ) : null}
+                </div>
+
+                <div className="grid gap-2 rounded-2xl border border-boutique-line bg-boutique-bg p-4 text-sm text-boutique-muted sm:grid-cols-3">
+                  <div>
+                    <p className="font-semibold text-boutique-ink">Изработка</p>
+                    <p className="mt-1 leading-5">
+                      {product.fulfillmentNote ?? "Обичайно 1–5 работни дни"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-boutique-ink">Доставка и плащане</p>
+                    <p className="mt-1 leading-5">
+                      Еконт или Спиди · наложен платеж
+                    </p>
+                    <Link
+                      href="/delivery"
+                      className="mt-1 inline-flex font-semibold text-boutique-sage-deep underline-offset-4 hover:underline"
+                    >
+                      Виж условията
+                    </Link>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-boutique-ink">Връщане</p>
+                    <p className="mt-1 leading-5">
+                      14 дни за неперсонализирани продукти
+                    </p>
+                    <Link
+                      href="/returns"
+                      className="mt-1 inline-flex font-semibold text-boutique-sage-deep underline-offset-4 hover:underline"
+                    >
+                      Условия за връщане
+                    </Link>
+                  </div>
                 </div>
               </div>
 

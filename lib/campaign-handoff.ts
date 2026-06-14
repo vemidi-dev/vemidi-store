@@ -422,7 +422,7 @@ export function evaluateCampaignHandoff(
     };
   }
 
-  if (!product || product.soldOut) {
+  if (!product || !product.orderable) {
     return {
       status: "invalid",
       title: "Продуктът не е наличен",

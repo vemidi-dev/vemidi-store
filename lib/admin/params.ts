@@ -56,6 +56,8 @@ export function parseProductCreateDraft(raw: string): ProductCreateDraft | null 
       price?: unknown;
       is_customizable?: unknown;
       is_sold_out?: unknown;
+      fulfillment_type?: unknown;
+      stock_quantity?: unknown;
       card_badge?: unknown;
       category_ids?: unknown;
       color_fields?: unknown;
@@ -189,6 +191,14 @@ export function parseProductCreateDraft(raw: string): ProductCreateDraft | null 
       price: typeof parsed.price === "string" ? parsed.price : "",
       isCustomizable: parsed.is_customizable === true,
       isSoldOut: parsed.is_sold_out === true,
+      fulfillmentType:
+        parsed.fulfillment_type === "stocked" || parsed.fulfillment_type === "unavailable"
+          ? parsed.fulfillment_type
+          : "made_to_order",
+      stockQuantity:
+        typeof parsed.stock_quantity === "string" && parsed.stock_quantity.trim()
+          ? Number.parseInt(parsed.stock_quantity, 10)
+          : null,
       cardBadge: typeof parsed.card_badge === "string" ? parsed.card_badge : "",
       categoryIds,
       colorFields,

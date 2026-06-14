@@ -21,7 +21,8 @@ export async function GET(request: Request) {
     const cities = await searchEcontCities(query);
     return NextResponse.json({ cities });
   } catch (error) {
-    console.error("Econt city search failed:", error);
+    const message = error instanceof Error ? error.message : "unknown";
+    console.error("Econt city search failed:", message);
     return NextResponse.json(
       { error: "Неуспешно зареждане на населени места от Еконт." },
       { status: 502 },

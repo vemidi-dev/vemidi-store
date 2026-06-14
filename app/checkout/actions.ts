@@ -8,6 +8,11 @@ import {
   resolveOrderAttributionFromLines,
 } from "@/lib/campaign-attribution";
 import {
+  checkoutErrorMessages,
+  mapCheckoutError,
+} from "@/lib/checkout/errors";
+import { formatOrderReference } from "@/lib/checkout/order-confirmation";
+import {
   validatePersonalizationFields,
   type PersonalizationFieldDefinition,
 } from "@/lib/checkout-personalization";
@@ -30,6 +35,9 @@ export type CheckoutActionState = {
     currency: string;
     itemCount: number;
   };
+  confirmation?: {
+    orderRef: string;
+  };
 };
 
 type SubmittedCartItem = {
@@ -47,45 +55,6 @@ type SubmittedCartItem = {
   landingUrl?: unknown;
 };
 
-const checkoutErrorMessages: Record<string, string> = {
-  invalid_customer_name: "Моля, въведете име и фамилия.",
-  invalid_customer_phone: "Моля, въведете валиден телефон.",
-  invalid_customer_email: "Имейл адресът не е валиден.",
-  invalid_courier: "Изберете куриер.",
-  invalid_delivery_type: "Изберете начин на доставка.",
-  invalid_city: "Въведете населено място.",
-  office_required: "Въведете офис на куриера.",
-  address_required: "Въведете пълен адрес за доставка.",
-  empty_order: "Количката е празна.",
-  too_many_items: "Поръчката съдържа твърде много артикули.",
-  invalid_order_item: "В количката има невалиден артикул.",
-  invalid_quantity: "В количката има невалидно количество.",
-  product_not_found: "Някой от продуктите вече не е наличен.",
-  product_sold_out: "Някой от продуктите в количката е изчерпан.",
-  invalid_product_price: "Цената на продукт не може да бъде потвърдена.",
-  personalization_too_long: "Текстът за персонализация е твърде дълъг.",
-  invalid_personalization_fields: "Данните за персонализация са невалидни.",
-  required_personalization_missing: "Попълнете всички задължителни полета за персонализация.",
-  invalid_personalization_date: "Въведете валидна дата в полето за персонализация.",
-  product_not_customizable: "Избран продукт не поддържа персонализация.",
-  invalid_color_count: "Изберете необходимия брой цветове за продукта.",
-  invalid_color_selection: "Някой от избраните цветове вече не е наличен.",
-  invalid_option_selections: "Изборът на опции е невалиден.",
-  invalid_option_group: "Подадена е непозволена група опции.",
-  duplicate_option_group: "Дублирана група опции.",
-  duplicate_option_value: "Една и съща стойност на опция е подадена повече от веднъж.",
-  invalid_option_value: "Подадена е непозволена стойност на опция.",
-  invalid_option_count: "Броят избрани опции не е валиден.",
-  required_option_missing: "Попълнете всички задължителни опции.",
-  option_dependency_not_met: "Условната опция не е достъпна.",
-  option_value_sold_out: "Избраната опция е изчерпана.",
-  option_text_too_long: "Текстът в опцията е твърде дълъг.",
-  invalid_option_date: "Въведете валидна дата в опцията.",
-  invalid_idempotency_key: "Заявката за поръчка е невалидна. Презаредете страницата и опитайте отново.",
-  order_request_in_progress: "Поръчката вече се обработва. Изчакайте момент и опитайте отново.",
-  rate_limit_exceeded: "Направени са твърде много опити. Изчакайте 15 минути и опитайте отново.",
-};
-
 function text(formData: FormData, name: string, maxLength: number) {
   return String(formData.get(name) ?? "").trim().slice(0, maxLength);
 }
@@ -97,14 +66,6 @@ function parseCartItems(raw: string): SubmittedCartItem[] | null {
   } catch {
     return null;
   }
-}
-
-function mapCheckoutError(message: string) {
-  const knownError = Object.entries(checkoutErrorMessages).find(([code]) =>
-    message.includes(code),
-  );
-
-  return knownError?.[1] ?? "Поръчката не беше записана. Моля, опитайте отново.";
 }
 
 export async function createStoreOrder(
@@ -419,7 +380,10 @@ export async function createStoreOrder(
     try {
       await sendOrderNotifications(createdOrder as OrderRow);
     } catch (error) {
-      console.error("Order notification email failed:", error);
+      console.error("Order notification dispatch failed", {
+        orderId: data,
+        error: error instanceof Error ? error.message : "unknown",
+      });
     }
   }
 
@@ -428,6 +392,9 @@ export async function createStoreOrder(
   return {
     ok: true,
     message: "Поръчката е приета успешно.",
+    confirmation: {
+      orderRef: formatOrderReference(data),
+    },
     purchase: {
       value: Number(createdOrder?.total_price) || 0,
       currency: String(createdOrder?.currency || "EUR"),

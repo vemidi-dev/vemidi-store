@@ -5,6 +5,7 @@ import type {
   ParsedOptionGroup,
   ParsedPersonalizationField,
 } from "@/lib/admin/types";
+import type { ProductFulfillmentType } from "@/lib/product-fulfillment";
 
 export type ProductMutationInput = {
   name: string;
@@ -16,6 +17,8 @@ export type ProductMutationInput = {
   imageUrl: string | null;
   isCustomizable: boolean;
   isSoldOut: boolean;
+  fulfillmentType: ProductFulfillmentType;
+  stockQuantity: number | null;
   cardBadge: string | null;
   categoryIds: string[];
   colorFields: ParsedColorField[];
@@ -76,6 +79,8 @@ function toRpcInput(input: ProductMutationInput) {
     p_image_url: input.imageUrl ?? "",
     p_is_customizable: input.isCustomizable,
     p_is_sold_out: input.isSoldOut,
+    p_fulfillment_type: input.fulfillmentType,
+    p_stock_quantity: input.stockQuantity,
     p_card_badge: input.cardBadge ?? "",
     p_category_ids: input.categoryIds,
     p_color_fields: toColorFieldsPayload(input.colorFields),
@@ -99,7 +104,7 @@ export async function createProductAtomic(
   supabase: SupabaseClient,
   input: ProductMutationInput,
 ) {
-  return supabase.rpc("admin_create_product_v5", toRpcInput(input));
+  return supabase.rpc("admin_create_product_v6", toRpcInput(input));
 }
 
 export async function updateProductAtomic(
@@ -107,7 +112,7 @@ export async function updateProductAtomic(
   productId: string,
   input: ProductMutationInput,
 ) {
-  return supabase.rpc("admin_update_product_v5", {
+  return supabase.rpc("admin_update_product_v6", {
     p_product_id: productId,
     ...toRpcInput(input),
   });
@@ -145,7 +150,8 @@ const rpcErrorMessages: Record<string, string> = {
   product_not_found: "Продуктът не е намерен.",
   invalid_product_slug: "SEO адресът е невалиден.",
   slug_taken: "Този SEO адрес вече се използва.",
-  slug_unavailable: "Неуспешно генериране на уникален SEO адрес.",
+  invalid_product_fulfillment: "Невалиден режим на наличност.",
+  invalid_stock_quantity: "Складовата наличност е невалидна.",
 };
 
 export function getProductMutationErrorMessage(

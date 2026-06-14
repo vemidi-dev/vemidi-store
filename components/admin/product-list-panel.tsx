@@ -19,6 +19,7 @@ import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
 import { ProductGalleryAddForm } from "@/components/admin/product-gallery-add-form";
 import { ProductGalleryReplaceForm } from "@/components/admin/product-gallery-replace-form";
 import { ProductImageFileInput } from "@/components/admin/product-image-file-input";
+import { ProductFulfillmentFields } from "@/components/admin/product-fulfillment-fields";
 import { ProductCardBadgeField } from "@/components/admin/product-card-badge-field";
 import { ProductColorFieldsEditor } from "@/components/admin/product-color-fields-editor";
 import { ProductOptionGroupsEditor } from "@/components/admin/product-option-groups-editor";
@@ -36,6 +37,7 @@ import type { AdminData } from "@/lib/admin/data";
 import { buildDependencyOptionsFromGroups } from "@/lib/admin/option-dependency-options";
 import { adminFormFields } from "@/lib/admin/form-fields";
 import type { CategoryRow } from "@/lib/admin/types";
+import { formatAdminFulfillmentListStatus } from "@/lib/product-fulfillment";
 
 export function ProductListPanel({
   data,
@@ -95,7 +97,7 @@ export function ProductListPanel({
             filters={[
               {
                 key: "status",
-                label: "Статус",
+                label: "Наличност",
                 dataAttribute: "filterStatus",
                 options: [
                   { value: "active", label: "Активни" },
@@ -146,7 +148,7 @@ export function ProductListPanel({
               <span />
               <span>Име</span>
               <span>Цена</span>
-              <span>Статус</span>
+              <span>Наличност</span>
               <span>Категории</span>
               <span className="text-right">Действия</span>
             </div>
@@ -253,6 +255,12 @@ export function ProductListPanel({
                 ? "Без категория"
                 : assignedCategories.map((category) => category.name).join(", ");
 
+            const fulfillmentStatus = formatAdminFulfillmentListStatus({
+              soldOut: product.is_sold_out,
+              fulfillmentType: product.fulfillment_type,
+              stockQuantity: product.stock_quantity ?? null,
+            });
+
             return (
               <div
                 key={product.id}
@@ -293,8 +301,8 @@ export function ProductListPanel({
                   <p className="text-sm text-boutique-ink">
                     {Number(product.price).toFixed(2)} €
                   </p>
-                  <p className="text-xs text-boutique-muted">
-                    {product.is_sold_out ? "Изчерпан" : "Активен"}
+                  <p className="text-xs text-boutique-muted" title={fulfillmentStatus}>
+                    {fulfillmentStatus}
                   </p>
                   <p className="line-clamp-2 text-xs text-boutique-muted" title={categoryLabel}>
                     {categoryLabel}
@@ -361,8 +369,7 @@ export function ProductListPanel({
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-medium text-boutique-ink">{product.name}</p>
                     <p className="text-xs text-boutique-muted">
-                      {Number(product.price).toFixed(2)} € ·{" "}
-                      {product.is_sold_out ? "Изчерпан" : "Активен"}
+                      {Number(product.price).toFixed(2)} € · {fulfillmentStatus}
                     </p>
                     <p className="line-clamp-1 text-[11px] text-boutique-muted">{categoryLabel}</p>
                   </div>
@@ -574,6 +581,13 @@ export function ProductListPanel({
 
                     <div className="md:col-span-2">
                       <ProductCardBadgeField defaultValue={product.card_badge} />
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <ProductFulfillmentFields
+                        initialFulfillmentType={product.fulfillment_type ?? "made_to_order"}
+                        initialStockQuantity={product.stock_quantity ?? null}
+                      />
                     </div>
 
                     {hasNoGalleryImages ? (

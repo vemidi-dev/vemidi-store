@@ -9,6 +9,12 @@ import {
   resolveProductCardStatusLabel,
 } from "@/lib/product-card";
 
+const defaultProductAvailability = {
+  fulfillmentType: "made_to_order" as const,
+  availabilityLabel: "Изработва се по поръчка",
+  orderable: true,
+};
+
 const baseProduct: Product = {
   id: "11111111-1111-4111-8111-111111111111",
   slug: "gift-box",
@@ -17,6 +23,7 @@ const baseProduct: Product = {
   description: "Описание",
   price: 29.9,
   images: [{ src: "https://example.com/image.webp", alt: "Подаръчна кутия" }],
+  ...defaultProductAvailability,
 };
 
 test("normalizeProductCardBadge accepts known labels and rejects unknown values", () => {

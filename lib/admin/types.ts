@@ -1,3 +1,5 @@
+import type { ProductFulfillmentType } from "@/lib/product-fulfillment";
+
 export type AdminTab =
   | "products"
   | "categories"
@@ -137,6 +139,8 @@ export type ProductRow = {
   image_url: string | null;
   is_customizable: boolean;
   is_sold_out: boolean;
+  fulfillment_type?: ProductFulfillmentType;
+  stock_quantity?: number | null;
   card_badge?: string | null;
 };
 
@@ -234,6 +238,8 @@ export type ProductCreateDraft = {
   price: string;
   isCustomizable: boolean;
   isSoldOut: boolean;
+  fulfillmentType: ProductFulfillmentType;
+  stockQuantity: number | null;
   cardBadge: string;
   categoryIds: string[];
   colorFields: ProductDraftColorField[];

@@ -9,7 +9,7 @@ import { siteConfig } from "@/config/site";
 import { getSiteContent } from "@/lib/content/site-content";
 
 const navLinkClass =
-  "relative whitespace-nowrap rounded-sm text-sm font-medium text-boutique-muted transition-colors duration-200 after:pointer-events-none after:absolute after:-bottom-1 after:left-0 after:h-px after:w-full after:origin-left after:scale-x-0 after:bg-boutique-rose-deep after:transition-transform after:duration-300 hover:text-boutique-rose-deep hover:after:scale-x-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-boutique-rose-deep";
+  "relative whitespace-nowrap rounded-sm text-sm font-medium text-boutique-muted transition-colors duration-200 after:pointer-events-none after:absolute after:-bottom-1 after:left-0 after:h-px after:w-full after:origin-left after:scale-x-0 after:bg-boutique-rose-deep after:transition-transform after:duration-300 hover:text-boutique-rose-deep hover:after:scale-x-100";
 
 export async function Header() {
   const content = await getSiteContent();
@@ -26,10 +26,10 @@ export async function Header() {
             <Image
               src="/assets/logo-transparent-color.png"
               alt="VeMiDi crafts logo"
-              width={96}
-              height={96}
+              width={480}
+              height={573}
               priority
-              className="h-12 w-12 shrink-0 scale-[1.65] object-contain transition-transform duration-200 group-hover:scale-[1.72] sm:h-14 sm:w-14"
+              className="h-12 w-10 shrink-0 object-contain transition-opacity duration-200 group-hover:opacity-80 sm:h-14 sm:w-12"
             />
             <span className="min-w-0 leading-tight">
               <span className="block truncate font-heading text-base tracking-tight text-boutique-ink transition-colors duration-200 group-hover:text-boutique-rose-deep sm:text-xl">

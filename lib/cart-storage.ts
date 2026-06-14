@@ -1,3 +1,4 @@
+import { normalizeCartQuantityWithLimit } from "@/lib/cart/quantity-limits";
 import { isUuid } from "@/lib/is-uuid";
 import { makeCartLineId } from "@/lib/cart-line-id";
 import {
@@ -124,7 +125,16 @@ export function parseStoredCart(raw: string | null): CartLine[] {
           ? value.imageSrc.trim().slice(0, 2000)
           : undefined;
       const quantity =
-        typeof value.quantity === "number" ? normalizeCartQuantity(value.quantity) : 0;
+        typeof value.quantity === "number"
+          ? normalizeCartQuantity(value.quantity)
+          : 0;
+      const maxCartQuantity =
+        typeof value.maxCartQuantity === "number" &&
+        Number.isFinite(value.maxCartQuantity) &&
+        value.maxCartQuantity >= 0
+          ? Math.floor(value.maxCartQuantity)
+          : undefined;
+      const cappedQuantity = normalizeCartQuantityWithLimit(quantity, maxCartQuantity);
 
       if (
         !productId ||
@@ -134,7 +144,8 @@ export function parseStoredCart(raw: string | null): CartLine[] {
         typeof price !== "number" ||
         !Number.isFinite(price) ||
         price < 0 ||
-        quantity === 0
+        quantity === 0 ||
+        cappedQuantity === 0
       ) {
         continue;
       }
@@ -183,7 +194,8 @@ export function parseStoredCart(raw: string | null): CartLine[] {
         title,
         imageSrc,
         price,
-        quantity,
+        quantity: cappedQuantity,
+        ...(maxCartQuantity !== undefined ? { maxCartQuantity } : {}),
         campaign,
         source,
         landingUrl,

@@ -8,7 +8,7 @@ import { NavCartLink } from "@/components/layout/nav-cart-link";
 import { siteConfig } from "@/config/site";
 
 const mobileNavLinkClass =
-  "block rounded-lg px-3 py-3 text-base font-medium text-boutique-ink transition-colors duration-200 hover:bg-boutique-paper hover:text-boutique-rose-deep focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-boutique-rose-deep";
+  "block rounded-lg px-3 py-3 text-base font-medium text-boutique-ink transition-colors duration-200 hover:bg-boutique-paper hover:text-boutique-rose-deep";
 
 export function MobileNav() {
   const [open, setOpen] = useState(false);
@@ -49,7 +49,7 @@ export function MobileNav() {
     <div className="md:hidden">
       <button
         type="button"
-        className="grid h-10 w-10 place-items-center rounded-lg border border-boutique-line/80 bg-white text-boutique-ink transition-colors duration-200 hover:border-boutique-rose-deep/35 hover:bg-boutique-paper focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-boutique-rose-deep"
+        className="grid h-11 w-11 place-items-center rounded-lg border border-boutique-line/80 bg-white text-boutique-ink transition-colors duration-200 hover:border-boutique-rose-deep/35 hover:bg-boutique-paper"
         aria-expanded={open}
         aria-controls={panelId}
         aria-label={open ? "Затвори менюто" : "Отвори менюто"}
@@ -100,7 +100,7 @@ export function MobileNav() {
                   <p className="font-heading text-lg text-boutique-ink">Меню</p>
                   <button
                     type="button"
-                    className="grid h-9 w-9 place-items-center rounded-lg text-boutique-muted transition-colors duration-200 hover:bg-boutique-paper hover:text-boutique-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-boutique-rose-deep"
+                    className="grid h-11 w-11 place-items-center rounded-lg text-boutique-muted transition-colors duration-200 hover:bg-boutique-paper hover:text-boutique-ink"
                     aria-label="Затвори менюто"
                     onClick={closeMenu}
                   >

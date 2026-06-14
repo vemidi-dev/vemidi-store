@@ -13,6 +13,7 @@
     "supabase:check": "node ./scripts/supabase-smoke-check.mjs",
     "start": "next start",
     "test": "tsx --test tests/**/*.test.ts",
+    "test:integration": "tsx --test tests/integration/**/*.integration.test.ts",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit"
   },

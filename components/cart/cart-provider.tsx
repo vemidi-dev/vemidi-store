@@ -22,10 +22,12 @@ import type { Product } from "@/lib/catalog";
 import { makeCartLineId } from "@/lib/cart-line-id";
 import {
   getCartTotals,
-  normalizeCartQuantity,
   normalizePersonalization,
   parseStoredCart,
 } from "@/lib/cart-storage";
+import {
+  normalizeCartQuantityWithLimit,
+} from "@/lib/cart/quantity-limits";
 import {
   calculateEstimatedUnitPrice,
 } from "@/lib/product-option-pricing";
@@ -151,8 +153,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
       attribution?: CampaignAttribution,
       optionSelections?: ProductOptionSelection[],
     ) => {
-      const normalizedQuantity = normalizeCartQuantity(quantity);
-      if (normalizedQuantity === 0 || !Number.isFinite(product.price) || product.price < 0) {
+      const normalizedQuantity = normalizeCartQuantityWithLimit(
+        quantity,
+        product.maxCartQuantity,
+      );
+      if (
+        normalizedQuantity === 0 ||
+        !Number.isFinite(product.price) ||
+        product.price < 0 ||
+        !product.orderable
+      ) {
         return;
       }
 
@@ -214,7 +224,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
               campaign: mergedAttribution?.campaign ?? l.campaign,
               source: mergedAttribution?.source ?? l.source,
               landingUrl: mergedAttribution?.landingUrl ?? l.landingUrl,
-              quantity: normalizeCartQuantity(l.quantity + normalizedQuantity),
+              quantity: normalizeCartQuantityWithLimit(
+                l.quantity + normalizedQuantity,
+                l.maxCartQuantity ?? product.maxCartQuantity,
+              ),
             };
           });
         }
@@ -229,6 +242,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
             imageSrc: product.images.find((image) => image.src)?.src,
             price: estimatedPrice,
             quantity: normalizedQuantity,
+            maxCartQuantity: product.maxCartQuantity,
             campaign: storedAttribution?.campaign,
             source: storedAttribution?.source,
             landingUrl: storedAttribution?.landingUrl,
@@ -246,8 +260,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
   );
 
   const setQuantity = useCallback((lineId: string, quantity: number) => {
-    const next = normalizeCartQuantity(quantity);
     setLines((prev) => {
+      const line = prev.find((entry) => entry.lineId === lineId);
+      const next = normalizeCartQuantityWithLimit(quantity, line?.maxCartQuantity);
       if (next === 0) {
         return prev.filter((l) => l.lineId !== lineId);
       }

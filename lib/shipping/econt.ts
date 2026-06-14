@@ -40,6 +40,7 @@ type EcontOfficesResponse = {
 const ECONT_NOMENCLATURES_URL =
   "https://ee.econt.com/services/Nomenclatures/NomenclaturesService";
 const CITY_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+export const ECONT_REQUEST_TIMEOUT_MS = 8_000;
 
 let cityCache:
   | {
@@ -99,21 +100,34 @@ async function postEcont<T>(method: string, body: Record<string, unknown>) {
     throw new Error("ECONT_NOT_CONFIGURED");
   }
 
-  const response = await fetch(`${ECONT_NOMENCLATURES_URL}.${method}.json`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Basic ${Buffer.from(`${username}:${password}`).toString("base64")}`,
-    },
-    body: JSON.stringify(body),
-    cache: "no-store",
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), ECONT_REQUEST_TIMEOUT_MS);
 
-  if (!response.ok) {
-    throw new Error(`ECONT_REQUEST_FAILED:${response.status}`);
+  try {
+    const response = await fetch(`${ECONT_NOMENCLATURES_URL}.${method}.json`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Basic ${Buffer.from(`${username}:${password}`).toString("base64")}`,
+      },
+      body: JSON.stringify(body),
+      cache: "no-store",
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      throw new Error(`ECONT_REQUEST_FAILED:${response.status}`);
+    }
+
+    return (await response.json()) as T;
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      throw new Error("ECONT_REQUEST_TIMEOUT");
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
   }
-
-  return (await response.json()) as T;
 }
 
 function mapCities(response: EcontCitiesResponse): EcontCity[] {

@@ -1,6 +1,7 @@
 import type { ProductOptionGroup } from "@/lib/product-options";
 import type { ProductColorField } from "@/lib/product-colors";
 import type { ProductPersonalizationField, WishTemplate } from "@/lib/product-personalization";
+import type { ProductFulfillmentType } from "@/lib/product-fulfillment";
 import type { ProductPromotionSnapshot } from "@/lib/product-pricing";
 
 export type ProductImage = {
@@ -37,6 +38,13 @@ export type Product = {
   customizable?: boolean;
   /** When true, the product is shown as sold out and cannot be ordered. */
   soldOut?: boolean;
+  fulfillmentType: ProductFulfillmentType;
+  /** Derived storefront label for availability messaging. */
+  availabilityLabel: string;
+  /** Derived flag for add-to-cart / checkout eligibility. */
+  orderable: boolean;
+  /** Client-side cart cap for stocked products; not shown on product pages. */
+  maxCartQuantity?: number;
   /** Optional color configuration grouped by material/type. */
   colorFields?: ProductColorField[];
   optionGroups?: ProductOptionGroup[];

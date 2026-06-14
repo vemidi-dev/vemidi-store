@@ -85,6 +85,9 @@ const baseProduct: Product = {
   price: 20,
   images: [],
   optionGroups: [makeGroup()],
+  fulfillmentType: "made_to_order",
+  availabilityLabel: "Изработва се по поръчка",
+  orderable: true,
 };
 
 test("yes/no single option is recognized as a boolean toggle", () => {
@@ -380,6 +383,24 @@ test("primary variants show final price while secondary options show surcharge",
   assert.equal(formatOptionChoicePrice(13.5, 4.5, true), "18,00 €");
   assert.equal(formatOptionChoicePrice(13.5, 0, false), null);
   assert.equal(formatOptionChoicePrice(13.5, 2.5, false), "+2,50 €");
+});
+
+test("personalization changes the total without changing displayed variant prices", () => {
+  const productBasePrice = 13.5;
+  const personalizationDelta = 2.5;
+
+  assert.equal(
+    formatOptionChoicePrice(productBasePrice, 0, true),
+    "13,50 \u20ac",
+  );
+  assert.equal(
+    calculateEstimatedUnitPrice(
+      productBasePrice + personalizationDelta,
+      baseProduct.optionGroups!,
+      [{ groupId: groupSizeId, valueIds: [valueSmallId] }],
+    ),
+    16,
+  );
 });
 
 test("base promotion applies only to base price", () => {

@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { useCart } from "@/components/cart/cart-provider";
+import { isCartQuantityAtLimit, resolveCartQuantityLimit } from "@/lib/cart/quantity-limits";
 import { PageContainer } from "@/components/layout/page-container";
 import { formatEur } from "@/lib/format-eur";
 import type { CartPageContent } from "@/lib/content/site-content";
@@ -57,7 +58,11 @@ export function CartPanel({ content }: { content: CartPageContent }) {
             </div>
 
             <ul className="divide-y divide-boutique-line/90 overflow-hidden rounded-2xl border border-boutique-line bg-boutique-paper shadow-boutique-sm">
-              {lines.map((line) => (
+              {lines.map((line) => {
+                const quantityLimit = resolveCartQuantityLimit(line.maxCartQuantity);
+                const atLimit = isCartQuantityAtLimit(line.quantity, line.maxCartQuantity);
+
+                return (
                 <li key={line.lineId} className="p-4 sm:p-5">
                   <div className="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-4 sm:grid-cols-[7rem_minmax(0,1fr)_auto]">
                     <Link
@@ -137,7 +142,7 @@ export function CartPanel({ content }: { content: CartPageContent }) {
                         <input
                           type="number"
                           min={1}
-                          max={99}
+                          max={quantityLimit}
                           aria-label={`Количество за ${line.title}`}
                           value={line.quantity}
                           onChange={(event) =>
@@ -148,12 +153,18 @@ export function CartPanel({ content }: { content: CartPageContent }) {
                         <button
                           type="button"
                           aria-label="Увеличи количеството"
+                          disabled={atLimit}
                           onClick={() => setQuantity(line.lineId, line.quantity + 1)}
-                          className="grid h-9 w-9 place-items-center text-lg text-boutique-muted transition hover:text-boutique-ink"
+                          className="grid h-9 w-9 place-items-center text-lg text-boutique-muted transition hover:text-boutique-ink disabled:cursor-not-allowed disabled:opacity-40"
                         >
                           +
                         </button>
                       </div>
+                      {atLimit ? (
+                        <p className="mt-2 text-xs text-boutique-muted">
+                          Достигнахте наличното количество за този продукт.
+                        </p>
+                      ) : null}
 
                       <div className="text-right">
                         <p className="font-heading text-lg text-boutique-ink">
@@ -171,7 +182,8 @@ export function CartPanel({ content }: { content: CartPageContent }) {
                     </div>
                   </div>
                 </li>
-              ))}
+                );
+              })}
             </ul>
           </div>
 
@@ -186,7 +198,7 @@ export function CartPanel({ content }: { content: CartPageContent }) {
               </div>
               <div className="flex justify-between gap-4 text-boutique-muted">
                 <span>Доставка</span>
-                <span>Уточнява се</span>
+                <span className="text-right">По тарифа на куриера</span>
               </div>
             </div>
             <div className="mt-5 flex items-baseline justify-between gap-4">
@@ -198,6 +210,20 @@ export function CartPanel({ content }: { content: CartPageContent }) {
             <p className="mt-3 text-xs leading-5 text-boutique-muted">
               {content["cart.shipping_note"]}
             </p>
+            <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs font-semibold">
+              <Link
+                href="/delivery"
+                className="text-boutique-sage-deep underline-offset-4 hover:underline"
+              >
+                Доставка и плащане
+              </Link>
+              <Link
+                href="/returns"
+                className="text-boutique-sage-deep underline-offset-4 hover:underline"
+              >
+                Връщане и рекламации
+              </Link>
+            </div>
             <Link
               href="/checkout"
               className="mt-6 flex w-full justify-center rounded-xl bg-boutique-sage-deep px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-boutique-ink"

@@ -18,6 +18,7 @@ import {
 
 type ProductOptionsSelectorProps = {
   basePrice: number;
+  variantDisplayBasePrice?: number;
   groups: ProductOptionGroup[];
   value: ProductOptionSelection[];
   onChange: (selections: ProductOptionSelection[]) => void;
@@ -26,6 +27,7 @@ type ProductOptionsSelectorProps = {
 
 export function ProductOptionsSelector({
   basePrice,
+  variantDisplayBasePrice = basePrice,
   groups,
   value,
   onChange,
@@ -174,7 +176,7 @@ export function ProductOptionsSelector({
                     const selected = selection.valueIds.includes(option.id);
                     const showsFinalPrice = group.id === primaryChoiceGroupId;
                     const priceLabel = formatOptionChoicePrice(
-                      basePrice,
+                      variantDisplayBasePrice,
                       option.priceDelta,
                       group.inputType === "single" && showsFinalPrice,
                     );

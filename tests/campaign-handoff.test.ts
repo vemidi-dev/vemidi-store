@@ -11,6 +11,12 @@ import type { Product } from "@/lib/catalog";
 
 const productId = "11111111-1111-4111-8111-111111111111";
 
+const defaultProductAvailability = {
+  fulfillmentType: "made_to_order" as const,
+  availabilityLabel: "Изработва се по поръчка",
+  orderable: true,
+};
+
 const simpleProduct: Product = {
   id: productId,
   slug: "peperuda",
@@ -19,6 +25,7 @@ const simpleProduct: Product = {
   description: "Описание",
   price: 19.5,
   images: [{ src: "/img.jpg", alt: "Пеперуда" }],
+  ...defaultProductAvailability,
 };
 
 const configurableProduct: Product = {
@@ -42,6 +49,22 @@ const configurableProduct: Product = {
     },
   ],
 };
+
+test("campaign handoff rejects unavailable products", () => {
+  const unavailableProduct: Product = {
+    ...simpleProduct,
+    fulfillmentType: "unavailable",
+    availabilityLabel: "Временно недостъпен",
+    orderable: false,
+  };
+  const query = parseCampaignHandoffQuery({
+    product: productId,
+    campaign: "sample",
+  });
+  const result = evaluateCampaignHandoff(unavailableProduct, query);
+  assert.equal(result.status, "invalid");
+  assert.match(result.message, /не може да бъде поръчан/i);
+});
 
 test("campaign handoff rejects forged price parameters", () => {
   const query = parseCampaignHandoffQuery({

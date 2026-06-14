@@ -1,4 +1,6 @@
 import type { Product } from "@/lib/catalog";
+import { applyAvailabilityToProduct } from "@/lib/product-fulfillment";
+import type { ProductFulfillmentType } from "@/lib/product-fulfillment";
 import { normalizeProductCardBadge } from "@/lib/product-card";
 import {
   resolveProductPricing,
@@ -26,6 +28,8 @@ export type ProductRow = {
   image_url: string | null;
   is_customizable: boolean;
   is_sold_out?: boolean;
+  fulfillment_type?: ProductFulfillmentType;
+  stock_quantity?: number | null;
   card_badge?: string | null;
 };
 
@@ -58,7 +62,7 @@ export function toProduct(
   const basePrice = Number(row.price);
   const pricing = resolveProductPricing(basePrice, promotion ?? null);
 
-  return {
+  return applyAvailabilityToProduct({
     id: row.id,
     slug: row.slug,
     productCode: row.product_code,
@@ -72,11 +76,13 @@ export function toProduct(
     cardBadge: normalizeProductCardBadge(row.card_badge),
     customizable: row.is_customizable,
     soldOut: Boolean(row.is_sold_out),
+    fulfillmentType: row.fulfillment_type ?? "made_to_order",
+    stockQuantity: row.stock_quantity ?? null,
     images:
       images.length > 0
         ? images
         : [{ src: row.image_url ?? DEFAULT_PRODUCT_IMAGE, alt: row.name }],
-  };
+  });
 }
 
 export function toShowcaseCategory(category: StorefrontCategory): ShopCategory {

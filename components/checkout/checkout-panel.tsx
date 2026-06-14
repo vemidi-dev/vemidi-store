@@ -23,7 +23,10 @@ const initialState: CheckoutActionState = {
   message: "",
 };
 
-const PURCHASE_STORAGE_KEY = "vemidi:last-purchase";
+import {
+  ORDER_CONFIRMATION_STORAGE_KEY,
+  PURCHASE_STORAGE_KEY,
+} from "@/lib/checkout/order-confirmation";
 
 function SubmitOrderButton({
   ready,
@@ -65,10 +68,19 @@ export function CheckoutPanel({ content }: { content: CheckoutPageContent }) {
       if (state.purchase) {
         window.sessionStorage.setItem(PURCHASE_STORAGE_KEY, JSON.stringify(state.purchase));
       }
+      if (state.confirmation?.orderRef) {
+        window.sessionStorage.setItem(
+          ORDER_CONFIRMATION_STORAGE_KEY,
+          JSON.stringify({
+            orderRef: state.confirmation.orderRef,
+            issuedAt: Date.now(),
+          }),
+        );
+      }
       clear();
       router.replace("/thank-you");
     }
-  }, [clear, router, state.ok, state.purchase]);
+  }, [clear, router, state.confirmation, state.ok, state.purchase]);
 
   if (state.ok) {
     return (

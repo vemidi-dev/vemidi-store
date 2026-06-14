@@ -2,8 +2,15 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+import { buildCheckoutDeliveryPayload, formatEcontAddressDeliveryDetails } from "@/lib/checkout/delivery-payload";
 import type { EcontCity, EcontOffice } from "@/lib/shipping/econt";
-import { formatEcontOfficeLabel } from "@/lib/shipping/econt";
+import {
+  ECONT_LOOKUP_UNAVAILABLE_MESSAGE,
+  getEcontLookupErrorMessage,
+  parseEcontCitiesResponse,
+  parseEcontOfficesResponse,
+  shouldFallbackToManualEcont,
+} from "@/lib/shipping/econt-lookup";
 
 const fieldClass =
   "mt-2 w-full rounded-xl border border-boutique-line bg-boutique-bg px-4 py-3 text-sm text-boutique-ink outline-none transition placeholder:text-boutique-muted/60 focus:border-boutique-accent/50 focus:ring-2 focus:ring-boutique-accent/10";
@@ -48,30 +55,31 @@ export function CheckoutDeliveryFields({
   const useEcontLookup = courier === "econt";
   const needsOfficePicker =
     useEcontLookup && (deliveryType === "office" || deliveryType === "automat");
-  const submittedDeliveryType =
-    deliveryType === "automat" ? "office" : deliveryType;
+  const useHiddenDeliveryFields = useEcontLookup && econtAvailable;
 
   const selectedOffice = useMemo(
     () => offices.find((office) => String(office.id) === selectedOfficeId) ?? null,
     [offices, selectedOfficeId],
   );
 
-  const submittedCity = useEcontLookup
-    ? selectedCity?.name ?? ""
-    : manualCity;
-  const submittedOffice = useEcontLookup
-    ? selectedOffice
-      ? formatEcontOfficeLabel(selectedOffice)
-      : ""
-    : manualOffice;
-  const submittedDetails = useEcontLookup
-    ? deliveryType === "address"
-      ? manualDetails
-      : selectedOffice?.isAPS
-        ? `Автомат на Еконт: ${formatEcontOfficeLabel(selectedOffice)}`
-        : manualDetails
-    : manualDetails;
-  const useHiddenDeliveryFields = useEcontLookup && econtAvailable;
+  const deliveryPayload = buildCheckoutDeliveryPayload({
+    courier,
+    deliveryType,
+    city: useEcontLookup ? selectedCity?.name ?? "" : manualCity,
+    officeOrPostcode: useEcontLookup
+      ? selectedOffice
+        ? `${selectedOffice.name} — ${selectedOffice.fullAddress}`
+        : manualOffice
+      : manualOffice,
+    address: manualAddress,
+    deliveryNote: manualDetails,
+    selectedOffice,
+  });
+
+  const manualDeliveryDetails =
+    deliveryType === "address"
+      ? formatEcontAddressDeliveryDetails(manualAddress, manualDetails)
+      : manualDetails;
 
   useEffect(() => {
     if (!useEcontLookup) {
@@ -96,26 +104,32 @@ export function CheckoutDeliveryFields({
           { signal: controller.signal },
         );
 
-        if (response.status === 503) {
+        const result = await parseEcontCitiesResponse(response);
+        if (!result.ok) {
           setEcontAvailable(false);
           setCityResults([]);
+          setLookupError(
+            shouldFallbackToManualEcont(response)
+              ? ECONT_LOOKUP_UNAVAILABLE_MESSAGE
+              : getEcontLookupErrorMessage(result.reason),
+          );
           return;
         }
 
-        if (!response.ok) {
-          throw new Error("city-search-failed");
-        }
-
-        const payload = (await response.json()) as { cities?: EcontCity[] };
         setEcontAvailable(true);
-        setCityResults(payload.cities ?? []);
-      } catch {
+        setCityResults(result.cities);
+      } catch (error) {
         if (controller.signal.aborted) {
           return;
         }
 
-        setLookupError("Неуспешно зареждане на населени места. Опитайте отново.");
+        setEcontAvailable(false);
         setCityResults([]);
+        setLookupError(
+          error instanceof DOMException && error.name === "AbortError"
+            ? getEcontLookupErrorMessage("timeout")
+            : getEcontLookupErrorMessage("network"),
+        );
       } finally {
         if (!controller.signal.aborted) {
           setLoadingCities(false);
@@ -153,20 +167,34 @@ export function CheckoutDeliveryFields({
           { signal: controller.signal },
         );
 
-        if (!response.ok) {
-          throw new Error("office-search-failed");
+        const result = await parseEcontOfficesResponse(response);
+        if (!result.ok) {
+          setEcontAvailable(false);
+          setOffices([]);
+          setSelectedOfficeId("");
+          setLookupError(
+            result.reason === "unavailable"
+              ? ECONT_LOOKUP_UNAVAILABLE_MESSAGE
+              : getEcontLookupErrorMessage(result.reason),
+          );
+          return;
         }
 
-        const payload = (await response.json()) as { offices?: EcontOffice[] };
-        setOffices(payload.offices ?? []);
+        setOffices(result.offices);
         setSelectedOfficeId("");
-      } catch {
+      } catch (error) {
         if (controller.signal.aborted) {
           return;
         }
 
-        setLookupError("Неуспешно зареждане на офиси. Опитайте отново.");
+        setEcontAvailable(false);
         setOffices([]);
+        setSelectedOfficeId("");
+        setLookupError(
+          error instanceof DOMException && error.name === "AbortError"
+            ? getEcontLookupErrorMessage("timeout")
+            : getEcontLookupErrorMessage("network"),
+        );
       } finally {
         if (!controller.signal.aborted) {
           setLoadingOffices(false);
@@ -190,6 +218,9 @@ export function CheckoutDeliveryFields({
     setOffices([]);
     setSelectedOfficeId("");
     setLookupError(null);
+    if (value === "econt") {
+      setEcontAvailable(true);
+    }
   }
 
   function handleCitySelect(city: EcontCity) {
@@ -209,11 +240,23 @@ export function CheckoutDeliveryFields({
 
       {useHiddenDeliveryFields ? (
         <>
-          <input type="hidden" name="courier" value={courier} />
-          <input type="hidden" name="delivery_type" value={submittedDeliveryType} />
-          <input type="hidden" name="city" value={submittedCity} />
-          <input type="hidden" name="office_or_postcode" value={submittedOffice} />
-          <input type="hidden" name="delivery_details" value={submittedDetails} />
+          <input type="hidden" name="courier" value={deliveryPayload.courier} />
+          <input
+            type="hidden"
+            name="delivery_type"
+            value={deliveryPayload.deliveryType}
+          />
+          <input type="hidden" name="city" value={deliveryPayload.city} />
+          <input
+            type="hidden"
+            name="office_or_postcode"
+            value={deliveryPayload.officeOrPostcode}
+          />
+          <input
+            type="hidden"
+            name="delivery_details"
+            value={deliveryPayload.details}
+          />
         </>
       ) : null}
 
@@ -312,7 +355,9 @@ export function CheckoutDeliveryFields({
                   </option>
                   {offices.map((office) => (
                     <option key={office.id} value={String(office.id)}>
-                      {formatEcontOfficeLabel(office)}
+                      {office.fullAddress
+                        ? `${office.name} — ${office.fullAddress}`
+                        : office.name}
                     </option>
                   ))}
                 </select>
@@ -362,8 +407,7 @@ export function CheckoutDeliveryFields({
           <>
             {courier === "econt" && !econtAvailable ? (
               <p className="sm:col-span-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-                Еконт справочникът не е наличен в момента. Моля, въведете данните за
-                доставка ръчно.
+                {ECONT_LOOKUP_UNAVAILABLE_MESSAGE}
               </p>
             ) : null}
 
@@ -384,23 +428,54 @@ export function CheckoutDeliveryFields({
                 name="office_or_postcode"
                 value={manualOffice}
                 maxLength={200}
-                required={!useHiddenDeliveryFields && deliveryType !== "address"}
+                required={deliveryType !== "address"}
                 className={fieldClass}
                 onChange={(event) => setManualOffice(event.target.value)}
               />
             </label>
-            <label className="text-sm font-medium text-boutique-ink sm:col-span-2">
-              Адрес / уточнение за офиса
-              <textarea
-                name="delivery_details"
-                value={manualDetails}
-                rows={3}
-                maxLength={500}
-                required={!useHiddenDeliveryFields && deliveryType === "address"}
-                className={`${fieldClass} resize-y`}
-                onChange={(event) => setManualDetails(event.target.value)}
-              />
-            </label>
+            {deliveryType === "address" ? (
+              <>
+                <label className="text-sm font-medium text-boutique-ink sm:col-span-2">
+                  Адрес
+                  <textarea
+                    value={manualAddress}
+                    rows={3}
+                    maxLength={500}
+                    required
+                    className={`${fieldClass} resize-y`}
+                    onChange={(event) => setManualAddress(event.target.value)}
+                  />
+                </label>
+                <label className="text-sm font-medium text-boutique-ink sm:col-span-2">
+                  Уточнение за доставка
+                  <textarea
+                    value={manualDetails}
+                    rows={2}
+                    maxLength={500}
+                    className={`${fieldClass} resize-y`}
+                    placeholder="Вход, етаж, домофон или друго уточнение..."
+                    onChange={(event) => setManualDetails(event.target.value)}
+                  />
+                </label>
+                <input
+                  type="hidden"
+                  name="delivery_details"
+                  value={manualDeliveryDetails}
+                />
+              </>
+            ) : (
+              <label className="text-sm font-medium text-boutique-ink sm:col-span-2">
+                Адрес / уточнение за офиса
+                <textarea
+                  name="delivery_details"
+                  value={manualDetails}
+                  rows={3}
+                  maxLength={500}
+                  className={`${fieldClass} resize-y`}
+                  onChange={(event) => setManualDetails(event.target.value)}
+                />
+              </label>
+            )}
           </>
         )}
       </div>

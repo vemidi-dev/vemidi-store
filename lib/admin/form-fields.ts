@@ -15,6 +15,8 @@ export const adminFormFields = {
     existingImageUrl: "existing_image_url",
     isCustomizable: "is_customizable",
     isSoldOut: "is_sold_out",
+    fulfillmentType: "fulfillment_type",
+    stockQuantity: "stock_quantity",
     cardBadge: "card_badge",
     categoryIds: "category_ids",
     wishTemplateIds: "wish_template_ids",

@@ -1,4 +1,10 @@
 import type { AdminTab } from "@/lib/admin/types";
+import {
+  normalizeFulfillmentType,
+  parseStockQuantity,
+  validateFulfillmentInput,
+  type ProductFulfillmentType,
+} from "@/lib/product-fulfillment";
 import { adminFormFields } from "@/lib/admin/form-fields";
 
 type CreateProductDraftPayload = {
@@ -10,6 +16,8 @@ type CreateProductDraftPayload = {
   price: string;
   is_customizable: boolean;
   is_sold_out: boolean;
+  fulfillment_type: string;
+  stock_quantity: string;
   card_badge: string;
   category_ids: string[];
   color_fields: Array<{
@@ -31,6 +39,22 @@ type CreateProductDraftPayload = {
   }>;
   wish_template_ids: string[];
 };
+
+export function parseProductFulfillmentFromFormData(formData: FormData): {
+  fulfillmentType: ProductFulfillmentType;
+  stockQuantity: number | null;
+  error: string | null;
+} {
+  const fulfillmentType = normalizeFulfillmentType(
+    getString(formData, adminFormFields.product.fulfillmentType) || "made_to_order",
+  );
+  const rawStock = getString(formData, adminFormFields.product.stockQuantity);
+  const stockQuantity =
+    fulfillmentType === "stocked" ? parseStockQuantity(rawStock) : null;
+  const error = validateFulfillmentInput(fulfillmentType, stockQuantity);
+
+  return { fulfillmentType, stockQuantity, error };
+}
 
 export function getString(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
@@ -187,6 +211,8 @@ export function makeCreateProductDraft(formData: FormData) {
     price: getString(formData, adminFormFields.product.price),
     is_customizable: isChecked(formData, adminFormFields.product.isCustomizable),
     is_sold_out: isChecked(formData, adminFormFields.product.isSoldOut),
+    fulfillment_type: getString(formData, adminFormFields.product.fulfillmentType) || "made_to_order",
+    stock_quantity: getString(formData, adminFormFields.product.stockQuantity),
     card_badge: getString(formData, adminFormFields.product.cardBadge),
     category_ids: getCategoryIds(formData),
     color_fields: colorFields,

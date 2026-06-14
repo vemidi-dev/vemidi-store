@@ -143,7 +143,7 @@ export function ProductCardMedia({
               showPrevious();
             }}
             aria-label="Предишна снимка"
-            className="absolute left-1.5 top-1/2 z-10 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full bg-white/90 text-base text-boutique-ink opacity-100 shadow-sm transition hover:bg-white sm:left-2 sm:h-9 sm:w-9 sm:text-lg sm:opacity-0 sm:group-hover:opacity-100"
+            className="absolute left-0.5 top-1/2 z-10 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full bg-white/90 text-lg text-boutique-ink opacity-100 shadow-sm transition hover:bg-white sm:left-2 sm:opacity-0 sm:group-hover:opacity-100"
           >
             ‹
           </button>
@@ -154,38 +154,45 @@ export function ProductCardMedia({
               showNext();
             }}
             aria-label="Следваща снимка"
-            className="absolute right-1.5 top-1/2 z-10 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full bg-white/90 text-base text-boutique-ink opacity-100 shadow-sm transition hover:bg-white sm:right-2 sm:h-9 sm:w-9 sm:text-lg sm:opacity-0 sm:group-hover:opacity-100"
+            className="absolute right-0.5 top-1/2 z-10 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full bg-white/90 text-lg text-boutique-ink opacity-100 shadow-sm transition hover:bg-white sm:right-2 sm:opacity-0 sm:group-hover:opacity-100"
           >
             ›
           </button>
           <div
-            className={`absolute inset-x-0 z-10 flex justify-center ${
-              compact ? "bottom-2 gap-1" : "bottom-3 gap-1.5"
+            className={`absolute inset-x-0 z-10 ${
+              compact ? "bottom-0" : "bottom-1"
             }`}
           >
-            {images.map((image, index) => (
-              <button
-                key={`${image.src}-${index}`}
-                type="button"
-                onClick={(event) => {
-                  stopCarouselEvent(event);
-                  setActiveImage(index);
-                }}
-                aria-label={`Покажи снимка ${index + 1}`}
-                aria-current={index === safeImageIndex ? "true" : undefined}
-                className={`rounded-full transition ${
-                  compact ? "h-1" : "h-1.5"
-                } ${
-                  index === safeImageIndex
-                    ? compact
-                      ? "w-3.5 bg-white"
-                      : "w-5 bg-white"
-                    : compact
-                      ? "w-1 bg-white/65 hover:bg-white"
-                      : "w-1.5 bg-white/65 hover:bg-white"
-                }`}
-              />
-            ))}
+            <div className="mx-auto flex w-fit max-w-full justify-start overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {images.map((image, index) => (
+                <button
+                  key={`${image.src}-${index}`}
+                  type="button"
+                  onClick={(event) => {
+                    stopCarouselEvent(event);
+                    setActiveImage(index);
+                  }}
+                  aria-label={`Покажи снимка ${index + 1}`}
+                  aria-current={index === safeImageIndex ? "true" : undefined}
+                  className="group/dot grid h-11 w-11 shrink-0 place-items-center rounded-full transition focus-visible:outline-offset-[-3px]"
+                >
+                  <span
+                    aria-hidden
+                    className={`block rounded-full transition ${
+                      compact ? "h-1" : "h-1.5"
+                    } ${
+                      index === safeImageIndex
+                        ? compact
+                          ? "w-3.5 bg-white"
+                          : "w-5 bg-white"
+                        : compact
+                          ? "w-1 bg-white/65 group-hover/dot:bg-white"
+                          : "w-1.5 bg-white/65 group-hover/dot:bg-white"
+                    }`}
+                  />
+                </button>
+              ))}
+            </div>
           </div>
         </>
       ) : null}
