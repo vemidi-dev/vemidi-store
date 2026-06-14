@@ -26,6 +26,10 @@ import { ProductOptionGroupsEditor } from "@/components/admin/product-option-gro
 import { ProductPersonalizationFieldsEditor } from "@/components/admin/product-personalization-fields-editor";
 import { ProductMerchandisingFields } from "@/components/admin/product-merchandising-fields";
 import { ProductSeoFields } from "@/components/admin/product-seo-fields";
+import {
+  getCategoryDisplayLabel,
+  sortCategoriesForDisplay,
+} from "@/lib/category-hierarchy";
 import { ProductWishSelector } from "@/components/admin/product-wish-selector";
 import {
   adminFieldClass,
@@ -69,8 +73,8 @@ export function ProductListPanel({
   const occasionCategories = categories.filter(
     (category) => category.category_type === "occasion",
   );
-  const productCategories = categories.filter(
-    (category) => category.category_type === "product",
+  const productCategories = sortCategoriesForDisplay(
+    categories.filter((category) => category.category_type === "product"),
   );
 
   return (
@@ -112,7 +116,7 @@ export function ProductListPanel({
                 dataAttribute: "productCats",
                 options: productCategories.map((category) => ({
                   value: category.id,
-                  label: category.name,
+                  label: getCategoryDisplayLabel(categories, category),
                 })),
               },
               {
@@ -236,6 +240,16 @@ export function ProductListPanel({
             const productCategoryIds = assignedCategories
               .filter((category) => category.category_type === "product")
               .map((category) => category.id);
+            const productCategoryFilterIds = Array.from(
+              new Set([
+                ...productCategoryIds,
+                ...assignedCategories.flatMap((category) =>
+                  category.category_type === "product" && category.parent_id
+                    ? [category.parent_id]
+                    : [],
+                ),
+              ]),
+            );
             const occasionCategoryIds = assignedCategories
               .filter((category) => category.category_type === "occasion")
               .map((category) => category.id);
@@ -275,7 +289,7 @@ export function ProductListPanel({
                 ]
                   .filter(Boolean)
                   .join(" ")}
-                data-product-cats={productCategoryIds.join(" ")}
+                data-product-cats={productCategoryFilterIds.join(" ")}
                 data-occasion-cats={occasionCategoryIds.join(" ")}
                 data-sort-name={product.name}
                 data-sort-price={product.price}
@@ -491,8 +505,11 @@ export function ProductListPanel({
                                 {categoryType === "product" ? "Продукти" : "Поводи"}
                               </p>
                               <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                                {categories
-                                  .filter((category) => category.category_type === categoryType)
+                                {sortCategoriesForDisplay(
+                                  categories.filter(
+                                    (category) => category.category_type === categoryType,
+                                  ),
+                                )
                                   .map((category) => (
                                     <label
                                       key={`${product.id}-${category.id}-edit`}
@@ -505,7 +522,7 @@ export function ProductListPanel({
                                         defaultChecked={assignedIds.includes(category.id)}
                                         className="h-4 w-4 rounded border-boutique-line text-boutique-accent"
                                       />
-                                      {category.name}
+                                      {getCategoryDisplayLabel(categories, category)}
                                     </label>
                                   ))}
                               </div>

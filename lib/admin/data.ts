@@ -83,7 +83,7 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
     supabase.from("products").select("*").order("id", { ascending: false }),
     supabase
       .from("categories")
-      .select("id,name,slug,category_type,show_on_home,home_sort_order,card_description")
+      .select("id,name,slug,category_type,parent_id,show_on_home,home_sort_order,card_description")
       .order("category_type", { ascending: true })
       .order("home_sort_order", { ascending: true })
       .order("name", { ascending: true }),

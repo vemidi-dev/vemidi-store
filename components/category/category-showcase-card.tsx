@@ -17,7 +17,10 @@ export default function CategoryShowcaseCard({
   presentation = "default",
 }: CategoryShowcaseCardProps) {
   const filterName = category.categoryType === "occasion" ? "occasion" : "product";
-  const href = `/shop?${filterName}=${encodeURIComponent(category.slug)}#product-grid`;
+  const href =
+    category.categoryType === "product"
+      ? `/categories/${encodeURIComponent(category.slug)}`
+      : `/shop?${filterName}=${encodeURIComponent(category.slug)}#product-grid`;
 
   if (presentation === "product") {
     return (

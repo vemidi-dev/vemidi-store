@@ -144,7 +144,7 @@ export async function getStorefrontCatalog(): Promise<StorefrontCatalog> {
         .order("created_at", { ascending: false }),
       supabase
         .from("categories")
-        .select("id,name,slug,category_type,show_on_home,home_sort_order,card_description")
+        .select("id,name,slug,category_type,parent_id,show_on_home,home_sort_order,card_description")
         .order("name", { ascending: true }),
       supabase.from("product_categories").select("product_id,category_id"),
       supabase
@@ -250,7 +250,7 @@ export async function getStorefrontCategories(
 
   let query = supabase
     .from("categories")
-    .select("id,name,slug,category_type,show_on_home,home_sort_order,card_description")
+    .select("id,name,slug,category_type,parent_id,show_on_home,home_sort_order,card_description")
     .order("name", { ascending: true });
 
   if (categoryType) {

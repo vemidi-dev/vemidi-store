@@ -28,7 +28,8 @@ export default async function HomePage() {
     (category) => category.category_type === "occasion",
   );
   const productCategories = homeCategories.filter(
-    (category) => category.category_type === "product",
+    (category) =>
+      category.category_type === "product" && category.parent_id === null,
   );
   const featuredProductCategories = productCategories.slice(0, 8).map(toShowcaseCategory);
   const featuredOccasionCategories = occasionCategories.slice(0, 6).map(toShowcaseCategory);

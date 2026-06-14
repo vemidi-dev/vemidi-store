@@ -25,6 +25,7 @@ export const adminFormFields = {
     name: "name",
     slug: "slug",
     type: "category_type",
+    parentId: "parent_id",
     cardDescription: "card_description",
     showOnHome: "show_on_home",
     direction: "direction",

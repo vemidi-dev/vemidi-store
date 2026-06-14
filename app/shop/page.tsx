@@ -6,6 +6,11 @@ import { PageContainer } from "@/components/layout/page-container";
 import { VisualPageHero } from "@/components/layout/visual-page-hero";
 import { isProductOnPromotion } from "@/lib/product-pricing";
 import { getSiteContent } from "@/lib/content/site-content";
+import {
+  getCategoryDisplayLabel,
+  getCategoryFamilySlugs,
+  sortCategoriesForDisplay,
+} from "@/lib/category-hierarchy";
 import { getStorefrontCatalog } from "@/lib/storefront/repository";
 
 export const metadata: Metadata = {
@@ -60,11 +65,12 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
     getSiteContent(),
   ]);
 
-  const productCategoryFilters: FilterValue[] = categories
-    .filter((category) => category.category_type === "product")
+  const productCategoryFilters: FilterValue[] = sortCategoriesForDisplay(
+    categories.filter((category) => category.category_type === "product"),
+  )
     .map((category) => ({
       id: category.slug,
-      label: category.name,
+      label: getCategoryDisplayLabel(categories, category),
     }));
   const occasionFilters: FilterValue[] = categories
     .filter((category) => category.category_type === "occasion")
@@ -81,6 +87,16 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
   const activeOccasion =
     requestedOccasion ||
     (legacyCategoryType === "occasion" ? legacyCategory : "");
+  const selectedProductCategory = categories.find(
+    (category) =>
+      category.category_type === "product" &&
+      category.slug === activeProductCategory,
+  );
+  const activeProductCategorySlugs = new Set(
+    selectedProductCategory
+      ? getCategoryFamilySlugs(categories, selectedProductCategory)
+      : [],
+  );
   const priceFilters: FilterValue[] = [
     { id: "under-20", label: "До 20 EUR" },
     { id: "20-40", label: "20-40 EUR" },
@@ -94,7 +110,9 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
     const text = `${product.title} ${product.description}`.toLowerCase();
     const matchesQuery = query ? text.includes(query.toLowerCase()) : true;
     const matchesProductCategory = activeProductCategory
-      ? product.categorySlugs.includes(activeProductCategory)
+      ? product.categorySlugs.some((slug) =>
+          activeProductCategorySlugs.has(slug),
+        )
       : true;
     const matchesOccasion = activeOccasion
       ? product.categorySlugs.includes(activeOccasion)

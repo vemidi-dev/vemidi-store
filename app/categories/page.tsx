@@ -10,6 +10,10 @@ import {
   type ShopCategory,
 } from "@/lib/shop-categories";
 import { getSiteContent } from "@/lib/content/site-content";
+import {
+  getCategoryFamilySlugs,
+  getCategoryProductCount,
+} from "@/lib/category-hierarchy";
 import { toShowcaseCategory } from "@/lib/storefront/mappers";
 import { getStorefrontCatalog } from "@/lib/storefront/repository";
 
@@ -25,8 +29,9 @@ type CategoryWithCount = ShopCategory & {
 };
 
 function getCategoryHref(category: ShopCategory) {
-  const filterName = category.categoryType === "occasion" ? "occasion" : "product";
-  return `/shop?${filterName}=${encodeURIComponent(category.slug)}#product-grid`;
+  return category.categoryType === "product"
+    ? `/categories/${encodeURIComponent(category.slug)}`
+    : `/shop?occasion=${encodeURIComponent(category.slug)}#product-grid`;
 }
 
 function getProductLabel(count: number) {
@@ -121,22 +126,18 @@ export default async function CategoriesPage() {
     getStorefrontCatalog(),
     getSiteContent(),
   ]);
-  const counts = new Map<string, number>();
-
-  products.forEach((product) => {
-    product.categorySlugs.forEach((slug) => {
-      counts.set(slug, (counts.get(slug) ?? 0) + 1);
-    });
-  });
-
   const withCounts = categories.map(
     (category): CategoryWithCount => ({
       ...toShowcaseCategory(category),
-      productCount: counts.get(category.slug) ?? 0,
+      productCount: getCategoryProductCount(
+        products.map((product) => product.categorySlugs),
+        getCategoryFamilySlugs(categories, category),
+      ),
     }),
   );
   const productCategories = withCounts.filter(
-    (category) => category.categoryType === "product",
+    (category) =>
+      category.categoryType === "product" && category.parentId === null,
   );
   const occasionCategories = withCounts.filter(
     (category) => category.categoryType === "occasion",

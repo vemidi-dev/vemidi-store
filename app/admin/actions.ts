@@ -89,6 +89,7 @@ async function revalidateProductPaths(
   revalidatePath("/shop");
   revalidatePath("/products");
   revalidatePath("/categories");
+  revalidatePath("/categories/[slug]", "page");
 
   if (!productId) {
     return;
@@ -147,6 +148,7 @@ function revalidateCategoryPaths() {
   revalidatePath("/categories");
   revalidatePath("/occasions");
   revalidatePath("/shop");
+  revalidatePath("/categories/[slug]", "page");
 }
 
 async function getProductGalleryImageCount(
@@ -1108,6 +1110,8 @@ export async function createCategory(formData: FormData) {
   const name = getString(formData, adminFormFields.category.name);
   const slug = normalizeSlug(getString(formData, adminFormFields.category.slug));
   const categoryType = getString(formData, adminFormFields.category.type);
+  const parentId =
+    getString(formData, adminFormFields.category.parentId) || null;
   const showOnHome = isChecked(formData, adminFormFields.category.showOnHome);
   const cardDescription =
     getString(formData, adminFormFields.category.cardDescription).trim() || null;
@@ -1116,10 +1120,34 @@ export async function createCategory(formData: FormData) {
     redirectWith("error", "Попълнете име и slug за категорията.", activeTab);
   }
 
-  const { data: lastCategory } = await supabase
+  if (parentId && categoryType !== "product") {
+    redirectWith("error", "Само продуктовите категории могат да имат подкатегории.", activeTab);
+  }
+
+  if (parentId) {
+    const { data: parentCategory, error: parentError } = await supabase
+      .from("categories")
+      .select("id,category_type,parent_id")
+      .eq("id", parentId)
+      .maybeSingle();
+    if (
+      parentError ||
+      !parentCategory ||
+      parentCategory.category_type !== "product" ||
+      parentCategory.parent_id
+    ) {
+      redirectWith("error", "Избраната основна категория е невалидна.", activeTab);
+    }
+  }
+
+  let lastCategoryQuery = supabase
     .from("categories")
     .select("home_sort_order")
-    .eq("category_type", categoryType)
+    .eq("category_type", categoryType);
+  lastCategoryQuery = parentId
+    ? lastCategoryQuery.eq("parent_id", parentId)
+    : lastCategoryQuery.is("parent_id", null);
+  const { data: lastCategory } = await lastCategoryQuery
     .order("home_sort_order", { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -1131,7 +1159,8 @@ export async function createCategory(formData: FormData) {
       name,
       slug,
       category_type: categoryType,
-      show_on_home: showOnHome,
+      parent_id: parentId,
+      show_on_home: parentId ? false : showOnHome,
       home_sort_order: homeSortOrder,
       card_description: cardDescription,
     });
@@ -1150,6 +1179,8 @@ export async function updateCategory(formData: FormData) {
   const name = getString(formData, adminFormFields.category.name);
   const slug = normalizeSlug(getString(formData, adminFormFields.category.slug));
   const categoryType = getString(formData, adminFormFields.category.type);
+  const parentId =
+    getString(formData, adminFormFields.category.parentId) || null;
   const showOnHome = isChecked(formData, adminFormFields.category.showOnHome);
   const cardDescription =
     getString(formData, adminFormFields.category.cardDescription).trim() || null;
@@ -1158,9 +1189,31 @@ export async function updateCategory(formData: FormData) {
     redirectWith("error", "Невалидни данни за категория.", activeTab);
   }
 
+  if (parentId === id) {
+    redirectWith("error", "Категорията не може да бъде собствена подкатегория.", activeTab);
+  }
+  if (parentId && categoryType !== "product") {
+    redirectWith("error", "Само продуктовите категории могат да имат подкатегории.", activeTab);
+  }
+  if (parentId) {
+    const { data: parentCategory, error: parentError } = await supabase
+      .from("categories")
+      .select("id,category_type,parent_id")
+      .eq("id", parentId)
+      .maybeSingle();
+    if (
+      parentError ||
+      !parentCategory ||
+      parentCategory.category_type !== "product" ||
+      parentCategory.parent_id
+    ) {
+      redirectWith("error", "Избраната основна категория е невалидна.", activeTab);
+    }
+  }
+
   const { data: existingCategory, error: existingCategoryError } = await supabase
     .from("categories")
-    .select("category_type,home_sort_order")
+    .select("category_type,parent_id,home_sort_order")
     .eq("id", id)
     .single();
   if (existingCategoryError || !existingCategory) {
@@ -1168,11 +1221,19 @@ export async function updateCategory(formData: FormData) {
   }
 
   let homeSortOrder = existingCategory.home_sort_order;
-  if (existingCategory.category_type !== categoryType) {
-    const { data: lastCategory } = await supabase
+  if (
+    existingCategory.category_type !== categoryType ||
+    existingCategory.parent_id !== parentId
+  ) {
+    let lastCategoryQuery = supabase
       .from("categories")
       .select("home_sort_order")
       .eq("category_type", categoryType)
+      .neq("id", id);
+    lastCategoryQuery = parentId
+      ? lastCategoryQuery.eq("parent_id", parentId)
+      : lastCategoryQuery.is("parent_id", null);
+    const { data: lastCategory } = await lastCategoryQuery
       .order("home_sort_order", { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -1185,7 +1246,8 @@ export async function updateCategory(formData: FormData) {
       name,
       slug,
       category_type: categoryType,
-      show_on_home: showOnHome,
+      parent_id: parentId,
+      show_on_home: parentId ? false : showOnHome,
       home_sort_order: homeSortOrder,
       card_description: cardDescription,
     })
@@ -1230,6 +1292,21 @@ export async function deleteCategory(formData: FormData) {
 
   if (!id) {
     redirectWith("error", "Липсва категория за изтриване.", activeTab);
+  }
+
+  const { count: childCount, error: childCountError } = await supabase
+    .from("categories")
+    .select("id", { count: "exact", head: true })
+    .eq("parent_id", id);
+  if (childCountError) {
+    redirectWith("error", "Категорията не можа да бъде проверена за подкатегории.", activeTab);
+  }
+  if ((childCount ?? 0) > 0) {
+    redirectWith(
+      "error",
+      "Първо преместете или изтрийте подкатегориите на тази категория.",
+      activeTab,
+    );
   }
 
   const { error } = await supabase.from("categories").delete().eq("id", id);

@@ -16,6 +16,10 @@ import {
   adminPanelClass,
 } from "@/components/admin/styles";
 import { adminFormFields } from "@/lib/admin/form-fields";
+import {
+  getCategoryDisplayLabel,
+  sortCategoriesForDisplay,
+} from "@/lib/category-hierarchy";
 import { makeAdminTabHref } from "@/lib/admin/params";
 import type {
   CategoryRow,
@@ -45,8 +49,8 @@ export function ProductCreatePanel({
   draft,
   imageReselectWarning = false,
 }: ProductCreatePanelProps) {
-  const productCategories = categories.filter(
-    (category) => category.category_type === "product",
+  const productCategories = sortCategoriesForDisplay(
+    categories.filter((category) => category.category_type === "product"),
   );
   const occasionCategories = categories.filter(
     (category) => category.category_type === "occasion",
@@ -194,7 +198,7 @@ export function ProductCreatePanel({
                               defaultChecked={draft?.categoryIds.includes(category.id)}
                               className="h-4 w-4 rounded border-boutique-line text-boutique-accent"
                             />
-                            {category.name}
+                            {getCategoryDisplayLabel(categories, category)}
                           </label>
                         ))}
                       </div>

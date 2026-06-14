@@ -5,6 +5,7 @@ export type StorefrontCategory = {
   name: string;
   slug: string;
   category_type: "product" | "occasion";
+  parent_id: string | null;
   show_on_home: boolean;
   home_sort_order: number;
   card_description: string | null;

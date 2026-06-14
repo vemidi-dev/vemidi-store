@@ -327,3 +327,39 @@ where pg_namespace.nspname = 'public'
 order by proname;
 ```
 
+## Product category hierarchy
+
+Run `category_hierarchy.sql` before deploying the application changes that add
+subcategory management and `/categories/[slug]` pages.
+
+The migration is non-destructive:
+
+- existing categories remain top-level (`parent_id = null`);
+- product assignments in `product_categories` are unchanged;
+- only product categories may have a parent;
+- the hierarchy is limited to two levels;
+- deleting a parent with children is blocked;
+- moving categories only changes the order among siblings.
+
+Safe apply order:
+
+1. export `categories` and `product_categories` from Supabase;
+2. run `supabase/category_hierarchy.sql` in the SQL editor;
+3. verify that all existing rows have `parent_id = null`;
+4. deploy the application to Vercel Preview;
+5. create one test subcategory and assign a test product to it;
+6. verify the parent category, subcategory page, shop filter, sitemap, and admin edit form;
+7. deploy to Production only after Preview passes.
+
+Verification query:
+
+```sql
+select
+  child.name as category,
+  parent.name as parent_category,
+  child.category_type,
+  child.home_sort_order
+from public.categories child
+left join public.categories parent on parent.id = child.parent_id
+order by coalesce(parent.name, child.name), child.parent_id nulls first, child.home_sort_order;
+```

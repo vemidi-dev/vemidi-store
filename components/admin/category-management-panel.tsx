@@ -10,6 +10,13 @@ import { adminFormFields } from "@/lib/admin/form-fields";
 import type { CategoryRow } from "@/lib/admin/types";
 
 export function CategoryManagementPanel({ categories }: { categories: CategoryRow[] }) {
+  const parentCategories = categories
+    .filter(
+      (category) =>
+        category.category_type === "product" && category.parent_id === null,
+    )
+    .sort((left, right) => left.name.localeCompare(right.name, "bg"));
+
   return (
     <article className={adminPanelClass}>
       <h2 className="font-heading text-2xl text-boutique-ink">
@@ -34,7 +41,7 @@ export function CategoryManagementPanel({ categories }: { categories: CategoryRo
           action={createCategory}
           className="border-t border-boutique-line/80 px-4 pb-4 pt-4 sm:px-5 sm:pb-5"
         >
-          <div className="grid gap-4 md:grid-cols-[1fr_1fr_1fr_auto]">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-[1fr_1fr_1fr_1fr_auto]">
             <input type="hidden" name={adminFormFields.common.tab} value="categories" />
             <label className="text-sm font-medium text-boutique-ink">
               Име на категория
@@ -66,7 +73,25 @@ export function CategoryManagementPanel({ categories }: { categories: CategoryRo
                 <option value="occasion">Повод</option>
               </select>
             </label>
-            <label className="text-sm font-medium text-boutique-ink md:col-span-3">
+            <label className="text-sm font-medium text-boutique-ink">
+              Основна категория
+              <select
+                name={adminFormFields.category.parentId}
+                defaultValue=""
+                className={adminFieldClass}
+              >
+                <option value="">Няма — основна категория</option>
+                {parentCategories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+              <span className="mt-1 block text-xs font-normal text-boutique-muted">
+                Използва се само за продуктови подкатегории.
+              </span>
+            </label>
+            <label className="text-sm font-medium text-boutique-ink md:col-span-2 xl:col-span-4">
               Кратък текст за картата
               <textarea
                 name={adminFormFields.category.cardDescription}
@@ -75,7 +100,7 @@ export function CategoryManagementPanel({ categories }: { categories: CategoryRo
                 className={`${adminFieldClass} min-h-16 resize-y`}
               />
             </label>
-            <label className="inline-flex items-center gap-2 text-sm font-medium text-boutique-ink md:col-span-3">
+            <label className="inline-flex items-center gap-2 text-sm font-medium text-boutique-ink md:col-span-2 xl:col-span-4">
               <input
                 name={adminFormFields.category.showOnHome}
                 type="checkbox"

@@ -76,6 +76,18 @@ Apply this migration before deploying SEO slug / product code application change
 6. deploy to Production only after Preview passes;
 7. keep the export until the production smoke test is complete.
 
+### Product subcategories (`category_hierarchy.sql`)
+
+Apply this migration before deploying the category hierarchy application changes:
+
+1. export `categories` and `product_categories`;
+2. run `supabase/category_hierarchy.sql`;
+3. confirm existing categories remain top-level;
+4. deploy to Preview;
+5. create a test child category and assign a product;
+6. verify `/categories`, `/categories/<slug>`, `/shop`, `/sitemap.xml`, and the admin category form;
+7. deploy to Production only after the checks pass.
+
 Before a destructive schema change:
 
 1. export the affected tables from Supabase;

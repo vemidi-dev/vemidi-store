@@ -6,7 +6,7 @@ import { getPublishedBlogPosts, getPublishedEvents } from "@/lib/content/reposit
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const siteUrl = getSiteUrl();
-  const [{ products }, blogPosts, events] = await Promise.all([
+  const [{ categories, products }, blogPosts, events] = await Promise.all([
     getStorefrontCatalog(),
     getPublishedBlogPosts(),
     getPublishedEvents(),
@@ -42,6 +42,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "weekly" as const,
       priority: 0.7,
     })),
+    ...categories
+      .filter((category) => category.category_type === "product")
+      .map((category) => ({
+        url: new URL(`/categories/${category.slug}`, siteUrl).toString(),
+        lastModified: now,
+        changeFrequency: "weekly" as const,
+        priority: category.parent_id ? 0.6 : 0.7,
+      })),
     ...blogPosts.map((post) => ({
       url: new URL(`/blog/${post.slug}`, siteUrl).toString(),
       lastModified: new Date(post.updated_at),

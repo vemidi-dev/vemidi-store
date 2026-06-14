@@ -32,12 +32,30 @@ export function CategoryManagementView({ categories }: CategoryManagementViewPro
   const [query, setQuery] = useState("");
 
   const sortedCategories = useMemo(() => {
-    return categories
-      .filter((category) => category.category_type === activeTab)
-      .sort((left, right) => {
-        const positionDifference = left.home_sort_order - right.home_sort_order;
-        return positionDifference || left.name.localeCompare(right.name, "bg");
-      });
+    const byOrder = (left: CategoryRow, right: CategoryRow) => {
+      const positionDifference = left.home_sort_order - right.home_sort_order;
+      return positionDifference || left.name.localeCompare(right.name, "bg");
+    };
+    const matching = categories.filter(
+      (category) => category.category_type === activeTab,
+    );
+    const roots = matching
+      .filter((category) => category.parent_id === null)
+      .sort(byOrder);
+    const rootIds = new Set(roots.map((category) => category.id));
+    const nested = roots.flatMap((root) => [
+      root,
+      ...matching
+        .filter((category) => category.parent_id === root.id)
+        .sort(byOrder),
+    ]);
+    const orphans = matching
+      .filter(
+        (category) =>
+          category.parent_id !== null && !rootIds.has(category.parent_id),
+      )
+      .sort(byOrder);
+    return [...nested, ...orphans];
   }, [activeTab, categories]);
 
   const normalizedQuery = query.trim().toLocaleLowerCase("bg");
@@ -102,7 +120,15 @@ export function CategoryManagementView({ categories }: CategoryManagementViewPro
           </div>
 
           {visibleCategories.map((category) => {
-            const indexInTab = sortedCategories.findIndex((entry) => entry.id === category.id);
+            const siblings = sortedCategories.filter(
+              (entry) => entry.parent_id === category.parent_id,
+            );
+            const indexInTab = siblings.findIndex(
+              (entry) => entry.id === category.id,
+            );
+            const parentCategory = category.parent_id
+              ? categories.find((entry) => entry.id === category.parent_id)
+              : null;
 
             return (
             <div
@@ -110,7 +136,10 @@ export function CategoryManagementView({ categories }: CategoryManagementViewPro
               className="border-b border-boutique-line/70 bg-white last:border-b-0"
             >
               <div className="hidden px-3 py-2 md:grid md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_6rem_5rem_4rem_auto] md:items-center md:gap-2">
-                <p className="truncate font-medium text-boutique-ink">{category.name}</p>
+                <p className="truncate font-medium text-boutique-ink">
+                  {parentCategory ? "↳ " : ""}
+                  {category.name}
+                </p>
                 <p className="truncate text-xs text-boutique-muted">{category.slug}</p>
                 <p className="text-xs text-boutique-muted">
                   {category.category_type === "product" ? "Продукт" : "Повод"}
@@ -139,7 +168,7 @@ export function CategoryManagementView({ categories }: CategoryManagementViewPro
                     <input type="hidden" name={adminFormFields.category.direction} value="down" />
                     <button
                       type="submit"
-                      disabled={indexInTab === sortedCategories.length - 1}
+                      disabled={indexInTab === siblings.length - 1}
                       aria-label="Премести надолу"
                       className="grid h-7 w-7 place-items-center rounded-full border border-boutique-line text-xs disabled:opacity-35"
                     >
@@ -157,7 +186,10 @@ export function CategoryManagementView({ categories }: CategoryManagementViewPro
 
               <div className="flex items-center justify-between gap-2 px-2 py-2 md:hidden">
                 <div className="min-w-0">
-                  <p className="truncate font-medium text-boutique-ink">{category.name}</p>
+                  <p className="truncate font-medium text-boutique-ink">
+                    {parentCategory ? "↳ " : ""}
+                    {category.name}
+                  </p>
                   <p className="truncate text-xs text-boutique-muted">{category.slug}</p>
                 </div>
                 <div className="flex gap-1">
@@ -179,7 +211,7 @@ export function CategoryManagementView({ categories }: CategoryManagementViewPro
                     <input type="hidden" name={adminFormFields.category.direction} value="down" />
                     <button
                       type="submit"
-                      disabled={indexInTab === sortedCategories.length - 1}
+                      disabled={indexInTab === siblings.length - 1}
                       className="grid h-7 w-7 place-items-center rounded-full border border-boutique-line text-xs disabled:opacity-35"
                     >
                       ↓
@@ -228,6 +260,31 @@ export function CategoryManagementView({ categories }: CategoryManagementViewPro
                     >
                       <option value="product">Продуктова категория</option>
                       <option value="occasion">Повод</option>
+                    </select>
+                  </label>
+                  <label className="text-sm font-medium text-boutique-ink">
+                    Основна категория
+                    <select
+                      name={adminFormFields.category.parentId}
+                      defaultValue={category.parent_id ?? ""}
+                      className={adminFieldClass}
+                    >
+                      <option value="">Няма — основна категория</option>
+                      {categories
+                        .filter(
+                          (entry) =>
+                            entry.category_type === "product" &&
+                            entry.parent_id === null &&
+                            entry.id !== category.id,
+                        )
+                        .sort((left, right) =>
+                          left.name.localeCompare(right.name, "bg"),
+                        )
+                        .map((entry) => (
+                          <option key={entry.id} value={entry.id}>
+                            {entry.name}
+                          </option>
+                        ))}
                     </select>
                   </label>
                   <label className="text-sm font-medium text-boutique-ink md:col-span-3">

@@ -91,9 +91,11 @@ export function toShowcaseCategory(category: StorefrontCategory): ShopCategory {
     category.category_type === "occasion" ? "повод" : "вид продукт";
 
   return {
+    id: category.id,
     slug: category.slug,
     title: category.name,
     categoryType: category.category_type,
+    parentId: category.parent_id,
     imageSrc: imageSrc || DEFAULT_CATEGORY_IMAGE,
     imageAlt: `${category.name} - ${categoryLabel}`,
     cardDescription: category.card_description,
