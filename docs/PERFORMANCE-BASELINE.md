@@ -415,3 +415,119 @@ Baseline desktop CLS remains elevated on some templates (category **0.104**, pro
 | IMG-04 | Supabase remote URL on product LCP critical path | 4d |
 | CSS-01 | Render-blocking CSS ~150 ms on some mobile templates | Follow-up if needed |
 | CLS-D | Desktop CLS 0.10+ on category/product — awaiting Lighthouse trace | Post-4a measurement |
+
+---
+
+## Phase 4a post-deploy measurement
+
+**Measurement date:** 2026-06-15 (Europe/Sofia, local capture window ~01:22–01:45 EEST)
+**Production URL:** https://vemidi-store.vercel.app
+**Production commit:** `9155baa` (GitHub Production deployment confirmed)
+**Baseline reference:** `adac58f` scorecard (single-run capture)
+**Post-deploy method:** Lighthouse CLI **12.6.1**, same flags as baseline; **3 sequential runs** per URL × form factor; **median** used for comparison
+**Raw artifacts:** `tmp-lh-4a-*.json` (local, gitignored)
+
+### Methodology note
+
+The original scorecard above remains a **single-run baseline**. Post-deploy values are **medians of 3 runs**. This comparison (**single-run baseline vs median post-deploy**) does **not** establish causality — Phase 4a changes may correlate with observed deltas but cannot be attributed with certainty from lab data alone. Differences under **5% score** or **0.2 s LCP** should be treated as possible lab noise unless supported by LCP phase breakdown or network waterfall.
+
+---
+
+### Production deployment verification
+
+| Check | Result |
+|---|---|
+| GitHub Production deployment SHA | `9155baa` ✅ |
+| `/categories/kutii` serves `kutii.webp` (not `.png`) | ✅ |
+| Header logo `loading="lazy"` in HTML | ✅ |
+| Broken image requests (404) across 30 runs | **0** ✅ |
+
+---
+
+### Summary scorecard — baseline vs Phase 4a median
+
+| Page | Mobile Perf (base → 4a) | Δ | Mobile LCP | Δ | Desktop Perf | Δ | Desktop LCP | Δ | Mobile TBT | Δ | Desktop CLS | Δ |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| `/` | 72 → **89** | +24% | 2.9 → **3.2 s** | +0.3 s ⚠️ noise | 98 → **99** | +1% | 0.7 → **0.6 s** | −0.1 s | 1,080 → **82 ms** | −92% | 0.063 → **0.063** | 0 |
+| `/shop` | 70 → **82** | +17% | 3.2 → **3.1 s** | −0.1 s ⚠️ noise | 99 → **74** | −25% ‡ | 0.7 → **0.8 s** | +0.1 s ⚠️ noise | 1,070 → **504 ms** | −53% | 0.057 → **0.771** | ‡ anomalous |
+| `/categories/kutii` | 72 → **81** | +13% | 3.3 → **2.8 s** | −0.5 s | 97 → **97** | 0% | 0.8 → **0.7 s** | −0.1 s | 890 → **609 ms** | −32% | 0.104 → **0.104** | 0 |
+| `/occasions/svatba` | 85 → **74** | −13% † | 2.9 → **3.0 s** | +0.1 s ⚠️ noise | 99 → **96** | −3% ⚠️ noise | 0.8 → **0.7 s** | −0.1 s | 410 → **861 ms** | +110% † | 0.024 → **0.094** | +0.07 |
+| `/products/plik-za-pari` | 90 → **88** | −2% ⚠️ noise | 3.0 → **2.9 s** | −0.1 s ⚠️ noise | 99 → **99** | 0% | 0.7 → **0.6 s** | −0.1 s | 130 → **217 ms** | +67% † | 0.057 → **0.057** | 0 |
+
+† High run-to-run variance (see anomalies). ‡ Desktop `/shop` runs 2–3 had CLS **0.771** (layout-shift outlier); run 1 CLS **0.057** matched baseline.
+
+---
+
+### Detailed metrics — Phase 4a medians
+
+| Page | Form | Perf | LCP | CLS | TBT | FCP | Speed Index | TTFB | LCP load delay | LCP load dur. | LCP render delay |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| `/` | Mobile | 89 | 3.2 s | 0.000 | 82 ms | 1.8 s | 4.4 s | 147 ms | 658 ms | 55 ms | 1,701 ms |
+| `/` | Desktop | 99 | 0.6 s | 0.063 | 74 ms | 0.3 s | 0.8 s | 136 ms | 650 ms | 56 ms | 400 ms |
+| `/shop` | Mobile | 82 | 3.1 s | 0.031 | 504 ms | 1.1 s | 2.2 s | 40 ms | 643 ms | 54 ms | 1,201 ms |
+| `/shop` | Desktop | 74 | 0.8 s | 0.771 ‡ | 111 ms | 0.4 s | 1.0 s | 40 ms | 552 ms | 58 ms | 1,100 ms |
+| `/categories/kutii` | Mobile | 81 | 2.8 s | 0.031 | 609 ms | 1.0 s | 2.0 s | 137 ms | 505 ms | 53 ms | 527 ms |
+| `/categories/kutii` | Desktop | 97 | 0.7 s | **0.104** | 63 ms | 0.3 s | 0.9 s | 138 ms | 531 ms | 65 ms | 595 ms |
+| `/occasions/svatba` | Mobile | 74 | 3.0 s | 0.031 | 861 ms | 1.0 s | 2.5 s | 40 ms | 541 ms | 55 ms | 1,200 ms |
+| `/occasions/svatba` | Desktop | 96 | 0.7 s | 0.094 | 84 ms | 0.3 s | 1.1 s | 44 ms | 507 ms | 56 ms | 500 ms |
+| `/products/plik-za-pari` | Mobile | 88 | 2.9 s | 0.000 | 217 ms | 1.8 s | 4.6 s | 40 ms | 984 ms | 185 ms | 1,145 ms |
+| `/products/plik-za-pari` | Desktop | 99 | 0.6 s | **0.057** | 11 ms | 0.3 s | 1.0 s | 40 ms | 1,168 ms | 62 ms | 400 ms |
+
+---
+
+### LCP resource verification (representative run with hero as LCP)
+
+| Page | LCP element | LCP resource URL | Transfer size | `fetchpriority="high"` in DOM | Network priority | Eager/high images |
+|---|---|---|---|---|---|---|
+| `/` mobile | Hero `<img>` home-hero | `/_next/image?…home-hero.webp` | ~57 KB | Not in DOM snippet | **High** | 1 |
+| `/shop` mobile | Hero `<img>` products.png | `/_next/image?…products.png` | ~49 KB | Not in DOM snippet | **High** | 1 |
+| `/categories/kutii` mobile | Hero `<img>` kutii | `/_next/image?…kutii.webp` | **~31 KB** | Not in DOM snippet | **High** | 1 |
+| `/categories/kutii` desktop | Hero `<img>` kutii | `/_next/image?…kutii.webp` | **~36 KB** | Not in DOM snippet | **High** | 1 |
+| `/occasions/svatba` mobile | Hero `<img>` svatba | `/_next/image?…occasion-svatba.webp` | ~14 KB | Not in DOM snippet | **High** | 1–3 |
+| `/products/plik-za-pari` desktop | Gallery `<img>` | Supabase product image via `_next/image` | ~49 KB | Not in DOM snippet | **High** | 1 |
+
+Header logo: **`loading="lazy"`** in production HTML; **not** high network priority in runs where hero was LCP. `prioritize-lcp-image` audit **passes** (score 1) on homepage mobile run 1 vs baseline failure on fetchpriority detection.
+
+**WebP transfer (IMG-05):** Category hero `kutii.webp` optimized transfer **~31–36 KB** via `_next/image` (q=75). Source PNG is **2.0 MB** on disk; WebP source file **127 KB**. No `kutii.png` requests observed in category runs.
+
+---
+
+### LCP phase comparison (where hero was stable LCP)
+
+| Page | Form | Metric | Baseline | Phase 4a median | Δ | Assessment |
+|---|---|---|---:|---:|---:|---|
+| `/` | Mobile | Resource load delay | 1,089 ms | 658 ms | **−431 ms (−40%)** | Improved — supports IMG-02 |
+| `/` | Mobile | Resource load duration | 74 ms | 55 ms | −19 ms | Minor |
+| `/` | Mobile | Element render delay | 747 ms | 1,701 ms | +954 ms | Worse — lab variance / different main-thread shape; TBT median −998 ms |
+| `/categories/kutii` | Mobile | LCP | 3.3 s | 2.8 s | **−0.5 s** | Meaningful; WebP + priority cleanup likely contributors |
+| `/categories/kutii` | Desktop | CLS | 0.104 | 0.104 | 0 | **Unchanged** — CLS-D not addressed |
+| `/products/plik-za-pari` | Desktop | CLS | 0.057 | 0.057 | 0 | **Unchanged** |
+
+---
+
+### Run anomalies (not excluded; noted for interpretation)
+
+| Run | Observation |
+|---|---|
+| `/shop` mobile run 3 | Perf **65**, TBT **1,303 ms** — main-thread outlier; median TBT still −53% vs baseline |
+| `/shop` desktop runs 2–3 | CLS **0.771**, Perf **74** — severe layout-shift outlier; run 1 CLS **0.057** matches baseline |
+| `/occasions/svatba` mobile run 1 | Perf **67**, TBT **1,089 ms** — pulls median TBT above baseline |
+| `/products/plik-za-pari` mobile run 1 | TBT **1,688 ms** outlier; runs 2–3 TBT **46–217 ms** |
+
+---
+
+### Hypothesis verdicts
+
+| ID | Hypothesis | Verdict | Evidence |
+|---|---|---|---|
+| **IMG-01** | Dual `priority` (header + hero) removed | **Confirmed** | Logo lazy in HTML; hero receives sole high network priority when hero is LCP; 0 broken images |
+| **IMG-02** | LCP discovery / load delay improved | **Partially confirmed** | Homepage mobile load delay −40%; category mobile LCP −0.5 s; `prioritize-lcp-image` passes. Not uniform across all URLs; render-delay and multi-run variance limit causal claims |
+| **IMG-05** | WebP reduces category hero transfer | **Confirmed** | `kutii.webp` served in production; ~31–36 KB transfer vs 2.0 MB PNG source; no `.png` request |
+| **CLS-D** | Desktop CLS fixed | **Not confirmed** | Category desktop CLS **0.104** unchanged; product desktop **0.057** unchanged; `/shop` desktop polluted by outlier runs — needs trace analysis |
+| **Phase 4b** | CartProvider impact on mobile TBT | **Investigate first** | Mobile TBT medians still **504–861 ms** on listing templates (`/shop`, `/occasions`); homepage TBT improved dramatically but listing pages remain above ≤300 ms target; lab INP not measured — TBT used as proxy only. **Next:** bundle/trace analysis of `CartProvider`; scoping only if its contribution is proven |
+
+### Visual / functional checks (production)
+
+No visual regression reported during post-deploy browser verification. Hero proportions unchanged (Phase 4a did not modify hero layout). WebP heroes render correctly with `object-cover`.
+
+**Next step:** Optional Lighthouse trace on `/categories/kutii` and `/shop` desktop for CLS outliers before any layout intervention. For Phase 4b: **bundle/trace analysis on `CartProvider` first**; route scoping only if its contribution to mobile TBT is proven.
