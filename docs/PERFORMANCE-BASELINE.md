@@ -1,0 +1,343 @@
+# Performance Baseline — VeMiDi crafts (Core Web Vitals / Phase 4)
+
+**Project:** `D:\Cursor\src`  
+**Baseline date:** 2026-06-14  
+**Production URL:** https://vemidi-store.vercel.app  
+**Git baseline:** `47cea64` (Technical SEO Phase 3)  
+**Capture method:** Lighthouse CLI 12.6.1 (lab), headless Chrome, Performance category only  
+**Branch:** `main`  
+**Scope:** Core Web Vitals baseline for Technical SEO Phase 4 (no code changes in this document)
+
+---
+
+## Methodology
+
+| Setting | Value |
+|---|---|
+| Tool | `npx lighthouse@12.6.1` |
+| Mobile | `--form-factor=mobile --screenEmulation.mobile=true` |
+| Desktop | `--preset=desktop` |
+| Throttling | Lighthouse default simulated mobile / desktop |
+| INP | **Not available in lab runs** — TBT used as main-thread proxy on mobile |
+| Raw reports | Local artifacts `tmp-lh-*.json` (not committed) |
+
+**Pages audited:**
+
+| Template | URL |
+|---|---|
+| Homepage | `/` |
+| Shop | `/shop` |
+| Product category | `/categories/kutii` |
+| Occasion landing | `/occasions/svatba` |
+| Product detail | `/products/plik-za-pari` |
+
+**Note:** An initial product URL (`/products/sreburen-medalyon`) returned **404** in production; baseline product metrics use a live catalog slug (`plik-za-pari`).
+
+---
+
+## Summary scorecard
+
+| Page | Mobile Perf | Desktop Perf | Mobile LCP | Desktop LCP | Mobile CLS | Desktop CLS | Mobile TBT | Desktop TBT | Mobile FCP | Desktop FCP |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| `/` | **72** | **98** | 2.9 s | 0.7 s | 0.031 | 0.063 | 1,080 ms | 90 ms | 1.2 s | 0.3 s |
+| `/shop` | **70** | **99** | 3.2 s | 0.7 s | 0.031 | 0.057 | 1,070 ms | 30 ms | 1.2 s | 0.4 s |
+| `/categories/kutii` | **72** | **97** | 3.3 s | 0.8 s | 0.031 | 0.104 | 890 ms | 30 ms | 1.0 s | 0.4 s |
+| `/occasions/svatba` | **85** | **99** | 2.9 s | 0.8 s | 0.031 | 0.024 | 410 ms | 20 ms | 1.0 s | 0.4 s |
+| `/products/plik-za-pari` | **90** | **99** | 3.0 s | 0.7 s | 0.000 | 0.057 | 130 ms | 50 ms | 1.7 s | 0.4 s |
+
+### Cross-cutting findings
+
+| Metric | Mobile | Desktop | Assessment |
+|---|---|---|---|
+| **Performance gap** | 58–90 | 92–99 | Mobile is the constraint; desktop is healthy |
+| **LCP** | 2.9–3.4 s | 0.7–0.8 s | Mobile LCP above 2.5 s “good” threshold on all hero/listing templates |
+| **CLS** | ≤ 0.031 (good) except product N/A | 0.024–0.129 | Category/product desktop CLS elevated (0.10+) — investigate layout shifts |
+| **TBT / INP proxy** | 410–1,080 ms | 20–150 ms | Listing pages dominated by JS main-thread cost on mobile |
+| **FCP** | 1.0–1.7 s | 0.3–0.4 s | Mobile FCP acceptable; product detail slower FCP (1.7 s) |
+
+---
+
+## Per-page analysis
+
+### 1. Homepage (`/`)
+
+| | Mobile | Desktop |
+|---|---|---|
+| Performance | 72 | 98 |
+| LCP | 2.9 s | 0.7 s |
+| CLS | 0.031 | 0.063 |
+| TBT | 1,080 ms | 90 ms |
+| FCP | 1.2 s | 0.3 s |
+| INP (lab) | n/a | n/a |
+
+**LCP element (identical Mobile/Desktop pattern):**
+
+| Field | Value |
+|---|---|
+| Element | Hero `<img>` (`next/image`, `fill`, `object-cover`) |
+| Alt | „Персонализиран дървен подарък за kръщене“ |
+| Selector | `section.overflow-hidden > div.grid > div.relative > img.object-cover` |
+| Source | `/_next/image?url=%2Fassets%2Fhome-hero.webp` |
+| Component chain | `app/page.tsx` → `components/home/home-hero.tsx` (L71–78, `priority`) |
+
+**Mobile LCP phase breakdown (homepage):**
+
+| Phase | Duration |
+|---|---:|
+| TTFB | 168 ms |
+| Resource load delay | **1,089 ms** |
+| Resource load duration | 74 ms |
+| Element render delay | **747 ms** |
+
+**LCP discovery checklist:** request discoverable ✅, not lazy ✅, **`fetchpriority=high` not detected ❌**
+
+| Category | Issue | Likely cause |
+|---|---|---|
+| **Images** | High resource load delay + render delay | Hero competes with header logo (`priority` in `header.tsx` L31); two `priority` images on same view |
+| **JavaScript** | TBT ~1,080 ms | Global `CartProvider` (`app/layout.tsx`), header client islands, Next.js chunks `1255-*.js`, `4bd1b696-*.js` |
+| **CSS** | Minor | Tailwind bundle via Next; no major render-blocking flagged on home mobile |
+| **Fonts** | OK | `next/font` Inter + Playfair, `display: swap` (`app/layout.tsx`) — Lighthouse `font-display` pass |
+| **External** | None on LCP | Static asset `/assets/home-hero.webp` via Vercel `_next/image` |
+
+---
+
+### 2. Shop (`/shop`)
+
+| | Mobile | Desktop |
+|---|---|---|
+| Performance | 70 | 99 |
+| LCP | 3.2 s | 0.7 s |
+| CLS | 0.031 | 0.057 |
+| TBT | 1,070 ms | 30 ms |
+| FCP | 1.2 s | 0.4 s |
+
+**LCP element:**
+
+| Field | Value |
+|---|---|
+| Element | Hero `<img>` via `VisualPageHero` |
+| Alt | „Ръчно изработени продукти от VeMiDi crafts“ |
+| Source | `/_next/image?url=%2Fassets%2Fproducts.png` |
+| Files | `app/shop/page.tsx` → `components/layout/visual-page-hero.tsx` (L27–35, `priority`) |
+
+**Dominant cost:** Mobile JS (page boot ~1,650 ms + chunk `1255-*.js` ~1,333 ms) + product grid hydration via client `ProductCardMedia` on each card.
+
+| Category | Issue | Files |
+|---|---|---|
+| **Images** | Hero LCP ~3.2 s mobile | `visual-page-hero.tsx`, static `/assets/products.png` |
+| **JavaScript** | Highest TBT among commerce listings | `cart-provider.tsx`, `product-card-media.tsx` (`"use client"`), shop page product grid |
+| **CSS** | — | — |
+| **Fonts** | OK | Root layout fonts |
+| **External** | Supabase images in grid (not LCP) | `next.config.ts` remote patterns; listing thumbnails |
+
+---
+
+### 3. Product category (`/categories/kutii`)
+
+| | Mobile | Desktop |
+|---|---|---|
+| Performance | 72 | 97 |
+| LCP | 3.3 s | 0.8 s |
+| CLS | 0.031 | **0.104** |
+| TBT | 890 ms | 30 ms |
+| FCP | 1.0 s | 0.4 s |
+
+**LCP element:**
+
+| Field | Value |
+|---|---|
+| Element | Hero `<img>` (`VisualPageHero`) |
+| Alt | „Ръчно izработени продукти в категория Кутийки и kошнички“ |
+| Source | `/_next/image?url=%2Fassets%2Fcategories%2Fproduct%2Fkutii.png` |
+| Files | `app/categories/[slug]/page.tsx` → `visual-page-hero.tsx`; image from `lib/category-images.ts` |
+
+**Desktop CLS 0.104** — likely hero/grid layout or font swap; needs follow-up in Phase 4 (layout reservation, aspect-ratio containers).
+
+| Category | Issue | Files |
+|---|---|---|
+| **Images** | Category hero PNG via `_next/image` | `getCategoryImageSrc()`, `visual-page-hero.tsx` |
+| **JavaScript** | TBT ~890 ms mobile | Same global client bundle + product grid |
+| **CSS** | Render-blocking CSS ~150 ms (mobile) | Next compiled CSS chunk `*.css` |
+| **Fonts** | OK | — |
+| **External** | — | — |
+
+---
+
+### 4. Occasion landing (`/occasions/svatba`)
+
+| | Mobile | Desktop |
+|---|---|---|
+| Performance | 85 | 99 |
+| LCP | 2.9 s | 0.8 s |
+| CLS | 0.031 | 0.024 |
+| TBT | 410 ms | 20 ms |
+| FCP | 1.0 s | 0.4 s |
+
+**LCP element:**
+
+| Field | Value |
+|---|---|
+| Element | Hero `<img>` (`VisualPageHero`) |
+| Alt | „Персонализирани подаръци за Сvatba“ |
+| Source | `/_next/image?url=%2Fassets%2Foccasion-svatba.webp` |
+| Files | `app/occasions/[slug]/page.tsx` → `visual-page-hero.tsx` |
+
+**Best mobile performance among hero templates** (85) — still above LCP target; lower TBT than shop/home (fewer interactive cards above fold).
+
+---
+
+### 5. Product detail (`/products/plik-za-pari`)
+
+| | Mobile | Desktop |
+|---|---|---|
+| Performance | 90 | 99 |
+| LCP | 3.0 s | 0.7 s |
+| CLS | **0.000** | 0.057 |
+| TBT | **130 ms** | 50 ms |
+| FCP | **1.7 s** | 0.4 s |
+
+**LCP element:**
+
+| Field | Value |
+|---|---|
+| Element | Primary gallery `<img>` |
+| Alt | „Плik за pari“ |
+| Selector | `div.lg:sticky > div.flex > div.relative > img.object-cover` |
+| Source | `/_next/image` → **Supabase Storage** product image URL |
+| Files | `app/products/[slug]/page.tsx` → `components/product/product-detail-gallery.tsx` (`"use client"`, L22–30, `priority` on first image) |
+
+**Mobile LCP phases:**
+
+| Phase | Duration |
+|---|---:|
+| TTFB | 134 ms |
+| Resource load delay | **1,070 ms** |
+| Resource load duration | 185 ms |
+| Element render delay | **1,145 ms** |
+
+| Category | Issue | Files |
+|---|---|---|
+| **Images** | Remote Supabase origin + `_next/image` optimization chain | `product-detail-gallery.tsx`, `lib/storefront/repository.ts`, Supabase CDN |
+| **JavaScript** | Client gallery wrapper delays render despite low TBT | `"use client"` on gallery; add-to-cart client components below fold |
+| **CSS** | Render-blocking CSS ~150 ms (mobile) | Global CSS |
+| **Fonts** | OK | — |
+| **External** | **Supabase Storage** on LCP critical path | `koenzvpznqcqtiixaclo.supabase.co` via `next/image` |
+
+---
+
+## Problem taxonomy
+
+### Images
+
+| ID | Finding | Affected pages | Components / files |
+|---|---|---|---|
+| IMG-01 | Multiple `priority` images per view (header logo + hero) | `/`, `/shop`, `/categories/*`, `/occasions/*` | `components/layout/header.tsx` L31, `home-hero.tsx` L75, `visual-page-hero.tsx` L31 |
+| IMG-02 | Lighthouse reports missing `fetchpriority=high` on LCP image | All hero templates | Competing priorities; only one candidate should win |
+| IMG-03 | Mobile LCP 2.9–3.3 s on optimized static heroes | Hero templates | `_next/image` q=75; consider preload link or single priority |
+| IMG-04 | Product LCP from Supabase remote URL | Product detail | `product-detail-gallery.tsx`; latency in resource load + render delay |
+| IMG-05 | Category heroes use PNG assets | Category/Occasion | `lib/category-images.ts`, `/assets/categories/`, `/assets/occasion-*.webp` |
+
+### JavaScript
+
+| ID | Finding | Affected pages | Components / files |
+|---|---|---|---|
+| JS-01 | Global `CartProvider` on all public pages | All | `app/layout.tsx` L76–78, `components/cart/cart-provider.tsx` |
+| JS-02 | Mobile TBT 890–1,080 ms on listing pages | `/`, `/shop`, `/categories/*` | Next chunks + hydration; bootup time dominated by page + `1255-*.js` |
+| JS-03 | Client product card carousel | Shop, category, occasion, home grids | `components/product/product-card-media.tsx` (`"use client"`) |
+| JS-04 | Client product gallery shell | Product detail | `components/product/product-detail-gallery.tsx` |
+| JS-05 | Header client islands on every page | All | `header-actions.tsx`, `mobile-nav.tsx`, `scroll-to-top.tsx` |
+
+### CSS
+
+| ID | Finding | Affected pages | Notes |
+|---|---|---|---|
+| CSS-01 | Render-blocking stylesheet ~150 ms | Some mobile runs (category, occasion, product) | Next.js compiled CSS; expect modest gain from critical CSS strategy |
+| CSS-02 | Tailwind + component CSS via global bundle | All | `app/globals.css` |
+
+### Fonts
+
+| ID | Finding | Notes |
+|---|---|---|
+| FONT-01 | **No issue detected** | Inter + Playfair via `next/font/google`, `display: swap` — Lighthouse pass |
+
+### External services
+
+| ID | Service | Impact | Pages |
+|---|---|---|---|
+| EXT-01 | Supabase Storage (product images) | LCP resource load on product detail | `/products/[slug]` |
+| EXT-02 | Vercel `_next/image` optimizer | All images; necessary but adds redirect chain | All |
+| EXT-03 | Econt API | Checkout only — **not in baseline page set** | `/checkout` |
+| EXT-04 | Analytics | No GTM/Pixel loaded (per `site-content` cookies policy) | — |
+
+---
+
+## Phase 4 implementation plan (prioritized)
+
+Ordered by **expected mobile CWV impact**, then **implementation risk**.
+
+| Priority | ID | Action | Expected effect | Risk | Effort | Related audit |
+|---:|---|---|---|---|---|---|
+| 1 | IMG-01/02 | **Single LCP `priority` candidate per template** — remove `priority` from header logo on pages with hero, or demote hero when logo wins; ensure one `fetchpriority="high"` on true LCP | High mobile LCP (−0.5–1.5 s est.) | Low | S | LOW-03 |
+| 2 | JS-01 | **Scope `CartProvider`** to cart/shop/product/checkout routes instead of root layout | High mobile TBT / INP on content pages | Medium | L | LOW-06 |
+| 3 | JS-03 | **Split product card media** — SSR first image + link; hydrate carousel only on interaction | Medium TBT on listing pages; less hydration | Medium | M | LOW-02 |
+| 4 | JS-04 | **SSR-first product gallery** — server-render first image; client enhancement for thumbnails | Medium product LCP render delay | Medium | M | — |
+| 5 | IMG-04 | **Product hero image strategy** — preload LCP image URL in `generateMetadata` / `<link rel="preload">`; verify `sizes` for mobile | Medium product LCP | Low | S | — |
+| 6 | IMG-05 | **Convert category PNG heroes to WebP/AVIF** where missing | Low–medium LCP on category pages | Low | S | — |
+| 7 | CSS-01 | Audit render-blocking CSS; defer non-critical if measurable | Low mobile FCP | Low | S | — |
+| 8 | CLS-D | **Fix desktop CLS** on category (0.104) and product (0.057) — explicit dimensions, reserve hero height | CLS field data | Low | S | — |
+| 9 | — | **Bundle analysis** (`@next/bundle-analyzer`) after CartProvider scope change | Validates JS-01/02 | Low | S | — |
+| 10 | — | **Field CWV** via Search Console / CrUX after deploy | Validation | — | — | — |
+
+### Recommended Phase 4 execution order
+
+```text
+Phase 4a (quick wins)     → IMG-01/02, IMG-05, CLS-D
+Phase 4b (architecture)   → JS-01 CartProvider scope
+Phase 4c (components)     → JS-03 product card, JS-04 gallery
+Phase 4d (product LCP)    → IMG-04 preload + Supabase path review
+Phase 4e (validation)     → Re-run Lighthouse matrix + CrUX
+```
+
+### Success targets (mobile lab, same URLs)
+
+| Metric | Current baseline | Phase 4 target |
+|---|---:|---:|
+| Performance score | 70–72 (listings) | ≥ 85 |
+| LCP | 2.9–3.3 s | ≤ 2.5 s |
+| TBT | 890–1,080 ms (listings) | ≤ 300 ms |
+| CLS | ≤ 0.031 mobile | maintain ≤ 0.1 |
+
+---
+
+## Validation commands (Phase 4 regression)
+
+```bash
+cd D:\Cursor\src
+
+# Repeat baseline capture (example — homepage mobile)
+npx lighthouse@12.6.1 "https://vemidi-store.vercel.app/" \
+  --output=json --output-path=./tmp-lh-home-mobile.json \
+  --form-factor=mobile --screenEmulation.mobile=true \
+  --only-categories=performance --chrome-flags="--headless=new"
+
+npm run typecheck
+npm test
+npm run build
+```
+
+**Field validation (post-deploy):** Google Search Console → Core Web Vitals; PageSpeed Insights field data for `/`, `/shop`, `/categories/kutii`, `/products/plik-za-pari`.
+
+---
+
+## Relationship to Technical SEO audit
+
+| Audit ID | Phase 4 baseline evidence |
+|---|---|
+| LOW-02 | JS-03 — `product-card-media.tsx` client carousel on all grids |
+| LOW-03 | IMG-01/02 — header + hero dual `priority` |
+| LOW-06 | JS-01 — global `CartProvider` correlates with high mobile TBT |
+| §13 CWV | Quantified LCP/CLS/TBT gap mobile vs desktop |
+
+---
+
+*Baseline captured 2026-06-14. No code changes in this document. Awaiting Phase 4 implementation approval.*

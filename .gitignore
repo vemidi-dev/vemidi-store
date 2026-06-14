@@ -7,3 +7,4 @@ out
 .vercel
 tmp-next-start*
 tmp-*.log
+tmp-lh-*
