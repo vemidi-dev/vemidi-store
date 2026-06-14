@@ -6,3 +6,4 @@ out
 *.tsbuildinfo
 .vercel
 tmp-next-start*
+tmp-*.log

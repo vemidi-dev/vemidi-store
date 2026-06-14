@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { ContentDetail } from "@/components/content/content-detail";
 import { ContentImage } from "@/components/content/content-image";
 import { ProductCard } from "@/components/product/product-card";
+import { JsonLd } from "@/components/seo/json-ld";
 import { getCategoryListingHref } from "@/lib/category-url";
 import {
   getPublishedBlogPost,
@@ -13,6 +14,11 @@ import {
 } from "@/lib/content/repository";
 import { getSiteUrl } from "@/lib/site-url";
 import { getStorefrontCatalog } from "@/lib/storefront/repository";
+import { buildArticleSchema } from "@/lib/seo/article-schema";
+import {
+  buildBlogPostBreadcrumbItems,
+  buildBreadcrumbListSchema,
+} from "@/lib/seo/breadcrumbs";
 
 type BlogPostPageProps = { params: Promise<{ slug: string }> };
 
@@ -65,8 +71,16 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const date = post.published_at
     ? new Intl.DateTimeFormat("bg-BG", { dateStyle: "long" }).format(new Date(post.published_at))
     : null;
+  const siteUrl = getSiteUrl();
+  const structuredData = [
+    buildArticleSchema(post, siteUrl),
+    buildBreadcrumbListSchema(buildBlogPostBreadcrumbItems(post), siteUrl),
+  ];
+
   return (
-    <ContentDetail
+    <>
+      <JsonLd data={structuredData} />
+      <ContentDetail
       eyebrow="Блог"
       title={post.title}
       excerpt={post.excerpt}
@@ -143,5 +157,6 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         </div>
       </section>
     </ContentDetail>
+    </>
   );
 }

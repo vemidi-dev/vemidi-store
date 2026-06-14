@@ -1,5 +1,9 @@
 import type { MetadataRoute } from "next";
 
+import {
+  filterIndexableProductCategories,
+  getProductCategorySlugs,
+} from "@/lib/seo/category-indexability";
 import { getStorefrontCatalog } from "@/lib/storefront/repository";
 import { getSiteUrl } from "@/lib/site-url";
 import { getPublishedBlogPosts, getPublishedEvents } from "@/lib/content/repository";
@@ -12,6 +16,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     getPublishedEvents(),
   ]);
   const now = new Date();
+  const productCategorySlugs = getProductCategorySlugs(products);
+  const indexableCategories = filterIndexableProductCategories(
+    categories,
+    productCategorySlugs,
+  );
 
   const staticRoutes = [
     { path: "", priority: 1, changeFrequency: "weekly" as const },
@@ -42,14 +51,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "weekly" as const,
       priority: 0.7,
     })),
-    ...categories
-      .filter((category) => category.category_type === "product")
-      .map((category) => ({
-        url: new URL(`/categories/${category.slug}`, siteUrl).toString(),
-        lastModified: now,
-        changeFrequency: "weekly" as const,
-        priority: category.parent_id ? 0.6 : 0.7,
-      })),
+    ...indexableCategories.map((category) => ({
+      url: new URL(`/categories/${category.slug}`, siteUrl).toString(),
+      lastModified: now,
+      changeFrequency: "weekly" as const,
+      priority: category.parent_id ? 0.6 : 0.7,
+    })),
     ...blogPosts.map((post) => ({
       url: new URL(`/blog/${post.slug}`, siteUrl).toString(),
       lastModified: new Date(post.updated_at),

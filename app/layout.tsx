@@ -3,8 +3,10 @@ import { Inter, Playfair_Display } from "next/font/google";
 import type { ReactNode } from "react";
 
 import { CartProvider } from "@/components/cart/cart-provider";
+import { JsonLd } from "@/components/seo/json-ld";
 import { SiteShell } from "@/components/layout/site-shell";
 import { siteConfig } from "@/config/site";
+import { buildSiteStructuredData } from "@/lib/seo/organization-schema";
 import { getSiteUrl } from "@/lib/site-url";
 
 import "./globals.css";
@@ -63,11 +65,14 @@ type RootLayoutProps = {
 };
 
 export default function RootLayout({ children }: RootLayoutProps) {
+  const siteUrl = getSiteUrl();
+
   return (
     <html lang="bg" className={`${playfair.variable} ${inter.variable}`}>
       <body
         className={`${inter.className} bg-boutique-bg text-boutique-ink antialiased [font-feature-settings:'kern'_1,'liga'_1]`}
       >
+        <JsonLd data={buildSiteStructuredData(siteUrl)} />
         <CartProvider>
           <SiteShell>{children}</SiteShell>
         </CartProvider>

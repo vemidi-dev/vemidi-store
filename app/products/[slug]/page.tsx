@@ -7,6 +7,7 @@ import { ProductDetailGallery } from "@/components/product/product-detail-galler
 import { PageContainer } from "@/components/layout/page-container";
 import { ProductPrice } from "@/components/product/product-price";
 import { ProductCard } from "@/components/product/product-card";
+import { JsonLd } from "@/components/seo/json-ld";
 import { isProductOnPromotion } from "@/lib/product-pricing";
 import {
   getStorefrontCatalog,
@@ -20,6 +21,10 @@ import {
   getProductPath,
 } from "@/lib/product-url";
 import { resolveSchemaOrgProductAvailability } from "@/lib/seo/product-schema-availability";
+import {
+  buildBreadcrumbListSchema,
+  buildProductBreadcrumbItems,
+} from "@/lib/seo/breadcrumbs";
 
 type ProductPageProps = {
   params: Promise<{ slug: string }>;
@@ -157,15 +162,19 @@ export default async function ProductDetailPage({
       itemCondition: "https://schema.org/NewCondition",
     },
   };
+  const catalogProduct = catalog.products.find((entry) => entry.id === product.id);
+  const breadcrumbSchema = buildBreadcrumbListSchema(
+    buildProductBreadcrumbItems(catalog.categories, {
+      title: product.title,
+      slug: product.slug,
+      categorySlugs: catalogProduct?.categorySlugs ?? [],
+    }),
+    getSiteUrl(),
+  );
 
   return (
     <div className="min-h-screen bg-boutique-bg">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(structuredData).replace(/</g, "\\u003c"),
-        }}
-      />
+      <JsonLd data={[structuredData, breadcrumbSchema]} />
       <section className="border-b border-boutique-line/90 bg-boutique-paper">
         <PageContainer className="py-14 md:py-20 lg:py-24">
           <Link

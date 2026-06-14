@@ -1,9 +1,15 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { signOut } from "@/app/auth/actions";
 import { PageContainer } from "@/components/layout/page-container";
 import { createClient } from "@/lib/supabase/server";
+
+export const metadata: Metadata = {
+  title: "Профил",
+  robots: { index: false, follow: false },
+};
 
 export default async function AccountPage() {
   const supabase = await createClient();

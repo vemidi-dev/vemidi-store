@@ -1,10 +1,11 @@
 # Technical SEO Audit — VeMiDi crafts (Next.js Storefront)
 
-**Project:** `D:\Cursor\src`  
-**Audit date:** 2026-06-14  
-**Phase 1 implementation:** 2026-06-14 (launch blockers — code only, no commit/deploy)  
-**Branch:** `main`  
-**Scope:** Read-only audit + Phase 1 SEO fixes (local validation only)
+**Project:** `D:\Cursor\src`
+**Audit date:** 2026-06-14
+**Phase 1 implementation:** 2026-06-14 (commit `0b28884`, pushed)
+**Phase 2 implementation:** 2026-06-14 (rich results + indexability — code only, no commit/deploy)
+**Branch:** `main`
+**Scope:** Read-only audit + Phase 1/2 SEO fixes (local validation only)
 
 ---
 
@@ -17,9 +18,32 @@
 | HIGH-01 | 404 / invalid URL indexation | ✅ Partial | Invalid **product**: `noindex,nofollow` via `generateMetadata`. Invalid **category**: `noindex,follow` in `generateMetadata` (fixes layout `index,follow` leak). Next.js 404 also injects `noindex`. `not-found.tsx` unchanged — framework handles it. |
 | HIGH-02 | `/products` temporary redirect | ✅ Done | `permanentRedirect` via `resolveProductsPageRedirect()` |
 | HIGH-03 | Faceted `/shop` and `/blog` crawl traps | ✅ Done | Any query key present → `noindex,follow` (incl. empty values); bare routes indexable |
-| HIGH-04 | Empty category soft 404 | ⏳ Phase 2 | Not in Phase 1 scope |
-| HIGH-05 | BreadcrumbList JSON-LD | ⏳ Phase 2 | Not in Phase 1 scope |
+| HIGH-04 | Empty category soft 404 | ✅ Done | `noindex, follow` + sitemap exclusion; parent with child products stays indexable |
+| HIGH-05 | BreadcrumbList JSON-LD | ✅ Done | Reusable helper; category/product/blog/event pages |
 | MEDIUM-09 | `category_hierarchy.sql` applied | ✅ Confirmed | Applied in Supabase (user confirmed) |
+
+### Phase 2 implementation status (rich results + indexability)
+
+| ID | Issue | Status | Notes |
+|---|---|---|---|
+| HIGH-04 | Empty category soft 404 | ✅ Done | `lib/seo/category-indexability.ts`; page stays 200, `noindex, follow`, excluded from sitemap |
+| HIGH-05 | BreadcrumbList JSON-LD | ✅ Done | `lib/seo/breadcrumbs.ts` + `components/seo/json-ld.tsx`; absolute URLs, no duplicates |
+| MEDIUM-01 | Organization / WebSite JSON-LD | ✅ Done | Root layout; data from `config/site.ts`; no SearchAction |
+| MEDIUM-02 | Article / Event JSON-LD | ✅ Done | `/blog/[slug]`, `/events/[slug]`; optional fields omitted when empty |
+| MEDIUM-04 | Category Twitter metadata | ✅ Done | Mirrors OG; invalid category remains `noindex` |
+| MEDIUM-07 | `robots.txt` disallow gaps | ✅ Done | `/cart`, `/login`, `/campaign-checkout`, `/auth/` added |
+| LOW-01 | Login page `noindex` | ✅ Done | Explicit `noindex, nofollow`; account page same |
+| Sitemap | Empty categories excluded | ✅ Done | `filterIndexableProductCategories` in `app/sitemap.ts` |
+
+### Phase 2 validation (post-implementation)
+
+| Check | Result |
+|---|---|
+| `npm run typecheck` | ✅ Pass |
+| `npm run lint` | ✅ Pass (2 pre-existing warnings) |
+| `npm test` | ✅ Pass (304 tests, 0 failures) |
+| `npm run build` | ✅ Pass |
+| `git diff --check` | ✅ Pass |
 
 ### Phase 1 validation (post-implementation)
 
@@ -51,10 +75,10 @@ The **biggest gaps** are:
 1. **Structured data accuracy** — Product JSON-LD always reports `PreOrder` availability regardless of stock state.
 2. **Faceted URL indexation** — `/shop` filter combinations and legacy `/shop?product=` URLs duplicate new `/categories/[slug]` pages without a strict canonical/noindex policy.
 3. **404/indexation hygiene** — Global layout defaults to `index: true`; `not-found.tsx` and several utility routes lack explicit `noindex`.
-4. **Missing rich-result schemas** — No `BreadcrumbList`, `Organization`/`WebSite`, `Article`, or `Event` JSON-LD.
+4. ~~**Missing rich-result schemas**~~ — Phase 2 adds `BreadcrumbList`, `Organization`/`WebSite`, `Article`, and `Event` JSON-LD.
 5. **Migration verification** — `category_hierarchy.sql` confirmed applied in Supabase (2026-06-14).
 
-**Phase 1 complete.** Remaining gaps: empty category soft 404, BreadcrumbList/Organization/Article/Event schema, occasion landing URLs, robots.txt gaps, CWV tuning — see Phase 2 below.
+**Phase 1 complete.** **Phase 2 complete (local, uncommitted).** Remaining gaps: occasion landing URLs, homepage metadata, product OG type, sitemap timestamps, CWV tuning — see Phase 3 below.
 
 ---
 
@@ -497,10 +521,10 @@ The **biggest gaps** are:
 | Schema | Present? |
 |---|---|
 | Product + Offer | ✅ Partial — availability wrong |
-| BreadcrumbList | ❌ |
-| Organization/WebSite | ❌ |
-| Article | ❌ |
-| Event | ❌ |
+| BreadcrumbList | ✅ category, product, blog, event |
+| Organization/WebSite | ✅ root layout |
+| Article | ✅ `/blog/[slug]` |
+| Event | ✅ `/events/[slug]` |
 
 ### 10. Categories (hierarchy)
 
@@ -510,7 +534,7 @@ The **biggest gaps** are:
 | Parent includes child products | ✅ `getCategoryFamilySlugs` |
 | Sitemap all product categories | ✅ Including subcategories |
 | Canonical on category pages | ✅ |
-| Empty categories | ⚠️ Soft 200 |
+| Empty categories | ✅ `noindex, follow` + sitemap exclusion |
 | Subcategories on `/categories` index | ✅ Top-level only (`app/categories/page.tsx` L138–141) |
 
 ### 11. Product variants and availability
@@ -554,22 +578,26 @@ The **biggest gaps** are:
 4. ~~**HIGH-03** — Implement faceted `/shop` (and `/blog`) noindex/canonical policy~~ ✅ Phase 1
 5. ~~**MEDIUM-09** — Confirm `category_hierarchy.sql` applied in production Supabase~~ ✅ Confirmed
 
-**Remaining pre-launch recommendations (Phase 2):**
+**Phase 2 complete (local, uncommitted):**
 
-1. **HIGH-04** — Empty category handling (soft 404 / sitemap exclusion)
-2. **HIGH-05** — BreadcrumbList JSON-LD
-3. **MEDIUM-01** — Organization/WebSite schema
+1. ~~**HIGH-04** — Empty category handling~~ ✅
+2. ~~**HIGH-05** — BreadcrumbList JSON-LD~~ ✅
+3. ~~**MEDIUM-01** — Organization/WebSite schema~~ ✅
+4. ~~**MEDIUM-02** — Article/Event JSON-LD~~ ✅
+5. ~~**MEDIUM-04** — Category Twitter metadata~~ ✅
+6. ~~**MEDIUM-07** — robots.txt utility disallow~~ ✅
+7. ~~**LOW-01** — Login/account noindex~~ ✅
 
-## Recommended after launch
+## Recommended after launch (Phase 3)
 
-1. **HIGH-05** — BreadcrumbList JSON-LD  
-2. **MEDIUM-01** — Organization/WebSite schema  
-3. **MEDIUM-02** — Article/Event JSON-LD  
-4. **HIGH-02** — Permanent redirect for `/products`  
-5. **HIGH-04** — Empty category handling  
-6. **MEDIUM-03** — Occasion landing URL strategy  
-7. **MEDIUM-08** — Sitemap real `lastModified` timestamps  
-8. **LOW-03** — LCP priority tuning  
+1. **MEDIUM-03** — Occasion landing URL strategy (`/occasions/[slug]` or equivalent)
+2. **MEDIUM-05** — Product Open Graph type `product`
+3. **MEDIUM-06** — Homepage explicit metadata export
+4. **MEDIUM-08** — Sitemap real `lastModified` timestamps (products/categories)
+5. **HIGH-01** (residual) — Explicit `not-found.tsx` metadata export (defense in depth)
+6. **LOW-02** — Product card carousel server/client split
+7. **LOW-03** — LCP priority tuning (single candidate per page)
+8. **LOW-06** — CartProvider scope reduction
 
 ---
 
@@ -578,10 +606,9 @@ The **biggest gaps** are:
 | Phase | Items | Est. effort |
 |---|---|---|
 | **1 — Launch blockers** | CRITICAL-01, CRITICAL-02, HIGH-01, HIGH-03, migration verify | 1–2 days |
-| **2 — Redirect hygiene** | HIGH-02, internal link updates (blog, CTAs), MEDIUM-07 | 0.5 day |
-| **3 — Rich results** | HIGH-05, MEDIUM-01, MEDIUM-02, CRITICAL-01 validation | 1–2 days |
-| **4 — Content quality** | HIGH-04, MEDIUM-03, MEDIUM-06, MEDIUM-04 | 1–2 days |
-| **5 — Performance polish** | LOW-02, LOW-03, LOW-06 | 2+ days |
+| **2 — Rich results + indexability** ✅ | HIGH-04, HIGH-05, MEDIUM-01, MEDIUM-02, MEDIUM-04, MEDIUM-07, LOW-01 | Done (local) |
+| **3 — Content & URL strategy** | MEDIUM-03, MEDIUM-05, MEDIUM-06, MEDIUM-08 | 1–2 days |
+| **4 — Performance polish** | LOW-02, LOW-03, LOW-06 | 2+ days |
 
 ---
 
@@ -624,10 +651,10 @@ curl -s https://vemidi-store.vercel.app/products/{slug} | findstr /i "applicatio
 
 ### External tools
 
-- [Google Rich Results Test](https://search.google.com/test/rich-results) — product, blog, event URLs  
-- [Facebook Sharing Debugger](https://developers.facebook.com/tools/debug/) — OG tags  
-- Google Search Console — Coverage, Page indexing, Sitemaps, Core Web Vitals  
-- Screaming Frog (≤500 URLs) — faceted URL discovery, canonical conflicts, 404s  
+- [Google Rich Results Test](https://search.google.com/test/rich-results) — product, blog, event URLs
+- [Facebook Sharing Debugger](https://developers.facebook.com/tools/debug/) — OG tags
+- Google Search Console — Coverage, Page indexing, Sitemaps, Core Web Vitals
+- Screaming Frog (≤500 URLs) — faceted URL discovery, canonical conflicts, 404s
 
 ### Supabase migration check
 
@@ -657,4 +684,36 @@ where pg_namespace.nspname = 'public' and proname = 'validate_category_hierarchy
 
 ---
 
-*End of audit. Awaiting approval before implementing fixes.*
+---
+
+## Phase 2 changed files (uncommitted)
+
+### New
+- `components/seo/json-ld.tsx` — server-side JSON-LD renderer
+- `lib/seo/json-ld.ts` — safe serialization (`compactJsonLd`, `serializeJsonLd`)
+- `lib/seo/breadcrumbs.ts` — BreadcrumbList helper + route builders
+- `lib/seo/category-indexability.ts` — empty category detection + sitemap filter
+- `lib/seo/category-metadata.ts` — category metadata (Twitter, empty noindex)
+- `lib/seo/organization-schema.ts` — Organization + WebSite from `config/site.ts`
+- `lib/seo/article-schema.ts` — Article JSON-LD
+- `lib/seo/event-schema.ts` — Event JSON-LD (conditional fields)
+- `tests/breadcrumb-schema.test.ts`
+- `tests/organization-schema.test.ts`
+- `tests/article-schema.test.ts`
+- `tests/event-schema.test.ts`
+- `tests/category-indexability.test.ts`
+- `tests/robots-config.test.ts`
+
+### Modified
+- `app/layout.tsx` — site-level Organization/WebSite JSON-LD
+- `app/robots.ts` — extended disallow paths
+- `app/sitemap.ts` — excludes empty product categories
+- `app/categories/[slug]/page.tsx` — breadcrumbs, metadata, empty noindex
+- `app/products/[slug]/page.tsx` — BreadcrumbList JSON-LD
+- `app/blog/[slug]/page.tsx` — Article + BreadcrumbList JSON-LD
+- `app/events/[slug]/page.tsx` — Event + BreadcrumbList JSON-LD
+- `app/login/page.tsx` — explicit noindex
+- `app/account/page.tsx` — explicit noindex
+- `docs/TECHNICAL-SEO-AUDIT.md` — Phase 2 status
+
+*Phase 2 complete locally. Awaiting review before commit/deploy.*

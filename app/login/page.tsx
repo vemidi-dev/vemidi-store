@@ -1,6 +1,13 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 
 import { PageContainer } from "@/components/layout/page-container";
+
+export const metadata: Metadata = {
+  title: "Вход",
+  robots: { index: false, follow: false },
+};
+
 export default function LoginPage() {
   return (
     <section className="pb-24 pt-8 md:pt-12">

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import CategoryShowcaseCard from "@/components/category/category-showcase-card";
+import { JsonLd } from "@/components/seo/json-ld";
 import { PageContainer } from "@/components/layout/page-container";
 import { VisualPageHero } from "@/components/layout/visual-page-hero";
 import { ProductCard } from "@/components/product/product-card";
@@ -13,6 +14,17 @@ import {
 import { getCategoryImageSrc } from "@/lib/category-images";
 import { toShowcaseCategory } from "@/lib/storefront/mappers";
 import { getStorefrontCatalog } from "@/lib/storefront/repository";
+import {
+  buildBreadcrumbListSchema,
+  buildCategoryBreadcrumbItems,
+} from "@/lib/seo/breadcrumbs";
+import {
+  buildCategoryPageMetadata,
+} from "@/lib/seo/category-metadata";
+import {
+  getProductCategorySlugs,
+} from "@/lib/seo/category-indexability";
+import { getSiteUrl } from "@/lib/site-url";
 
 type CategoryPageProps = {
   params: Promise<{ slug: string }>;
@@ -22,7 +34,7 @@ export async function generateMetadata({
   params,
 }: CategoryPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const { categories } = await getStorefrontCatalog();
+  const { categories, products } = await getStorefrontCatalog();
   const category = categories.find(
     (entry) => entry.category_type === "product" && entry.slug === slug,
   );
@@ -34,26 +46,16 @@ export async function generateMetadata({
     };
   }
 
-  const imageCategory = category.parent_id
-    ? categories.find((entry) => entry.id === category.parent_id) ?? category
-    : category;
-  const description =
-    category.card_description?.trim() ||
-    `Разгледайте ръчно изработени продукти в категория „${category.name}“ от VeMiDi crafts.`;
+  const parent = category.parent_id
+    ? categories.find((entry) => entry.id === category.parent_id) ?? null
+    : null;
 
-  return {
-    title: category.name,
-    description,
-    alternates: { canonical: `/categories/${category.slug}` },
-    openGraph: {
-      title: category.name,
-      description,
-      url: `/categories/${category.slug}`,
-      images: [
-        getCategoryImageSrc(imageCategory.slug, imageCategory.category_type),
-      ],
-    },
-  };
+  return buildCategoryPageMetadata({
+    category,
+    categories,
+    productCategorySlugs: getProductCategorySlugs(products),
+    parent,
+  });
 }
 
 export default async function CategoryPage({ params }: CategoryPageProps) {
@@ -85,9 +87,14 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     imageCategory.slug,
     imageCategory.category_type,
   );
+  const breadcrumbSchema = buildBreadcrumbListSchema(
+    buildCategoryBreadcrumbItems(categories, category),
+    getSiteUrl(),
+  );
 
   return (
     <div>
+      <JsonLd data={breadcrumbSchema} />
       <VisualPageHero
         eyebrow={
           <>

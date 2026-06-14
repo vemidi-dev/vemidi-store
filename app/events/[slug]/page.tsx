@@ -5,11 +5,18 @@ import { notFound } from "next/navigation";
 
 import { ContentDetail } from "@/components/content/content-detail";
 import { EventRegistrationForm } from "@/components/content/event-registration-form";
+import { JsonLd } from "@/components/seo/json-ld";
 import {
   getPublishedEvent,
   getPublishedEvents,
 } from "@/lib/content/repository";
 import { formatEur } from "@/lib/format-eur";
+import {
+  buildBreadcrumbListSchema,
+  buildEventBreadcrumbItems,
+} from "@/lib/seo/breadcrumbs";
+import { buildEventSchema } from "@/lib/seo/event-schema";
+import { getSiteUrl } from "@/lib/site-url";
 
 type EventPageProps = { params: Promise<{ slug: string }> };
 
@@ -68,8 +75,17 @@ export default async function EventPage({ params }: EventPageProps) {
     !hasStarted &&
     event.available_spots !== null &&
     event.available_spots > 0;
+  const siteUrl = getSiteUrl();
+  const eventSchema = buildEventSchema(event, siteUrl);
+  const structuredData = [
+    ...(eventSchema ? [eventSchema] : []),
+    buildBreadcrumbListSchema(buildEventBreadcrumbItems(event), siteUrl),
+  ];
+
   return (
-    <ContentDetail
+    <>
+      <JsonLd data={structuredData} />
+      <ContentDetail
       eyebrow="Събитие"
       title={event.title}
       excerpt={event.excerpt}
@@ -114,5 +130,6 @@ export default async function EventPage({ params }: EventPageProps) {
         </section>
       ) : null}
     </ContentDetail>
+    </>
   );
 }
