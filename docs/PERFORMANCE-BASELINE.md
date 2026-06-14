@@ -341,3 +341,77 @@ npm run build
 ---
 
 *Baseline captured 2026-06-14. No code changes in this document. Awaiting Phase 4 implementation approval.*
+
+---
+
+## Phase 4a implementation — awaiting measurement
+
+**Status:** Code complete locally (not committed). Baseline commit: `adac58f`.
+**Scope:** Low-risk Core Web Vitals quick wins — IMG-01/02 and IMG-05 only. No CartProvider, product-card, admin, or hero layout changes.
+
+### Changes made
+
+| Area | Action | Files |
+|---|---|---|
+| **IMG-01/02** | Removed `priority` from header logo | `components/layout/header.tsx` |
+| **IMG-01/02** | Removed `priority` from about page inline image (text `PageHero` only) | `app/about/page.tsx` |
+| **IMG-01/02** | Kept `priority` on true LCP images: `HomeHero`, `VisualPageHero`, first gallery image, thank-you hero | `home-hero.tsx`, `visual-page-hero.tsx`, `product-detail-gallery.tsx`, `thank-you-content.tsx` |
+| **IMG-05** | Converted mapped product-category PNG heroes to WebP (q=85); originals retained | `public/assets/categories/product/*.webp`, `public/assets/moss.webp` |
+| **IMG-05** | Updated slug → file mapping for PNG → WebP | `lib/category-images.ts` |
+| **Tests** | Source-level priority tests; category WebP mapping tests | `tests/performance-priority.test.ts`, `tests/category-images.test.ts` |
+
+Hero container dimensions and `sizes` attributes were **not changed** from the pre-4a baseline layout.
+
+### LCP priority candidate per template (post-4a)
+
+| Template | LCP priority image | Notes |
+|---|---|---|
+| `/` | `home-hero.webp` via `HomeHero` | Header logo lazy |
+| `/shop` | `products.png` via `VisualPageHero` | Header logo lazy |
+| `/categories/[slug]` | Category hero via `VisualPageHero` + `getCategoryImageSrc()` | e.g. `kutii.webp` |
+| `/occasions/[slug]` | Occasion hero via `VisualPageHero` | e.g. `occasion-svatba.webp` |
+| `/products/[slug]` | First gallery image via `ProductDetailGallery` (`priority={safeIndex === 0}`) | Supabase CDN URL |
+| `/about` | None (text `PageHero`; about image lazy) | No competing priority |
+| `/thank-you` | `thank-you.webp` | Sole priority on page |
+
+### WebP conversion summary (mapped PNG → WebP)
+
+| File | Original | WebP |
+|---|---:|---:|
+| `kutii` | 2.0 MB | 124 KB |
+| `gips` | 601 KB | 24 KB |
+| `medali` | 2.1 MB | 136 KB |
+| `plik-za-pari` | 2.7 MB | 294 KB |
+| `sapuneni-rozi` | 1.9 MB | 131 KB |
+| `zakachalki-kluch` | 2.1 MB | 128 KB |
+| `moss` | 1.7 MB | 124 KB |
+
+JPG-mapped categories (`bijuta`, `gosti`, `ramki-pana`, `semejni`) unchanged.
+
+### Desktop CLS — not addressed in 4a
+
+Baseline desktop CLS remains elevated on some templates (category **0.104**, product **0.057**). Phase 4a did **not** change hero layout or claim a CLS fix. Desktop CLS requires a fresh Lighthouse run and trace analysis after deploy before any further layout intervention.
+
+### Validation (local, pre-commit)
+
+| Check | Result |
+|---|---|
+| `git diff --check` | ✅ Pass |
+| `npm run typecheck` | ✅ Pass |
+| `npm run lint` | ✅ Pass (2 pre-existing warnings) |
+| `npm test` | ✅ Pass |
+| `npm run build` | ✅ Pass |
+| Browser smoke (375 / 768 / 1440 px) | See implementation report |
+
+**Baseline scorecard above is unchanged** — re-run Lighthouse matrix after deploy to measure impact.
+
+### Remaining risks (deferred to Phase 4b+)
+
+| ID | Risk | Phase |
+|---|---|---|
+| JS-01 | Global `CartProvider` — mobile TBT 890–1,080 ms on listings | 4b |
+| JS-03 | Client product card carousel hydration | 4c |
+| JS-04 | Client product gallery shell — product LCP render delay | 4c |
+| IMG-04 | Supabase remote URL on product LCP critical path | 4d |
+| CSS-01 | Render-blocking CSS ~150 ms on some mobile templates | Follow-up if needed |
+| CLS-D | Desktop CLS 0.10+ on category/product — awaiting Lighthouse trace | Post-4a measurement |

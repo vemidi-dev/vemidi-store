@@ -6,7 +6,7 @@ import { getCategoryImageSrc } from "@/lib/category-images";
 test("getCategoryImageSrc maps product slugs to current image files", () => {
   assert.equal(
     getCategoryImageSrc("kutii", "product"),
-    "/assets/categories/product/kutii.png",
+    "/assets/categories/product/kutii.webp",
   );
   assert.equal(
     getCategoryImageSrc("ramki-i-pana", "product"),
@@ -14,7 +14,7 @@ test("getCategoryImageSrc maps product slugs to current image files", () => {
   );
   assert.equal(
     getCategoryImageSrc("plik-za-pari", "product"),
-    "/assets/categories/product/plik-za-pari.png",
+    "/assets/categories/product/plik-za-pari.webp",
   );
   assert.equal(
     getCategoryImageSrc("podaracheta-za-gosti", "product"),
@@ -22,11 +22,11 @@ test("getCategoryImageSrc maps product slugs to current image files", () => {
   );
   assert.equal(
     getCategoryImageSrc("zakachalki", "product"),
-    "/assets/categories/product/zakachalki-kluch.png",
+    "/assets/categories/product/zakachalki-kluch.webp",
   );
   assert.equal(
     getCategoryImageSrc("gips", "product"),
-    "/assets/categories/product/gips.png",
+    "/assets/categories/product/gips.webp",
   );
   assert.equal(
     getCategoryImageSrc("bijuta", "product"),
@@ -34,7 +34,7 @@ test("getCategoryImageSrc maps product slugs to current image files", () => {
   );
   assert.equal(
     getCategoryImageSrc("sakndinavski muh", "product"),
-    "/assets/moss.png",
+    "/assets/moss.webp",
   );
   assert.equal(
     getCategoryImageSrc("family", "product"),

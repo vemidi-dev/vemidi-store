@@ -29,16 +29,16 @@ const SLUG_ALIASES: Record<string, string> = {
 const PRODUCT_IMAGE_FILES: Record<string, string> = {
   bijuta: "bijuta.jpg",
   "bijuta-i-aksesoari": "bijuta.jpg",
-  gips: "gips.png",
-  moss: "../moss.png",
+  gips: "gips.webp",
+  moss: "../moss.webp",
   semejni: "../semejni.jpg",
   gosti: "gosti.jpg",
-  kutii: "kutii.png",
-  medali: "medali.png",
-  "plik-za-pari": "plik-za-pari.png",
+  kutii: "kutii.webp",
+  medali: "medali.webp",
+  "plik-za-pari": "plik-za-pari.webp",
   "ramki-pana": "ramki-pana.jpg",
-  "sapuneni-rozi": "sapuneni-rozi.png",
-  "zakachalki-kluch": "zakachalki-kluch.png",
+  "sapuneni-rozi": "sapuneni-rozi.webp",
+  "zakachalki-kluch": "zakachalki-kluch.webp",
   "tvorcheski-komplekti": "../tvorcheski-komplekti.webp",
 };
 

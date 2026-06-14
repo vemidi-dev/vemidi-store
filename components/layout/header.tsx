@@ -28,7 +28,6 @@ export async function Header() {
               alt="VeMiDi crafts logo"
               width={480}
               height={573}
-              priority
               className="h-12 w-10 shrink-0 object-contain transition-opacity duration-200 group-hover:opacity-80 sm:h-14 sm:w-12"
             />
             <span className="min-w-0 leading-tight">

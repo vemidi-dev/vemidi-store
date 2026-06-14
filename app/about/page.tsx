@@ -48,7 +48,6 @@ export default async function AboutPage() {
               fill
               sizes="(max-width: 1024px) 100vw, 50vw"
               className="object-cover"
-              priority
             />
           </div>
 
