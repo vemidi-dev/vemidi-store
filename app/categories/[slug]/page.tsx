@@ -195,26 +195,26 @@ export default async function CategoryPage({
 
           <ContextFilter
             action={`/categories/${category.slug}`}
-            label="Филтрирай по повод"
+            label="По повод"
             name="occasion"
             value={activeOccasion}
             allLabel="Всички поводи"
             options={occasionOptions}
-          />
-
-          {filteredProducts.length > 0 ? (
-            <div className="mt-6 grid grid-cols-2 gap-2 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
-              {filteredProducts.map((product) => (
-                <ProductCard key={product.id} product={product} variant="catalog" />
-              ))}
-            </div>
-          ) : (
-            <p className="mt-8 rounded-xl border border-dashed border-boutique-line p-8 text-center text-sm text-boutique-muted">
-              {activeOccasion
-                ? "Няма продукти по избрания повод."
-                : "Все още няма продукти в тази категория."}
-            </p>
-          )}
+          >
+            {filteredProducts.length > 0 ? (
+              <div className="grid grid-cols-2 gap-2 sm:gap-5 lg:grid-cols-3">
+                {filteredProducts.map((product) => (
+                  <ProductCard key={product.id} product={product} variant="catalog" />
+                ))}
+              </div>
+            ) : (
+              <p className="rounded-xl border border-dashed border-boutique-line p-8 text-center text-sm text-boutique-muted">
+                {activeOccasion
+                  ? "Няма продукти по избрания повод."
+                  : "Все още няма продукти в тази категория."}
+              </p>
+            )}
+          </ContextFilter>
         </PageContainer>
       </section>
     </div>

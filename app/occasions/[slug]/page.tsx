@@ -137,21 +137,21 @@ export default async function OccasionPage({
             value={activeProduct}
             allLabel="Всички видове продукти"
             options={productOptions}
-          />
-
-          {filteredProducts.length > 0 ? (
-            <div className="mt-6 grid grid-cols-2 gap-2 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
-              {filteredProducts.map((product) => (
-                <ProductCard key={product.id} product={product} variant="catalog" />
-              ))}
-            </div>
-          ) : (
-            <p className="mt-8 rounded-xl border border-dashed border-boutique-line p-8 text-center text-sm text-boutique-muted">
-              {activeProduct
-                ? "Няма продукти от избрания вид за този повод."
-                : "Все още няма продукти за този повод."}
-            </p>
-          )}
+          >
+            {filteredProducts.length > 0 ? (
+              <div className="grid grid-cols-2 gap-2 sm:gap-5 lg:grid-cols-3">
+                {filteredProducts.map((product) => (
+                  <ProductCard key={product.id} product={product} variant="catalog" />
+                ))}
+              </div>
+            ) : (
+              <p className="rounded-xl border border-dashed border-boutique-line p-8 text-center text-sm text-boutique-muted">
+                {activeProduct
+                  ? "Няма продукти от избрания вид за този повод."
+                  : "Все още няма продукти за този повод."}
+              </p>
+            )}
+          </ContextFilter>
         </PageContainer>
       </section>
     </div>
