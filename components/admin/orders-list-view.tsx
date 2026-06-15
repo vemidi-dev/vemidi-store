@@ -22,6 +22,11 @@ import {
   type OrderRow,
   type OrdersQuery,
 } from "@/lib/admin/orders";
+import {
+  getOrderNotificationBadgeClass,
+  getOrderNotificationOverallLabel,
+  type OrderNotificationSummary,
+} from "@/lib/admin/order-notifications";
 
 const SOURCE_BADGE: Record<string, string> = {
   store: "bg-boutique-sage-deep text-boutique-on-sage",
@@ -40,9 +45,15 @@ type OrdersListViewProps = {
   orders: OrderRow[];
   total: number;
   query: OrdersQuery;
+  notificationSummaries?: Record<string, OrderNotificationSummary>;
 };
 
-export function OrdersListView({ orders, total, query }: OrdersListViewProps) {
+export function OrdersListView({
+  orders,
+  total,
+  query,
+  notificationSummaries = {},
+}: OrdersListViewProps) {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
   const pageOrderIds = useMemo(() => orders.map((order) => order.id), [orders]);
@@ -153,6 +164,23 @@ export function OrdersListView({ orders, total, query }: OrdersListViewProps) {
                   <p className="text-xs text-boutique-muted">
                     {getOrderStatusLabel(order.status)} · {getOrderItemCount(order)} арт.
                   </p>
+                  {notificationSummaries[order.id] ? (
+                    <p className="mt-1">
+                      <span
+                        className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase ${getOrderNotificationBadgeClass(
+                          notificationSummaries[order.id].admin === "failed" ||
+                            notificationSummaries[order.id].customer === "failed"
+                            ? "failed"
+                            : notificationSummaries[order.id].admin === "pending" ||
+                                notificationSummaries[order.id].customer === "pending"
+                              ? "pending"
+                              : "sent",
+                        )}`}
+                      >
+                        Имейл: {getOrderNotificationOverallLabel(notificationSummaries[order.id])}
+                      </span>
+                    </p>
+                  ) : null}
                 </div>
               </div>
               <details id={detailsId} className="mt-3 border-t border-boutique-line pt-3">
@@ -160,7 +188,10 @@ export function OrdersListView({ orders, total, query }: OrdersListViewProps) {
                   Детайли
                 </summary>
                 <div className="mt-3">
-                  <OrderDetailsSection order={order} />
+                  <OrderDetailsSection
+                    order={order}
+                    notificationSummary={notificationSummaries[order.id]}
+                  />
                   <div className="mt-4 border-t border-boutique-line pt-4">
                     <OrderStatusForm
                       currentStatus={order.status}
@@ -204,6 +235,7 @@ export function OrdersListView({ orders, total, query }: OrdersListViewProps) {
               <th className="px-3 py-2.5 font-semibold">Номер</th>
               <th className="px-3 py-2.5 font-semibold">Дата</th>
               <th className="px-3 py-2.5 font-semibold">Статус</th>
+              <th className="px-3 py-2.5 font-semibold">Имейл</th>
               <th className="px-3 py-2.5 font-semibold">Клиент</th>
               <th className="px-3 py-2.5 font-semibold">Телефон</th>
               <th className="px-3 py-2.5 font-semibold">Източник</th>
@@ -237,6 +269,25 @@ export function OrdersListView({ orders, total, query }: OrdersListViewProps) {
                     </td>
                     <td className="px-3 py-2.5 align-top text-xs">
                       {getOrderStatusLabel(order.status)}
+                    </td>
+                    <td className="px-3 py-2.5 align-top text-xs">
+                      {notificationSummaries[order.id] ? (
+                        <span
+                          className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase ${getOrderNotificationBadgeClass(
+                            notificationSummaries[order.id].admin === "failed" ||
+                              notificationSummaries[order.id].customer === "failed"
+                              ? "failed"
+                              : notificationSummaries[order.id].admin === "pending" ||
+                                  notificationSummaries[order.id].customer === "pending"
+                                ? "pending"
+                                : "sent",
+                          )}`}
+                        >
+                          {getOrderNotificationOverallLabel(notificationSummaries[order.id])}
+                        </span>
+                      ) : (
+                        <span className="text-boutique-muted">—</span>
+                      )}
                     </td>
                     <td className="px-3 py-2.5 align-top">
                       <p className="break-words font-medium text-boutique-ink">
@@ -286,9 +337,12 @@ export function OrdersListView({ orders, total, query }: OrdersListViewProps) {
                   </tr>
                   {isExpanded ? (
                     <tr id={detailsId} className="border-b border-boutique-line bg-boutique-bg/60">
-                      <td colSpan={12} className="p-4">
+                      <td colSpan={13} className="p-4">
                         <div className="rounded-lg border border-boutique-line bg-white p-5 text-left">
-                        <OrderDetailsSection order={order} />
+                        <OrderDetailsSection
+                          order={order}
+                          notificationSummary={notificationSummaries[order.id]}
+                        />
                         <div className="mt-4 border-t border-boutique-line pt-4">
                           <OrderStatusForm
                             currentStatus={order.status}

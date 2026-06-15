@@ -7,6 +7,7 @@ import {
   type OrderRow,
   type OrdersQuery,
 } from "@/lib/admin/orders";
+import type { OrderNotificationSummary } from "@/lib/admin/order-notifications";
 
 import { adminFieldClass, adminPanelClass } from "./styles";
 
@@ -16,6 +17,7 @@ type OrdersPanelProps = {
   query: OrdersQuery;
   counts: ReturnType<typeof getOrderCounts>;
   error: { message: string } | null;
+  notificationSummaries?: Record<string, OrderNotificationSummary>;
 };
 
 export function OrdersPanel({
@@ -24,6 +26,7 @@ export function OrdersPanel({
   query,
   counts,
   error,
+  notificationSummaries = {},
 }: OrdersPanelProps) {
   return (
     <div className="space-y-5">
@@ -165,7 +168,12 @@ export function OrdersPanel({
           поръчки.
         </div>
       ) : (
-        <OrdersListView orders={orders} query={query} total={total} />
+        <OrdersListView
+          orders={orders}
+          query={query}
+          total={total}
+          notificationSummaries={notificationSummaries}
+        />
       )}
     </div>
   );

@@ -64,6 +64,8 @@ const catalog: StorefrontCatalog = {
       orderable: product.orderable,
       images: product.images,
       categorySlugs: ["kutii"],
+      updatedAt: null,
+      createdAt: null,
     },
   ],
   featuredProductIds: [],

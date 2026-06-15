@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import type { OrderRow } from "@/lib/admin/orders";
-import { sendOrderNotifications } from "@/lib/orders/send-order-notifications";
+import { deliverOrderNotificationChannel } from "@/lib/orders/send-order-notifications";
 
 const baseOrder = {
   id: "a1b2c3d4-e5f6-4789-a012-3456789abcde",
@@ -31,26 +31,28 @@ const baseOrder = {
   raw_payload: {},
 } as OrderRow;
 
-test("sendOrderNotifications skips when Resend is not configured", async () => {
+test("deliverOrderNotificationChannel skips when Resend is not configured", async () => {
   const original = process.env.RESEND_API_KEY;
   delete process.env.RESEND_API_KEY;
 
-  const result = await sendOrderNotifications(baseOrder);
-  assert.equal(result.admin.sent, false);
-  assert.equal(result.admin.skipped, true);
-  assert.equal(result.customer.sent, false);
+  const result = await deliverOrderNotificationChannel(baseOrder, "admin");
+  assert.equal(result.sent, false);
+  assert.equal(result.skipped, true);
 
   if (original) {
     process.env.RESEND_API_KEY = original;
   }
 });
 
-test("sendOrderNotifications returns structured customer skip without email", async () => {
-  const result = await sendOrderNotifications({
-    ...baseOrder,
-    customer_email: null,
-  });
+test("deliverOrderNotificationChannel returns customer skip without email", async () => {
+  const result = await deliverOrderNotificationChannel(
+    {
+      ...baseOrder,
+      customer_email: null,
+    },
+    "customer",
+  );
 
-  assert.equal(result.customer.skipped, true);
-  assert.equal(result.customer.sent, false);
+  assert.equal(result.skipped, true);
+  assert.equal(result.sent, false);
 });

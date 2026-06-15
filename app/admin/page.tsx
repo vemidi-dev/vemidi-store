@@ -28,7 +28,10 @@ import {
 import { buildPromotionProductOptions } from "@/lib/promotion-admin";
 import { checkIsAdmin } from "@/lib/supabase/admin-auth";
 import { createClient } from "@/lib/supabase/server";
+import { buildOrderNotificationSummaries } from "@/lib/admin/order-notifications";
+import type { OrderNotificationSummary } from "@/lib/admin/order-notifications";
 import { loadOrdersPage, parseOrdersQuery } from "@/lib/admin/orders";
+import { loadOrderNotificationDeliveries } from "@/lib/orders/order-notification-outbox";
 import {
   filterSubscribers,
   normalizeSubscriberStatus,
@@ -214,6 +217,22 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
   if (activeTab === "orders") {
     const ordersResult = await loadOrdersPage(supabase, ordersQuery);
+    let notificationSummaries: Record<string, OrderNotificationSummary> = {};
+
+    try {
+      const deliveryRows = await loadOrderNotificationDeliveries(
+        supabase,
+        ordersResult.orders.map((order) => order.id),
+      );
+      notificationSummaries = buildOrderNotificationSummaries(deliveryRows);
+    } catch (notificationError) {
+      console.error("Failed to load order notification statuses", {
+        error:
+          notificationError instanceof Error
+            ? notificationError.message
+            : "unknown",
+      });
+    }
 
     return (
       <section className="pb-24 pt-10">
@@ -237,6 +256,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               query={ordersQuery}
               counts={ordersResult.counts}
               error={ordersResult.error}
+              notificationSummaries={notificationSummaries}
             />
           </div>
         </PageContainer>

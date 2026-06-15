@@ -4,11 +4,13 @@ import {
   getEcontOfficesForDelivery,
   isEcontConfigured,
 } from "@/lib/shipping/econt";
+import { ECONT_RATE_LIMIT_MESSAGE } from "@/lib/shipping/econt-rate-limit";
+import { enforceEcontLookupRateLimit } from "@/lib/shipping/enforce-econt-lookup-rate-limit";
 
 export async function GET(request: Request) {
   if (!isEcontConfigured()) {
     return NextResponse.json(
-      { error: "Econt API is not configured." },
+      { error: "Услугата за офиси временно не е налична." },
       { status: 503 },
     );
   }
@@ -18,17 +20,19 @@ export async function GET(request: Request) {
   const deliveryType = searchParams.get("deliveryType");
 
   if (!Number.isFinite(cityId) || cityId <= 0) {
-    return NextResponse.json(
-      { error: "Invalid cityId." },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "Невалидни данни за град." }, { status: 400 });
   }
 
   if (deliveryType !== "office" && deliveryType !== "automat") {
     return NextResponse.json(
-      { error: "Invalid deliveryType." },
+      { error: "Невалиден тип доставка." },
       { status: 400 },
     );
+  }
+
+  const { decision } = await enforceEcontLookupRateLimit();
+  if (decision.kind === "deny") {
+    return NextResponse.json({ error: ECONT_RATE_LIMIT_MESSAGE }, { status: 429 });
   }
 
   try {

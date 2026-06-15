@@ -18,12 +18,20 @@ import {
   type OrderRow,
 } from "@/lib/admin/orders";
 import { formatOrderOptionLine } from "@/lib/order-option-display";
+import type { OrderNotificationSummary } from "@/lib/admin/order-notifications";
+import { OrderNotificationStatus } from "@/components/admin/order-notification-status";
 
 function valueOrDash(value: string | null | undefined) {
   return value?.trim() || "—";
 }
 
-export function OrderDetailsSection({ order }: { order: OrderRow }) {
+export function OrderDetailsSection({
+  order,
+  notificationSummary,
+}: {
+  order: OrderRow;
+  notificationSummary?: OrderNotificationSummary;
+}) {
   const storeItems = parseStoreOrderItems(order);
   const itemCount = getOrderItemCount(order);
 
@@ -207,6 +215,8 @@ export function OrderDetailsSection({ order }: { order: OrderRow }) {
           <p className="mt-2 whitespace-pre-wrap break-words text-boutique-ink">{order.note}</p>
         </section>
       ) : null}
+
+      <OrderNotificationStatus summary={notificationSummary} />
     </div>
   );
 }

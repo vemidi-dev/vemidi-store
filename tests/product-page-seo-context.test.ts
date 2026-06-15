@@ -42,6 +42,8 @@ const catalog: StorefrontCatalog = {
       orderable: true,
       images: [],
       categorySlugs: ["obetsi", "bijuta"],
+      updatedAt: null,
+      createdAt: null,
     },
   ],
   featuredProductIds: [],

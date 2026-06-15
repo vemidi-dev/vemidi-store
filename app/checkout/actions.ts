@@ -19,6 +19,10 @@ import {
 import type { ProductOptionGroup } from "@/lib/product-options";
 import { validateProductOptionSelections } from "@/lib/product-option-validation";
 import { mapProductOptionGroups } from "@/lib/storefront/option-groups";
+import {
+  enqueueAndDispatchOrderNotifications,
+} from "@/lib/orders/order-notification-outbox";
+import { isOrderNotificationOutboxUnavailable } from "@/lib/orders/order-notification-schedule";
 import { sendOrderNotifications } from "@/lib/orders/send-order-notifications";
 import { getRequestFingerprint } from "@/lib/request-fingerprint";
 import { isUuid } from "@/lib/is-uuid";
@@ -378,7 +382,19 @@ export async function createStoreOrder(
 
   if (createdOrder) {
     try {
-      await sendOrderNotifications(createdOrder as OrderRow);
+      const orderRow = createdOrder as OrderRow;
+      try {
+        await enqueueAndDispatchOrderNotifications(supabase, orderRow);
+      } catch (outboxError) {
+        if (isOrderNotificationOutboxUnavailable(outboxError)) {
+          console.warn("Order notification outbox unavailable; using direct send", {
+            orderId: data,
+          });
+          await sendOrderNotifications(orderRow);
+        } else {
+          throw outboxError;
+        }
+      }
     } catch (error) {
       console.error("Order notification dispatch failed", {
         orderId: data,
