@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import CategoryShowcaseCard from "@/components/category/category-showcase-card";
+import { ContextFilter } from "@/components/catalog/context-filter";
 import { JsonLd } from "@/components/seo/json-ld";
 import { PageContainer } from "@/components/layout/page-container";
 import { VisualPageHero } from "@/components/layout/visual-page-hero";
@@ -11,6 +12,12 @@ import {
   getCategoryFamilySlugs,
   getChildCategories,
 } from "@/lib/category-hierarchy";
+import {
+  filterProductsByOccasion,
+  firstContextFilterValue,
+  getOccasionFilterOptions,
+  hasContextFilterParams,
+} from "@/lib/catalog-context-filters";
 import { getCategoryImageSrc } from "@/lib/category-images";
 import { toShowcaseCategory } from "@/lib/storefront/mappers";
 import { getStorefrontCatalog } from "@/lib/storefront/repository";
@@ -28,12 +35,14 @@ import { getSiteUrl } from "@/lib/site-url";
 
 type CategoryPageProps = {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
 export async function generateMetadata({
   params,
+  searchParams,
 }: CategoryPageProps): Promise<Metadata> {
-  const { slug } = await params;
+  const [{ slug }, query] = await Promise.all([params, searchParams]);
   const { categories, products } = await getStorefrontCatalog();
   const category = categories.find(
     (entry) => entry.category_type === "product" && entry.slug === slug,
@@ -52,11 +61,15 @@ export async function generateMetadata({
     categories,
     productCategorySlugs: getProductCategorySlugs(products),
     parent,
+    faceted: hasContextFilterParams(query),
   });
 }
 
-export default async function CategoryPage({ params }: CategoryPageProps) {
-  const { slug } = await params;
+export default async function CategoryPage({
+  params,
+  searchParams,
+}: CategoryPageProps) {
+  const [{ slug }, query] = await Promise.all([params, searchParams]);
   const { categories, products } = await getStorefrontCatalog();
   const category = categories.find(
     (entry) => entry.category_type === "product" && entry.slug === slug,
@@ -75,6 +88,21 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     product.categorySlugs.some((categorySlug) =>
       acceptedSlugs.has(categorySlug),
     ),
+  );
+  const occasionOptions = getOccasionFilterOptions(
+    categories,
+    categoryProducts,
+  );
+  const requestedOccasion = firstContextFilterValue(query.occasion);
+  const activeOccasion = occasionOptions.some(
+    (option) => option.value === requestedOccasion,
+  )
+    ? requestedOccasion
+    : "";
+  const filteredProducts = filterProductsByOccasion(
+    categoryProducts,
+    activeOccasion,
+    occasionOptions,
   );
   const description =
     category.card_description?.trim() ||
@@ -160,20 +188,31 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
               </h2>
             </div>
             <p className="text-sm text-boutique-muted">
-              {categoryProducts.length}{" "}
-              {categoryProducts.length === 1 ? "продукт" : "продукта"}
+              {filteredProducts.length}{" "}
+              {filteredProducts.length === 1 ? "продукт" : "продукта"}
             </p>
           </div>
 
-          {categoryProducts.length > 0 ? (
+          <ContextFilter
+            action={`/categories/${category.slug}`}
+            label="Филтрирай по повод"
+            name="occasion"
+            value={activeOccasion}
+            allLabel="Всички поводи"
+            options={occasionOptions}
+          />
+
+          {filteredProducts.length > 0 ? (
             <div className="mt-6 grid grid-cols-2 gap-2 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
-              {categoryProducts.map((product) => (
+              {filteredProducts.map((product) => (
                 <ProductCard key={product.id} product={product} variant="catalog" />
               ))}
             </div>
           ) : (
             <p className="mt-8 rounded-xl border border-dashed border-boutique-line p-8 text-center text-sm text-boutique-muted">
-              Все още няма добавени продукти в тази категория.
+              {activeOccasion
+                ? "Няма продукти по избрания повод."
+                : "Все още няма продукти в тази категория."}
             </p>
           )}
         </PageContainer>

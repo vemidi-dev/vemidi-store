@@ -47,6 +47,17 @@ test("empty occasion metadata is noindex", () => {
   assert.deepEqual(metadata.robots, { index: false, follow: true });
 });
 
+test("filtered occasion metadata is noindex with the clean canonical", () => {
+  const metadata = buildOccasionPageMetadata({
+    occasion,
+    productCategorySlugs: [["svatba"]],
+    faceted: true,
+  });
+
+  assert.deepEqual(metadata.robots, { index: false, follow: true });
+  assert.equal(metadata.alternates?.canonical, "/occasions/svatba");
+});
+
 test("invalid occasion slug is absent from catalog lookup used by page notFound", () => {
   assert.equal(findOccasionCategory(categories, "missing-slug"), null);
 });

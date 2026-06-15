@@ -8,6 +8,7 @@ import type { StorefrontCategory } from "@/lib/storefront/types";
 type BuildOccasionMetadataInput = {
   occasion: StorefrontCategory;
   productCategorySlugs: string[][];
+  faceted?: boolean;
 };
 
 export function findOccasionCategory(
@@ -47,6 +48,7 @@ export function resolveOccasionPageMetadata(
 export function buildOccasionPageMetadata({
   occasion,
   productCategorySlugs,
+  faceted = false,
 }: BuildOccasionMetadataInput): Metadata {
   const imageSrc = getCategoryImageSrc(occasion.slug, occasion.category_type);
   const description =
@@ -59,7 +61,7 @@ export function buildOccasionPageMetadata({
     title: occasion.name,
     description,
     alternates: { canonical: canonicalPath },
-    robots: indexable
+    robots: !faceted && indexable
       ? { index: true, follow: true }
       : { index: false, follow: true },
     openGraph: {

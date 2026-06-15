@@ -3,9 +3,16 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { JsonLd } from "@/components/seo/json-ld";
+import { ContextFilter } from "@/components/catalog/context-filter";
 import { PageContainer } from "@/components/layout/page-container";
 import { VisualPageHero } from "@/components/layout/visual-page-hero";
 import { ProductCard } from "@/components/product/product-card";
+import {
+  filterProductsByProductCategory,
+  firstContextFilterValue,
+  getProductCategoryFilterOptions,
+  hasContextFilterParams,
+} from "@/lib/catalog-context-filters";
 import { getCategoryImageSrc } from "@/lib/category-images";
 import {
   buildBreadcrumbListSchema,
@@ -21,12 +28,14 @@ import { getSiteUrl } from "@/lib/site-url";
 
 type OccasionPageProps = {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
 export async function generateMetadata({
   params,
+  searchParams,
 }: OccasionPageProps): Promise<Metadata> {
-  const { slug } = await params;
+  const [{ slug }, query] = await Promise.all([params, searchParams]);
   const { categories, products } = await getStorefrontCatalog();
   const occasion = findOccasionCategory(categories, slug);
 
@@ -37,11 +46,15 @@ export async function generateMetadata({
   return buildOccasionPageMetadata({
     occasion,
     productCategorySlugs: getProductCategorySlugs(products),
+    faceted: hasContextFilterParams(query),
   });
 }
 
-export default async function OccasionPage({ params }: OccasionPageProps) {
-  const { slug } = await params;
+export default async function OccasionPage({
+  params,
+  searchParams,
+}: OccasionPageProps) {
+  const [{ slug }, query] = await Promise.all([params, searchParams]);
   const { categories, products } = await getStorefrontCatalog();
   const occasion = findOccasionCategory(categories, slug);
 
@@ -51,6 +64,22 @@ export default async function OccasionPage({ params }: OccasionPageProps) {
 
   const occasionProducts = products.filter((product) =>
     product.categorySlugs.includes(occasion.slug),
+  );
+  const productOptions = getProductCategoryFilterOptions(
+    categories,
+    occasionProducts,
+  );
+  const requestedProduct = firstContextFilterValue(query.product);
+  const activeProduct = productOptions.some(
+    (option) => option.value === requestedProduct,
+  )
+    ? requestedProduct
+    : "";
+  const filteredProducts = filterProductsByProductCategory(
+    occasionProducts,
+    activeProduct,
+    categories,
+    productOptions,
   );
   const description =
     occasion.card_description?.trim() ||
@@ -96,20 +125,31 @@ export default async function OccasionPage({ params }: OccasionPageProps) {
               </h2>
             </div>
             <p className="text-sm text-boutique-muted">
-              {occasionProducts.length}{" "}
-              {occasionProducts.length === 1 ? "продукт" : "продукта"}
+              {filteredProducts.length}{" "}
+              {filteredProducts.length === 1 ? "продукт" : "продукта"}
             </p>
           </div>
 
-          {occasionProducts.length > 0 ? (
+          <ContextFilter
+            action={`/occasions/${occasion.slug}`}
+            label="Филтрирай по вид продукт"
+            name="product"
+            value={activeProduct}
+            allLabel="Всички видове продукти"
+            options={productOptions}
+          />
+
+          {filteredProducts.length > 0 ? (
             <div className="mt-6 grid grid-cols-2 gap-2 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
-              {occasionProducts.map((product) => (
+              {filteredProducts.map((product) => (
                 <ProductCard key={product.id} product={product} variant="catalog" />
               ))}
             </div>
           ) : (
             <p className="mt-8 rounded-xl border border-dashed border-boutique-line p-8 text-center text-sm text-boutique-muted">
-              Все още няма добавени продукти за този повод.
+              {activeProduct
+                ? "Няма продукти от избрания вид за този повод."
+                : "Все още няма продукти за този повод."}
             </p>
           )}
         </PageContainer>

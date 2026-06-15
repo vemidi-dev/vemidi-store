@@ -10,6 +10,7 @@ type BuildCategoryMetadataInput = {
   categories: StorefrontCategory[];
   productCategorySlugs: string[][];
   parent: StorefrontCategory | null;
+  faceted?: boolean;
 };
 
 export function buildCategoryPageMetadata({
@@ -17,6 +18,7 @@ export function buildCategoryPageMetadata({
   categories,
   productCategorySlugs,
   parent,
+  faceted = false,
 }: BuildCategoryMetadataInput): Metadata {
   const imageCategory = parent ?? category;
   const imageSrc = getCategoryImageSrc(
@@ -35,7 +37,7 @@ export function buildCategoryPageMetadata({
     title: category.name,
     description,
     alternates: { canonical: canonicalPath },
-    robots: indexable
+    robots: !faceted && indexable
       ? { index: true, follow: true }
       : { index: false, follow: true },
     openGraph: {

@@ -93,3 +93,17 @@ test("empty category metadata is noindex but keeps canonical", () => {
   assert.equal(metadata.alternates?.canonical, "/categories/prazna");
   assert.equal(metadata.twitter?.title, empty.name);
 });
+
+test("filtered category metadata is noindex with the clean canonical", () => {
+  const category = categories[1];
+  const metadata = buildCategoryPageMetadata({
+    category,
+    categories,
+    productCategorySlugs: [["obetsi"]],
+    parent: categories[0],
+    faceted: true,
+  });
+
+  assert.deepEqual(metadata.robots, { index: false, follow: true });
+  assert.equal(metadata.alternates?.canonical, "/categories/obetsi");
+});
