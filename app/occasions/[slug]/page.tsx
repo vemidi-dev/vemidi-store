@@ -132,7 +132,7 @@ export default async function OccasionPage({
 
           <ContextFilter
             action={`/occasions/${occasion.slug}`}
-            label="Филтрирай по вид продукт"
+            label="Вид продукт"
             name="product"
             value={activeProduct}
             allLabel="Всички видове продукти"

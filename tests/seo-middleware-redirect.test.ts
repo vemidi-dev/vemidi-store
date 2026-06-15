@@ -45,6 +45,13 @@ test("/shop sole product param redirects to category page", () => {
   );
 });
 
+test("/shop sole legacy product param redirects to canonical category page", () => {
+  assert.deepEqual(
+    resolveSeoRedirectTarget("/shop", params({ product: "plik-za-pari" })),
+    { pathname: "/categories/plikove-za-pari" },
+  );
+});
+
 test("/shop sole occasion param redirects to occasion page", () => {
   assert.deepEqual(
     resolveSeoRedirectTarget("/shop", params({ occasion: "svatba" })),

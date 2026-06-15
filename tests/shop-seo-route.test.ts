@@ -120,6 +120,33 @@ test("shop unknown params are noindex", () => {
   );
 });
 
+test("legacy product category slug resolves to canonical category path", () => {
+  const legacyCategories: StorefrontCategory[] = [
+    ...categories,
+    {
+      id: "cat-3",
+      name: "Пликове за пари",
+      slug: "plikove-za-pari",
+      category_type: "product",
+      parent_id: null,
+      show_on_home: true,
+      home_sort_order: 3,
+      card_description: null,
+      createdAt: null,
+    },
+  ];
+  const params = { product: "plik-za-pari" };
+  const parsed = parseShopSearchParams(params);
+  assert.equal(
+    resolveShopProductCategoryRedirect(params, parsed, legacyCategories),
+    "/categories/plikove-za-pari",
+  );
+  assert.equal(
+    resolveProductsPageRedirect(params, legacyCategories),
+    "/categories/plikove-za-pari",
+  );
+});
+
 test("only valid product category redirects to /categories/{slug}", () => {
   const params = { product: "kutii" };
   const parsed = parseShopSearchParams(params);

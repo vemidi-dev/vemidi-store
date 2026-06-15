@@ -1,5 +1,7 @@
+import { resolveCanonicalProductCategorySlug } from "@/lib/category-slug-aliases";
+
 export function getCategoryPath(slug: string) {
-  return `/categories/${encodeURIComponent(slug)}`;
+  return `/categories/${encodeURIComponent(resolveCanonicalProductCategorySlug(slug))}`;
 }
 
 export function getOccasionPath(slug: string) {

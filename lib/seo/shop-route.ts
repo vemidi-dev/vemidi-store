@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { resolveCanonicalProductCategorySlug } from "@/lib/category-slug-aliases";
 import { getCategoryPath, getOccasionPath } from "@/lib/category-url";
 import {
   buildFacetedNoindexMetadata,
@@ -70,8 +71,10 @@ function findProductCategoryBySlug(
   categories: StorefrontCategory[],
   slug: string,
 ) {
+  const canonicalSlug = resolveCanonicalProductCategorySlug(slug);
   return categories.find(
-    (category) => category.category_type === "product" && category.slug === slug,
+    (category) =>
+      category.category_type === "product" && category.slug === canonicalSlug,
   );
 }
 

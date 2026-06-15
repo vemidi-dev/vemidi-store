@@ -26,6 +26,8 @@ export const config = {
   matcher: [
     "/products",
     "/shop",
+    "/categories/:path*",
+    "/occasions/:path*",
     "/admin/:path*",
     "/account",
     "/account/:path*",

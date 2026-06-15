@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 
+import { isLegacyProductCategorySlug } from "@/lib/category-slug-aliases";
 import {
   filterIndexableProductCategories,
   getProductCategorySlugs,
@@ -27,7 +28,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const indexableCategories = filterIndexableProductCategories(
     categories,
     productCategorySlugs,
-  );
+  ).filter((category) => !isLegacyProductCategorySlug(category.slug));
   const indexableOccasions = filterIndexableOccasions(
     categories,
     productCategorySlugs,
