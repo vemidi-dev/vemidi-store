@@ -71,9 +71,6 @@ function ProductCategoryCard({ category }: { category: CategoryWithCount }) {
         ) : (
           <MediaPlaceholder label="Снимка на категорията" />
         )}
-        <span className="absolute right-2 top-2 hidden h-9 w-9 place-items-center rounded-full border border-boutique-line bg-white/90 font-heading text-sm text-boutique-sage-deep shadow-sm sm:grid sm:h-11 sm:w-11 sm:text-lg">
-          {category.title.slice(0, 1)}
-        </span>
       </div>
 
       <div className="p-2.5 sm:p-5">

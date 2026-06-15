@@ -9,14 +9,15 @@
   --color-boutique-accent: #8a6748;
   --color-boutique-line: #e4ddd4;
   --color-boutique-warm: #ebe4db;
-  --color-boutique-sage: #8a9a86;
-  --color-boutique-sage-deep: #4d5c4a;
+  --color-boutique-sage: #809671;
+  --color-boutique-sage-deep: #5f7254;
+  --color-boutique-sage-hover: #4f6347;
   --color-boutique-on-sage: #f3efe6;
   --color-boutique-ochre: #c9a66b;
   /* Supporting tokens used by the new home layout, mapped to the VeMiDi palette. */
   --color-boutique-blush: #ebe4db;
-  --color-boutique-rose: #8a9a86;
-  --color-boutique-rose-deep: #4d5c4a;
+  --color-boutique-rose: #809671;
+  --color-boutique-rose-deep: #5f7254;
   --shadow-boutique: 0 22px 50px -12px rgb(44 40 37 / 0.08);
   --shadow-boutique-sm: 0 12px 28px -8px rgb(44 40 37 / 0.06);
 }
@@ -61,7 +62,19 @@ button.bg-boutique-rose-deep:focus-visible,
 a.bg-boutique-sage-deep:hover,
 a.bg-boutique-sage-deep:focus-visible,
 button.bg-boutique-sage-deep:hover,
-button.bg-boutique-sage-deep:focus-visible,
+button.bg-boutique-sage-deep:focus-visible {
+  background-color: var(--color-boutique-sage-hover);
+  color: #fff;
+}
+
+a.bg-boutique-rose-deep:hover,
+button.bg-boutique-rose-deep:hover,
+a.bg-boutique-sage-deep:hover,
+button.bg-boutique-sage-deep:hover {
+  box-shadow: 0 10px 24px -10px rgb(79 99 71 / 0.65);
+  transform: translateY(-2px);
+}
+
 a.bg-boutique-ink:hover,
 a.bg-boutique-ink:focus-visible,
 button.bg-boutique-ink:hover,
