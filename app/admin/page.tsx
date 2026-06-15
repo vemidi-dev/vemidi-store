@@ -10,6 +10,7 @@ import { ColorManagementPanel } from "@/components/admin/color-management-panel"
 import { ProductCreatePanel } from "@/components/admin/product-create-panel";
 import { ProductListPanel } from "@/components/admin/product-list-panel";
 import { OrdersPanel } from "@/components/admin/orders-panel";
+import { WithdrawalsPanel } from "@/components/admin/withdrawals-panel";
 import { ContentManagementPanel } from "@/components/admin/content-management-panel";
 import { EventManagementPanel } from "@/components/admin/event-management-panel";
 import { EventGalleryManagementPanel } from "@/components/admin/event-gallery-management-panel";
@@ -31,6 +32,7 @@ import { createClient } from "@/lib/supabase/server";
 import { buildOrderNotificationSummaries } from "@/lib/admin/order-notifications";
 import type { OrderNotificationSummary } from "@/lib/admin/order-notifications";
 import { loadOrdersPage, parseOrdersQuery } from "@/lib/admin/orders";
+import { loadWithdrawalsPage, parseWithdrawalsQuery } from "@/lib/admin/withdrawals";
 import { loadOrderNotificationDeliveries } from "@/lib/orders/order-notification-outbox";
 import {
   filterSubscribers,
@@ -67,6 +69,12 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     payment: firstValue(params.payment),
     delivery: firstValue(params.delivery),
     sort: firstValue(params.sort),
+    page: firstValue(params.page),
+    pageSize: firstValue(params.page_size),
+  });
+  const withdrawalsQuery = parseWithdrawalsQuery({
+    status: firstValue(params.status),
+    search: firstValue(params.q),
     page: firstValue(params.page),
     pageSize: firstValue(params.page_size),
   });
@@ -257,6 +265,37 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               counts={ordersResult.counts}
               error={ordersResult.error}
               notificationSummaries={notificationSummaries}
+            />
+          </div>
+        </PageContainer>
+      </section>
+    );
+  }
+
+  if (activeTab === "withdrawals") {
+    const withdrawalsResult = await loadWithdrawalsPage(supabase, withdrawalsQuery);
+
+    return (
+      <section className="pb-24 pt-10">
+        <PageContainer>
+          <div className="mx-auto max-w-6xl space-y-8">
+            <AdminHeader activeTab={activeTab} />
+            {success || error ? (
+              <div
+                className={`rounded-xl border px-4 py-3 text-sm ${
+                  error
+                    ? "border-red-200 bg-red-50 text-red-700"
+                    : "border-emerald-200 bg-emerald-50 text-emerald-700"
+                }`}
+              >
+                {error || success}
+              </div>
+            ) : null}
+            <WithdrawalsPanel
+              requests={withdrawalsResult.requests}
+              total={withdrawalsResult.total}
+              query={withdrawalsQuery}
+              error={withdrawalsResult.error}
             />
           </div>
         </PageContainer>

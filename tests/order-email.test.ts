@@ -68,4 +68,5 @@ test("buildCustomerOrderEmail includes confirmation copy", () => {
   assert.match(email.subject, /Потвърждение на поръчка AAAAAAAA/);
   assert.match(email.html, /Благодарим за поръчката/);
   assert.match(email.html, /Доставката се заплаща отделно при куриера/);
+  assert.match(email.html, /\/withdrawal/);
 });

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 import { InformationPage, InformationSection } from "@/components/legal/information-page";
 import { splitLines } from "@/lib/content/format-content";
@@ -22,6 +23,13 @@ export default async function ReturnsPage() {
       <p className="text-xs uppercase tracking-wider">{content["returns.updated_at"]}</p>
       <InformationSection title={content["returns.withdrawal_title"]}>
         <p>{content["returns.withdrawal_text"]}</p>
+        <p>
+          За подаване на заявление за отказ от договор използвайте{" "}
+          <Link className="font-semibold text-boutique-ink underline" href="/withdrawal">
+            формата за отказ от договор
+          </Link>
+          .
+        </p>
       </InformationSection>
       <InformationSection title={content["returns.personalized_title"]}>
         <p>{content["returns.personalized_text"]}</p>

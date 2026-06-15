@@ -26,7 +26,7 @@ type SendEmailInput = {
   idempotencyKey?: string;
 };
 
-function getResendConfig() {
+export function getResendConfig() {
   const apiKey = process.env.RESEND_API_KEY?.trim();
   const from =
     process.env.ORDER_NOTIFICATION_FROM?.trim() ||

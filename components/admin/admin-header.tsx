@@ -72,6 +72,7 @@ export function AdminHeader({ activeTab }: { activeTab: AdminTab }) {
           className="flex w-full flex-wrap gap-1 rounded-2xl border border-boutique-sage-deep/30 bg-boutique-sage-deep/10 p-1 sm:w-fit sm:rounded-full"
         >
           <AdminTabLink activeTab={activeTab} label="Поръчки" tab="orders" />
+          <AdminTabLink activeTab={activeTab} label="Отказ от договор" tab="withdrawals" />
         </nav>
       </div>
 

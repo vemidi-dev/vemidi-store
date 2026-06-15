@@ -159,6 +159,7 @@ export function buildAdminOrderEmail(order: OrderRow, adminOrdersUrl: string) {
 }
 
 export function buildCustomerOrderEmail(order: OrderRow) {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim() || "http://localhost:3000";
   const orderLabel = order.id.slice(0, 8).toUpperCase();
   const body = `
     <p style="margin:0 0 16px;color:#2a2824;">
@@ -178,6 +179,12 @@ export function buildCustomerOrderEmail(order: OrderRow) {
       При въпроси пишете на
       <a href="mailto:${escapeHtml(siteConfig.business.email)}" style="color:#4d5c4a;">${escapeHtml(siteConfig.business.email)}</a>
       или се обадете на ${escapeHtml(siteConfig.business.phoneDisplay)}.
+    </p>
+    <p style="margin:16px 0 0;line-height:1.6;color:#5e5a54;">
+      За отказ от договор (право на връщане в срок) вижте
+      <a href="${escapeHtml(new URL("/withdrawal", siteUrl).toString())}" style="color:#4d5c4a;">формата за отказ от договор</a>.
+      За рекламации вижте
+      <a href="${escapeHtml(new URL("/returns", siteUrl).toString())}" style="color:#4d5c4a;">Връщане и рекламации</a>.
     </p>
   `;
 

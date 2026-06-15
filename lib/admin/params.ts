@@ -18,6 +18,7 @@ export function normalizeAdminTab(value: string): AdminTab {
     value === "colors" ||
     value === "promotions" ||
     value === "orders" ||
+    value === "withdrawals" ||
     value === "blog" ||
     value === "events" ||
     value === "wishes" ||

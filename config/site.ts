@@ -20,6 +20,7 @@ export const siteConfig = {
   informationLinks: [
     { href: "/delivery", label: "Доставка и плащане" },
     { href: "/returns", label: "Връщане и рекламации" },
+    { href: "/withdrawal", label: "Отказ от договор" },
     { href: "/terms", label: "Общи условия" },
     { href: "/privacy", label: "Поверителност" },
     { href: "/cookies", label: "Бисквитки" },

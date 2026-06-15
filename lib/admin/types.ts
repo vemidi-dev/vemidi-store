@@ -6,6 +6,7 @@ export type AdminTab =
   | "colors"
   | "promotions"
   | "orders"
+  | "withdrawals"
   | "blog"
   | "events"
   | "wishes"
