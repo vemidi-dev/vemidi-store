@@ -25,7 +25,9 @@ type BlogPostPageProps = { params: Promise<{ slug: string }> };
 export async function generateMetadata({ params }: BlogPostPageProps): Promise<Metadata> {
   const { slug } = await params;
   const post = await getPublishedBlogPost(slug);
-  if (!post) return { title: "Публикацията не е намерена", robots: { index: false } };
+  if (!post) {
+    notFound();
+  }
   return {
     title: post.title,
     description: post.excerpt,

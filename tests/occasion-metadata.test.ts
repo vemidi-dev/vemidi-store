@@ -47,7 +47,11 @@ test("empty occasion metadata is noindex", () => {
   assert.deepEqual(metadata.robots, { index: false, follow: true });
 });
 
-test("invalid occasion slug resolves to noindex metadata via production helper", () => {
+test("invalid occasion slug is absent from catalog lookup used by page notFound", () => {
+  assert.equal(findOccasionCategory(categories, "missing-slug"), null);
+});
+
+test("resolveOccasionPageMetadata still documents invalid slug metadata helper", () => {
   const metadata = resolveOccasionPageMetadata(
     "missing-slug",
     categories,
@@ -56,8 +60,4 @@ test("invalid occasion slug resolves to noindex metadata via production helper",
 
   assert.equal(metadata.title, "Поводът не е намерен");
   assert.deepEqual(metadata.robots, { index: false, follow: true });
-});
-
-test("invalid occasion slug is absent from catalog lookup used by page notFound", () => {
-  assert.equal(findOccasionCategory(categories, "missing-slug"), null);
 });

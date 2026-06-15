@@ -23,6 +23,19 @@ export const metadata: Metadata = {
   description:
     "Разгледайте ръчно изработените подаръци на VeMiDi по вид продукт и по повод.",
   alternates: { canonical: "/categories" },
+  openGraph: {
+    type: "website",
+    title: "Категории",
+    description:
+      "Разгледайте ръчно изработените подаръци на VeMiDi по вид продукт и по повод.",
+    url: "/categories",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Категории",
+    description:
+      "Разгледайте ръчно изработените подаръци на VeMiDi по вид продукт и по повод.",
+  },
 };
 
 type CategoryWithCount = ShopCategory & {

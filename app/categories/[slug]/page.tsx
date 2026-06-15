@@ -40,10 +40,7 @@ export async function generateMetadata({
   );
 
   if (!category) {
-    return {
-      title: "Категорията не е намерена",
-      robots: { index: false, follow: true },
-    };
+    notFound();
   }
 
   const parent = category.parent_id

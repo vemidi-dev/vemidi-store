@@ -13,8 +13,8 @@ import {
 } from "@/lib/seo/breadcrumbs";
 import { getProductCategorySlugs } from "@/lib/seo/category-indexability";
 import {
+  buildOccasionPageMetadata,
   findOccasionCategory,
-  resolveOccasionPageMetadata,
 } from "@/lib/seo/occasion-metadata";
 import { getStorefrontCatalog } from "@/lib/storefront/repository";
 import { getSiteUrl } from "@/lib/site-url";
@@ -28,12 +28,16 @@ export async function generateMetadata({
 }: OccasionPageProps): Promise<Metadata> {
   const { slug } = await params;
   const { categories, products } = await getStorefrontCatalog();
+  const occasion = findOccasionCategory(categories, slug);
 
-  return resolveOccasionPageMetadata(
-    slug,
-    categories,
-    getProductCategorySlugs(products),
-  );
+  if (!occasion) {
+    notFound();
+  }
+
+  return buildOccasionPageMetadata({
+    occasion,
+    productCategorySlugs: getProductCategorySlugs(products),
+  });
 }
 
 export default async function OccasionPage({ params }: OccasionPageProps) {

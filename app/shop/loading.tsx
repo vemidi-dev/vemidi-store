@@ -1,6 +1,6 @@
 import { PageContainer } from "@/components/layout/page-container";
 
-export default function Loading() {
+export default function ShopLoading() {
   return (
     <div aria-busy="true" aria-live="polite">
       <span className="sr-only">Страницата се зарежда</span>

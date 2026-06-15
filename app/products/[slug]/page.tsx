@@ -43,10 +43,7 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
   }
 
   if (resolution.kind === "not_found") {
-    return {
-      title: "Продуктът не е намерен",
-      robots: { index: false, follow: false },
-    };
+    notFound();
   }
 
   return buildProductPageMetadata(resolution.product, resolution.canonicalSlug);
