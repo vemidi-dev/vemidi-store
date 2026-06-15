@@ -181,7 +181,7 @@
 1. Production env: `SUPABASE_SECRET_KEY`, `CHECKOUT_RATE_LIMIT_SECRET`, `RESEND_API_KEY`, `ORDER_NOTIFICATION_FROM` (verified domain), `ORDER_NOTIFICATION_TO`, `CRON_SECRET`, `ECONT_*` (Р°РєРѕ live lookup).
 2. Launch day: СЂСЉС‡РµРЅ РјРѕРЅРёС‚РѕСЂРёРЅРі РЅР° `/admin?tab=orders` Р°РєРѕ Resend РЅРµ Рµ hardened (H-01).
 3. РЎР»РµРґ launch: H-02 rate limit РЅР° Econt routes; M-01 env hardening.
-4. Vercel Cron: `vercel.json` → `/api/cron/retry-order-notifications` на `*/5 * * * *`; Vercel изпраща `Authorization: Bearer ${CRON_SECRET}`.
+4. Vercel Cron: `vercel.json` → `/api/cron/retry-order-notifications` на `0 3 * * *` (Hobby: веднъж дневно); Vercel изпраща `Authorization: Bearer ${CRON_SECRET}`.
 
 ---
 
