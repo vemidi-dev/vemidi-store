@@ -3,12 +3,17 @@ import type { Metadata } from "next";
 import { siteConfig } from "@/config/site";
 import { getProductPath } from "@/lib/product-url";
 import type { Product } from "@/lib/catalog";
+import {
+  buildProductMetaDescription,
+  type ProductSeoContext,
+} from "@/lib/seo/product-description-seo";
 
 export function buildProductPageMetadata(
   product: Product,
   canonicalSlug: string,
+  context?: ProductSeoContext,
 ): Metadata {
-  const description = product.description.slice(0, 160).trim();
+  const description = buildProductMetaDescription(product, context);
   const primaryImage = product.images.find((image) => image.src)?.src;
   const canonicalPath = getProductPath(canonicalSlug);
 

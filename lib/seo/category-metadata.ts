@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { getCategoryImageSrc } from "@/lib/category-images";
 import { isProductCategoryIndexable } from "@/lib/seo/category-indexability";
+import { buildCategoryMetaDescription } from "@/lib/seo/category-description-seo";
 import type { StorefrontCategory } from "@/lib/storefront/types";
 
 type BuildCategoryMetadataInput = {
@@ -22,9 +23,7 @@ export function buildCategoryPageMetadata({
     imageCategory.slug,
     imageCategory.category_type,
   );
-  const description =
-    category.card_description?.trim() ||
-    `Разгледайте ръчно изработени продукти в категория „${category.name}“ от VeMiDi crafts.`;
+  const description = buildCategoryMetaDescription(category);
   const canonicalPath = `/categories/${category.slug}`;
   const indexable = isProductCategoryIndexable(
     categories,

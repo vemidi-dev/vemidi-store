@@ -1,6 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { cache } from "react";
 
 import type { Product } from "@/lib/catalog";
+import { resolvePrimaryProductCategory } from "@/lib/seo/breadcrumbs";
 import type { ProductColorField } from "@/lib/product-colors";
 import type {
   ProductPersonalizationField,
@@ -140,7 +142,7 @@ async function loadActivePromotions(
   return pickActivePromotionByProductId((data ?? []) as ProductPromotionRow[]);
 }
 
-export async function getStorefrontCatalog(): Promise<StorefrontCatalog> {
+async function fetchStorefrontCatalog(): Promise<StorefrontCatalog> {
   const supabase = await getClient();
   if (!supabase) {
     return {
@@ -269,6 +271,82 @@ export async function getStorefrontCatalog(): Promise<StorefrontCatalog> {
     relatedProductIdsByProductId,
   };
 }
+
+export const getStorefrontCatalog = cache(fetchStorefrontCatalog);
+
+export type StorefrontProductSeoContext = {
+  categories: StorefrontCategory[];
+  categorySlugs: string[];
+  primaryCategory: StorefrontCategory | null;
+};
+
+async function fetchStorefrontProductSeoContext(
+  productId: string,
+): Promise<StorefrontProductSeoContext> {
+  const supabase = await getClient();
+  if (!supabase) {
+    return { categories: [], categorySlugs: [], primaryCategory: null };
+  }
+
+  const { data: relations } = await supabase
+    .from("product_categories")
+    .select("category_id")
+    .eq("product_id", productId);
+
+  const categoryIds = (relations ?? []).map((row) => String(row.category_id));
+  if (categoryIds.length === 0) {
+    return { categories: [], categorySlugs: [], primaryCategory: null };
+  }
+
+  const { data: directCategories } = await supabase
+    .from("categories")
+    .select(
+      "id,name,slug,category_type,parent_id,show_on_home,home_sort_order,card_description,created_at",
+    )
+    .in("id", categoryIds);
+
+  const direct = ((directCategories ?? []) as CategoryRow[]).map(
+    mapStorefrontCategory,
+  );
+  const parentIds = [
+    ...new Set(
+      direct
+        .map((category) => category.parent_id)
+        .filter((parentId): parentId is string => Boolean(parentId)),
+    ),
+  ];
+
+  let parents: StorefrontCategory[] = [];
+  if (parentIds.length > 0) {
+    const { data: parentCategories } = await supabase
+      .from("categories")
+      .select(
+        "id,name,slug,category_type,parent_id,show_on_home,home_sort_order,card_description,created_at",
+      )
+      .in("id", parentIds);
+    parents = ((parentCategories ?? []) as CategoryRow[]).map(
+      mapStorefrontCategory,
+    );
+  }
+
+  const categories = [...direct, ...parents].filter(
+    (category, index, list) =>
+      list.findIndex((entry) => entry.id === category.id) === index,
+  );
+  const categorySlugs = direct
+    .filter((category) => category.category_type === "product")
+    .map((category) => category.slug);
+
+  return {
+    categories,
+    categorySlugs,
+    primaryCategory: resolvePrimaryProductCategory(categories, categorySlugs),
+  };
+}
+
+export const getStorefrontProductSeoContext = cache(
+  fetchStorefrontProductSeoContext,
+);
 
 export async function getStorefrontCategories(
   categoryType?: StorefrontCategory["category_type"],
@@ -495,7 +573,7 @@ export async function getStorefrontProduct(productId: string): Promise<Product |
   return loadStorefrontProductDetails(supabase, productId);
 }
 
-export async function getStorefrontProductPage(
+async function fetchStorefrontProductPage(
   routeParam: string,
 ): Promise<ProductRouteResolution> {
   const supabase = await getClient();
@@ -519,3 +597,5 @@ export async function getStorefrontProductPage(
     canonicalSlug: product.slug,
   };
 }
+
+export const getStorefrontProductPage = cache(fetchStorefrontProductPage);

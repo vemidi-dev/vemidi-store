@@ -23,21 +23,27 @@ const product: Product = {
 };
 
 test("product metadata includes canonical, Open Graph and Twitter fields", () => {
-  const metadata = buildProductPageMetadata(product, product.slug);
+  const metadata = buildProductPageMetadata(product, product.slug, {
+    primaryCategory: { name: "Кутии", slug: "kutii" },
+  });
   const openGraph = metadata.openGraph as {
     type?: string;
     title?: string;
     url?: string;
     siteName?: string;
     images?: Array<{ url: string; alt: string }>;
+    description?: string;
   };
   const twitter = metadata.twitter as {
     card?: string;
     images?: string[];
+    description?: string;
   };
 
   assert.equal(metadata.title, product.title);
-  assert.equal(metadata.description, product.description);
+  assert.ok(metadata.description && metadata.description.length >= 40);
+  assert.equal(openGraph.description, metadata.description);
+  assert.equal(twitter.description, metadata.description);
   assert.equal(metadata.alternates?.canonical, "/products/personalizirana-kutiya");
   assert.equal(openGraph.type, "website");
   assert.equal(openGraph.title, product.title);

@@ -8,10 +8,13 @@ import { PageContainer } from "@/components/layout/page-container";
 import { ProductPrice } from "@/components/product/product-price";
 import { ProductCard } from "@/components/product/product-card";
 import { JsonLd } from "@/components/seo/json-ld";
+import { VisibleBreadcrumbs } from "@/components/seo/visible-breadcrumbs";
 import { isProductOnPromotion } from "@/lib/product-pricing";
+import { getCategoryPath } from "@/lib/category-url";
 import {
   getStorefrontCatalog,
   getStorefrontProductPage,
+  getStorefrontProductSeoContext,
 } from "@/lib/storefront/repository";
 import { getSiteUrl } from "@/lib/site-url";
 import { buildCampaignAttribution } from "@/lib/campaign-attribution";
@@ -20,11 +23,14 @@ import {
   buildCanonicalProductRedirectPath,
   getProductPath,
 } from "@/lib/product-url";
-import { resolveSchemaOrgProductAvailability } from "@/lib/seo/product-schema-availability";
 import {
-  buildBreadcrumbListSchema,
-  buildProductBreadcrumbItems,
-} from "@/lib/seo/breadcrumbs";
+  getProductCategorySlugs,
+  isProductCategoryIndexable,
+} from "@/lib/seo/category-indexability";
+import { resolveSchemaOrgProductAvailability } from "@/lib/seo/product-schema-availability";
+import { buildBreadcrumbListSchema } from "@/lib/seo/breadcrumbs";
+import { buildProductSchemaDescription } from "@/lib/seo/product-description-seo";
+import { resolveProductPageSeo } from "@/lib/seo/product-page-seo";
 import { buildProductPageMetadata } from "@/lib/seo/product-metadata";
 
 type ProductPageProps = {
@@ -46,7 +52,20 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
     notFound();
   }
 
-  return buildProductPageMetadata(resolution.product, resolution.canonicalSlug);
+  const seoContextData = await getStorefrontProductSeoContext(resolution.product.id);
+
+  return buildProductPageMetadata(
+    resolution.product,
+    resolution.canonicalSlug,
+    {
+      primaryCategory: seoContextData.primaryCategory
+        ? {
+            name: seoContextData.primaryCategory.name,
+            slug: seoContextData.primaryCategory.slug,
+          }
+        : null,
+    },
+  );
 }
 
 export default async function ProductDetailPage({
@@ -107,11 +126,28 @@ export default async function ProductDetailPage({
         ? (product.maxCartQuantity ?? (product.orderable ? 1 : 0))
         : null,
   });
+  const {
+    primaryCategory,
+    breadcrumbItems,
+    seoContext: productSeoContext,
+  } = resolveProductPageSeo(catalog, product);
+  const productCategorySlugs = getProductCategorySlugs(catalog.products);
+  const showCategoryLink =
+    primaryCategory &&
+    isProductCategoryIndexable(
+      catalog.categories,
+      productCategorySlugs,
+      primaryCategory,
+    );
+  const schemaDescription = buildProductSchemaDescription(
+    product,
+    productSeoContext,
+  );
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "Product",
     name: product.title,
-    description: product.description,
+    description: schemaDescription,
     image: productImage ? [productImage] : undefined,
     url: productUrl,
     sku: product.productCode,
@@ -138,13 +174,9 @@ export default async function ProductDetailPage({
       itemCondition: "https://schema.org/NewCondition",
     },
   };
-  const catalogProduct = catalog.products.find((entry) => entry.id === product.id);
+
   const breadcrumbSchema = buildBreadcrumbListSchema(
-    buildProductBreadcrumbItems(catalog.categories, {
-      title: product.title,
-      slug: product.slug,
-      categorySlugs: catalogProduct?.categorySlugs ?? [],
-    }),
+    breadcrumbItems,
     getSiteUrl(),
   );
 
@@ -153,12 +185,7 @@ export default async function ProductDetailPage({
       <JsonLd data={[structuredData, breadcrumbSchema]} />
       <section className="border-b border-boutique-line/90 bg-boutique-paper">
         <PageContainer className="py-14 md:py-20 lg:py-24">
-          <Link
-            href="/shop"
-            className="inline-block text-xs font-semibold uppercase tracking-[0.22em] text-boutique-muted transition hover:text-boutique-accent"
-          >
-            ← Назад към магазина
-          </Link>
+          <VisibleBreadcrumbs items={breadcrumbItems} />
 
           <div className="mt-14 grid gap-16 lg:mt-20 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-20 xl:gap-24">
             <div className="lg:sticky lg:top-32 lg:self-start">
@@ -176,6 +203,18 @@ export default async function ProductDetailPage({
                 <h1 className="font-heading text-4xl leading-[1.12] tracking-tight text-boutique-ink sm:text-5xl lg:text-[2.75rem]">
                   {product.title}
                 </h1>
+
+                {showCategoryLink ? (
+                  <p className="text-sm text-boutique-muted">
+                    Категория:{" "}
+                    <Link
+                      href={getCategoryPath(primaryCategory.slug)}
+                      className="font-semibold text-boutique-sage-deep underline-offset-4 hover:underline"
+                    >
+                      {primaryCategory.name}
+                    </Link>
+                  </p>
+                ) : null}
 
                 <div className="flex flex-wrap items-center gap-3">
                   <ProductPrice product={product} size="lg" />
