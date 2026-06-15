@@ -253,11 +253,13 @@ export function ProductDetailAddToCart({
               placeholder: field.placeholder ?? undefined,
               onChange: (
                 event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-              ) =>
+              ) => {
                 setValues((current) => ({
                   ...current,
                   [field.id]: event.target.value.slice(0, field.maxLength),
-                })),
+                }));
+                setError(null);
+              },
               className:
                 "mt-2 w-full rounded-xl border border-boutique-line bg-white px-4 py-3 text-sm text-boutique-ink outline-none focus:border-boutique-rose-deep",
               ref: (element: HTMLInputElement | HTMLTextAreaElement | null) => {
@@ -507,6 +509,7 @@ export function ProductDetailAddToCart({
                         ...current,
                         [wishFieldId]: wish.body.slice(0, field?.maxLength ?? 1000),
                       }));
+                      setError(null);
                       setWishFieldId(null);
                     }}
                     className="mt-3 rounded-lg bg-boutique-sage-deep px-4 py-2 text-xs font-semibold text-white"
