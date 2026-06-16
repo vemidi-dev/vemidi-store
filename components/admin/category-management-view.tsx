@@ -296,6 +296,27 @@ export function CategoryManagementView({ categories }: CategoryManagementViewPro
                       className={`${adminFieldClass} min-h-16 resize-y`}
                     />
                   </label>
+                  <label className="text-sm font-medium text-boutique-ink md:col-span-3">
+                    Снимка на категорията
+                    {category.image_url ? (
+                      <span className="mt-2 flex items-center gap-3 rounded-lg border border-boutique-line bg-white p-2">
+                        <span
+                          className="h-16 w-20 rounded-md bg-cover bg-center"
+                          style={{ backgroundImage: `url(${category.image_url})` }}
+                          aria-hidden
+                        />
+                        <span className="text-xs font-normal text-boutique-muted">
+                          Качете нова снимка, за да замените текущата.
+                        </span>
+                      </span>
+                    ) : null}
+                    <input
+                      name={adminFormFields.category.imageFile}
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      className={`${adminFieldClass} file:mr-3 file:rounded-full file:border-0 file:bg-boutique-sage file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white`}
+                    />
+                  </label>
                   <label className="inline-flex items-center gap-2 text-sm font-medium text-boutique-ink md:col-span-3">
                     <input
                       name={adminFormFields.category.showOnHome}

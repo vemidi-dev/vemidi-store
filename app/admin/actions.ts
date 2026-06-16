@@ -13,6 +13,7 @@ import {
 import {
   getAdminTab,
   getCategoryIds,
+  getFile,
   getFiles,
   getOptionalString,
   getPrice,
@@ -48,7 +49,11 @@ import {
   processAndUploadProductImages,
   validateProductImageUploadBatch,
 } from "@/lib/admin/product-image-upload";
-import { getProductImagePath } from "@/lib/admin/storage";
+import {
+  deleteProductImage,
+  getProductImagePath,
+  uploadAdminImage,
+} from "@/lib/admin/storage";
 import type {
   AdminTab,
   ColorGroupRow,
@@ -1158,6 +1163,7 @@ export async function createCategory(formData: FormData) {
   const showOnHome = isChecked(formData, adminFormFields.category.showOnHome);
   const cardDescription =
     getString(formData, adminFormFields.category.cardDescription).trim() || null;
+  const imageFile = getFile(formData, adminFormFields.category.imageFile);
 
   if (!name || !slug || !["product", "occasion"].includes(categoryType)) {
     redirectWith("error", "Попълнете име и slug за категорията.", activeTab);
@@ -1196,6 +1202,21 @@ export async function createCategory(formData: FormData) {
     .maybeSingle();
   const homeSortOrder = (Number(lastCategory?.home_sort_order) || 0) + 10;
 
+  let uploadedCategoryImage: Awaited<ReturnType<typeof uploadAdminImage>> | null = null;
+  if (imageFile) {
+    try {
+      uploadedCategoryImage = await uploadAdminImage(supabase, imageFile, "categories");
+    } catch (error) {
+      redirectWith(
+        "error",
+        `Снимката на категорията не беше качена: ${
+          error instanceof Error ? error.message : "неочаквана грешка"
+        }`,
+        activeTab,
+      );
+    }
+  }
+
   const { error } = await supabase
     .from("categories")
     .insert({
@@ -1203,11 +1224,15 @@ export async function createCategory(formData: FormData) {
       slug,
       category_type: categoryType,
       parent_id: parentId,
+      image_url: uploadedCategoryImage?.url ?? null,
       show_on_home: parentId ? false : showOnHome,
       home_sort_order: homeSortOrder,
       card_description: cardDescription,
     });
   if (error) {
+    if (uploadedCategoryImage) {
+      await deleteProductImage(supabase, uploadedCategoryImage.path).catch(() => undefined);
+    }
     redirectWith("error", `Грешка при добавяне на категория: ${error.message}`, activeTab);
   }
 
@@ -1227,6 +1252,7 @@ export async function updateCategory(formData: FormData) {
   const showOnHome = isChecked(formData, adminFormFields.category.showOnHome);
   const cardDescription =
     getString(formData, adminFormFields.category.cardDescription).trim() || null;
+  const imageFile = getFile(formData, adminFormFields.category.imageFile);
 
   if (!id || !name || !slug || !["product", "occasion"].includes(categoryType)) {
     redirectWith("error", "Невалидни данни за категория.", activeTab);
@@ -1256,7 +1282,7 @@ export async function updateCategory(formData: FormData) {
 
   const { data: existingCategory, error: existingCategoryError } = await supabase
     .from("categories")
-    .select("category_type,parent_id,home_sort_order")
+    .select("category_type,parent_id,home_sort_order,image_url")
     .eq("id", id)
     .single();
   if (existingCategoryError || !existingCategory) {
@@ -1283,6 +1309,21 @@ export async function updateCategory(formData: FormData) {
     homeSortOrder = (Number(lastCategory?.home_sort_order) || 0) + 10;
   }
 
+  let uploadedCategoryImage: Awaited<ReturnType<typeof uploadAdminImage>> | null = null;
+  if (imageFile) {
+    try {
+      uploadedCategoryImage = await uploadAdminImage(supabase, imageFile, "categories");
+    } catch (error) {
+      redirectWith(
+        "error",
+        `Снимката на категорията не беше качена: ${
+          error instanceof Error ? error.message : "неочаквана грешка"
+        }`,
+        activeTab,
+      );
+    }
+  }
+
   const { error } = await supabase
     .from("categories")
     .update({
@@ -1290,13 +1331,24 @@ export async function updateCategory(formData: FormData) {
       slug,
       category_type: categoryType,
       parent_id: parentId,
+      ...(uploadedCategoryImage ? { image_url: uploadedCategoryImage.url } : {}),
       show_on_home: parentId ? false : showOnHome,
       home_sort_order: homeSortOrder,
       card_description: cardDescription,
     })
     .eq("id", id);
   if (error) {
+    if (uploadedCategoryImage) {
+      await deleteProductImage(supabase, uploadedCategoryImage.path).catch(() => undefined);
+    }
     redirectWith("error", `Грешка при редакция на категория: ${error.message}`, activeTab);
+  }
+
+  if (uploadedCategoryImage && existingCategory.image_url) {
+    const previousImagePath = getProductImagePath(existingCategory.image_url);
+    if (previousImagePath) {
+      await deleteProductImage(supabase, previousImagePath).catch(() => undefined);
+    }
   }
 
   revalidateCategoryPaths();

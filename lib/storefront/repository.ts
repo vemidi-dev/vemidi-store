@@ -37,6 +37,7 @@ type CategoryRow = {
   slug: string;
   category_type: "product" | "occasion";
   parent_id: string | null;
+  image_url: string | null;
   show_on_home: boolean;
   home_sort_order: number;
   card_description: string | null;
@@ -50,6 +51,7 @@ function mapStorefrontCategory(row: CategoryRow): StorefrontCategory {
     slug: row.slug,
     category_type: row.category_type,
     parent_id: row.parent_id,
+    image_url: row.image_url ?? null,
     show_on_home: row.show_on_home,
     home_sort_order: row.home_sort_order,
     card_description: row.card_description,
@@ -172,7 +174,7 @@ async function fetchStorefrontCatalog(): Promise<StorefrontCatalog> {
         .order("created_at", { ascending: false }),
       supabase
         .from("categories")
-        .select("id,name,slug,category_type,parent_id,show_on_home,home_sort_order,card_description,created_at")
+        .select("id,name,slug,category_type,parent_id,image_url,show_on_home,home_sort_order,card_description,created_at")
         .order("name", { ascending: true }),
       supabase.from("product_categories").select("product_id,category_id"),
       supabase
@@ -301,7 +303,7 @@ async function fetchStorefrontProductSeoContext(
   const { data: directCategories } = await supabase
     .from("categories")
     .select(
-      "id,name,slug,category_type,parent_id,show_on_home,home_sort_order,card_description,created_at",
+      "id,name,slug,category_type,parent_id,image_url,show_on_home,home_sort_order,card_description,created_at",
     )
     .in("id", categoryIds);
 
@@ -321,7 +323,7 @@ async function fetchStorefrontProductSeoContext(
     const { data: parentCategories } = await supabase
       .from("categories")
       .select(
-        "id,name,slug,category_type,parent_id,show_on_home,home_sort_order,card_description,created_at",
+        "id,name,slug,category_type,parent_id,image_url,show_on_home,home_sort_order,card_description,created_at",
       )
       .in("id", parentIds);
     parents = ((parentCategories ?? []) as CategoryRow[]).map(
@@ -358,7 +360,7 @@ export async function getStorefrontCategories(
 
   let query = supabase
     .from("categories")
-    .select("id,name,slug,category_type,parent_id,show_on_home,home_sort_order,card_description,created_at")
+    .select("id,name,slug,category_type,parent_id,image_url,show_on_home,home_sort_order,card_description,created_at")
     .order("name", { ascending: true });
 
   if (categoryType) {

@@ -6,11 +6,11 @@ import { getCategoryImageSrc } from "@/lib/category-images";
 test("getCategoryImageSrc maps product slugs to current image files", () => {
   assert.equal(
     getCategoryImageSrc("kutii", "product"),
-    "/assets/categories/product/kutii.webp",
+    "/assets/categories/product/kutii-i-koshnichki.webp",
   );
   assert.equal(
     getCategoryImageSrc("ramki-i-pana", "product"),
-    "/assets/categories/product/ramki-pana.jpg",
+    "/assets/categories/product/ramki-i-pana.png",
   );
   assert.equal(
     getCategoryImageSrc("plik-za-pari", "product"),
@@ -22,11 +22,11 @@ test("getCategoryImageSrc maps product slugs to current image files", () => {
   );
   assert.equal(
     getCategoryImageSrc("zakachalki", "product"),
-    "/assets/categories/product/zakachalki-kluch.webp",
+    "/assets/categories/product/zakachalki-i-kljuchodarjateli.webp",
   );
   assert.equal(
     getCategoryImageSrc("gips", "product"),
-    "/assets/categories/product/gips.webp",
+    "/assets/categories/product/gips.png",
   );
   assert.equal(
     getCategoryImageSrc("bijuta", "product"),

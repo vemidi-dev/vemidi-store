@@ -160,6 +160,7 @@ export type CategoryRow = {
   slug: string;
   category_type: "product" | "occasion";
   parent_id: string | null;
+  image_url: string | null;
   show_on_home: boolean;
   home_sort_order: number;
   card_description: string | null;

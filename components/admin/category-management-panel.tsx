@@ -100,6 +100,18 @@ export function CategoryManagementPanel({ categories }: { categories: CategoryRo
                 className={`${adminFieldClass} min-h-16 resize-y`}
               />
             </label>
+            <label className="text-sm font-medium text-boutique-ink md:col-span-2 xl:col-span-4">
+              Снимка на категорията
+              <input
+                name={adminFormFields.category.imageFile}
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                className={`${adminFieldClass} file:mr-3 file:rounded-full file:border-0 file:bg-boutique-sage file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white`}
+              />
+              <span className="mt-1 block text-xs font-normal text-boutique-muted">
+                Ако не качите снимка, сайтът ще използва текущата резервна снимка по slug.
+              </span>
+            </label>
             <label className="inline-flex items-center gap-2 text-sm font-medium text-boutique-ink md:col-span-2 xl:col-span-4">
               <input
                 name={adminFormFields.category.showOnHome}

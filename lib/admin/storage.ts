@@ -14,7 +14,7 @@ export type UploadedProductImage = {
   url: string;
 };
 
-type ImageFolder = "products" | "blog" | "events" | "events/gallery";
+type ImageFolder = "products" | "categories" | "blog" | "events" | "events/gallery";
 
 async function hasValidImageSignature(file: File) {
   const bytes = new Uint8Array(await file.slice(0, 12).arrayBuffer());

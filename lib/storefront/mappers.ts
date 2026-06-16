@@ -88,7 +88,8 @@ export function toProduct(
 }
 
 export function toShowcaseCategory(category: StorefrontCategory): ShopCategory {
-  const imageSrc = getCategoryImageSrc(category.slug, category.category_type);
+  const imageSrc =
+    category.image_url || getCategoryImageSrc(category.slug, category.category_type);
   const categoryLabel =
     category.category_type === "occasion" ? "повод" : "вид продукт";
 
