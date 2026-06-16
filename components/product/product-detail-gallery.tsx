@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import type { TouchEvent } from "react";
+import { useRef, useState } from "react";
 
 import type { ProductImage } from "@/lib/catalog";
 import { MediaPlaceholder } from "@/components/ui/media-placeholder";
@@ -12,12 +13,60 @@ type ProductDetailGalleryProps = {
 
 export function ProductDetailGallery({ images }: ProductDetailGalleryProps) {
   const [active, setActive] = useState(0);
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   const safeIndex = Math.min(active, Math.max(0, images.length - 1));
   const main = images[safeIndex] ?? images[0];
+  const hasMultipleImages = images.length > 1;
+
+  const showImage = (index: number) => {
+    if (!hasMultipleImages) {
+      return;
+    }
+
+    setActive((index + images.length) % images.length);
+  };
+
+  const showPreviousImage = () => showImage(safeIndex - 1);
+  const showNextImage = () => showImage(safeIndex + 1);
+
+  const handleTouchEnd = (event: TouchEvent<HTMLDivElement>) => {
+    if (!hasMultipleImages || !touchStartRef.current) {
+      return;
+    }
+
+    const endTouch = event.changedTouches[0];
+    if (!endTouch) {
+      touchStartRef.current = null;
+      return;
+    }
+
+    const deltaX = endTouch.clientX - touchStartRef.current.x;
+    const deltaY = endTouch.clientY - touchStartRef.current.y;
+    touchStartRef.current = null;
+
+    if (Math.abs(deltaX) < 45 || Math.abs(deltaX) < Math.abs(deltaY)) {
+      return;
+    }
+
+    if (deltaX > 0) {
+      showPreviousImage();
+    } else {
+      showNextImage();
+    }
+  };
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl border border-boutique-line/80 bg-boutique-bg shadow-boutique">
+      <div
+        className="relative aspect-[4/5] w-full touch-pan-y overflow-hidden rounded-2xl border border-boutique-line/80 bg-boutique-bg shadow-boutique"
+        onTouchStart={(event) => {
+          const touch = event.touches[0];
+          if (touch) {
+            touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+          }
+        }}
+        onTouchEnd={handleTouchEnd}
+      >
         {main?.src ? (
           <Image
             key={main.src}
@@ -35,9 +84,29 @@ export function ProductDetailGallery({ images }: ProductDetailGalleryProps) {
           className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-boutique-ink/5"
           aria-hidden
         />
+        {hasMultipleImages ? (
+          <>
+            <button
+              type="button"
+              onClick={showPreviousImage}
+              className="absolute left-4 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/70 bg-white/90 text-2xl leading-none text-boutique-ink shadow-lg transition hover:-translate-x-0.5 hover:bg-white focus:outline-none focus:ring-2 focus:ring-boutique-sage"
+              aria-label="Предишна снимка"
+            >
+              ‹
+            </button>
+            <button
+              type="button"
+              onClick={showNextImage}
+              className="absolute right-4 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/70 bg-white/90 text-2xl leading-none text-boutique-ink shadow-lg transition hover:translate-x-0.5 hover:bg-white focus:outline-none focus:ring-2 focus:ring-boutique-sage"
+              aria-label="Следваща снимка"
+            >
+              ›
+            </button>
+          </>
+        ) : null}
       </div>
 
-      {images.length > 1 ? (
+      {hasMultipleImages ? (
         <ul className="flex flex-wrap gap-4">
           {images.map((img, i) => (
             <li key={img.src}>
