@@ -5,6 +5,7 @@ import {
   setPrimaryProductImage,
   toggleProductSoldOut,
   updateProduct,
+  updateProductImageAltText,
   updateProductMerchandising,
 } from "@/app/admin/actions";
 import { DUPLICATE_MISSING_IMAGES_NOTICE } from "@/lib/admin/duplicate-product";
@@ -611,6 +612,7 @@ export function ProductListPanel({
                       <div className="md:col-span-2">
                         <ProductImageFileInput
                           name={adminFormFields.product.imageFiles}
+                          altTextName={adminFormFields.product.imageAltTexts}
                           label="Снимки на продукта"
                           className={adminFieldClass}
                           helperClassName={adminHelperClass}
@@ -727,6 +729,27 @@ export function ProductListPanel({
                                 </form>
                               )}
                             </div>
+                            <form action={updateProductImageAltText} className="mt-3 space-y-2">
+                              <input
+                                type="hidden"
+                                name={adminFormFields.productImage.imageId}
+                                value={image.id}
+                              />
+                              <label className="block text-xs font-medium text-boutique-ink">
+                                Alt текст
+                                <input
+                                  name={adminFormFields.productImage.altText}
+                                  type="text"
+                                  maxLength={160}
+                                  defaultValue={image.alt_text ?? ""}
+                                  placeholder="Кратко описание на снимката"
+                                  className={`${adminFieldClass} mt-1 text-xs`}
+                                />
+                              </label>
+                              <button className="rounded-full border border-boutique-line px-3 py-1.5 text-xs font-semibold text-boutique-ink transition hover:border-boutique-sage-deep/50">
+                                Запази alt
+                              </button>
+                            </form>
                             <div className="mt-3 flex flex-wrap gap-2">
                               <form action={moveProductImage}>
                                 <input

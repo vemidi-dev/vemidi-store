@@ -187,8 +187,8 @@ async function deleteUploadedImagesBestEffort(
 async function attachProductImages(
   supabase: NonNullable<Awaited<ReturnType<typeof createClient>>>,
   productId: string,
-  productName: string,
   images: UploadedProductImage[],
+  altTexts: string[] = [],
 ) {
   if (images.length === 0) {
     return null;
@@ -196,12 +196,18 @@ async function attachProductImages(
 
   const { error } = await supabase.rpc("admin_attach_product_images", {
     p_product_id: productId,
-    p_images: images.map((image) => ({
+    p_images: images.map((image, index) => ({
       image_url: image.url,
-      alt_text: productName,
+      alt_text: altTexts[index]?.trim() || null,
     })),
   });
   return error;
+}
+
+function getProductImageAltTexts(formData: FormData) {
+  return formData
+    .getAll(adminFormFields.product.imageAltTexts)
+    .map((value) => String(value ?? "").trim().slice(0, 160));
 }
 
 async function parseProductColorFields(
@@ -433,6 +439,7 @@ export async function createProduct(formData: FormData) {
   );
   const { slug, error: slugError } = parseSubmittedProductSlug(formData, name);
   const imageFiles = getFiles(formData, adminFormFields.product.imageFiles);
+  const imageAltTexts = getProductImageAltTexts(formData);
   const galleryUploadError = validateProductImageUploadBatch(imageFiles, 0);
   const price = getPrice(formData);
   const categoryIds = getCategoryIds(formData);
@@ -534,8 +541,8 @@ export async function createProduct(formData: FormData) {
   const galleryError = await attachProductImages(
     supabase,
     newProductId,
-    name,
     uploadedImages,
+    imageAltTexts,
   );
   if (galleryError) {
     await deleteUploadedImagesBestEffort(supabase, uploadedImages);
@@ -583,6 +590,7 @@ export async function updateProduct(formData: FormData) {
   const { slug, error: slugError } = parseSubmittedProductSlug(formData, name);
   const price = getPrice(formData);
   const imageFiles = getFiles(formData, adminFormFields.product.imageFiles);
+  const imageAltTexts = getProductImageAltTexts(formData);
   const existingGalleryCount = id ? await getProductGalleryImageCount(supabase, id) : 0;
   const galleryUploadError =
     imageFiles.length > 0
@@ -678,7 +686,7 @@ export async function updateProduct(formData: FormData) {
       );
     }
 
-    const galleryError = await attachProductImages(supabase, id, name, uploadedImages);
+    const galleryError = await attachProductImages(supabase, id, uploadedImages, imageAltTexts);
     if (galleryError) {
       await deleteUploadedImagesBestEffort(supabase, uploadedImages);
       const migrationMissing = galleryError.message.includes("admin_attach_product_images");
@@ -702,8 +710,8 @@ export async function addProductGalleryImages(formData: FormData) {
   const supabase = await getAuthorizedClient();
   const activeTab = getAdminTab(formData, "products");
   const id = getString(formData, adminFormFields.common.id);
-  const name = getString(formData, adminFormFields.product.name) || "Продукт";
   const imageFiles = getFiles(formData, adminFormFields.product.imageFiles);
+  const imageAltTexts = getProductImageAltTexts(formData);
   const existingGalleryCount = id ? await getProductGalleryImageCount(supabase, id) : 0;
   const galleryUploadError = validateProductImageUploadBatch(
     imageFiles,
@@ -733,7 +741,7 @@ export async function addProductGalleryImages(formData: FormData) {
     redirectWithProductEdit("error", `Грешка при качване на изображение: ${message}`, id);
   }
 
-  const galleryError = await attachProductImages(supabase, id, name, uploadedImages);
+  const galleryError = await attachProductImages(supabase, id, uploadedImages, imageAltTexts);
   if (galleryError) {
     await deleteUploadedImagesBestEffort(supabase, uploadedImages);
     const migrationMissing = galleryError.message.includes("admin_attach_product_images");
@@ -1041,6 +1049,39 @@ export async function setPrimaryProductImage(formData: FormData) {
 
   await revalidateProductPaths(supabase,image?.product_id ? String(image.product_id) : undefined);
   redirectWith("success", "Основната снимка е променена.", "products");
+}
+
+export async function updateProductImageAltText(formData: FormData) {
+  const supabase = await getAuthorizedClient();
+  const imageId = getString(formData, adminFormFields.productImage.imageId);
+  const altText =
+    getOptionalString(formData, adminFormFields.productImage.altText)?.slice(0, 160) ??
+    null;
+
+  if (!imageId) {
+    redirectWith("error", "Липсва снимка за редакция.", "products");
+  }
+
+  const { data: image } = await supabase
+    .from("product_images")
+    .select("product_id")
+    .eq("id", imageId)
+    .single();
+
+  const { error } = await supabase
+    .from("product_images")
+    .update({ alt_text: altText })
+    .eq("id", imageId);
+
+  if (error) {
+    redirectWith("error", "Alt текстът не беше запазен.", "products");
+  }
+
+  await revalidateProductPaths(
+    supabase,
+    image?.product_id ? String(image.product_id) : undefined,
+  );
+  redirectWith("success", "Alt текстът е запазен.", "products");
 }
 
 export async function moveProductImage(formData: FormData) {

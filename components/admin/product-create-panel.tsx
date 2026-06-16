@@ -157,6 +157,7 @@ export function ProductCreatePanel({
           <div className="grid gap-5 md:grid-cols-2">
             <ProductImageFileInput
               name={adminFormFields.product.imageFiles}
+              altTextName={adminFormFields.product.imageAltTexts}
               label="Снимки на продукта"
               className={adminFieldClass}
               helperClassName={adminHelperClass}

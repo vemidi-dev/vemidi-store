@@ -12,6 +12,7 @@ export const adminFormFields = {
     price: "price",
     imageFile: "image_file",
     imageFiles: "image_files",
+    imageAltTexts: "image_alt_text[]",
     existingImageUrl: "existing_image_url",
     isCustomizable: "is_customizable",
     isSoldOut: "is_sold_out",
@@ -32,6 +33,7 @@ export const adminFormFields = {
   },
   productImage: {
     imageId: "image_id",
+    altText: "image_alt_text",
     direction: "direction",
     replaceFile: "replace_image_file",
   },

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 
 import {
   PRODUCT_IMAGE_MAX_FILES_PER_UPLOAD,
@@ -10,6 +10,7 @@ import {
 
 type ProductImageFileInputProps = {
   name: string;
+  altTextName?: string;
   label: string;
   className: string;
   helperClassName: string;
@@ -24,6 +25,8 @@ function formatMegabytes(bytes: number) {
 }
 
 type SelectedFilePreview = {
+  id: string;
+  file: File;
   name: string;
   size: number;
   previewUrl: string;
@@ -31,6 +34,7 @@ type SelectedFilePreview = {
 
 export function ProductImageFileInput({
   name,
+  altTextName,
   label,
   className,
   helperClassName,
@@ -47,13 +51,58 @@ export function ProductImageFileInput({
   const [message, setMessage] = useState(defaultHelper);
   const [status, setStatus] = useState<"idle" | "ready" | "error">("idle");
   const [previews, setPreviews] = useState<SelectedFilePreview[]>([]);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const previewsRef = useRef<SelectedFilePreview[]>([]);
   const remainingSlots = Math.max(0, PRODUCT_IMAGE_MAX_PER_PRODUCT - existingGalleryCount);
 
   useEffect(() => {
-    return () => {
-      previews.forEach((preview) => URL.revokeObjectURL(preview.previewUrl));
-    };
+    previewsRef.current = previews;
   }, [previews]);
+
+  useEffect(() => {
+    return () => {
+      previewsRef.current.forEach((preview) => URL.revokeObjectURL(preview.previewUrl));
+    };
+  }, []);
+
+  const syncInputFiles = (items: SelectedFilePreview[]) => {
+    const input = inputRef.current;
+    if (!input || typeof DataTransfer === "undefined") {
+      return;
+    }
+
+    const transfer = new DataTransfer();
+    items.forEach((item) => transfer.items.add(item.file));
+    input.files = transfer.files;
+  };
+
+  const updateReadyMessage = (items: SelectedFilePreview[]) => {
+    if (items.length === 0) {
+      setStatus("idle");
+      setMessage(defaultHelper);
+      return;
+    }
+
+    setStatus("ready");
+    setMessage(
+      `Избрани ${items.length} файла. Общ размер: ${formatMegabytes(
+        items.reduce((sum, item) => sum + item.size, 0),
+      )}. Можете да добавяте още снимки преди изпращане.`,
+    );
+  };
+
+  const removePreview = (idToRemove: string) => {
+    setPreviews((current) => {
+      const removed = current.find((preview) => preview.id === idToRemove);
+      const next = current.filter((preview) => preview.id !== idToRemove);
+      if (removed) {
+        URL.revokeObjectURL(removed.previewUrl);
+      }
+      syncInputFiles(next);
+      updateReadyMessage(next);
+      return next;
+    });
+  };
 
   return (
     <div>
@@ -68,6 +117,7 @@ export function ProductImageFileInput({
       <input
         id={id}
         name={name}
+        ref={inputRef}
         type="file"
         multiple
         accept={ACCEPTED_MIME_TYPES.join(",")}
@@ -76,19 +126,12 @@ export function ProductImageFileInput({
           const input = event.currentTarget;
           const files = Array.from(input.files ?? []);
 
-          setPreviews((current) => {
-            current.forEach((preview) => URL.revokeObjectURL(preview.previewUrl));
-            return [];
-          });
-
           if (files.length === 0) {
-            input.setCustomValidity("");
-            setStatus("idle");
-            setMessage(defaultHelper);
             return;
           }
 
-          if (files.length > PRODUCT_IMAGE_MAX_FILES_PER_UPLOAD) {
+          const totalCount = previews.length + files.length;
+          if (totalCount > PRODUCT_IMAGE_MAX_FILES_PER_UPLOAD) {
             input.setCustomValidity(
               `Изберете най-много ${PRODUCT_IMAGE_MAX_FILES_PER_UPLOAD} снимки наведнъж.`,
             );
@@ -97,10 +140,11 @@ export function ProductImageFileInput({
             setMessage(
               `Избрани са твърде много файлове. Максимум наведнъж: ${PRODUCT_IMAGE_MAX_FILES_PER_UPLOAD}.`,
             );
+            syncInputFiles(previews);
             return;
           }
 
-          if (existingGalleryCount + files.length > PRODUCT_IMAGE_MAX_PER_PRODUCT) {
+          if (existingGalleryCount + totalCount > PRODUCT_IMAGE_MAX_PER_PRODUCT) {
             input.setCustomValidity(
               `Продуктът може да има най-много ${PRODUCT_IMAGE_MAX_PER_PRODUCT} снимки.`,
             );
@@ -109,6 +153,7 @@ export function ProductImageFileInput({
             setMessage(
               `Можете да добавите още най-много ${remainingSlots} снимки към този продукт.`,
             );
+            syncInputFiles(previews);
             return;
           }
 
@@ -118,6 +163,7 @@ export function ProductImageFileInput({
             input.reportValidity();
             setStatus("error");
             setMessage("Невалиден формат. Изберете PNG, JPG или WEBP.");
+            syncInputFiles(previews);
             return;
           }
 
@@ -131,23 +177,36 @@ export function ProductImageFileInput({
             setMessage(
               `„${oversized.name}“ надвишава ${formatMegabytes(PRODUCT_IMAGE_MAX_INPUT_BYTES)}.`,
             );
+            syncInputFiles(previews);
             return;
           }
 
-          const nextPreviews = files.map((file) => ({
-            name: file.name,
-            size: file.size,
-            previewUrl: URL.createObjectURL(file),
-          }));
+          const nextPreviews = [
+            ...previews,
+            ...files.map((file) => ({
+              id: `${file.name}-${file.size}-${file.lastModified}-${crypto.randomUUID()}`,
+              file,
+              name: file.name,
+              size: file.size,
+              previewUrl: URL.createObjectURL(file),
+            })),
+          ];
+
+          const duplicateNames = new Set<string>();
+          const uniquePreviews = nextPreviews.filter((preview) => {
+            const key = `${preview.file.name}-${preview.file.size}-${preview.file.lastModified}`;
+            if (duplicateNames.has(key)) {
+              URL.revokeObjectURL(preview.previewUrl);
+              return false;
+            }
+            duplicateNames.add(key);
+            return true;
+          });
 
           input.setCustomValidity("");
-          setStatus("ready");
-          setPreviews(nextPreviews);
-          setMessage(
-            `Избрани ${files.length} файла. Общ размер: ${formatMegabytes(
-              files.reduce((sum, file) => sum + file.size, 0),
-            )}. След изпращане ще бъдат обработени и конвертирани в WebP.`,
-          );
+          setPreviews(uniquePreviews);
+          syncInputFiles(uniquePreviews);
+          updateReadyMessage(uniquePreviews);
         }}
       />
 
@@ -155,7 +214,7 @@ export function ProductImageFileInput({
         <ul className="mt-3 grid gap-3 sm:grid-cols-2">
           {previews.map((preview) => (
             <li
-              key={preview.previewUrl}
+              key={preview.id}
               className="overflow-hidden rounded-lg border border-boutique-line/70 bg-white"
             >
               <div className="relative aspect-[4/3] bg-boutique-bg">
@@ -167,9 +226,34 @@ export function ProductImageFileInput({
                 />
               </div>
               <div className="space-y-1 px-3 py-2 text-xs text-boutique-muted">
-                <p className="truncate font-medium text-boutique-ink">{preview.name}</p>
+                <div className="flex items-start justify-between gap-2">
+                  <p className="min-w-0 truncate font-medium text-boutique-ink">
+                    {preview.name}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => removePreview(preview.id)}
+                    className="shrink-0 rounded-full border border-boutique-line px-2 py-0.5 font-semibold text-boutique-ink transition hover:border-red-200 hover:text-red-700"
+                  >
+                    Махни
+                  </button>
+                </div>
                 <p>Оригинал: {formatMegabytes(preview.size)}</p>
                 <p>Ще бъде оптимизирано при качване</p>
+                {altTextName ? (
+                  <label className="block pt-2 text-left">
+                    <span className="font-medium text-boutique-ink">
+                      Alt текст (по желание)
+                    </span>
+                    <input
+                      name={altTextName}
+                      type="text"
+                      maxLength={160}
+                      placeholder="Кратко описание на снимката"
+                      className="mt-1 w-full rounded-lg border border-boutique-line bg-boutique-paper px-3 py-2 text-xs text-boutique-ink outline-none transition focus:border-boutique-sage-deep focus:ring-2 focus:ring-boutique-sage/20"
+                    />
+                  </label>
+                ) : null}
               </div>
             </li>
           ))}

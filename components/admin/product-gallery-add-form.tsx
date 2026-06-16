@@ -25,6 +25,7 @@ export function ProductGalleryAddForm({
       <input type="hidden" name={adminFormFields.product.name} value={productName} />
       <ProductImageFileInput
         name={adminFormFields.product.imageFiles}
+        altTextName={adminFormFields.product.imageAltTexts}
         label="Добави снимки"
         className={adminFieldClass}
         helperClassName={adminHelperClass}
