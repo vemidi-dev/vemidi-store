@@ -230,41 +230,9 @@ export default async function ProductDetailPage({
                   ) : null}
                 </div>
 
-                <div className="grid gap-2 rounded-2xl border border-boutique-line bg-boutique-bg p-4 text-sm text-boutique-muted sm:grid-cols-3">
-                  <div>
-                    <p className="font-semibold text-boutique-ink">Изработка</p>
-                    <p className="mt-1 leading-5">
-                      {product.fulfillmentNote ?? "Обичайно 1–5 работни дни"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="font-semibold text-boutique-ink">Доставка и плащане</p>
-                    <p className="mt-1 leading-5">
-                      Еконт или Спиди · наложен платеж
-                    </p>
-                    <Link
-                      href="/delivery"
-                      className="mt-1 inline-flex font-semibold text-boutique-sage-deep underline-offset-4 hover:underline"
-                    >
-                      Виж условията
-                    </Link>
-                  </div>
-                  <div>
-                    <p className="font-semibold text-boutique-ink">Връщане</p>
-                    <p className="mt-1 leading-5">
-                      14 дни за неперсонализирани продукти
-                    </p>
-                    <Link
-                      href="/returns"
-                      className="mt-1 inline-flex font-semibold text-boutique-sage-deep underline-offset-4 hover:underline"
-                    >
-                      Условия за връщане
-                    </Link>
-                  </div>
-                </div>
               </div>
 
-              <p className="mt-12 max-w-xl text-lg leading-[1.75] text-boutique-muted md:text-xl md:leading-[1.8]">
+              <p className="mt-7 max-w-xl text-lg leading-[1.75] text-boutique-muted md:text-xl md:leading-[1.8]">
                 {product.description}
               </p>
               {product.additionalInfo ? (
@@ -279,41 +247,44 @@ export default async function ProductDetailPage({
                 product={product}
               />
 
-              <div className="mt-14 grid gap-3 md:mt-16">
-                <article className="rounded-2xl border border-boutique-line bg-boutique-bg p-5">
-                  <h2 className="font-heading text-xl text-boutique-ink">
-                    Изработка и срок
-                  </h2>
-                  <p className="mt-2 text-sm leading-relaxed text-boutique-muted">
-                    {product.fulfillmentNote ??
-                      "Изпращане от ателието за 5-10 работни дни. При персонализация ще потвърдим текста преди изработка."}
+              <div className="mt-6 divide-y divide-boutique-line rounded-2xl border border-boutique-line bg-boutique-bg/70 text-sm shadow-sm">
+                <div className="grid gap-1 px-5 py-4 sm:grid-cols-[8rem_minmax(0,1fr)] sm:gap-5">
+                  <p className="font-semibold text-boutique-ink">Изработка</p>
+                  <p className="leading-6 text-boutique-muted">
+                    1–5 работни дни в зависимост от натоварването. Ако ви е нужен друг срок,
+                    <Link
+                      href="/contact"
+                      className="ml-1 font-semibold text-boutique-sage-deep underline-offset-4 hover:underline"
+                    >
+                      свържете се с нас
+                    </Link>
+                    .
                   </p>
-                </article>
-                <article className="rounded-2xl border border-boutique-line bg-boutique-bg p-5">
-                  <h2 className="font-heading text-xl text-boutique-ink">
-                    Ръчно изработен продукт
-                  </h2>
-                  <p className="mt-2 text-sm leading-relaxed text-boutique-muted">
-                    Всеки продукт се изработва индивидуално. Възможни са малки разлики в
-                    цветовете, текстурата и разположението на детайлите, които правят изделието
-                    уникално.
+                </div>
+                <div className="grid gap-1 px-5 py-4 sm:grid-cols-[8rem_minmax(0,1fr)] sm:gap-5">
+                  <p className="font-semibold text-boutique-ink">Доставка</p>
+                  <p className="leading-6 text-boutique-muted">
+                    Еконт или Спиди · наложен платеж.
+                    <Link
+                      href="/delivery"
+                      className="ml-1 font-semibold text-boutique-sage-deep underline-offset-4 hover:underline"
+                    >
+                      Виж условията
+                    </Link>
                   </p>
-                </article>
-                <article className="rounded-2xl border border-boutique-line bg-boutique-bg p-5">
-                  <h2 className="font-heading text-xl text-boutique-ink">
-                    Имате въпрос преди поръчка?
-                  </h2>
-                  <p className="mt-2 text-sm leading-relaxed text-boutique-muted">
-                    Пишете ни за възможностите за персонализация, цветовете или срока за
-                    конкретен повод.
+                </div>
+                <div className="grid gap-1 px-5 py-4 sm:grid-cols-[8rem_minmax(0,1fr)] sm:gap-5">
+                  <p className="font-semibold text-boutique-ink">Връщане</p>
+                  <p className="leading-6 text-boutique-muted">
+                    14 дни за неперсонализирани продукти.
+                    <Link
+                      href="/returns"
+                      className="ml-1 font-semibold text-boutique-sage-deep underline-offset-4 hover:underline"
+                    >
+                      Условия за връщане
+                    </Link>
                   </p>
-                  <Link
-                    href="/contact"
-                    className="mt-4 inline-flex text-sm font-semibold text-boutique-accent underline-offset-4 hover:underline"
-                  >
-                    Свържете се с нас
-                  </Link>
-                </article>
+                </div>
               </div>
             </div>
           </div>

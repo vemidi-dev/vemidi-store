@@ -261,7 +261,7 @@ export function ProductDetailAddToCart({
                 setError(null);
               },
               className:
-                "mt-2 w-full rounded-xl border border-boutique-line bg-white px-4 py-3 text-sm text-boutique-ink outline-none focus:border-boutique-rose-deep",
+                "mt-2 w-full rounded-xl border border-boutique-line bg-white px-4 py-3 text-sm text-boutique-ink outline-none transition focus:border-boutique-sage-deep focus:ring-2 focus:ring-boutique-sage/25",
               ref: (element: HTMLInputElement | HTMLTextAreaElement | null) => {
                 fieldInputRefs.current[field.id] = element;
               },
@@ -314,7 +314,9 @@ export function ProductDetailAddToCart({
                         : "grid-rows-[0fr] opacity-0"
                     }`}
                   >
-                    <div className="overflow-hidden">
+                    <div
+                      className={showInput ? "overflow-visible p-0.5" : "overflow-hidden"}
+                    >
                       <label
                         htmlFor={inputId}
                         className="block text-sm font-medium text-boutique-ink"
@@ -418,17 +420,22 @@ export function ProductDetailAddToCart({
       ) : null}
 
       {colorFields.length ? (
-        <div className="mt-7 grid gap-5 sm:grid-cols-2">
+        <div className="mt-7 grid gap-6">
           {colorFields.map((field) => (
-            <fieldset key={field.id}>
-              <legend className="text-sm font-semibold text-boutique-ink">{field.label}</legend>
-              <div className="mt-3 flex flex-wrap gap-3">
+            <fieldset key={field.id} className="rounded-2xl border border-boutique-line bg-white/60 p-4">
+              <legend className="px-1 text-sm font-semibold text-boutique-ink">
+                {field.label}
+              </legend>
+              <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4">
                 {field.options.map((option) => {
                   const selected = (selectedByGroup[field.id] ?? []).includes(option.id);
                   return (
-                    <label key={option.id} className="cursor-pointer text-center text-xs text-boutique-muted">
+                    <label
+                      key={option.id}
+                      className="group cursor-pointer rounded-2xl p-2 text-center text-xs text-boutique-muted transition hover:bg-boutique-bg"
+                    >
                       <input
-                        className="sr-only"
+                        className="peer sr-only"
                         type={field.maxSelect <= 1 ? "radio" : "checkbox"}
                         name={`color-${field.id}`}
                         checked={selected}
@@ -444,12 +451,29 @@ export function ProductDetailAddToCart({
                         }}
                       />
                       <span
-                        className={`mx-auto block h-9 w-9 rounded-full border-2 ${
-                          selected ? "border-boutique-sage-deep ring-2 ring-boutique-sage/30" : "border-white ring-1 ring-boutique-line"
+                        className={`relative mx-auto grid h-12 w-12 place-items-center rounded-full border-4 border-white shadow-sm ring-1 transition group-hover:scale-105 peer-focus-visible:ring-2 peer-focus-visible:ring-boutique-sage-deep ${
+                          selected
+                            ? "ring-2 ring-boutique-sage-deep"
+                            : "ring-boutique-line"
                         }`}
                         style={{ backgroundColor: option.hex ?? "#eee8df" }}
-                      />
-                      <span className="mt-1 block">{option.name}</span>
+                      >
+                        {selected ? (
+                          <span
+                            aria-hidden="true"
+                            className="grid h-5 w-5 place-items-center rounded-full bg-white/90 text-[0.65rem] font-bold text-boutique-sage-deep shadow-sm"
+                          >
+                            ✓
+                          </span>
+                        ) : null}
+                      </span>
+                      <span
+                        className={`mt-2 block leading-4 ${
+                          selected ? "font-semibold text-boutique-ink" : ""
+                        }`}
+                      >
+                        {option.name}
+                      </span>
                     </label>
                   );
                 })}
