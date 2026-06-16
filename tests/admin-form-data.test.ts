@@ -8,6 +8,7 @@ import {
   getWishTemplateIds,
   makeCreateProductDraft,
 } from "@/lib/admin/form-data";
+import { parseProductCreateDraft } from "@/lib/admin/params";
 import { parseProductOptionGroups } from "@/lib/admin/parse-option-groups";
 
 test("admin form field names stay aligned with product draft parsing", () => {
@@ -90,6 +91,7 @@ test("admin form field names stay aligned with product draft parsing", () => {
       },
     ],
     wish_template_ids: ["wish-one", "wish-two"],
+    option_groups: [],
   });
 });
 
@@ -188,4 +190,45 @@ test("mixed product option groups keep their row values aligned", () => {
   assert.equal(parsed.groups[1]?.placeholder, "Въведете име");
   assert.equal(parsed.groups[1]?.maxLength, 50);
   assert.equal(parsed.groups[1]?.textPriceDelta, 3);
+});
+
+test("product create draft preserves option groups for recovery", () => {
+  const formData = new FormData();
+  formData.set(adminFormFields.product.name, "Custom product");
+  formData.set(adminFormFields.product.slug, "custom-product");
+  formData.set(adminFormFields.product.description, "Description");
+  formData.set(adminFormFields.product.price, "12.00");
+  formData.append(adminFormFields.product.categoryIds, "category-one");
+  formData.append(adminFormFields.optionGroup.ids, "");
+  formData.append(adminFormFields.optionGroup.names, "Size");
+  formData.append(adminFormFields.optionGroup.keys, "size");
+  formData.append(adminFormFields.optionGroup.inputTypes, "single");
+  formData.append(adminFormFields.optionGroup.required, "on");
+  formData.append(adminFormFields.optionGroup.minSelects, "1");
+  formData.append(adminFormFields.optionGroup.maxSelects, "1");
+  formData.append(adminFormFields.optionGroup.sortOrders, "0");
+  formData.append(adminFormFields.optionGroup.active, "on");
+  formData.append(adminFormFields.optionGroup.dependsOnOptionIds, "");
+  formData.append(adminFormFields.optionGroup.placeholders, "");
+  formData.append(adminFormFields.optionGroup.maxLengths, "");
+  formData.append(adminFormFields.optionGroup.textPriceDeltas, "0");
+  formData.append(
+    adminFormFields.optionGroup.valuesJson,
+    JSON.stringify([
+      {
+        label: "Mini",
+        key: "mini",
+        priceDelta: 0,
+        isDefault: true,
+        isActive: true,
+        isSoldOut: false,
+        sortOrder: 0,
+      },
+    ]),
+  );
+
+  const draft = parseProductCreateDraft(makeCreateProductDraft(formData));
+
+  assert.equal(draft?.optionGroups?.[0]?.name, "Size");
+  assert.equal(draft?.optionGroups?.[0]?.values[0]?.label, "Mini");
 });

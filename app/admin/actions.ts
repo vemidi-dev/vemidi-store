@@ -67,6 +67,8 @@ import { createClient } from "@/lib/supabase/server";
 
 const ADMIN_PATH = "/admin";
 const ADMIN_LOGIN_PATH = "/admin/login";
+const MAX_DRAFT_QUERY_LENGTH = 6000;
+
 function redirectWith(
   kind: "success" | "error",
   message: string,
@@ -74,7 +76,7 @@ function redirectWith(
   draft?: string,
 ): never {
   const params = new URLSearchParams({ [kind]: message, tab });
-  if (draft) {
+  if (draft && encodeURIComponent(draft).length <= MAX_DRAFT_QUERY_LENGTH) {
     params.set("draft", draft);
   }
   redirect(`${ADMIN_PATH}?${params.toString()}`);

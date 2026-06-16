@@ -2,6 +2,7 @@ import type {
   AdminTab,
   ProductCreateDraft,
   ProductDraftColorField,
+  ProductDraftOptionGroup,
   ProductDraftPersonalizationField,
 } from "@/lib/admin/types";
 
@@ -64,6 +65,7 @@ export function parseProductCreateDraft(raw: string): ProductCreateDraft | null 
       color_fields?: unknown;
       personalization_fields?: unknown;
       wish_template_ids?: unknown;
+      option_groups?: unknown;
     };
 
     const categoryIds = Array.isArray(parsed.category_ids)
@@ -181,6 +183,81 @@ export function parseProductCreateDraft(raw: string): ProductCreateDraft | null 
             typeof value === "string" && value.trim().length > 0,
         )
       : [];
+    const optionGroups = Array.isArray(parsed.option_groups)
+      ? parsed.option_groups
+          .map((group) => {
+            if (!group || typeof group !== "object") {
+              return null;
+            }
+
+            const candidate = group as ProductDraftOptionGroup;
+            const inputType =
+              candidate.inputType === "multiple" ||
+              candidate.inputType === "text" ||
+              candidate.inputType === "textarea" ||
+              candidate.inputType === "date"
+                ? candidate.inputType
+                : "single";
+            const values = Array.isArray(candidate.values)
+              ? candidate.values.filter(
+                  (value) =>
+                    value &&
+                    typeof value.label === "string" &&
+                    typeof value.key === "string",
+                )
+              : [];
+
+            if (typeof candidate.name !== "string" || !candidate.name.trim()) {
+              return null;
+            }
+
+            return {
+              id: typeof candidate.id === "string" ? candidate.id : null,
+              name: candidate.name,
+              key:
+                typeof candidate.key === "string" && candidate.key
+                  ? candidate.key
+                  : "option",
+              inputType,
+              isRequired: candidate.isRequired === true,
+              minSelect:
+                typeof candidate.minSelect === "number"
+                  ? Math.max(0, candidate.minSelect)
+                  : inputType === "single"
+                    ? 1
+                    : 0,
+              maxSelect:
+                typeof candidate.maxSelect === "number"
+                  ? Math.max(0, candidate.maxSelect)
+                  : inputType === "single"
+                    ? 1
+                    : 0,
+              sortOrder:
+                typeof candidate.sortOrder === "number" ? candidate.sortOrder : 0,
+              isActive: candidate.isActive !== false,
+              pricingMode: "delta" as const,
+              dependsOnOptionId:
+                typeof candidate.dependsOnOptionId === "string" &&
+                candidate.dependsOnOptionId
+                  ? candidate.dependsOnOptionId
+                  : null,
+              placeholder:
+                typeof candidate.placeholder === "string"
+                  ? candidate.placeholder
+                  : null,
+              maxLength:
+                typeof candidate.maxLength === "number"
+                  ? Math.min(1000, Math.max(1, candidate.maxLength))
+                  : null,
+              textPriceDelta:
+                typeof candidate.textPriceDelta === "number"
+                  ? Math.max(0, candidate.textPriceDelta)
+                  : 0,
+              values,
+            };
+          })
+          .filter((group): group is ProductDraftOptionGroup => group !== null)
+      : [];
 
     return {
       name: typeof parsed.name === "string" ? parsed.name : "",
@@ -205,6 +282,7 @@ export function parseProductCreateDraft(raw: string): ProductCreateDraft | null 
       colorFields,
       personalizationFields,
       wishTemplateIds,
+      optionGroups,
     };
   } catch {
     return null;

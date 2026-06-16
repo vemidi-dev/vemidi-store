@@ -6,6 +6,7 @@ import {
   type ProductFulfillmentType,
 } from "@/lib/product-fulfillment";
 import { adminFormFields } from "@/lib/admin/form-fields";
+import { parseProductOptionGroups } from "@/lib/admin/parse-option-groups";
 
 type CreateProductDraftPayload = {
   name: string;
@@ -38,6 +39,7 @@ type CreateProductDraftPayload = {
     allows_wish_templates: boolean;
   }>;
   wish_template_ids: string[];
+  option_groups: unknown[];
 };
 
 export function parseProductFulfillmentFromFormData(formData: FormData): {
@@ -201,6 +203,7 @@ export function makeCreateProductDraft(formData: FormData) {
     is_required: personalizationRequired[index] ?? false,
     allows_wish_templates: personalizationAllowsWishes[index] ?? false,
   }));
+  const optionGroupsResult = parseProductOptionGroups(formData);
 
   const draft: CreateProductDraftPayload = {
     name: getString(formData, adminFormFields.product.name),
@@ -218,6 +221,7 @@ export function makeCreateProductDraft(formData: FormData) {
     color_fields: colorFields,
     personalization_fields: personalizationFields,
     wish_template_ids: getWishTemplateIds(formData),
+    option_groups: optionGroupsResult.error ? [] : optionGroupsResult.groups,
   };
 
   return JSON.stringify(draft);
