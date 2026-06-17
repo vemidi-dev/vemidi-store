@@ -24,7 +24,7 @@ function GalleryMainImage({
 }) {
   return (
     <div
-      className={`relative aspect-[4/5] overflow-hidden rounded-2xl border border-boutique-line/80 bg-boutique-bg shadow-boutique ${className ?? ""}`}
+      className={`relative aspect-[4/5] overflow-hidden rounded-2xl border border-boutique-line/80 bg-white shadow-boutique ${className ?? ""}`}
     >
       {image?.src ? (
         <Image
@@ -34,7 +34,7 @@ function GalleryMainImage({
           fill
           priority={priority}
           sizes={sizes}
-          className="object-cover"
+          className="object-contain p-1"
         />
       ) : (
         <MediaPlaceholder label="Основна снимка на продукта" />
@@ -64,7 +64,7 @@ function GalleryThumbnailButton({
     <button
       type="button"
       onClick={onSelect}
-      className={`relative shrink-0 overflow-hidden rounded-xl border-2 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-boutique-sage focus-visible:ring-offset-2 ${
+      className={`relative overflow-hidden rounded-xl border-2 bg-white transition focus:outline-none focus-visible:ring-2 focus-visible:ring-boutique-sage focus-visible:ring-offset-2 ${
         isActive
           ? "border-boutique-ink shadow-md"
           : "border-transparent opacity-80 ring-1 ring-boutique-line/80 hover:opacity-100"
@@ -78,7 +78,7 @@ function GalleryThumbnailButton({
           alt={image.alt || `Миниатюра ${index + 1}`}
           fill
           sizes="80px"
-          className="object-cover"
+          className="object-contain p-1"
         />
       ) : (
         <MediaPlaceholder label={`Снимка ${index + 1}`} />
@@ -176,7 +176,7 @@ export function ProductDetailGallery({ images }: ProductDetailGalleryProps) {
       <div className="hidden lg:flex lg:items-start lg:gap-4">
         {hasMultipleImages ? (
           <ul
-            className="flex max-h-[min(34rem,calc(100vh-10rem))] w-20 shrink-0 flex-col gap-3 overflow-y-auto pr-1"
+            className="flex w-24 shrink-0 flex-col gap-3"
             aria-label="Миниатюри на продукта"
           >
             {images.map((img, i) => (
@@ -186,7 +186,7 @@ export function ProductDetailGallery({ images }: ProductDetailGalleryProps) {
                   index={i}
                   isActive={i === safeIndex}
                   onSelect={() => setActive(i)}
-                  className="h-24 w-20"
+                  className="aspect-square w-24"
                 />
               </li>
             ))}
@@ -199,7 +199,7 @@ export function ProductDetailGallery({ images }: ProductDetailGalleryProps) {
         {mainImageWithArrows}
         {hasMultipleImages ? (
           <ul
-            className="mt-4 flex gap-3 overflow-x-auto pb-1"
+            className="mt-4 grid grid-cols-4 gap-3 sm:grid-cols-6"
             aria-label="Миниатюри на продукта"
           >
             {images.map((img, i) => (
@@ -209,7 +209,7 @@ export function ProductDetailGallery({ images }: ProductDetailGalleryProps) {
                   index={i}
                   isActive={i === safeIndex}
                   onSelect={() => setActive(i)}
-                  className="h-20 w-16"
+                  className="aspect-square w-full"
                 />
               </li>
             ))}
