@@ -13,11 +13,12 @@ import {
   getProductCategoryFilterOptions,
   hasContextFilterParams,
 } from "@/lib/catalog-context-filters";
-import { getCategoryImageSrc } from "@/lib/category-images";
+import { resolveCategoryCoverImage } from "@/lib/category-image-resolution";
 import {
   buildBreadcrumbListSchema,
   buildOccasionBreadcrumbItems,
 } from "@/lib/seo/breadcrumbs";
+import { OCCASION_INDEX_PATH } from "@/lib/category-url";
 import { getProductCategorySlugs } from "@/lib/seo/category-indexability";
 import {
   buildOccasionPageMetadata,
@@ -84,7 +85,7 @@ export default async function OccasionPage({
   const description =
     occasion.card_description?.trim() ||
     `Открийте персонализирани подаръци за „${occasion.name}“.`;
-  const imageSrc = getCategoryImageSrc(occasion.slug, occasion.category_type);
+  const heroImage = resolveCategoryCoverImage(occasion);
   const breadcrumbSchema = buildBreadcrumbListSchema(
     buildOccasionBreadcrumbItems(occasion),
     getSiteUrl(),
@@ -102,15 +103,15 @@ export default async function OccasionPage({
             <span className="px-2" aria-hidden>
               ›
             </span>
-            <Link href="/occasions" className="transition hover:underline">
+            <Link href={OCCASION_INDEX_PATH} className="transition hover:underline">
               По повод
             </Link>
           </>
         }
         title={occasion.name}
         description={description}
-        imageSrc={imageSrc}
-        imageAlt={`Персонализирани подаръци за ${occasion.name}`}
+        imageSrc={heroImage.src}
+        imageAlt={heroImage.alt}
       />
 
       <section className="bg-white py-10 md:py-14">
@@ -131,7 +132,7 @@ export default async function OccasionPage({
           </div>
 
           <ContextFilter
-            action={`/occasions/${occasion.slug}`}
+            action={`${OCCASION_INDEX_PATH}/${occasion.slug}`}
             label="Вид продукт"
             name="product"
             value={activeProduct}

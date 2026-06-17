@@ -297,7 +297,7 @@ export function CategoryManagementView({ categories }: CategoryManagementViewPro
                     />
                   </label>
                   <label className="text-sm font-medium text-boutique-ink md:col-span-3">
-                    Снимка на категорията
+                    Снимка за карта на категорията
                     {category.image_url ? (
                       <span className="mt-2 flex items-center gap-3 rounded-lg border border-boutique-line bg-white p-2">
                         <span
@@ -315,6 +315,49 @@ export function CategoryManagementView({ categories }: CategoryManagementViewPro
                       type="file"
                       accept="image/png,image/jpeg,image/webp"
                       className={`${adminFieldClass} file:mr-3 file:rounded-full file:border-0 file:bg-boutique-sage file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white`}
+                    />
+                  </label>
+                  <label className="text-sm font-medium text-boutique-ink md:col-span-3">
+                    Alt текст за карта
+                    <input
+                      name={adminFormFields.category.imageAlt}
+                      type="text"
+                      maxLength={160}
+                      defaultValue={category.image_alt ?? ""}
+                      placeholder="Кратко описание на снимката за картата"
+                      className={adminFieldClass}
+                    />
+                  </label>
+                  <label className="text-sm font-medium text-boutique-ink md:col-span-3">
+                    Cover снимка за страницата
+                    {category.cover_image_url ? (
+                      <span className="mt-2 flex items-center gap-3 rounded-lg border border-boutique-line bg-white p-2">
+                        <span
+                          className="h-16 w-28 rounded-md bg-cover bg-center"
+                          style={{ backgroundImage: `url(${category.cover_image_url})` }}
+                          aria-hidden
+                        />
+                        <span className="text-xs font-normal text-boutique-muted">
+                          Качете нова cover снимка, за да замените текущата.
+                        </span>
+                      </span>
+                    ) : null}
+                    <input
+                      name={adminFormFields.category.coverImageFile}
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      className={`${adminFieldClass} file:mr-3 file:rounded-full file:border-0 file:bg-boutique-sage file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white`}
+                    />
+                  </label>
+                  <label className="text-sm font-medium text-boutique-ink md:col-span-3">
+                    Alt текст за cover
+                    <input
+                      name={adminFormFields.category.coverImageAlt}
+                      type="text"
+                      maxLength={160}
+                      defaultValue={category.cover_image_alt ?? ""}
+                      placeholder="Кратко описание на cover снимката"
+                      className={adminFieldClass}
                     />
                   </label>
                   <label className="inline-flex items-center gap-2 text-sm font-medium text-boutique-ink md:col-span-3">

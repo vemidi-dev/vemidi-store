@@ -93,10 +93,13 @@ async function revalidateProductPaths(
 ) {
   revalidatePath(ADMIN_PATH);
   revalidatePath("/");
-  revalidatePath("/shop");
+  revalidatePath("/producti");
   revalidatePath("/products");
-  revalidatePath("/categories");
-  revalidatePath("/categories/[slug]", "page");
+  revalidatePath("/produkti");
+  revalidatePath("/categorii");
+  revalidatePath("/categorii");
+  revalidatePath("/categorii/[slug]", "page");
+  revalidatePath("/categorii/[slug]", "page");
 
   if (!productId) {
     return;
@@ -152,10 +155,13 @@ function redirectWithProductEdit(
 function revalidateCategoryPaths() {
   revalidatePath(ADMIN_PATH);
   revalidatePath("/");
-  revalidatePath("/categories");
-  revalidatePath("/occasions");
-  revalidatePath("/shop");
-  revalidatePath("/categories/[slug]", "page");
+  revalidatePath("/categorii");
+  revalidatePath("/categorii");
+  revalidatePath("/povodi");
+  revalidatePath("/povodi");
+  revalidatePath("/producti");
+  revalidatePath("/categorii/[slug]", "page");
+  revalidatePath("/categorii/[slug]", "page");
 }
 
 async function getProductGalleryImageCount(
@@ -1164,6 +1170,14 @@ export async function createCategory(formData: FormData) {
   const cardDescription =
     getString(formData, adminFormFields.category.cardDescription).trim() || null;
   const imageFile = getFile(formData, adminFormFields.category.imageFile);
+  const coverImageFile = getFile(formData, adminFormFields.category.coverImageFile);
+  const imageAlt =
+    getOptionalString(formData, adminFormFields.category.imageAlt)?.trim().slice(0, 160) ??
+    null;
+  const coverImageAlt =
+    getOptionalString(formData, adminFormFields.category.coverImageAlt)
+      ?.trim()
+      .slice(0, 160) ?? null;
 
   if (!name || !slug || !["product", "occasion"].includes(categoryType)) {
     redirectWith("error", "Попълнете име и slug за категорията.", activeTab);
@@ -1203,6 +1217,7 @@ export async function createCategory(formData: FormData) {
   const homeSortOrder = (Number(lastCategory?.home_sort_order) || 0) + 10;
 
   let uploadedCategoryImage: Awaited<ReturnType<typeof uploadAdminImage>> | null = null;
+  let uploadedCoverImage: Awaited<ReturnType<typeof uploadAdminImage>> | null = null;
   if (imageFile) {
     try {
       uploadedCategoryImage = await uploadAdminImage(supabase, imageFile, "categories");
@@ -1210,6 +1225,22 @@ export async function createCategory(formData: FormData) {
       redirectWith(
         "error",
         `Снимката на категорията не беше качена: ${
+          error instanceof Error ? error.message : "неочаквана грешка"
+        }`,
+        activeTab,
+      );
+    }
+  }
+  if (coverImageFile) {
+    try {
+      uploadedCoverImage = await uploadAdminImage(supabase, coverImageFile, "categories");
+    } catch (error) {
+      if (uploadedCategoryImage) {
+        await deleteProductImage(supabase, uploadedCategoryImage.path).catch(() => undefined);
+      }
+      redirectWith(
+        "error",
+        `Cover снимката не беше качена: ${
           error instanceof Error ? error.message : "неочаквана грешка"
         }`,
         activeTab,
@@ -1225,6 +1256,9 @@ export async function createCategory(formData: FormData) {
       category_type: categoryType,
       parent_id: parentId,
       image_url: uploadedCategoryImage?.url ?? null,
+      image_alt: imageAlt,
+      cover_image_url: uploadedCoverImage?.url ?? null,
+      cover_image_alt: coverImageAlt,
       show_on_home: parentId ? false : showOnHome,
       home_sort_order: homeSortOrder,
       card_description: cardDescription,
@@ -1232,6 +1266,9 @@ export async function createCategory(formData: FormData) {
   if (error) {
     if (uploadedCategoryImage) {
       await deleteProductImage(supabase, uploadedCategoryImage.path).catch(() => undefined);
+    }
+    if (uploadedCoverImage) {
+      await deleteProductImage(supabase, uploadedCoverImage.path).catch(() => undefined);
     }
     redirectWith("error", `Грешка при добавяне на категория: ${error.message}`, activeTab);
   }
@@ -1253,6 +1290,14 @@ export async function updateCategory(formData: FormData) {
   const cardDescription =
     getString(formData, adminFormFields.category.cardDescription).trim() || null;
   const imageFile = getFile(formData, adminFormFields.category.imageFile);
+  const coverImageFile = getFile(formData, adminFormFields.category.coverImageFile);
+  const imageAlt =
+    getOptionalString(formData, adminFormFields.category.imageAlt)?.trim().slice(0, 160) ??
+    null;
+  const coverImageAlt =
+    getOptionalString(formData, adminFormFields.category.coverImageAlt)
+      ?.trim()
+      .slice(0, 160) ?? null;
 
   if (!id || !name || !slug || !["product", "occasion"].includes(categoryType)) {
     redirectWith("error", "Невалидни данни за категория.", activeTab);
@@ -1282,7 +1327,7 @@ export async function updateCategory(formData: FormData) {
 
   const { data: existingCategory, error: existingCategoryError } = await supabase
     .from("categories")
-    .select("category_type,parent_id,home_sort_order,image_url")
+    .select("category_type,parent_id,home_sort_order,image_url,cover_image_url")
     .eq("id", id)
     .single();
   if (existingCategoryError || !existingCategory) {
@@ -1310,6 +1355,7 @@ export async function updateCategory(formData: FormData) {
   }
 
   let uploadedCategoryImage: Awaited<ReturnType<typeof uploadAdminImage>> | null = null;
+  let uploadedCoverImage: Awaited<ReturnType<typeof uploadAdminImage>> | null = null;
   if (imageFile) {
     try {
       uploadedCategoryImage = await uploadAdminImage(supabase, imageFile, "categories");
@@ -1317,6 +1363,22 @@ export async function updateCategory(formData: FormData) {
       redirectWith(
         "error",
         `Снимката на категорията не беше качена: ${
+          error instanceof Error ? error.message : "неочаквана грешка"
+        }`,
+        activeTab,
+      );
+    }
+  }
+  if (coverImageFile) {
+    try {
+      uploadedCoverImage = await uploadAdminImage(supabase, coverImageFile, "categories");
+    } catch (error) {
+      if (uploadedCategoryImage) {
+        await deleteProductImage(supabase, uploadedCategoryImage.path).catch(() => undefined);
+      }
+      redirectWith(
+        "error",
+        `Cover снимката не беше качена: ${
           error instanceof Error ? error.message : "неочаквана грешка"
         }`,
         activeTab,
@@ -1332,6 +1394,9 @@ export async function updateCategory(formData: FormData) {
       category_type: categoryType,
       parent_id: parentId,
       ...(uploadedCategoryImage ? { image_url: uploadedCategoryImage.url } : {}),
+      image_alt: imageAlt,
+      ...(uploadedCoverImage ? { cover_image_url: uploadedCoverImage.url } : {}),
+      cover_image_alt: coverImageAlt,
       show_on_home: parentId ? false : showOnHome,
       home_sort_order: homeSortOrder,
       card_description: cardDescription,
@@ -1341,6 +1406,9 @@ export async function updateCategory(formData: FormData) {
     if (uploadedCategoryImage) {
       await deleteProductImage(supabase, uploadedCategoryImage.path).catch(() => undefined);
     }
+    if (uploadedCoverImage) {
+      await deleteProductImage(supabase, uploadedCoverImage.path).catch(() => undefined);
+    }
     redirectWith("error", `Грешка при редакция на категория: ${error.message}`, activeTab);
   }
 
@@ -1348,6 +1416,12 @@ export async function updateCategory(formData: FormData) {
     const previousImagePath = getProductImagePath(existingCategory.image_url);
     if (previousImagePath) {
       await deleteProductImage(supabase, previousImagePath).catch(() => undefined);
+    }
+  }
+  if (uploadedCoverImage && existingCategory.cover_image_url) {
+    const previousCoverPath = getProductImagePath(existingCategory.cover_image_url);
+    if (previousCoverPath) {
+      await deleteProductImage(supabase, previousCoverPath).catch(() => undefined);
     }
   }
 

@@ -161,6 +161,9 @@ export type CategoryRow = {
   category_type: "product" | "occasion";
   parent_id: string | null;
   image_url: string | null;
+  image_alt: string | null;
+  cover_image_url: string | null;
+  cover_image_alt: string | null;
   show_on_home: boolean;
   home_sort_order: number;
   card_description: string | null;

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
-import { getCategoryImageSrc } from "@/lib/category-images";
+import { resolveCategoryCoverImage } from "@/lib/category-image-resolution";
+import { getCategoryPath } from "@/lib/category-url";
 import { isProductCategoryIndexable } from "@/lib/seo/category-indexability";
 import { buildCategoryMetaDescription } from "@/lib/seo/category-description-seo";
 import type { StorefrontCategory } from "@/lib/storefront/types";
@@ -20,13 +21,9 @@ export function buildCategoryPageMetadata({
   parent,
   faceted = false,
 }: BuildCategoryMetadataInput): Metadata {
-  const imageCategory = parent ?? category;
-  const imageSrc = getCategoryImageSrc(
-    imageCategory.slug,
-    imageCategory.category_type,
-  );
+  const heroImage = resolveCategoryCoverImage(category, parent);
   const description = buildCategoryMetaDescription(category);
-  const canonicalPath = `/categories/${category.slug}`;
+  const canonicalPath = getCategoryPath(category.slug);
   const indexable = isProductCategoryIndexable(
     categories,
     productCategorySlugs,
@@ -44,13 +41,13 @@ export function buildCategoryPageMetadata({
       title: category.name,
       description,
       url: canonicalPath,
-      images: [imageSrc],
+      images: heroImage.src ? [heroImage.src] : undefined,
     },
     twitter: {
       card: "summary_large_image",
       title: category.name,
       description,
-      images: [imageSrc],
+      images: heroImage.src ? [heroImage.src] : undefined,
     },
   };
 }

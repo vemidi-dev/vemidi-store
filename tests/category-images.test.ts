@@ -2,6 +2,10 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { getCategoryImageSrc } from "@/lib/category-images";
+import {
+  resolveCategoryCardImage,
+  resolveCategoryCoverImage,
+} from "@/lib/category-image-resolution";
 
 test("getCategoryImageSrc maps product slugs to current image files", () => {
   assert.equal(
@@ -71,4 +75,73 @@ test("getCategoryImageSrc maps occasion slugs and aliases", () => {
     getCategoryImageSrc("home", "occasion"),
     "/assets/ocassion-new-home.png",
   );
+});
+
+test("resolveCategoryCardImage prefers uploaded card image and alt text", () => {
+  const resolved = resolveCategoryCardImage({
+    name: "Кутии",
+    slug: "kutii",
+    category_type: "product",
+    image_url: "https://cdn.example.com/kutii-card.webp",
+    image_alt: "Кутии и кошнички",
+  });
+
+  assert.equal(resolved.src, "https://cdn.example.com/kutii-card.webp");
+  assert.equal(resolved.alt, "Кутии и кошнички");
+});
+
+test("resolveCategoryCardImage falls back to static slug asset and category name", () => {
+  const resolved = resolveCategoryCardImage({
+    name: "Кутии",
+    slug: "kutii",
+    category_type: "product",
+  });
+
+  assert.equal(resolved.src, "/assets/categories/product/kutii-i-koshnichki.webp");
+  assert.equal(resolved.alt, "Кутии");
+});
+
+test("resolveCategoryCoverImage prefers cover image over card image", () => {
+  const resolved = resolveCategoryCoverImage({
+    name: "Кутии",
+    slug: "kutii",
+    category_type: "product",
+    image_url: "https://cdn.example.com/kutii-card.webp",
+    cover_image_url: "https://cdn.example.com/kutii-cover.webp",
+    cover_image_alt: "Hero за кутии",
+  });
+
+  assert.equal(resolved.src, "https://cdn.example.com/kutii-cover.webp");
+  assert.equal(resolved.alt, "Hero за кутии");
+});
+
+test("resolveCategoryCoverImage falls back to card image when cover is missing", () => {
+  const resolved = resolveCategoryCoverImage({
+    name: "Кутии",
+    slug: "kutii",
+    category_type: "product",
+    image_url: "https://cdn.example.com/kutii-card.webp",
+    image_alt: "Карта за кутии",
+  });
+
+  assert.equal(resolved.src, "https://cdn.example.com/kutii-card.webp");
+  assert.equal(resolved.alt, "Карта за кутии");
+});
+
+test("resolveCategoryCoverImage inherits parent static hero for subcategories", () => {
+  const resolved = resolveCategoryCoverImage(
+    {
+      name: "Малки кутии",
+      slug: "malki-kutii",
+      category_type: "product",
+    },
+    {
+      name: "Кутии",
+      slug: "kutii",
+      category_type: "product",
+    },
+  );
+
+  assert.equal(resolved.src, "/assets/categories/product/kutii-i-koshnichki.webp");
+  assert.equal(resolved.alt, "Малки кутии");
 });

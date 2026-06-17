@@ -12,13 +12,14 @@ import {
   getCategoryFamilySlugs,
   getChildCategories,
 } from "@/lib/category-hierarchy";
+import { CATEGORY_INDEX_PATH } from "@/lib/category-url";
 import {
   filterProductsByOccasion,
   firstContextFilterValue,
   getOccasionFilterOptions,
   hasContextFilterParams,
 } from "@/lib/catalog-context-filters";
-import { getCategoryImageSrc } from "@/lib/category-images";
+import { resolveCategoryCoverImage } from "@/lib/category-image-resolution";
 import { toShowcaseCategory } from "@/lib/storefront/mappers";
 import { getStorefrontCatalog } from "@/lib/storefront/repository";
 import {
@@ -107,11 +108,7 @@ export default async function CategoryPage({
   const description =
     category.card_description?.trim() ||
     `Открийте ръчно изработени предложения в категория „${category.name}“.`;
-  const imageCategory = parent ?? category;
-  const categoryImageSrc = getCategoryImageSrc(
-    imageCategory.slug,
-    imageCategory.category_type,
-  );
+  const heroImage = resolveCategoryCoverImage(category, parent);
   const breadcrumbSchema = buildBreadcrumbListSchema(
     buildCategoryBreadcrumbItems(categories, category),
     getSiteUrl(),
@@ -129,7 +126,7 @@ export default async function CategoryPage({
             <span className="px-2" aria-hidden>
               ›
             </span>
-            <Link href="/categories" className="transition hover:underline">
+            <Link href={CATEGORY_INDEX_PATH} className="transition hover:underline">
               Категории
             </Link>
             {parent ? (
@@ -138,7 +135,7 @@ export default async function CategoryPage({
                   ›
                 </span>
                 <Link
-                  href={`/categories/${parent.slug}`}
+                  href={`${CATEGORY_INDEX_PATH}/${parent.slug}`}
                   className="transition hover:underline"
                 >
                   {parent.name}
@@ -149,8 +146,8 @@ export default async function CategoryPage({
         }
         title={category.name}
         description={description}
-        imageSrc={categoryImageSrc}
-        imageAlt={`Ръчно изработени продукти в категория ${category.name}`}
+        imageSrc={heroImage.src}
+        imageAlt={heroImage.alt}
       />
 
       {children.length > 0 ? (
@@ -163,11 +160,7 @@ export default async function CategoryPage({
               {children.map((child) => (
                 <CategoryShowcaseCard
                   key={child.id}
-                  category={{
-                    ...toShowcaseCategory(child),
-                    imageSrc: categoryImageSrc,
-                    imageAlt: `${child.name} в категория ${category.name}`,
-                  }}
+                  category={toShowcaseCategory(child)}
                   compact
                 />
               ))}
@@ -194,7 +187,7 @@ export default async function CategoryPage({
           </div>
 
           <ContextFilter
-            action={`/categories/${category.slug}`}
+            action={`${CATEGORY_INDEX_PATH}/${category.slug}`}
             label="По повод"
             name="occasion"
             value={activeOccasion}

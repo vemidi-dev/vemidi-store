@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { getCategoryImageSrc } from "@/lib/category-images";
+import { resolveCategoryCoverImage } from "@/lib/category-image-resolution";
 import { getOccasionPath } from "@/lib/category-url";
 import { isOccasionIndexable } from "@/lib/seo/occasion-indexability";
 import type { StorefrontCategory } from "@/lib/storefront/types";
@@ -50,7 +50,7 @@ export function buildOccasionPageMetadata({
   productCategorySlugs,
   faceted = false,
 }: BuildOccasionMetadataInput): Metadata {
-  const imageSrc = getCategoryImageSrc(occasion.slug, occasion.category_type);
+  const heroImage = resolveCategoryCoverImage(occasion);
   const description =
     occasion.card_description?.trim() ||
     `Открийте персонализирани подаръци за „${occasion.name}“ от VeMiDi crafts.`;
@@ -68,13 +68,13 @@ export function buildOccasionPageMetadata({
       title: occasion.name,
       description,
       url: canonicalPath,
-      images: [imageSrc],
+      images: heroImage.src ? [heroImage.src] : undefined,
     },
     twitter: {
       card: "summary_large_image",
       title: occasion.name,
       description,
-      images: [imageSrc],
+      images: heroImage.src ? [heroImage.src] : undefined,
     },
   };
 }

@@ -6,7 +6,7 @@ import {
   resolveProductPricing,
   type ProductPromotionRow,
 } from "@/lib/product-pricing";
-import { getCategoryImageSrc } from "@/lib/category-images";
+import { resolveCategoryCardImage } from "@/lib/category-image-resolution";
 import type { ShopCategory } from "@/lib/shop-categories";
 import type { StorefrontCategory } from "@/lib/storefront/types";
 
@@ -88,8 +88,7 @@ export function toProduct(
 }
 
 export function toShowcaseCategory(category: StorefrontCategory): ShopCategory {
-  const imageSrc =
-    category.image_url || getCategoryImageSrc(category.slug, category.category_type);
+  const cardImage = resolveCategoryCardImage(category);
   const categoryLabel =
     category.category_type === "occasion" ? "повод" : "вид продукт";
 
@@ -99,8 +98,8 @@ export function toShowcaseCategory(category: StorefrontCategory): ShopCategory {
     title: category.name,
     categoryType: category.category_type,
     parentId: category.parent_id,
-    imageSrc: imageSrc || DEFAULT_CATEGORY_IMAGE,
-    imageAlt: `${category.name} - ${categoryLabel}`,
+    imageSrc: cardImage.src || DEFAULT_CATEGORY_IMAGE,
+    imageAlt: cardImage.alt || `${category.name} - ${categoryLabel}`,
     cardDescription: category.card_description,
   };
 }
