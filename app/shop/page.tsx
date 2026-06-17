@@ -36,13 +36,6 @@ type FilterValue = {
   label: string;
 };
 
-function firstValue(value: string | string[] | undefined): string {
-  if (!value) {
-    return "";
-  }
-  return Array.isArray(value) ? value[0] ?? "" : value;
-}
-
 function getPriceBucket(price: number): FilterValue["id"] {
   if (price < 20) {
     return "under-20";
@@ -279,7 +272,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
             Приложи
           </button>
           <Link
-            href="/shop#product-grid"
+            href="/producti#product-grid"
             className="rounded-lg border border-boutique-line px-4 py-2.5 text-sm font-semibold text-boutique-ink lg:py-3"
           >
             Изчисти
@@ -350,7 +343,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
               <form className="sticky top-28 space-y-5 rounded-xl border border-boutique-line bg-boutique-paper p-5 shadow-boutique-sm">
                 <div className="flex items-center justify-between">
                   <h2 className="font-heading text-xl text-boutique-ink">Филтри</h2>
-                  <Link href="/shop#product-grid" className="text-xs text-boutique-sage-deep hover:underline">
+                  <Link href="/producti#product-grid" className="text-xs text-boutique-sage-deep hover:underline">
                     Изчисти
                   </Link>
                 </div>

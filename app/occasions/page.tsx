@@ -5,7 +5,7 @@ import Link from "next/link";
 import { PageContainer } from "@/components/layout/page-container";
 import { VisualPageHero } from "@/components/layout/visual-page-hero";
 import { MediaPlaceholder } from "@/components/ui/media-placeholder";
-import { getCategoryListingHref } from "@/lib/category-url";
+import { OCCASION_INDEX_PATH, getCategoryListingHref } from "@/lib/category-url";
 import { getSiteContent } from "@/lib/content/site-content";
 import type { ShopCategory } from "@/lib/shop-categories";
 import { toShowcaseCategory } from "@/lib/storefront/mappers";
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   title: "Подаръци по повод",
   description:
     "Открийте подходящ персонализиран подарък за кръщене, сватба, рожден ден, юбилей и други специални моменти.",
-  alternates: { canonical: "/occasions" },
+  alternates: { canonical: OCCASION_INDEX_PATH },
 };
 
 type OccasionWithCount = ShopCategory & {
@@ -144,7 +144,7 @@ export default async function OccasionsPage() {
             </p>
           </div>
           <Link
-            href="/contact"
+            href="/kontakti"
             className="shrink-0 rounded-lg bg-boutique-rose-deep px-6 py-3 text-sm font-semibold text-white transition hover:bg-boutique-ink"
           >
             {content["occasions.cta_button"]}

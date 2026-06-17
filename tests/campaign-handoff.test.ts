@@ -110,7 +110,7 @@ test("campaign handoff redirects configurable products with missing required opt
   const result = evaluateCampaignHandoff(configurableProduct, query);
   assert.equal(result.status, "needs_configuration");
   if (result.status === "needs_configuration") {
-    assert.match(result.redirectPath, /\/products\//);
+    assert.match(result.redirectPath, /\/produkti\//);
     assert.ok(result.missing.length > 0);
   }
 });

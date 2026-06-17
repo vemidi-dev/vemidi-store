@@ -27,12 +27,12 @@ export async function generateMetadata({ params }: EventPageProps): Promise<Meta
   return {
     title: event.title,
     description: event.excerpt,
-    alternates: { canonical: `/events/${slug}` },
+    alternates: { canonical: `/sabitiya/${slug}` },
     openGraph: {
       type: "article",
       title: event.title,
       description: event.excerpt,
-      url: `/events/${slug}`,
+      url: `/sabitiya/${slug}`,
       images: event.image_url ? [{ url: event.image_url, alt: event.title }] : undefined,
     },
   };
@@ -115,14 +115,14 @@ export default async function EventPage({ params }: EventPageProps) {
           Местата за това събитие са запълнени.
         </p>
       ) : hasStarted ? null : (
-        <Link href="/contact" className="inline-flex rounded-full bg-boutique-ink px-7 py-3 text-sm font-semibold text-boutique-paper">Попитай за записване</Link>
+        <Link href="/kontakti" className="inline-flex rounded-full bg-boutique-ink px-7 py-3 text-sm font-semibold text-boutique-paper">Попитай за записване</Link>
       )}
       {relatedEvents.length ? (
         <section>
           <h2 className="font-heading text-2xl text-boutique-ink">Други събития</h2>
           <div className="mt-4 grid gap-3">
             {relatedEvents.map((related) => (
-              <Link key={related.id} href={`/events/${related.slug}`} className="rounded-2xl border border-boutique-line bg-boutique-paper px-5 py-4 font-semibold text-boutique-ink hover:border-boutique-accent">
+              <Link key={related.id} href={`/sabitiya/${related.slug}`} className="rounded-2xl border border-boutique-line bg-boutique-paper px-5 py-4 font-semibold text-boutique-ink hover:border-boutique-accent">
                 {related.title}
               </Link>
             ))}

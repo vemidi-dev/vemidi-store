@@ -44,10 +44,10 @@ test("product metadata includes canonical, Open Graph and Twitter fields", () =>
   assert.ok(metadata.description && metadata.description.length >= 40);
   assert.equal(openGraph.description, metadata.description);
   assert.equal(twitter.description, metadata.description);
-  assert.equal(metadata.alternates?.canonical, "/products/personalizirana-kutiya");
+  assert.equal(metadata.alternates?.canonical, "/produkti/personalizirana-kutiya");
   assert.equal(openGraph.type, "website");
   assert.equal(openGraph.title, product.title);
-  assert.equal(openGraph.url, "/products/personalizirana-kutiya");
+  assert.equal(openGraph.url, "/produkti/personalizirana-kutiya");
   assert.equal(openGraph.siteName, "VeMiDi crafts");
   assert.deepEqual(openGraph.images, [
     { url: product.images[0].src, alt: product.title },

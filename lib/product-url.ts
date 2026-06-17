@@ -1,7 +1,9 @@
 import type { Product } from "@/lib/catalog";
 
+export const PRODUCT_INDEX_PATH = "/produkti";
+
 export function getProductPath(slug: string) {
-  return `/products/${encodeURIComponent(slug)}`;
+  return `${PRODUCT_INDEX_PATH}/${encodeURIComponent(slug)}`;
 }
 
 export function getProductUrl(product: Pick<Product, "slug">, siteUrl?: string) {

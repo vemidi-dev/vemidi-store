@@ -12,6 +12,7 @@ import { getSiteContent } from "@/lib/content/site-content";
 import { toShowcaseCategory } from "@/lib/storefront/mappers";
 import { getStorefrontCatalog } from "@/lib/storefront/repository";
 import { buildHomePageMetadata } from "@/lib/seo/page-metadata";
+import { CATEGORY_INDEX_PATH, OCCASION_INDEX_PATH } from "@/lib/category-url";
 
 export const metadata: Metadata = buildHomePageMetadata();
 
@@ -89,7 +90,7 @@ export default async function HomePage() {
                 </p>
               </div>
               <Link
-                href="/shop"
+                href="/producti"
                 className="inline-flex w-fit items-center gap-3 rounded-xl bg-boutique-rose-deep px-6 py-3.5 text-sm font-semibold text-white shadow-boutique-sm transition hover:-translate-y-0.5 hover:bg-boutique-ink hover:shadow-boutique"
               >
                 {content["home.featured_button"]} <span aria-hidden>→</span>
@@ -121,7 +122,7 @@ export default async function HomePage() {
               />
             ))}
             <Link
-              href="/occasions"
+              href={OCCASION_INDEX_PATH}
               aria-label="Виж всички поводи"
               className="group col-span-2 flex min-h-20 items-center justify-center gap-3 rounded-xl border border-boutique-sage/30 bg-boutique-warm/55 px-4 text-center transition hover:-translate-y-1 hover:border-boutique-sage-deep/45 hover:bg-boutique-warm sm:col-span-1 sm:min-h-36 sm:flex-col sm:gap-0"
             >
@@ -164,7 +165,7 @@ export default async function HomePage() {
           ) : null}
           <div className="mt-12 text-center">
             <Link
-              href="/categories"
+              href={CATEGORY_INDEX_PATH}
               className="inline-flex rounded-xl bg-boutique-rose-deep px-7 py-3.5 text-sm font-semibold text-white shadow-boutique-sm transition hover:-translate-y-0.5 hover:bg-boutique-ink"
             >
               Виж всички продукти

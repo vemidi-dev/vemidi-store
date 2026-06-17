@@ -22,7 +22,7 @@ const EVENT_GALLERY_PROFILE = "event_gallery" as const;
 
 function done(kind: "success" | "error", message: string): never {
   revalidatePath("/admin");
-  revalidatePath("/events");
+  revalidatePath("/sabitiya");
   redirect(`/admin?tab=events&${kind}=${encodeURIComponent(message)}`);
 }
 

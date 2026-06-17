@@ -11,23 +11,63 @@ function params(input: Record<string, string>): URLSearchParams {
   return new URLSearchParams(input);
 }
 
-test("bare /products redirects to /shop", () => {
+test("bare /products redirects to /producti", () => {
   assert.deepEqual(resolveSeoRedirectTarget("/products", new URLSearchParams()), {
-    pathname: "/shop",
+    pathname: "/producti",
   });
+});
+
+test("legacy /shop redirects to /producti", () => {
+  assert.deepEqual(resolveSeoRedirectTarget("/shop", new URLSearchParams()), {
+    pathname: "/producti",
+  });
+});
+
+test("legacy product detail path redirects to Bulgarian product path", () => {
+  assert.deepEqual(
+    resolveSeoRedirectTarget("/products/testov-produkt", new URLSearchParams()),
+    { pathname: "/produkti/testov-produkt" },
+  );
+});
+
+test("legacy category and occasion hubs redirect to Bulgarian paths", () => {
+  assert.deepEqual(
+    resolveSeoRedirectTarget("/categories", new URLSearchParams()),
+    { pathname: "/categorii" },
+  );
+  assert.deepEqual(
+    resolveSeoRedirectTarget("/occasions", new URLSearchParams()),
+    { pathname: "/povodi" },
+  );
+});
+
+test("legacy static pages redirect to Bulgarian paths", () => {
+  assert.deepEqual(resolveSeoRedirectTarget("/about", new URLSearchParams()), {
+    pathname: "/za-nas",
+  });
+  assert.deepEqual(resolveSeoRedirectTarget("/contact", new URLSearchParams()), {
+    pathname: "/kontakti",
+  });
+  assert.deepEqual(resolveSeoRedirectTarget("/events", new URLSearchParams()), {
+    pathname: "/sabitiya",
+  });
+  assert.deepEqual(
+    resolveSeoRedirectTarget("/events/rabotilnica", new URLSearchParams()),
+    { pathname: "/sabitiya/rabotilnica" },
+  );
 });
 
 test("/products with sole product category param redirects to category page", () => {
   assert.deepEqual(
     resolveSeoRedirectTarget("/products", params({ product: "kutii" })),
-    { pathname: "/categories/kutii" },
+    { pathname: "/categorii/kutii" },
   );
 });
 
 test("/products with sole occasion param redirects to occasion page", () => {
   assert.deepEqual(
     resolveSeoRedirectTarget("/products", params({ occasion: "svatba" })),
-    { pathname: "/occasions/svatba" },
+    { pathname: "/povodi/svatba" },
   );
 });
 
@@ -41,39 +81,39 @@ test("/products with legacy category param stays on RSC route", () => {
 test("/shop sole product param redirects to category page", () => {
   assert.deepEqual(
     resolveSeoRedirectTarget("/shop", params({ product: "kutii" })),
-    { pathname: "/categories/kutii" },
+    { pathname: "/categorii/kutii" },
   );
 });
 
 test("/shop sole legacy product param redirects to canonical category page", () => {
   assert.deepEqual(
     resolveSeoRedirectTarget("/shop", params({ product: "plik-za-pari" })),
-    { pathname: "/categories/plikove-za-pari" },
+    { pathname: "/categorii/plikove-za-pari" },
   );
 });
 
 test("/shop sole occasion param redirects to occasion page", () => {
   assert.deepEqual(
     resolveSeoRedirectTarget("/shop", params({ occasion: "svatba" })),
-    { pathname: "/occasions/svatba" },
+    { pathname: "/povodi/svatba" },
   );
 });
 
 test("/shop legacy category param stays on RSC route", () => {
-  assert.equal(
+  assert.deepEqual(
     resolveSeoRedirectTarget("/shop", params({ category: "kutii" })),
-    null,
+    { pathname: "/producti", search: "category=kutii" },
   );
 });
 
-test("faceted shop URL is not redirected by middleware", () => {
-  assert.equal(
+test("faceted shop URL redirects to the Bulgarian catalog path", () => {
+  assert.deepEqual(
     resolveSeoRedirectTarget("/shop", params({ product: "kutii", sort: "featured" })),
-    null,
+    { pathname: "/producti", search: "product=kutii&sort=featured" },
   );
-  assert.equal(
+  assert.deepEqual(
     resolveSeoRedirectTarget("/shop", params({ q: "test" })),
-    null,
+    { pathname: "/producti", search: "q=test" },
   );
 });
 
@@ -97,28 +137,28 @@ test("isValidRedirectSlug rejects empty, spaced, encoded-space and invalid slugs
 });
 
 test("invalid slug query values are not redirected", () => {
-  assert.equal(
+  assert.deepEqual(
     resolveSeoRedirectTarget("/shop", params({ product: "sakndinavski muh" })),
-    null,
+    { pathname: "/producti", search: "product=sakndinavski+muh" },
   );
-  assert.equal(
+  assert.deepEqual(
     resolveSeoRedirectTarget("/shop", params({ product: "foo/bar" })),
-    null,
+    { pathname: "/producti", search: "product=foo%2Fbar" },
   );
-  assert.equal(
+  assert.deepEqual(
     resolveSeoRedirectTarget("/shop", params({ occasion: "Svatba" })),
-    null,
+    { pathname: "/producti", search: "occasion=Svatba" },
   );
-  assert.equal(
+  assert.deepEqual(
     resolveSeoRedirectTarget("/shop", params({ product: "" })),
-    null,
+    { pathname: "/producti", search: "product=" },
   );
-  assert.equal(
+  assert.deepEqual(
     resolveSeoRedirectTarget(
       "/shop",
       new URLSearchParams("product=sakndinavski%20muh"),
     ),
-    null,
+    { pathname: "/producti", search: "product=sakndinavski+muh" },
   );
 });
 

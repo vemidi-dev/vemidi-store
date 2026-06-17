@@ -252,7 +252,7 @@ export function resolveProductsPageRedirect(
     return occasionRedirect;
   }
 
-  return `/shop${buildShopQueryString(parsed)}`;
+  return `/producti${buildShopQueryString(parsed)}`;
 }
 
 export function buildShopMetadata(
@@ -268,8 +268,8 @@ export function buildShopMetadata(
   }
 
   if (isShopFaceted(params, parsed, categories)) {
-    return buildFacetedNoindexMetadata("/shop", SHOP_METADATA_BASE);
+    return buildFacetedNoindexMetadata("/producti", SHOP_METADATA_BASE);
   }
 
-  return buildIndexableMetadata("/shop", SHOP_METADATA_BASE);
+  return buildIndexableMetadata("/producti", SHOP_METADATA_BASE);
 }

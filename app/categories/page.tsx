@@ -14,7 +14,7 @@ import {
   getCategoryFamilySlugs,
   getCategoryProductCount,
 } from "@/lib/category-hierarchy";
-import { getCategoryListingHref } from "@/lib/category-url";
+import { CATEGORY_INDEX_PATH, OCCASION_INDEX_PATH, getCategoryListingHref } from "@/lib/category-url";
 import { toShowcaseCategory } from "@/lib/storefront/mappers";
 import { getStorefrontCatalog } from "@/lib/storefront/repository";
 
@@ -22,13 +22,13 @@ export const metadata: Metadata = {
   title: "Категории",
   description:
     "Разгледайте ръчно изработените подаръци на VeMiDi по вид продукт и по повод.",
-  alternates: { canonical: "/categories" },
+  alternates: { canonical: CATEGORY_INDEX_PATH },
   openGraph: {
     type: "website",
     title: "Категории",
     description:
       "Разгледайте ръчно изработените подаръци на VeMiDi по вид продукт и по повод.",
-    url: "/categories",
+    url: CATEGORY_INDEX_PATH,
   },
   twitter: {
     card: "summary_large_image",
@@ -196,7 +196,7 @@ export default async function CategoriesPage() {
                 </h2>
               </div>
               <Link
-                href="/occasions"
+                href={OCCASION_INDEX_PATH}
                 className="text-sm font-semibold text-boutique-sage-deep underline-offset-4 hover:underline"
               >
                 Всички поводи →
@@ -225,7 +225,7 @@ export default async function CategoriesPage() {
                 {content["categories.products_cta_text"]}
               </p>
               <Link
-                href="/shop"
+                href="/producti"
                 className="mt-4 inline-flex rounded-lg bg-boutique-sage-deep px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-boutique-ink"
               >
                 {content["categories.products_cta_button"]} →
@@ -245,7 +245,7 @@ export default async function CategoriesPage() {
                 {content["categories.custom_cta_text"]}
               </p>
               <Link
-                href="/contact"
+                href="/kontakti"
                 className="mt-4 inline-flex rounded-lg border border-boutique-sage-deep px-5 py-2.5 text-sm font-semibold text-boutique-sage-deep transition hover:bg-boutique-sage-deep hover:text-white"
               >
                 {content["categories.custom_cta_button"]} →

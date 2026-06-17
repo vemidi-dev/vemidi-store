@@ -52,7 +52,7 @@ function UpcomingEventCard({ event }: { event: EventRow }) {
       </div>
       <div>
         <h3 className="font-heading text-lg leading-snug text-boutique-ink">
-          <Link href={`/events/${event.slug}`} className="hover:text-boutique-sage-deep">
+          <Link href={`/sabitiya/${event.slug}`} className="hover:text-boutique-sage-deep">
             {event.title}
           </Link>
         </h3>
@@ -75,7 +75,7 @@ function PastEventCard({ event }: { event: EventRow }) {
   return (
     <article>
       <Link
-        href={`/events/${event.slug}`}
+        href={`/sabitiya/${event.slug}`}
         className="group block overflow-hidden rounded-lg border border-boutique-line/80 bg-white"
       >
         <div className="aspect-[4/3] overflow-hidden bg-boutique-warm">
@@ -153,7 +153,7 @@ export function HomeContentGrid({
             <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
               <h2 className="font-heading text-3xl tracking-tight text-boutique-ink md:text-4xl">Предстоящи събития</h2>
               <Link
-                href="/events"
+                href="/sabitiya"
                 className="text-xs font-semibold text-boutique-sage-deep underline-offset-4 hover:underline"
               >
                 Виж всички събития

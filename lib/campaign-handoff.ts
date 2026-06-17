@@ -376,7 +376,7 @@ export function buildCampaignProductRedirectPath(
     }
   }
 
-  return `/products/${encodeURIComponent(product.slug)}${
+  return `/produkti/${encodeURIComponent(product.slug)}${
     params.size ? `?${params.toString()}` : ""
   }`;
 }

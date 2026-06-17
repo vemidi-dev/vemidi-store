@@ -89,8 +89,8 @@ export async function registerForEvent(
     return { ok: false, message: mapRegistrationError(error.message) };
   }
 
-  revalidatePath("/events");
-  revalidatePath(`/events/${eventSlug}`);
+  revalidatePath("/sabitiya");
+  revalidatePath(`/sabitiya/${eventSlug}`);
   revalidatePath("/admin");
 
   return {

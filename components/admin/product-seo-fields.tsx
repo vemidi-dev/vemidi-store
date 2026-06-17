@@ -72,7 +72,7 @@ export function ProductSeoFields({
         <p className={helperClassName}>
           Краен адрес:{" "}
           <span className="font-mono text-boutique-ink">
-            /products/{slug || "primерен-slug"}
+            /produkti/{slug || "primерен-slug"}
           </span>
         </p>
       </label>

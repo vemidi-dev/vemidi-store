@@ -36,15 +36,15 @@ const categories: StorefrontCategory[] = [
   },
 ];
 
-test("bare shop is indexable with canonical /shop", () => {
+test("bare shop is indexable with canonical /producti", () => {
   const metadata = buildShopMetadata({}, categories);
-  assert.equal(metadata.alternates?.canonical, "/shop");
+  assert.equal(metadata.alternates?.canonical, "/producti");
   assert.deepEqual(metadata.robots, { index: true, follow: true });
 });
 
-test("shop search query is noindex with canonical /shop", () => {
+test("shop search query is noindex with canonical /producti", () => {
   const metadata = buildShopMetadata({ q: "подарък" }, categories);
-  assert.equal(metadata.alternates?.canonical, "/shop");
+  assert.equal(metadata.alternates?.canonical, "/producti");
   assert.deepEqual(metadata.robots, { index: false, follow: true });
 });
 
@@ -57,7 +57,7 @@ test("empty shop query params are noindex", () => {
       true,
       JSON.stringify(params),
     );
-    assert.equal(metadata.alternates?.canonical, "/shop");
+    assert.equal(metadata.alternates?.canonical, "/producti");
     assert.deepEqual(metadata.robots, { index: false, follow: true });
   }
 });
@@ -68,25 +68,25 @@ test("valid sole occasion selector is not faceted because it redirects", () => {
   assert.equal(isShopFaceted(params, parsed, categories), false);
   assert.equal(
     resolveShopOccasionRedirect(params, parsed, categories),
-    "/occasions/svatba",
+    "/povodi/svatba",
   );
 });
 
-test("only valid occasion redirects to /occasions/{slug}", () => {
+test("only valid occasion redirects to /povodi/{slug}", () => {
   const params = { occasion: "svatba" };
   const parsed = parseShopSearchParams(params);
   assert.equal(
     resolveShopOccasionRedirect(params, parsed, categories),
-    "/occasions/svatba",
+    "/povodi/svatba",
   );
 });
 
-test("legacy occasion category redirects to /occasions/{slug}", () => {
+test("legacy occasion category redirects to /povodi/{slug}", () => {
   const params = { category: "svatba" };
   const parsed = parseShopSearchParams(params);
   assert.equal(
     resolveShopOccasionRedirect(params, parsed, categories),
-    "/occasions/svatba",
+    "/povodi/svatba",
   );
 });
 
@@ -139,29 +139,29 @@ test("legacy product category slug resolves to canonical category path", () => {
   const parsed = parseShopSearchParams(params);
   assert.equal(
     resolveShopProductCategoryRedirect(params, parsed, legacyCategories),
-    "/categories/plikove-za-pari",
+    "/categorii/plikove-za-pari",
   );
   assert.equal(
     resolveProductsPageRedirect(params, legacyCategories),
-    "/categories/plikove-za-pari",
+    "/categorii/plikove-za-pari",
   );
 });
 
-test("only valid product category redirects to /categories/{slug}", () => {
+test("only valid product category redirects to /categorii/{slug}", () => {
   const params = { product: "kutii" };
   const parsed = parseShopSearchParams(params);
   assert.equal(
     resolveShopProductCategoryRedirect(params, parsed, categories),
-    "/categories/kutii",
+    "/categorii/kutii",
   );
 });
 
-test("legacy product category param redirects to /categories/{slug}", () => {
+test("legacy product category param redirects to /categorii/{slug}", () => {
   const params = { category: "kutii" };
   const parsed = parseShopSearchParams(params);
   assert.equal(
     resolveShopProductCategoryRedirect(params, parsed, categories),
-    "/categories/kutii",
+    "/categorii/kutii",
   );
 });
 
@@ -192,27 +192,27 @@ test("legacy occasion category is not treated as product redirect", () => {
   assert.equal(resolveShopProductCategoryRedirect(params, parsed, categories), null);
 });
 
-test("products page redirects product categories to /categories/{slug}", () => {
+test("products page redirects product categories to /categorii/{slug}", () => {
   assert.equal(
     resolveProductsPageRedirect({ product: "kutii" }, categories),
-    "/categories/kutii",
+    "/categorii/kutii",
   );
 });
 
-test("products page redirects legacy product categories to /categories/{slug}", () => {
+test("products page redirects legacy product categories to /categorii/{slug}", () => {
   assert.equal(
     resolveProductsPageRedirect({ category: "kutii" }, categories),
-    "/categories/kutii",
+    "/categorii/kutii",
   );
 });
 
-test("products page redirects occasion filters to /occasions/{slug}", () => {
+test("products page redirects occasion filters to /povodi/{slug}", () => {
   assert.equal(
     resolveProductsPageRedirect({ occasion: "svatba" }, categories),
-    "/occasions/svatba",
+    "/povodi/svatba",
   );
 });
 
-test("products page bare redirect goes to /shop", () => {
-  assert.equal(resolveProductsPageRedirect({}, categories), "/shop");
+test("products page bare redirect goes to /producti", () => {
+  assert.equal(resolveProductsPageRedirect({}, categories), "/producti");
 });

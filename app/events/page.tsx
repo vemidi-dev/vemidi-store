@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   title: "Творчески работилници за деца",
   description:
     "Предстоящи творчески работилници за деца и снимки от минали събития в ателието на VeMiDi.",
-  alternates: { canonical: "/events" },
+  alternates: { canonical: "/sabitiya" },
 };
 
 function getEventTime(event: EventRow) {
@@ -53,7 +53,7 @@ function UpcomingEvents({ events }: { events: EventRow[] }) {
               key={event.id}
               className="overflow-hidden rounded-3xl border border-boutique-line bg-white shadow-boutique-sm"
             >
-              <Link href={`/events/${event.slug}`} className="block aspect-[16/10]">
+              <Link href={`/sabitiya/${event.slug}`} className="block aspect-[16/10]">
                 <ContentImage
                   src={event.image_url}
                   alt={event.title}
@@ -65,7 +65,7 @@ function UpcomingEvents({ events }: { events: EventRow[] }) {
                   {formatEventDate(event.starts_at)}
                 </p>
                 <h3 className="mt-3 font-heading text-3xl text-boutique-ink">
-                  <Link href={`/events/${event.slug}`}>{event.title}</Link>
+                  <Link href={`/sabitiya/${event.slug}`}>{event.title}</Link>
                 </h3>
                 <p className="mt-3 text-sm leading-6 text-boutique-muted">{event.excerpt}</p>
                 <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm text-boutique-muted">
@@ -77,7 +77,7 @@ function UpcomingEvents({ events }: { events: EventRow[] }) {
                   ) : null}
                 </div>
                 <Link
-                  href={`/events/${event.slug}`}
+                  href={`/sabitiya/${event.slug}`}
                   className="mt-6 inline-flex rounded-lg bg-boutique-rose-deep px-6 py-3 text-sm font-semibold text-white transition hover:bg-boutique-ink"
                 >
                   Виж подробности
@@ -113,7 +113,7 @@ function PastEvents({ events }: { events: EventRow[] }) {
             {events.map((event) => (
               <Link
                 key={event.id}
-                href={`/events/${event.slug}`}
+                href={`/sabitiya/${event.slug}`}
                 className="group overflow-hidden rounded-2xl border border-boutique-line bg-white shadow-boutique-sm transition hover:-translate-y-1 hover:shadow-boutique"
               >
                 <div className="aspect-[4/3] overflow-hidden">

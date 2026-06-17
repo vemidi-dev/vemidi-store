@@ -2,26 +2,27 @@ import Image from "next/image";
 import Link from "next/link";
 
 import type { SiteContent } from "@/lib/content/site-content";
+import { CATEGORY_INDEX_PATH, OCCASION_INDEX_PATH } from "@/lib/category-url";
 
 export function HomeHero({ content }: { content: SiteContent }) {
   const quickPaths = [
     {
-      href: "/occasions",
+      href: OCCASION_INDEX_PATH,
       icon: "♡",
       title: content["home.quick_occasions"],
     },
     {
-      href: "/categories",
+      href: CATEGORY_INDEX_PATH,
       icon: "◇",
       title: content["home.quick_categories"],
     },
     {
-      href: "/shop?personalization=only#product-grid",
+      href: "/producti?personalization=only#product-grid",
       icon: "✎",
       title: content["home.quick_personalized"],
     },
     {
-      href: "/events",
+      href: "/sabitiya",
       icon: "✦",
       title: content["home.quick_events"],
     },

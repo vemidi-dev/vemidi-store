@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   title: "Контакти",
   description:
     "Контакти, социални профили и данни за търговеца VeMiDi crafts.",
-  alternates: { canonical: "/contact" },
+  alternates: { canonical: "/kontakti" },
 };
 
 function ContactIcon({

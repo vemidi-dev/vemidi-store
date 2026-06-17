@@ -32,7 +32,7 @@ test("occasion metadata is indexable when products exist", () => {
 
   assert.equal(metadata.title, "Сватба");
   assert.equal(metadata.description, "Подаръци за сватбен ден.");
-  assert.equal(metadata.alternates?.canonical, "/occasions/svatba");
+  assert.equal(metadata.alternates?.canonical, "/povodi/svatba");
   assert.deepEqual(metadata.robots, { index: true, follow: true });
   assert.equal(metadata.openGraph?.title, "Сватба");
   assert.equal(metadata.twitter?.title, "Сватба");
@@ -55,7 +55,7 @@ test("filtered occasion metadata is noindex with the clean canonical", () => {
   });
 
   assert.deepEqual(metadata.robots, { index: false, follow: true });
-  assert.equal(metadata.alternates?.canonical, "/occasions/svatba");
+  assert.equal(metadata.alternates?.canonical, "/povodi/svatba");
 });
 
 test("invalid occasion slug is absent from catalog lookup used by page notFound", () => {

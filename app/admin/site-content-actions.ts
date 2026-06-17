@@ -66,13 +66,15 @@ export async function updateSiteContent(formData: FormData) {
   }
 
   revalidatePath("/");
-  revalidatePath("/about");
+  revalidatePath("/za-nas");
   revalidatePath("/cart");
   revalidatePath("/checkout");
-  revalidatePath("/contact");
-  revalidatePath("/shop");
-  revalidatePath("/categories");
-  revalidatePath("/occasions");
+  revalidatePath("/kontakti");
+  revalidatePath("/producti");
+  revalidatePath("/categorii");
+  revalidatePath("/categorii");
+  revalidatePath("/povodi");
+  revalidatePath("/povodi");
   revalidatePath("/delivery");
   revalidatePath("/returns");
   revalidatePath("/terms");

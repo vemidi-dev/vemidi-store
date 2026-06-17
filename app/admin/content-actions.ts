@@ -30,7 +30,7 @@ const config = {
   events: {
     table: "events",
     folder: "events" as const,
-    publicPath: "/events",
+    publicPath: "/sabitiya",
     singular: "Събитието",
   },
 };

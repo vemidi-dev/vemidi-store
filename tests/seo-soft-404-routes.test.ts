@@ -39,7 +39,7 @@ test("product UUID route param is recognized for legacy redirect path", () => {
 });
 
 test("categories hub exports page-level Open Graph", () => {
-  assert.equal(categoriesHubMetadata.openGraph?.url, "/categories");
+  assert.equal(categoriesHubMetadata.openGraph?.url, "/categorii");
   assert.equal(categoriesHubMetadata.openGraph?.title, "Категории");
-  assert.equal(categoriesHubMetadata.alternates?.canonical, "/categories");
+  assert.equal(categoriesHubMetadata.alternates?.canonical, "/categorii");
 });

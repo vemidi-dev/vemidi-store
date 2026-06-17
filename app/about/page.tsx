@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   title: "За нас",
   description:
     "VeMiDi Crafts създава персонализирани подаръци и декорации от дърво с лазерно изрязване, гравиране и ръчна довършителна работа.",
-  alternates: { canonical: "/about" },
+  alternates: { canonical: "/za-nas" },
 };
 
 export default async function AboutPage() {
@@ -43,7 +43,7 @@ export default async function AboutPage() {
         <PageContainer className="grid items-center gap-10 lg:grid-cols-2 lg:gap-14">
           <div className="relative aspect-[4/3] overflow-hidden rounded-3xl border border-boutique-line bg-boutique-paper shadow-boutique-sm">
             <Image
-              src="/assets/about.png"
+              src="/assets/za-nas.png"
               alt="Ръчно изработени персонализирани подаръци в ателието VeMiDi Crafts"
               fill
               sizes="(max-width: 1024px) 100vw, 50vw"
@@ -93,7 +93,7 @@ export default async function AboutPage() {
             {content["about.closing_tagline"]}
           </p>
           <Link
-            href="/shop"
+            href="/producti"
             className="mt-8 inline-flex rounded-full bg-boutique-ink px-8 py-3 text-sm font-semibold text-boutique-paper transition hover:bg-boutique-accent"
           >
             {content["about.cta_button"]}

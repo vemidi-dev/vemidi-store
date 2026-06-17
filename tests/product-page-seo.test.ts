@@ -126,7 +126,7 @@ test("product breadcrumb without category falls back to shop path", () => {
 
   assert.deepEqual(
     items.map((item) => item.path),
-    ["/", "/shop", "/products/personalizirana-kutiya"],
+    ["/", "/producti", "/produkti/personalizirana-kutiya"],
   );
 });
 
@@ -144,6 +144,6 @@ test("visible breadcrumb items match BreadcrumbList schema names", () => {
   );
   assert.equal(
     schema.itemListElement.at(-1)?.item,
-    "https://vemidi-store.vercel.app/products/personalizirana-kutiya",
+    "https://vemidi-store.vercel.app/produkti/personalizirana-kutiya",
   );
 });

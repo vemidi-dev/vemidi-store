@@ -16,6 +16,13 @@ import {
 import { getStorefrontCatalog } from "@/lib/storefront/repository";
 import { getSiteUrl } from "@/lib/site-url";
 import { getPublishedBlogPosts, getPublishedEvents } from "@/lib/content/repository";
+import {
+  CATEGORY_INDEX_PATH,
+  OCCASION_INDEX_PATH,
+  getCategoryPath,
+  getOccasionPath,
+} from "@/lib/category-url";
+import { getProductPath } from "@/lib/product-url";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const siteUrl = getSiteUrl();
@@ -40,13 +47,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const staticRoutes = [
     { path: "", priority: 1, changeFrequency: "weekly" as const },
-    { path: "/shop", priority: 0.9, changeFrequency: "daily" as const },
-    { path: "/categories", priority: 0.8, changeFrequency: "weekly" as const },
+    { path: "/producti", priority: 0.9, changeFrequency: "daily" as const },
+    { path: CATEGORY_INDEX_PATH, priority: 0.8, changeFrequency: "weekly" as const },
     { path: "/blog", priority: 0.6, changeFrequency: "weekly" as const },
-    { path: "/events", priority: 0.6, changeFrequency: "weekly" as const },
-    { path: "/occasions", priority: 0.7, changeFrequency: "weekly" as const },
-    { path: "/about", priority: 0.5, changeFrequency: "monthly" as const },
-    { path: "/contact", priority: 0.5, changeFrequency: "monthly" as const },
+    { path: "/sabitiya", priority: 0.6, changeFrequency: "weekly" as const },
+    { path: OCCASION_INDEX_PATH, priority: 0.7, changeFrequency: "weekly" as const },
+    { path: "/za-nas", priority: 0.5, changeFrequency: "monthly" as const },
+    { path: "/kontakti", priority: 0.5, changeFrequency: "monthly" as const },
     { path: "/delivery", priority: 0.4, changeFrequency: "monthly" as const },
     { path: "/returns", priority: 0.3, changeFrequency: "monthly" as const },
     { path: "/terms", priority: 0.3, changeFrequency: "monthly" as const },
@@ -65,7 +72,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ),
     ...products.map((product) =>
       buildSitemapEntry(
-        new URL(`/products/${product.slug}`, siteUrl).toString(),
+        new URL(getProductPath(product.slug), siteUrl).toString(),
         resolveProductLastModified(product),
         "weekly",
         0.7,
@@ -73,7 +80,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ),
     ...indexableCategories.map((category) =>
       buildSitemapEntry(
-        new URL(`/categories/${category.slug}`, siteUrl).toString(),
+        new URL(getCategoryPath(category.slug), siteUrl).toString(),
         resolveCategoryLastModified(category, categoryLastModifiedBySlug),
         "weekly",
         category.parent_id ? 0.6 : 0.7,
@@ -81,7 +88,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ),
     ...indexableOccasions.map((occasion) =>
       buildSitemapEntry(
-        new URL(`/occasions/${occasion.slug}`, siteUrl).toString(),
+        new URL(getOccasionPath(occasion.slug), siteUrl).toString(),
         resolveCategoryLastModified(occasion, categoryLastModifiedBySlug),
         "weekly",
         0.7,
@@ -97,7 +104,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ),
     ...events.map((event) =>
       buildSitemapEntry(
-        new URL(`/events/${event.slug}`, siteUrl).toString(),
+        new URL(`/sabitiya/${event.slug}`, siteUrl).toString(),
         parseSitemapTimestamp(event.updated_at),
         "weekly",
         0.6,

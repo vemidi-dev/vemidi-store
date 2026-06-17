@@ -159,7 +159,7 @@ export function HomeAtelier({ content }: { content: SiteContent }) {
             </p>
             <Link
               className="mt-8 inline-flex rounded-lg bg-boutique-rose-deep px-6 py-3 text-sm font-semibold text-white transition hover:bg-boutique-ink"
-              href="/about"
+              href="/za-nas"
             >
               {content["home.atelier_button"]}
             </Link>

@@ -30,7 +30,7 @@ export function HeaderActions() {
 
   return (
     <div className="flex items-center gap-2">
-      <form action="/shop" className="hidden items-center lg:flex">
+      <form action="/producti" className="hidden items-center lg:flex">
         <label className="relative">
           <span className="sr-only">Търсене на продукт</span>
           <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-boutique-muted">
@@ -46,7 +46,7 @@ export function HeaderActions() {
       </form>
 
       <Link
-        href="/shop#product-grid"
+        href="/producti#product-grid"
         aria-label="Търсене на продукт"
         title="Търсене"
         className={`${iconButtonClass} hidden min-[360px]:grid lg:hidden`}

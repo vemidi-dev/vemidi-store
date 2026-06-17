@@ -253,7 +253,7 @@ export default async function ProductDetailPage({
                   <p className="leading-6 text-boutique-muted">
                     1–5 работни дни в зависимост от натоварването. Ако ви е нужен друг срок,
                     <Link
-                      href="/contact"
+                      href="/kontakti"
                       className="ml-1 font-semibold text-boutique-sage-deep underline-offset-4 hover:underline"
                     >
                       свържете се с нас
@@ -304,7 +304,7 @@ export default async function ProductDetailPage({
                 </h2>
               </div>
               <Link
-                href="/shop"
+                href="/producti"
                 className="hidden text-sm font-semibold text-boutique-sage-deep underline-offset-4 hover:underline sm:inline-flex"
               >
                 Виж всички

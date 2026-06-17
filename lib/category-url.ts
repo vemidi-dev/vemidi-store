@@ -1,11 +1,14 @@
 import { resolveCanonicalProductCategorySlug } from "@/lib/category-slug-aliases";
 
+export const CATEGORY_INDEX_PATH = "/categorii";
+export const OCCASION_INDEX_PATH = "/povodi";
+
 export function getCategoryPath(slug: string) {
-  return `/categories/${encodeURIComponent(resolveCanonicalProductCategorySlug(slug))}`;
+  return `${CATEGORY_INDEX_PATH}/${encodeURIComponent(resolveCanonicalProductCategorySlug(slug))}`;
 }
 
 export function getOccasionPath(slug: string) {
-  return `/occasions/${encodeURIComponent(slug)}`;
+  return `${OCCASION_INDEX_PATH}/${encodeURIComponent(slug)}`;
 }
 
 export function getCategoryListingHref(category: {

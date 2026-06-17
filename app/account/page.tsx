@@ -53,7 +53,7 @@ export default async function AccountPage() {
                 Към поръчката
               </Link>
               <Link
-                href="/shop"
+                href="/producti"
                 className="rounded-full border border-boutique-line px-6 py-3 text-xs font-semibold uppercase tracking-wider text-boutique-ink transition hover:border-boutique-accent/40"
               >
                 Магазин

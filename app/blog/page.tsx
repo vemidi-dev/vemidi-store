@@ -295,7 +295,7 @@ export default async function BlogPage({ searchParams }: Props) {
                           </Link>
                           {getCtaHref(post) && post.cta_link_label ? (
                             <Link
-                              href={getCtaHref(post) ?? "/shop"}
+                              href={getCtaHref(post) ?? "/producti"}
                               className="text-boutique-sage-deep"
                             >
                               {post.cta_link_label} →
@@ -324,7 +324,7 @@ export default async function BlogPage({ searchParams }: Props) {
                     Разгледайте нашите персонализирани предложения за всеки повод.
                   </p>
                   <Link
-                    href="/shop"
+                    href="/producti"
                     className="mt-5 inline-flex rounded-lg bg-boutique-sage-deep px-5 py-2.5 text-sm font-semibold text-white"
                   >
                     Към магазина →

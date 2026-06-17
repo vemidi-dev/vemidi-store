@@ -1,4 +1,9 @@
-import { getCategoryPath, getOccasionPath } from "@/lib/category-url";
+import {
+  CATEGORY_INDEX_PATH,
+  OCCASION_INDEX_PATH,
+  getCategoryPath,
+  getOccasionPath,
+} from "@/lib/category-url";
 import { getChildCategories } from "@/lib/category-hierarchy";
 import { getProductPath } from "@/lib/product-url";
 import type { StorefrontCategory } from "@/lib/storefront/types";
@@ -58,7 +63,7 @@ export function buildCategoryBreadcrumbItems(
 
   return dedupeBreadcrumbItems([
     buildHomeBreadcrumb(),
-    { name: "Категории", path: "/categories" },
+    { name: "Категории", path: CATEGORY_INDEX_PATH },
     ...(parent
       ? [{ name: parent.name, path: getCategoryPath(parent.slug) }]
       : []),
@@ -100,7 +105,7 @@ export function buildProductBreadcrumbItems(
   if (!category) {
     return dedupeBreadcrumbItems([
       buildHomeBreadcrumb(),
-      { name: "Продукти", path: "/shop" },
+      { name: "Продукти", path: "/producti" },
       { name: product.title, path: getProductPath(product.slug) },
     ]);
   }
@@ -111,7 +116,7 @@ export function buildProductBreadcrumbItems(
 
   return dedupeBreadcrumbItems([
     buildHomeBreadcrumb(),
-    { name: "Категории", path: "/categories" },
+    { name: "Категории", path: CATEGORY_INDEX_PATH },
     ...(parent
       ? [{ name: parent.name, path: getCategoryPath(parent.slug) }]
       : []),
@@ -125,7 +130,7 @@ export function buildOccasionBreadcrumbItems(
 ): BreadcrumbItem[] {
   return dedupeBreadcrumbItems([
     buildHomeBreadcrumb(),
-    { name: "По повод", path: "/occasions" },
+    { name: "По повод", path: OCCASION_INDEX_PATH },
     { name: occasion.name, path: getOccasionPath(occasion.slug) },
   ]);
 }
@@ -147,8 +152,8 @@ export function buildEventBreadcrumbItems(event: {
 }): BreadcrumbItem[] {
   return dedupeBreadcrumbItems([
     buildHomeBreadcrumb(),
-    { name: "Събития", path: "/events" },
-    { name: event.title, path: `/events/${event.slug}` },
+    { name: "Събития", path: "/sabitiya" },
+    { name: event.title, path: `/sabitiya/${event.slug}` },
   ]);
 }
 

@@ -19,6 +19,7 @@ async function client() {
 function done(kind: "success" | "error", message: string): never {
   revalidatePath("/admin");
   revalidatePath("/products/[slug]", "page");
+  revalidatePath("/produkti/[slug]", "page");
   redirect(`/admin?tab=wishes&${kind}=${encodeURIComponent(message)}`);
 }
 

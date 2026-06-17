@@ -7,6 +7,7 @@ import {
   getProductCardCtaLabel,
   resolveProductCardStatusLabel,
 } from "@/lib/product-card";
+import { getProductPath } from "@/lib/product-url";
 
 type ProductCardProps = {
   product: Product;
@@ -51,7 +52,7 @@ export function ProductCard({ product, variant = "default" }: ProductCardProps) 
         ) : null}
 
         <Link
-          href={`/products/${product.slug}`}
+          href={getProductPath(product.slug)}
           className={`block focus:outline-none ${statusLabel && !compact ? "mt-2" : compact && statusLabel ? "sm:mt-2" : ""}`}
         >
           <h2
@@ -78,7 +79,7 @@ export function ProductCard({ product, variant = "default" }: ProductCardProps) 
               {product.availabilityLabel}
             </p>
           ) : (
-            <Link href={`/products/${product.slug}`} className={ctaClassName}>
+            <Link href={getProductPath(product.slug)} className={ctaClassName}>
               {compact ? `${ctaLabel} →` : ctaLabel}
             </Link>
           )}

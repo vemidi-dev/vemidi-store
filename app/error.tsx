@@ -38,7 +38,7 @@ export default function GlobalError({
               Опитай отново
             </button>
             <Link
-              href="/shop"
+              href="/producti"
               className="rounded-full border border-boutique-line px-7 py-3 text-sm font-semibold text-boutique-ink transition hover:border-boutique-accent"
             >
               Към продуктите

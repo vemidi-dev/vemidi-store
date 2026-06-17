@@ -90,7 +90,7 @@ test("empty category metadata is noindex but keeps canonical", () => {
   });
 
   assert.deepEqual(metadata.robots, { index: false, follow: true });
-  assert.equal(metadata.alternates?.canonical, "/categories/prazna");
+  assert.equal(metadata.alternates?.canonical, "/categorii/prazna");
   assert.equal(metadata.twitter?.title, empty.name);
 });
 
@@ -105,5 +105,5 @@ test("filtered category metadata is noindex with the clean canonical", () => {
   });
 
   assert.deepEqual(metadata.robots, { index: false, follow: true });
-  assert.equal(metadata.alternates?.canonical, "/categories/obetsi");
+  assert.equal(metadata.alternates?.canonical, "/categorii/obetsi");
 });

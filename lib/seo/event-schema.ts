@@ -250,7 +250,7 @@ export function buildEventSchema(
     return null;
   }
 
-  const url = buildAbsoluteUrl(`/events/${event.slug}`, siteUrl);
+  const url = buildAbsoluteUrl(`/sabitiya/${event.slug}`, siteUrl);
   const image = toAbsoluteImageUrl(event.image_url, siteUrl);
   const offers = buildOffers(event, url, referenceDate);
   const organizer = buildOrganizer(event);

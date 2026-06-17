@@ -122,7 +122,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           <h2 className="font-heading text-2xl text-boutique-ink">Свързани събития</h2>
           <div className="mt-5 grid gap-5 sm:grid-cols-2">
             {relatedEvents.map((event) => (
-              <Link key={event.id} href={`/events/${event.slug}`} className="overflow-hidden rounded-2xl border border-boutique-line bg-boutique-paper">
+              <Link key={event.id} href={`/sabitiya/${event.slug}`} className="overflow-hidden rounded-2xl border border-boutique-line bg-boutique-paper">
                 <div className="aspect-[16/9]">
                   <ContentImage src={event.image_url} alt={event.title} label="Снимка за събитието" />
                 </div>

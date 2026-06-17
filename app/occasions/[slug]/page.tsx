@@ -18,9 +18,7 @@ import {
   buildBreadcrumbListSchema,
   buildOccasionBreadcrumbItems,
 } from "@/lib/seo/breadcrumbs";
-import { getOccasionPath } from "@/lib/category-url";
-
-const OCCASION_INDEX_PATH = "/occasions";
+import { OCCASION_INDEX_PATH, getOccasionPath } from "@/lib/category-url";
 import { getProductCategorySlugs } from "@/lib/seo/category-indexability";
 import {
   buildOccasionPageMetadata,

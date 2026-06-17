@@ -7,6 +7,7 @@ import { useRef, useState } from "react";
 import { MediaPlaceholder } from "@/components/ui/media-placeholder";
 import type { ProductImage } from "@/lib/catalog";
 import type { ProductPromotionSnapshot } from "@/lib/product-pricing";
+import { getProductPath } from "@/lib/product-url";
 
 const SWIPE_THRESHOLD_PX = 40;
 
@@ -89,7 +90,7 @@ export function ProductCardMedia({
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      <Link href={`/products/${slug}`} className="absolute inset-0">
+      <Link href={getProductPath(slug)} className="absolute inset-0">
         {cover?.src ? (
           <>
             <Image

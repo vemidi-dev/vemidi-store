@@ -12,9 +12,7 @@ import {
   getCategoryFamilySlugs,
   getChildCategories,
 } from "@/lib/category-hierarchy";
-import { getCategoryPath } from "@/lib/category-url";
-
-const CATEGORY_INDEX_PATH = "/categories";
+import { CATEGORY_INDEX_PATH, getCategoryPath } from "@/lib/category-url";
 import {
   filterProductsByOccasion,
   firstContextFilterValue,

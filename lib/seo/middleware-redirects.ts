@@ -5,6 +5,13 @@ import {
   normalizeProductCategoryQueryParams,
   resolveCanonicalProductCategorySlug,
 } from "@/lib/category-slug-aliases";
+import {
+  CATEGORY_INDEX_PATH,
+  OCCASION_INDEX_PATH,
+  getCategoryPath,
+  getOccasionPath,
+} from "@/lib/category-url";
+import { getProductPath } from "@/lib/product-url";
 
 /** Permanent redirect status used for legacy SEO URL cleanup. */
 export const SEO_REDIRECT_STATUS = 308;
@@ -48,11 +55,11 @@ function singleQueryParam(
 }
 
 function categoryPath(slug: string): RedirectTarget {
-  return { pathname: `/categories/${slug}` };
+  return { pathname: getCategoryPath(slug) };
 }
 
 function occasionPath(slug: string): RedirectTarget {
-  return { pathname: `/occasions/${slug}` };
+  return { pathname: getOccasionPath(slug) };
 }
 
 function redirectWithSearch(
@@ -67,7 +74,23 @@ function resolveLegacyCategoryPathRedirect(
   pathname: string,
   searchParams: URLSearchParams,
 ): RedirectTarget | null {
-  const match = pathname.match(/^\/categories\/([^/]+)$/);
+  if (pathname === "/categories") {
+    return redirectWithSearch(CATEGORY_INDEX_PATH, searchParams);
+  }
+
+  const legacyMatch = pathname.match(/^\/categories\/([^/]+)$/);
+  if (legacyMatch) {
+    const slug = legacyMatch[1]!;
+    if (!isValidRedirectSlug(slug)) {
+      return null;
+    }
+
+    const canonicalSlug = getLegacyProductCategoryRedirect(slug) ?? slug;
+    const normalizedSearch = normalizeProductCategoryQueryParams(searchParams);
+    return redirectWithSearch(getCategoryPath(canonicalSlug), normalizedSearch ?? searchParams);
+  }
+
+  const match = pathname.match(/^\/categorii\/([^/]+)$/);
   if (!match) {
     return null;
   }
@@ -82,7 +105,7 @@ function resolveLegacyCategoryPathRedirect(
   const nextSearch = normalizedSearch ?? searchParams;
 
   if (canonicalSlug) {
-    return redirectWithSearch(`/categories/${canonicalSlug}`, nextSearch);
+    return redirectWithSearch(getCategoryPath(canonicalSlug), nextSearch);
   }
 
   if (normalizedSearch) {
@@ -96,7 +119,22 @@ function resolveContextFilterQueryRedirect(
   pathname: string,
   searchParams: URLSearchParams,
 ): RedirectTarget | null {
-  const match = pathname.match(/^\/occasions\/([^/]+)$/);
+  if (pathname === "/occasions") {
+    return redirectWithSearch(OCCASION_INDEX_PATH, searchParams);
+  }
+
+  const legacyMatch = pathname.match(/^\/occasions\/([^/]+)$/);
+  if (legacyMatch) {
+    const slug = legacyMatch[1]!;
+    if (!isValidRedirectSlug(slug)) {
+      return null;
+    }
+
+    const normalizedSearch = normalizeProductCategoryQueryParams(searchParams);
+    return redirectWithSearch(getOccasionPath(slug), normalizedSearch ?? searchParams);
+  }
+
+  const match = pathname.match(/^\/povodi\/([^/]+)$/);
   if (!match) {
     return null;
   }
@@ -122,6 +160,38 @@ export function resolveSeoRedirectTarget(
   pathname: string,
   searchParams: URLSearchParams,
 ): RedirectTarget | null {
+  if (pathname === "/about") {
+    return redirectWithSearch("/za-nas", searchParams);
+  }
+
+  if (pathname === "/contact") {
+    return redirectWithSearch("/kontakti", searchParams);
+  }
+
+  if (pathname === "/events") {
+    return redirectWithSearch("/sabitiya", searchParams);
+  }
+
+  const legacyEventPathMatch = pathname.match(/^\/events\/([^/]+)$/);
+  if (legacyEventPathMatch) {
+    const slug = legacyEventPathMatch[1]!;
+    if (!isValidRedirectSlug(slug)) {
+      return null;
+    }
+
+    return redirectWithSearch(`/sabitiya/${slug}`, searchParams);
+  }
+
+  const legacyProductPathMatch = pathname.match(/^\/products\/([^/]+)$/);
+  if (legacyProductPathMatch) {
+    const slug = legacyProductPathMatch[1]!;
+    if (!isValidRedirectSlug(slug)) {
+      return null;
+    }
+
+    return redirectWithSearch(getProductPath(slug), searchParams);
+  }
+
   const legacyCategoryRedirect = resolveLegacyCategoryPathRedirect(
     pathname,
     searchParams,
@@ -147,7 +217,7 @@ export function resolveSeoRedirectTarget(
       }
 
       if (searchParams.size === 0) {
-        return { pathname: "/shop" };
+        return { pathname: "/producti" };
       }
       return null;
     }
@@ -169,10 +239,10 @@ export function resolveSeoRedirectTarget(
     if (!single) {
       const normalizedSearch = normalizeProductCategoryQueryParams(searchParams);
       if (normalizedSearch) {
-        return redirectWithSearch(pathname, normalizedSearch);
+        return redirectWithSearch("/producti", normalizedSearch);
       }
 
-      return null;
+      return redirectWithSearch("/producti", searchParams);
     }
 
     if (single.key === "product") {
@@ -183,7 +253,27 @@ export function resolveSeoRedirectTarget(
       return occasionPath(single.value);
     }
 
-    return null;
+    return redirectWithSearch("/producti", searchParams);
+  }
+
+  if (pathname === "/producti") {
+    const single = singleQueryParam(searchParams);
+    if (single) {
+      if (single.key === "product") {
+        return categoryPath(resolveCanonicalProductCategorySlug(single.value));
+      }
+
+      if (single.key === "occasion") {
+        return occasionPath(single.value);
+      }
+
+      return null;
+    }
+
+    const normalizedSearch = normalizeProductCategoryQueryParams(searchParams);
+    if (normalizedSearch) {
+      return redirectWithSearch(pathname, normalizedSearch);
+    }
   }
 
   return null;

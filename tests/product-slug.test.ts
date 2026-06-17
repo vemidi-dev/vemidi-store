@@ -66,7 +66,7 @@ test("duplicate slug suggestion keeps -copy suffix", () => {
 test("product path helpers use seo slug", () => {
   assert.equal(
     getProductPath("tvorcheski-komplekt"),
-    "/products/tvorcheski-komplekt",
+    "/produkti/tvorcheski-komplekt",
   );
 });
 
@@ -78,7 +78,7 @@ test("redirect path keeps allowed campaign query params only", () => {
     price: "19.99",
     token: "secret",
   });
-  assert.match(path, /^\/products\/nov-slug\?/);
+  assert.match(path, /^\/produkti\/nov-slug\?/);
   assert.match(path, /campaign=spring/);
   assert.match(path, /source=landing/);
   assert.match(path, /landing=https/);
@@ -112,7 +112,7 @@ test("order snapshot helpers prefer product code and slug", () => {
   assert.equal(getOrderItemProductCode(item), "VM-000123");
   assert.equal(
     getOrderItemProductPath(item),
-    "/products/tvorcheski-komplekt",
+    "/produkti/tvorcheski-komplekt",
   );
 });
 

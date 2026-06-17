@@ -44,7 +44,7 @@ test("category breadcrumb includes parent for subcategory", () => {
 
   assert.deepEqual(
     items.map((item) => item.path),
-    ["/", "/categories", "/categories/bijuta", "/categories/obetsi"],
+    ["/", "/categorii", "/categorii/bijuta", "/categorii/obetsi"],
   );
 });
 
@@ -76,7 +76,7 @@ test("breadcrumb schema uses absolute urls and sequential positions", () => {
   assert.equal(schema.itemListElement[2]?.item, `${siteUrl.origin}/blog/idei-za-podarak`);
 });
 
-test("occasion breadcrumb uses /occasions landing path", () => {
+test("occasion breadcrumb uses /povodi landing path", () => {
   const items = buildOccasionBreadcrumbItems({
     name: "Сватба",
     slug: "svatba",
@@ -84,7 +84,7 @@ test("occasion breadcrumb uses /occasions landing path", () => {
 
   assert.deepEqual(
     items.map((item) => item.path),
-    ["/", "/occasions", "/occasions/svatba"],
+    ["/", "/povodi", "/povodi/svatba"],
   );
 });
 
