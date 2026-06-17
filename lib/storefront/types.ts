@@ -18,6 +18,7 @@ export type StorefrontCategory = {
 
 export type StorefrontProduct = Product & {
   categorySlugs: string[];
+  primaryCategoryId: string | null;
   updatedAt: string | null;
   createdAt: string | null;
 };

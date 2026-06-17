@@ -241,6 +241,10 @@ export function ProductListPanel({
             const productCategoryIds = assignedCategories
               .filter((category) => category.category_type === "product")
               .map((category) => category.id);
+            const primaryCategoryId =
+              product.primary_category_id && productCategoryIds.includes(product.primary_category_id)
+                ? product.primary_category_id
+                : productCategoryIds[0] ?? null;
             const productCategoryFilterIds = Array.from(
               new Set([
                 ...productCategoryIds,
@@ -512,19 +516,33 @@ export function ProductListPanel({
                                   ),
                                 )
                                   .map((category) => (
-                                    <label
+                                    <div
                                       key={`${product.id}-${category.id}-edit`}
-                                      className="inline-flex items-center gap-2 text-sm text-boutique-ink"
+                                      className="flex items-center gap-3 text-sm text-boutique-ink"
                                     >
-                                      <input
-                                        name={adminFormFields.product.categoryIds}
-                                        type="checkbox"
-                                        value={category.id}
-                                        defaultChecked={assignedIds.includes(category.id)}
-                                        className="h-4 w-4 rounded border-boutique-line text-boutique-accent"
-                                      />
-                                      {getCategoryDisplayLabel(categories, category)}
-                                    </label>
+                                      <label className="inline-flex min-w-0 flex-1 items-center gap-2">
+                                        <input
+                                          name={adminFormFields.product.categoryIds}
+                                          type="checkbox"
+                                          value={category.id}
+                                          defaultChecked={assignedIds.includes(category.id)}
+                                          className="h-4 w-4 rounded border-boutique-line text-boutique-accent"
+                                        />
+                                        {getCategoryDisplayLabel(categories, category)}
+                                      </label>
+                                      {category.category_type === "product" ? (
+                                        <label className="inline-flex shrink-0 items-center gap-1 text-xs text-boutique-muted">
+                                          <input
+                                            name={adminFormFields.product.primaryCategoryId}
+                                            type="radio"
+                                            value={category.id}
+                                            defaultChecked={primaryCategoryId === category.id}
+                                            className="h-3.5 w-3.5 border-boutique-line text-boutique-accent"
+                                          />
+                                          SEO
+                                        </label>
+                                      ) : null}
+                                    </div>
                                   ))}
                               </div>
                             </div>

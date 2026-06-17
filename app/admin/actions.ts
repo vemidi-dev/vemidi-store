@@ -17,6 +17,7 @@ import {
   getFiles,
   getOptionalString,
   getPrice,
+  getPrimaryCategoryId,
   getString,
   getWishTemplateIds,
   isChecked,
@@ -128,6 +129,24 @@ function parseSubmittedProductSlug(formData: FormData, productName: string) {
     };
   }
   return { slug: validated.slug, error: null };
+}
+
+async function validatePrimaryProductCategory(
+  supabase: NonNullable<Awaited<ReturnType<typeof createClient>>>,
+  categoryIds: string[],
+  primaryCategoryId: string | null,
+) {
+  if (!primaryCategoryId || !categoryIds.includes(primaryCategoryId)) {
+    return false;
+  }
+
+  const { data, error } = await supabase
+    .from("categories")
+    .select("id,category_type")
+    .eq("id", primaryCategoryId)
+    .maybeSingle();
+
+  return !error && data?.category_type === "product";
 }
 
 function redirectAfterDuplicate(newProductId: string, message: string): never {
@@ -454,6 +473,7 @@ export async function createProduct(formData: FormData) {
   const galleryUploadError = validateProductImageUploadBatch(imageFiles, 0);
   const price = getPrice(formData);
   const categoryIds = getCategoryIds(formData);
+  const primaryCategoryId = getPrimaryCategoryId(formData);
   const wishTemplateIds = getWishTemplateIds(formData);
   const { fields: colorFields, error: colorFieldsError } = await parseProductColorFields(
     supabase,
@@ -474,6 +494,14 @@ export async function createProduct(formData: FormData) {
     redirectWith(
       "error",
       "Попълнете име, описание, валидна цена и изберете поне една категория.",
+      activeTab,
+      draft,
+    );
+  }
+  if (!(await validatePrimaryProductCategory(supabase, categoryIds, primaryCategoryId))) {
+    redirectWith(
+      "error",
+      "Изберете основна продуктова категория.",
       activeTab,
       draft,
     );
@@ -513,6 +541,7 @@ export async function createProduct(formData: FormData) {
     stockQuantity,
     cardBadge,
     categoryIds,
+    primaryCategoryId,
     colorFields,
     personalizationFields,
     wishTemplateIds,
@@ -587,6 +616,7 @@ export async function updateProduct(formData: FormData) {
   const fulfillmentNote = getOptionalString(formData, adminFormFields.product.fulfillmentNote);
   const existingImageUrl = getString(formData, adminFormFields.product.existingImageUrl) || null;
   const categoryIds = getCategoryIds(formData);
+  const primaryCategoryId = getPrimaryCategoryId(formData);
   const wishTemplateIds = getWishTemplateIds(formData);
   const isCustomizable = isChecked(formData, adminFormFields.product.isCustomizable);
   const isSoldOut = isChecked(formData, adminFormFields.product.isSoldOut);
@@ -624,6 +654,13 @@ export async function updateProduct(formData: FormData) {
 
   if (!id || !name || !description || price === null || categoryIds.length === 0) {
     redirectWith("error", "Невалидни данни за редакция.", activeTab);
+  }
+  if (!(await validatePrimaryProductCategory(supabase, categoryIds, primaryCategoryId))) {
+    redirectWithProductEdit(
+      "error",
+      "Изберете основна продуктова категория.",
+      id,
+    );
   }
   if (galleryUploadError) {
     redirectWithProductEdit("error", galleryUploadError, id);
@@ -663,6 +700,7 @@ export async function updateProduct(formData: FormData) {
       stockQuantity,
       cardBadge,
       categoryIds,
+      primaryCategoryId,
       colorFields,
       personalizationFields,
       wishTemplateIds,

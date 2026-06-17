@@ -22,6 +22,7 @@ export function resolveProductPageSeo(
   const primaryCategory = resolvePrimaryProductCategory(
     catalog.categories,
     categorySlugs,
+    catalogProduct?.primaryCategoryId,
   );
   const seoContext: ProductSeoContext = {
     primaryCategory: primaryCategory
@@ -36,6 +37,7 @@ export function resolveProductPageSeo(
       title: product.title,
       slug: product.slug,
       categorySlugs,
+      primaryCategoryId: catalogProduct?.primaryCategoryId ?? null,
     }),
     seoContext,
   };

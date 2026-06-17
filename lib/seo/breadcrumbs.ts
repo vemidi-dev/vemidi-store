@@ -74,6 +74,7 @@ export function buildCategoryBreadcrumbItems(
 export function resolvePrimaryProductCategory(
   categories: StorefrontCategory[],
   productCategorySlugs: string[],
+  primaryCategoryId?: string | null,
 ): StorefrontCategory | null {
   const matches = categories.filter(
     (category) =>
@@ -83,6 +84,13 @@ export function resolvePrimaryProductCategory(
 
   if (matches.length === 0) {
     return null;
+  }
+
+  if (primaryCategoryId) {
+    const selected = matches.find((category) => category.id === primaryCategoryId);
+    if (selected) {
+      return selected;
+    }
   }
 
   return (
@@ -95,11 +103,17 @@ export function resolvePrimaryProductCategory(
 
 export function buildProductBreadcrumbItems(
   categories: StorefrontCategory[],
-  product: { title: string; slug: string; categorySlugs: string[] },
+  product: {
+    title: string;
+    slug: string;
+    categorySlugs: string[];
+    primaryCategoryId?: string | null;
+  },
 ): BreadcrumbItem[] {
   const category = resolvePrimaryProductCategory(
     categories,
     product.categorySlugs,
+    product.primaryCategoryId,
   );
 
   if (!category) {

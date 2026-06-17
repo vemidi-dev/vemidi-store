@@ -143,6 +143,7 @@ export type ProductRow = {
   fulfillment_type?: ProductFulfillmentType;
   stock_quantity?: number | null;
   card_badge?: string | null;
+  primary_category_id?: string | null;
 };
 
 export type ProductImageRow = {
@@ -248,6 +249,7 @@ export type ProductCreateDraft = {
   stockQuantity: number | null;
   cardBadge: string;
   categoryIds: string[];
+  primaryCategoryId: string | null;
   colorFields: ProductDraftColorField[];
   personalizationFields: ProductDraftPersonalizationField[];
   wishTemplateIds: string[];

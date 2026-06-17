@@ -42,6 +42,7 @@ const catalog: StorefrontCatalog = {
       orderable: true,
       images: [],
       categorySlugs: ["obetsi", "bijuta"],
+      primaryCategoryId: "parent",
       updatedAt: null,
       createdAt: null,
     },
@@ -50,14 +51,14 @@ const catalog: StorefrontCatalog = {
   relatedProductIdsByProductId: new Map(),
 };
 
-test("resolveProductPageSeo prefers child category for breadcrumbs and context", () => {
+test("resolveProductPageSeo prefers explicit primary category for breadcrumbs and context", () => {
   const product = catalog.products[0];
   const resolution = resolveProductPageSeo(catalog, product);
 
-  assert.equal(resolution.primaryCategory?.slug, "obetsi");
+  assert.equal(resolution.primaryCategory?.slug, "bijuta");
   assert.deepEqual(
-    resolution.breadcrumbItems.map((item) => item.name),
-    ["Начало", "Категории", "Бижута", "Обеци", "Сребърен медальон"],
+    resolution.breadcrumbItems.map((item) => item.path),
+    ["/", "/categorii", "/categorii/bijuta", "/produkti/sreburen-medalyon"],
   );
-  assert.equal(resolution.seoContext.primaryCategory?.slug, "obetsi");
+  assert.equal(resolution.seoContext.primaryCategory?.slug, "bijuta");
 });

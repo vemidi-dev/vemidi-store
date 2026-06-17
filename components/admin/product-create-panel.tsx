@@ -55,6 +55,7 @@ export function ProductCreatePanel({
   const occasionCategories = categories.filter(
     (category) => category.category_type === "occasion",
   );
+  const selectedPrimaryCategoryId = draft?.primaryCategoryId ?? null;
 
   return (
     <article className={adminPanelClass}>
@@ -191,16 +192,30 @@ export function ProductCreatePanel({
                       </p>
                       <div className="mt-2 grid gap-2 sm:grid-cols-2">
                         {(groupedCategories as CategoryRow[]).map((category) => (
-                          <label key={category.id} className="inline-flex items-center gap-2 text-sm text-boutique-ink">
-                            <input
-                              name={adminFormFields.product.categoryIds}
-                              type="checkbox"
-                              value={category.id}
-                              defaultChecked={draft?.categoryIds.includes(category.id)}
-                              className="h-4 w-4 rounded border-boutique-line text-boutique-accent"
-                            />
-                            {getCategoryDisplayLabel(categories, category)}
-                          </label>
+                          <div key={category.id} className="flex items-center gap-3 text-sm text-boutique-ink">
+                            <label className="inline-flex min-w-0 flex-1 items-center gap-2">
+                              <input
+                                name={adminFormFields.product.categoryIds}
+                                type="checkbox"
+                                value={category.id}
+                                defaultChecked={draft?.categoryIds.includes(category.id)}
+                                className="h-4 w-4 rounded border-boutique-line text-boutique-accent"
+                              />
+                              {getCategoryDisplayLabel(categories, category)}
+                            </label>
+                            {category.category_type === "product" ? (
+                              <label className="inline-flex shrink-0 items-center gap-1 text-xs text-boutique-muted">
+                                <input
+                                  name={adminFormFields.product.primaryCategoryId}
+                                  type="radio"
+                                  value={category.id}
+                                  defaultChecked={selectedPrimaryCategoryId === category.id}
+                                  className="h-3.5 w-3.5 border-boutique-line text-boutique-accent"
+                                />
+                                SEO
+                              </label>
+                            ) : null}
+                          </div>
                         ))}
                       </div>
                     </div>

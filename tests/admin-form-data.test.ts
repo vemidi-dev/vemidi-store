@@ -23,6 +23,7 @@ test("admin form field names stay aligned with product draft parsing", () => {
   formData.append(adminFormFields.product.categoryIds, "category-one");
   formData.append(adminFormFields.product.categoryIds, "category-one");
   formData.append(adminFormFields.product.categoryIds, "category-two");
+  formData.set(adminFormFields.product.primaryCategoryId, "category-one");
   formData.append(adminFormFields.colorField.labels, "Цвят на панделка");
   formData.append(adminFormFields.colorField.groupIds, "ribbon");
   formData.append(adminFormFields.colorField.minSelects, "1");
@@ -69,6 +70,7 @@ test("admin form field names stay aligned with product draft parsing", () => {
     stock_quantity: "",
     card_badge: "",
     category_ids: ["category-one", "category-two"],
+    primary_category_id: "category-one",
     color_fields: [
       {
         label: "Цвят на панделка",

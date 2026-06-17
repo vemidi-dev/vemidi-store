@@ -21,6 +21,7 @@ type CreateProductDraftPayload = {
   stock_quantity: string;
   card_badge: string;
   category_ids: string[];
+  primary_category_id: string | null;
   color_fields: Array<{
     label: string;
     group_id: string;
@@ -95,6 +96,10 @@ export function getCategoryIds(formData: FormData) {
         .filter(Boolean),
     ),
   );
+}
+
+export function getPrimaryCategoryId(formData: FormData) {
+  return getOptionalString(formData, adminFormFields.product.primaryCategoryId);
 }
 
 export function getWishTemplateIds(formData: FormData) {
@@ -218,6 +223,7 @@ export function makeCreateProductDraft(formData: FormData) {
     stock_quantity: getString(formData, adminFormFields.product.stockQuantity),
     card_badge: getString(formData, adminFormFields.product.cardBadge),
     category_ids: getCategoryIds(formData),
+    primary_category_id: getPrimaryCategoryId(formData),
     color_fields: colorFields,
     personalization_fields: personalizationFields,
     wish_template_ids: getWishTemplateIds(formData),

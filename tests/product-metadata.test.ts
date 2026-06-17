@@ -23,37 +23,54 @@ const product: Product = {
 };
 
 test("product metadata includes canonical, Open Graph and Twitter fields", () => {
-  const metadata = buildProductPageMetadata(product, product.slug, {
-    primaryCategory: { name: "Кутии", slug: "kutii" },
-  });
-  const openGraph = metadata.openGraph as {
-    type?: string;
-    title?: string;
-    url?: string;
-    siteName?: string;
-    images?: Array<{ url: string; alt: string }>;
-    description?: string;
-  };
-  const twitter = metadata.twitter as {
-    card?: string;
-    images?: string[];
-    description?: string;
-  };
+  const previousSiteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  process.env.NEXT_PUBLIC_SITE_URL = "https://vemidi-crafts.com";
 
-  assert.equal(metadata.title, product.title);
-  assert.ok(metadata.description && metadata.description.length >= 40);
-  assert.equal(openGraph.description, metadata.description);
-  assert.equal(twitter.description, metadata.description);
-  assert.equal(metadata.alternates?.canonical, "/produkti/personalizirana-kutiya");
-  assert.equal(openGraph.type, "website");
-  assert.equal(openGraph.title, product.title);
-  assert.equal(openGraph.url, "/produkti/personalizirana-kutiya");
-  assert.equal(openGraph.siteName, "VeMiDi crafts");
-  assert.deepEqual(openGraph.images, [
-    { url: product.images[0].src, alt: product.title },
-  ]);
-  assert.equal(twitter.card, "summary_large_image");
-  assert.deepEqual(twitter.images, [product.images[0].src]);
+  try {
+    const metadata = buildProductPageMetadata(product, product.slug, {
+      primaryCategory: { name: "Кутии", slug: "kutii" },
+    });
+    const openGraph = metadata.openGraph as {
+      type?: string;
+      title?: string;
+      url?: string;
+      siteName?: string;
+      images?: Array<{ url: string; alt: string }>;
+      description?: string;
+    };
+    const twitter = metadata.twitter as {
+      card?: string;
+      images?: string[];
+      description?: string;
+    };
+
+    assert.equal(metadata.title, product.title);
+    assert.ok(metadata.description && metadata.description.length >= 40);
+    assert.equal(openGraph.description, metadata.description);
+    assert.equal(twitter.description, metadata.description);
+    assert.equal(
+      metadata.alternates?.canonical,
+      "https://vemidi-crafts.com/produkti/personalizirana-kutiya",
+    );
+    assert.equal(openGraph.type, "website");
+    assert.equal(openGraph.title, product.title);
+    assert.equal(
+      openGraph.url,
+      "https://vemidi-crafts.com/produkti/personalizirana-kutiya",
+    );
+    assert.equal(openGraph.siteName, "VeMiDi crafts");
+    assert.deepEqual(openGraph.images, [
+      { url: product.images[0].src, alt: product.title },
+    ]);
+    assert.equal(twitter.card, "summary_large_image");
+    assert.deepEqual(twitter.images, [product.images[0].src]);
+  } finally {
+    if (previousSiteUrl === undefined) {
+      delete process.env.NEXT_PUBLIC_SITE_URL;
+    } else {
+      process.env.NEXT_PUBLIC_SITE_URL = previousSiteUrl;
+    }
+  }
 });
 
 test("product metadata omits image fields when product has no image", () => {

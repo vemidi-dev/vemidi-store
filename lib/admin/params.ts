@@ -62,6 +62,7 @@ export function parseProductCreateDraft(raw: string): ProductCreateDraft | null 
       stock_quantity?: unknown;
       card_badge?: unknown;
       category_ids?: unknown;
+      primary_category_id?: unknown;
       color_fields?: unknown;
       personalization_fields?: unknown;
       wish_template_ids?: unknown;
@@ -279,6 +280,11 @@ export function parseProductCreateDraft(raw: string): ProductCreateDraft | null 
           : null,
       cardBadge: typeof parsed.card_badge === "string" ? parsed.card_badge : "",
       categoryIds,
+      primaryCategoryId:
+        typeof parsed.primary_category_id === "string" &&
+        parsed.primary_category_id.trim()
+          ? parsed.primary_category_id
+          : null,
       colorFields,
       personalizationFields,
       wishTemplateIds,

@@ -21,6 +21,7 @@ export type ProductMutationInput = {
   stockQuantity: number | null;
   cardBadge: string | null;
   categoryIds: string[];
+  primaryCategoryId: string | null;
   colorFields: ParsedColorField[];
   personalizationFields: ParsedPersonalizationField[];
   wishTemplateIds: string[];
@@ -83,6 +84,7 @@ function toRpcInput(input: ProductMutationInput) {
     p_stock_quantity: input.stockQuantity,
     p_card_badge: input.cardBadge ?? "",
     p_category_ids: input.categoryIds,
+    p_primary_category_id: input.primaryCategoryId,
     p_color_fields: toColorFieldsPayload(input.colorFields),
     p_personalization_fields: input.personalizationFields.map((field) => ({
       label: field.label,
@@ -104,7 +106,7 @@ export async function createProductAtomic(
   supabase: SupabaseClient,
   input: ProductMutationInput,
 ) {
-  return supabase.rpc("admin_create_product_v6", toRpcInput(input));
+  return supabase.rpc("admin_create_product_v7", toRpcInput(input));
 }
 
 export async function updateProductAtomic(
@@ -112,7 +114,7 @@ export async function updateProductAtomic(
   productId: string,
   input: ProductMutationInput,
 ) {
-  return supabase.rpc("admin_update_product_v6", {
+  return supabase.rpc("admin_update_product_v7", {
     p_product_id: productId,
     ...toRpcInput(input),
   });
@@ -132,6 +134,10 @@ export async function duplicateProductAtomic(
 }
 
 const rpcErrorMessages: Record<string, string> = {
+  primary_category_required: "Изберете основна продуктова категория.",
+  invalid_primary_category: "Избраната основна категория е невалидна.",
+  primary_category_not_assigned:
+    "Основната категория трябва да е избрана и в категориите на продукта.",
   admin_required: "Нямате администраторски права.",
   category_required: "Изберете поне една категория.",
   invalid_category: "Избрана е невалидна категория.",

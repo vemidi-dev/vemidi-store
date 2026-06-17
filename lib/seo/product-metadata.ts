@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { siteConfig } from "@/config/site";
 import { getProductPath } from "@/lib/product-url";
 import type { Product } from "@/lib/catalog";
+import { getSiteUrl } from "@/lib/site-url";
 import {
   buildProductMetaDescription,
   type ProductSeoContext,
@@ -16,18 +17,19 @@ export function buildProductPageMetadata(
   const description = buildProductMetaDescription(product, context);
   const primaryImage = product.images.find((image) => image.src)?.src;
   const canonicalPath = getProductPath(canonicalSlug);
+  const canonicalUrl = new URL(canonicalPath, getSiteUrl()).toString();
 
   return {
     title: product.title,
     description: description || undefined,
-    alternates: { canonical: canonicalPath },
+    alternates: { canonical: canonicalUrl },
     openGraph: {
       type: "website",
       locale: "bg_BG",
       siteName: siteConfig.name,
       title: product.title,
       description: description || undefined,
-      url: canonicalPath,
+      url: canonicalUrl,
       images: primaryImage
         ? [{ url: primaryImage, alt: product.title }]
         : undefined,

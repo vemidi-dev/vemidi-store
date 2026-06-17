@@ -175,7 +175,7 @@ async function fetchStorefrontCatalog(): Promise<StorefrontCatalog> {
       supabase
         .from("products")
         .select(
-          "id,slug,product_code,name,description,price,image_url,is_customizable,is_sold_out,fulfillment_type,stock_quantity,card_badge,created_at,updated_at",
+          "id,slug,product_code,name,description,price,image_url,is_customizable,is_sold_out,fulfillment_type,stock_quantity,card_badge,primary_category_id,created_at,updated_at",
         )
         .order("created_at", { ascending: false }),
       supabase
@@ -253,6 +253,7 @@ async function fetchStorefrontCatalog(): Promise<StorefrontCatalog> {
         promotionsByProductId.get(row.id) ?? null,
       ),
       categorySlugs: categorySlugsByProductId.get(row.id) ?? [],
+      primaryCategoryId: row.primary_category_id ?? null,
       updatedAt: row.updated_at ?? null,
       createdAt: row.created_at ?? null,
       hasColorOptions: productIdsWithColorOptions.has(row.id),
@@ -300,6 +301,11 @@ async function fetchStorefrontProductSeoContext(
     .from("product_categories")
     .select("category_id")
     .eq("product_id", productId);
+  const { data: productRow } = await supabase
+    .from("products")
+    .select("primary_category_id")
+    .eq("id", productId)
+    .maybeSingle();
 
   const categoryIds = (relations ?? []).map((row) => String(row.category_id));
   if (categoryIds.length === 0) {
@@ -348,7 +354,13 @@ async function fetchStorefrontProductSeoContext(
   return {
     categories,
     categorySlugs,
-    primaryCategory: resolvePrimaryProductCategory(categories, categorySlugs),
+    primaryCategory: resolvePrimaryProductCategory(
+      categories,
+      categorySlugs,
+      typeof productRow?.primary_category_id === "string"
+        ? productRow.primary_category_id
+        : null,
+    ),
   };
 }
 

@@ -64,6 +64,7 @@ const catalog: StorefrontCatalog = {
       orderable: product.orderable,
       images: product.images,
       categorySlugs: ["kutii"],
+      primaryCategoryId: "boxes",
       updatedAt: null,
       createdAt: null,
     },

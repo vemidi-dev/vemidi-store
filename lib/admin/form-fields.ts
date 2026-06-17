@@ -20,6 +20,7 @@ export const adminFormFields = {
     stockQuantity: "stock_quantity",
     cardBadge: "card_badge",
     categoryIds: "category_ids",
+    primaryCategoryId: "primary_category_id",
     wishTemplateIds: "wish_template_ids",
   },
   category: {
