@@ -2,11 +2,11 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 import CategoryShowcaseCard from "@/components/category/category-showcase-card";
+import { HomeFeaturedProducts } from "@/components/home/home-featured-products";
 import { HomeHero } from "@/components/home/home-hero";
 import { HomeContentGrid } from "@/components/home/home-content-sections";
 import { HomeAtelier, HomeBenefits, HomeProcess } from "@/components/home/home-story";
 import { PageContainer } from "@/components/layout/page-container";
-import { ProductCard } from "@/components/product/product-card";
 import { getPublishedBlogPosts, getPublishedEvents } from "@/lib/content/repository";
 import { getSiteContent } from "@/lib/content/site-content";
 import { toShowcaseCategory } from "@/lib/storefront/mappers";
@@ -41,8 +41,12 @@ export default async function HomePage() {
   const productById = new Map(products.map((product) => [product.id, product]));
   const featuredProducts = featuredProductIds
     .map((productId) => productById.get(productId))
-    .filter((product): product is (typeof products)[number] => Boolean(product))
-    .slice(0, 6);
+    .filter((product): product is (typeof products)[number] => Boolean(product));
+  const featuredProductIdSet = new Set(featuredProducts.map((product) => product.id));
+  const homeProducts = [
+    ...featuredProducts,
+    ...products.filter((product) => !featuredProductIdSet.has(product.id)),
+  ];
   const latestPosts = blogPosts.slice(0, 3);
   const now = Date.now();
   const getEventTime = (event: (typeof events)[number]) =>
@@ -74,7 +78,7 @@ export default async function HomePage() {
       <HomeHero content={content} />
       <HomeBenefits />
 
-      {featuredProducts.length ? (
+      {homeProducts.length ? (
         <section className="border-b border-boutique-line bg-boutique-bg py-12 md:py-20">
           <PageContainer className="md:max-w-7xl">
             <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
@@ -97,11 +101,7 @@ export default async function HomePage() {
               </Link>
             </div>
 
-            <div className="mt-9 grid grid-cols-2 gap-3 sm:gap-6 lg:mt-12 lg:grid-cols-3 lg:gap-7">
-              {featuredProducts.map((product) => (
-                <ProductCard key={product.id} product={product} variant="catalog" />
-              ))}
-            </div>
+            <HomeFeaturedProducts products={homeProducts} />
           </PageContainer>
         </section>
       ) : null}

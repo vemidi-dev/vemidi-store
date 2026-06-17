@@ -144,7 +144,7 @@ export function ProductCardMedia({
               showPrevious();
             }}
             aria-label="Предишна снимка"
-            className="absolute left-0.5 top-1/2 z-10 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full bg-white/90 text-lg text-boutique-ink opacity-100 shadow-sm transition hover:bg-white sm:left-2 sm:opacity-0 sm:group-hover:opacity-100"
+            className="absolute left-1 top-1/2 z-10 grid h-9 w-7 -translate-y-1/2 place-items-center bg-transparent text-3xl leading-none text-white opacity-100 drop-shadow-[0_2px_5px_rgba(44,40,37,0.75)] transition hover:scale-110 hover:text-boutique-paper sm:left-2 sm:opacity-0 sm:group-hover:opacity-100"
           >
             ‹
           </button>
@@ -155,7 +155,7 @@ export function ProductCardMedia({
               showNext();
             }}
             aria-label="Следваща снимка"
-            className="absolute right-0.5 top-1/2 z-10 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full bg-white/90 text-lg text-boutique-ink opacity-100 shadow-sm transition hover:bg-white sm:right-2 sm:opacity-0 sm:group-hover:opacity-100"
+            className="absolute right-1 top-1/2 z-10 grid h-9 w-7 -translate-y-1/2 place-items-center bg-transparent text-3xl leading-none text-white opacity-100 drop-shadow-[0_2px_5px_rgba(44,40,37,0.75)] transition hover:scale-110 hover:text-boutique-paper sm:right-2 sm:opacity-0 sm:group-hover:opacity-100"
           >
             ›
           </button>
