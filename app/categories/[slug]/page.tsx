@@ -12,7 +12,9 @@ import {
   getCategoryFamilySlugs,
   getChildCategories,
 } from "@/lib/category-hierarchy";
-import { CATEGORY_INDEX_PATH } from "@/lib/category-url";
+import { getCategoryPath } from "@/lib/category-url";
+
+const CATEGORY_INDEX_PATH = "/categories";
 import {
   filterProductsByOccasion,
   firstContextFilterValue,
@@ -135,7 +137,7 @@ export default async function CategoryPage({
                   ›
                 </span>
                 <Link
-                  href={`${CATEGORY_INDEX_PATH}/${parent.slug}`}
+                  href={getCategoryPath(parent.slug)}
                   className="transition hover:underline"
                 >
                   {parent.name}
@@ -187,7 +189,7 @@ export default async function CategoryPage({
           </div>
 
           <ContextFilter
-            action={`${CATEGORY_INDEX_PATH}/${category.slug}`}
+            action={getCategoryPath(category.slug)}
             label="По повод"
             name="occasion"
             value={activeOccasion}

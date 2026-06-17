@@ -18,7 +18,9 @@ import {
   buildBreadcrumbListSchema,
   buildOccasionBreadcrumbItems,
 } from "@/lib/seo/breadcrumbs";
-import { OCCASION_INDEX_PATH } from "@/lib/category-url";
+import { getOccasionPath } from "@/lib/category-url";
+
+const OCCASION_INDEX_PATH = "/occasions";
 import { getProductCategorySlugs } from "@/lib/seo/category-indexability";
 import {
   buildOccasionPageMetadata,
@@ -132,7 +134,7 @@ export default async function OccasionPage({
           </div>
 
           <ContextFilter
-            action={`${OCCASION_INDEX_PATH}/${occasion.slug}`}
+            action={getOccasionPath(occasion.slug)}
             label="Вид продукт"
             name="product"
             value={activeProduct}
