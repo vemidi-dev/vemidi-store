@@ -2,17 +2,24 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { HeaderActions } from "@/components/layout/header-actions";
+import { HeaderNavigation } from "@/components/layout/header-navigation";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { PageContainer } from "@/components/layout/page-container";
 import { SocialLinks } from "@/components/layout/social-links";
-import { siteConfig } from "@/config/site";
+import {
+  buildOccasionCategoryNavItems,
+  buildProductCategoryNavItems,
+} from "@/lib/category-navigation";
 import { getSiteContent } from "@/lib/content/site-content";
-
-const navLinkClass =
-  "relative whitespace-nowrap rounded-sm text-sm font-medium text-boutique-muted transition-colors duration-200 after:pointer-events-none after:absolute after:-bottom-1 after:left-0 after:h-px after:w-full after:origin-left after:scale-x-0 after:bg-boutique-rose-deep after:transition-transform after:duration-300 hover:text-boutique-rose-deep hover:after:scale-x-100";
+import { getStorefrontCategories } from "@/lib/storefront/repository";
 
 export async function Header() {
-  const content = await getSiteContent();
+  const [content, categories] = await Promise.all([
+    getSiteContent(),
+    getStorefrontCategories(),
+  ]);
+  const productCategoryItems = buildProductCategoryNavItems(categories);
+  const occasionCategoryItems = buildOccasionCategoryNavItems(categories);
 
   return (
     <div className="sticky top-0 z-50 shadow-[0_1px_0_rgb(44_40_37_/0.05)]">
@@ -41,15 +48,11 @@ export async function Header() {
           </Link>
 
           <nav aria-label="Основна навигация" className="hidden flex-1 justify-center xl:flex">
-            <ul className="flex items-center gap-4 2xl:gap-5">
-              {siteConfig.navigation.map((item) => (
-                <li key={item.href}>
-                  <Link href={item.href} className={navLinkClass}>
-                    {item.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            <HeaderNavigation
+              productCategoryItems={productCategoryItems}
+              occasionCategoryItems={occasionCategoryItems}
+              interactionMode="hover"
+            />
           </nav>
 
           <div className="flex shrink-0 items-center gap-2">
@@ -60,7 +63,10 @@ export async function Header() {
               />
             </div>
             <HeaderActions />
-            <MobileNav />
+            <MobileNav
+              productCategoryItems={productCategoryItems}
+              occasionCategoryItems={occasionCategoryItems}
+            />
           </div>
         </div>
       </PageContainer>
@@ -69,15 +75,12 @@ export async function Header() {
         aria-label="Мобилна навигация"
         className="hidden border-t border-boutique-line/50 bg-white px-5 py-3.5 md:block xl:hidden"
       >
-        <ul className="mx-auto flex max-w-6xl flex-wrap justify-center gap-x-6 gap-y-3">
-          {siteConfig.navigation.map((item) => (
-            <li key={item.href}>
-              <Link href={item.href} className={navLinkClass}>
-                {item.label}
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <HeaderNavigation
+          productCategoryItems={productCategoryItems}
+          occasionCategoryItems={occasionCategoryItems}
+          interactionMode="hover"
+          className="mx-auto flex max-w-6xl flex-wrap justify-center gap-x-6 gap-y-3"
+        />
       </nav>
     </header>
     </div>

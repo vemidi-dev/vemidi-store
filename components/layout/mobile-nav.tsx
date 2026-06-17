@@ -5,12 +5,97 @@ import { useEffect, useId, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { NavCartLink } from "@/components/layout/nav-cart-link";
+import {
+  HEADER_CATEGORY_DROPDOWN,
+  HEADER_OCCASION_DROPDOWN,
+  type HeaderNavDropdownItem,
+} from "@/lib/category-navigation";
+import {
+  CATEGORY_INDEX_PATH,
+  OCCASION_INDEX_PATH,
+} from "@/lib/category-url";
 import { siteConfig } from "@/config/site";
 
 const mobileNavLinkClass =
   "block rounded-lg px-3 py-3 text-base font-medium text-boutique-ink transition-colors duration-200 hover:bg-boutique-paper hover:text-boutique-rose-deep";
 
-export function MobileNav() {
+const mobileSubLinkClass =
+  "block rounded-lg px-3 py-2.5 text-sm text-boutique-muted transition-colors duration-200 hover:bg-boutique-paper hover:text-boutique-rose-deep";
+
+type MobileNavProps = {
+  productCategoryItems: HeaderNavDropdownItem[];
+  occasionCategoryItems: HeaderNavDropdownItem[];
+};
+
+function MobileNavSection({
+  label,
+  indexHref,
+  indexLabel,
+  items,
+  onNavigate,
+}: {
+  label: string;
+  indexHref: string;
+  indexLabel: string;
+  items: HeaderNavDropdownItem[];
+  onNavigate: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const sectionId = useId();
+
+  return (
+    <li>
+      <button
+        type="button"
+        className={`${mobileNavLinkClass} flex w-full items-center justify-between`}
+        aria-expanded={open}
+        aria-controls={sectionId}
+        onClick={() => setOpen((current) => !current)}
+      >
+        <span>{label}</span>
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 16 16"
+          className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.75"
+        >
+          <path d="M4 6l4 4 4-4" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+      {open ? (
+        <ul id={sectionId} className="mt-1 space-y-0.5 border-l border-boutique-line/70 pl-3">
+          <li>
+            <Link
+              href={indexHref}
+              className={`${mobileSubLinkClass} font-semibold text-boutique-sage-deep`}
+              onClick={onNavigate}
+            >
+              {indexLabel}
+            </Link>
+          </li>
+          {items.map((item) => (
+            <li key={item.id}>
+              <Link
+                href={item.href}
+                className={`${mobileSubLinkClass} ${item.isChild ? "pl-3" : ""}`}
+                onClick={onNavigate}
+              >
+                {item.name}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </li>
+  );
+}
+
+export function MobileNav({
+  productCategoryItems,
+  occasionCategoryItems,
+}: MobileNavProps) {
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const panelId = useId();
@@ -118,18 +203,43 @@ export function MobileNav() {
                 </div>
 
                 <ul className="min-h-0 flex-1 overflow-y-auto px-3 py-4">
-                  {siteConfig.navigation.map((item) => (
-                    <li key={item.href}>
-                      <Link href={item.href} className={mobileNavLinkClass} onClick={closeMenu}>
-                        {item.label}
-                      </Link>
-                    </li>
-                  ))}
+                  {siteConfig.navigation.map((item) => {
+                    if (item.href === CATEGORY_INDEX_PATH) {
+                      return (
+                        <MobileNavSection
+                          key={item.href}
+                          label={item.label}
+                          indexHref={HEADER_CATEGORY_DROPDOWN.href}
+                          indexLabel={HEADER_CATEGORY_DROPDOWN.indexLabel}
+                          items={productCategoryItems}
+                          onNavigate={closeMenu}
+                        />
+                      );
+                    }
+
+                    if (item.href === OCCASION_INDEX_PATH) {
+                      return (
+                        <MobileNavSection
+                          key={item.href}
+                          label={item.label}
+                          indexHref={HEADER_OCCASION_DROPDOWN.href}
+                          indexLabel={HEADER_OCCASION_DROPDOWN.indexLabel}
+                          items={occasionCategoryItems}
+                          onNavigate={closeMenu}
+                        />
+                      );
+                    }
+
+                    return (
+                      <li key={item.href}>
+                        <Link href={item.href} className={mobileNavLinkClass} onClick={closeMenu}>
+                          {item.label}
+                        </Link>
+                      </li>
+                    );
+                  })}
                   <li className="mt-1 border-t border-boutique-line/70 pt-1">
-                    <NavCartLink
-                      className={mobileNavLinkClass}
-                      onNavigate={closeMenu}
-                    />
+                    <NavCartLink className={mobileNavLinkClass} onNavigate={closeMenu} />
                   </li>
                 </ul>
               </nav>
