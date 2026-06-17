@@ -192,8 +192,8 @@ export function ProductCreatePanel({
                       </p>
                       <div className="mt-2 grid gap-2 sm:grid-cols-2">
                         {(groupedCategories as CategoryRow[]).map((category) => (
-                          <div key={category.id} className="flex items-center gap-3 text-sm text-boutique-ink">
-                            <label className="inline-flex min-w-0 flex-1 items-center gap-2">
+                          <div key={category.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-boutique-ink">
+                            <label className="inline-flex min-w-0 items-center gap-2">
                               <input
                                 name={adminFormFields.product.categoryIds}
                                 type="checkbox"
@@ -204,15 +204,19 @@ export function ProductCreatePanel({
                               {getCategoryDisplayLabel(categories, category)}
                             </label>
                             {category.category_type === "product" ? (
-                              <label className="inline-flex shrink-0 items-center gap-1 text-xs text-boutique-muted">
+                              <label
+                                className="inline-flex shrink-0 items-center gap-1 text-xs text-boutique-muted"
+                                title="Основна категория за breadcrumb и SEO"
+                              >
                                 <input
                                   name={adminFormFields.product.primaryCategoryId}
                                   type="radio"
                                   value={category.id}
                                   defaultChecked={selectedPrimaryCategoryId === category.id}
+                                  aria-label={`Основна за SEO: ${getCategoryDisplayLabel(categories, category)}`}
                                   className="h-3.5 w-3.5 border-boutique-line text-boutique-accent"
                                 />
-                                SEO
+                                Основна
                               </label>
                             ) : null}
                           </div>
@@ -222,7 +226,10 @@ export function ProductCreatePanel({
                   ))}
                 </div>
               )}
-              <p className={adminHelperClass}>Може да изберете повече от една категория.</p>
+              <p className={adminHelperClass}>
+                Отметнете категориите на продукта. При продуктовите категории маркирайте една
+                категория като „Основна“ за breadcrumb и SEO.
+              </p>
             </fieldset>
           </div>
         </fieldset>

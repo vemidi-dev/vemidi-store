@@ -518,9 +518,9 @@ export function ProductListPanel({
                                   .map((category) => (
                                     <div
                                       key={`${product.id}-${category.id}-edit`}
-                                      className="flex items-center gap-3 text-sm text-boutique-ink"
+                                      className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-boutique-ink"
                                     >
-                                      <label className="inline-flex min-w-0 flex-1 items-center gap-2">
+                                      <label className="inline-flex min-w-0 items-center gap-2">
                                         <input
                                           name={adminFormFields.product.categoryIds}
                                           type="checkbox"
@@ -531,15 +531,19 @@ export function ProductListPanel({
                                         {getCategoryDisplayLabel(categories, category)}
                                       </label>
                                       {category.category_type === "product" ? (
-                                        <label className="inline-flex shrink-0 items-center gap-1 text-xs text-boutique-muted">
+                                        <label
+                                          className="inline-flex shrink-0 items-center gap-1 text-xs text-boutique-muted"
+                                          title="Основна категория за breadcrumb и SEO"
+                                        >
                                           <input
                                             name={adminFormFields.product.primaryCategoryId}
                                             type="radio"
                                             value={category.id}
                                             defaultChecked={primaryCategoryId === category.id}
+                                            aria-label={`Основна за SEO: ${getCategoryDisplayLabel(categories, category)}`}
                                             className="h-3.5 w-3.5 border-boutique-line text-boutique-accent"
                                           />
-                                          SEO
+                                          Основна
                                         </label>
                                       ) : null}
                                     </div>
@@ -549,6 +553,10 @@ export function ProductListPanel({
                           ))}
                         </div>
                       )}
+                      <p className={`${adminHelperClass} mt-2`}>
+                        Отметнете категориите на продукта. При продуктовите категории маркирайте
+                        една категория като „Основна“ за breadcrumb и SEO.
+                      </p>
                     </fieldset>
 
                     <details className="rounded-lg border border-boutique-line/70 bg-boutique-bg p-3 md:col-span-2">
