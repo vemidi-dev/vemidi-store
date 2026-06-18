@@ -133,7 +133,8 @@ export type ProductRow = {
   slug: string;
   product_code: string;
   name: string;
-  description: string;
+  subtitle: string | null;
+  description: string | null;
   additional_info: string | null;
   fulfillment_note: string | null;
   price: number;
@@ -239,6 +240,7 @@ export type ProductDraftPersonalizationField = {
 export type ProductCreateDraft = {
   name: string;
   slug: string;
+  subtitle: string;
   description: string;
   additionalInfo: string;
   fulfillmentNote: string;

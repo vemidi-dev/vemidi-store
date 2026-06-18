@@ -15,6 +15,7 @@ test("admin form field names stay aligned with product draft parsing", () => {
   const formData = new FormData();
   formData.set(adminFormFields.product.name, "Подаръчна кутия");
   formData.set(adminFormFields.product.slug, "podarachna-kutiya");
+  formData.set(adminFormFields.product.subtitle, "Кратко подзаглавие");
   formData.set(adminFormFields.product.description, "Описание");
   formData.set(adminFormFields.product.additionalInfo, "Допълнителни детайли");
   formData.set(adminFormFields.product.fulfillmentNote, "Изработка до 5 дни");
@@ -60,6 +61,7 @@ test("admin form field names stay aligned with product draft parsing", () => {
   assert.deepEqual(JSON.parse(makeCreateProductDraft(formData)), {
     name: "Подаръчна кутия",
     slug: "podarachna-kutiya",
+    subtitle: "Кратко подзаглавие",
     description: "Описание",
     additional_info: "Допълнителни детайли",
     fulfillment_note: "Изработка до 5 дни",
@@ -233,4 +235,18 @@ test("product create draft preserves option groups for recovery", () => {
 
   assert.equal(draft?.optionGroups?.[0]?.name, "Size");
   assert.equal(draft?.optionGroups?.[0]?.values[0]?.label, "Mini");
+});
+
+test("legacy product drafts without subtitle remain compatible", () => {
+  const draft = parseProductCreateDraft(
+    JSON.stringify({
+      name: "Legacy product",
+      slug: "legacy-product",
+      description: "Legacy description",
+      price: "10.00",
+    }),
+  );
+
+  assert.equal(draft?.subtitle, "");
+  assert.equal(draft?.description, "Legacy description");
 });

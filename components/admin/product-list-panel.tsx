@@ -467,12 +467,19 @@ export function ProductListPanel({
                       />
                     </label>
                     <label className="text-sm font-medium text-boutique-ink md:col-span-2">
+                      Подзаглавие
+                      <input
+                        name={adminFormFields.product.subtitle}
+                        defaultValue={product.subtitle ?? ""}
+                        className={adminFieldClass}
+                      />
+                    </label>
+                    <label className="text-sm font-medium text-boutique-ink md:col-span-2">
                       Описание
                       <textarea
                         name={adminFormFields.product.description}
                         rows={3}
-                        defaultValue={product.description}
-                        required
+                        defaultValue={product.description ?? ""}
                         className={`${adminFieldClass} resize-y`}
                       />
                     </label>

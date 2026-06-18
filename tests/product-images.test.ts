@@ -68,3 +68,14 @@ test("products without gallery rows keep the legacy image", () => {
     },
   ]);
 });
+
+test("products without optional content keep a safe storefront shape", () => {
+  const product = toProduct({
+    ...productRow,
+    subtitle: null,
+    description: null,
+  });
+
+  assert.equal(product.subtitle, null);
+  assert.equal(product.description, "");
+});

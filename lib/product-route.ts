@@ -24,7 +24,7 @@ export type ProductRouteResolution =
     };
 
 const productListColumns =
-  "id,slug,product_code,name,description,additional_info,fulfillment_note,price,image_url,is_customizable,is_sold_out,fulfillment_type,stock_quantity,card_badge";
+  "id,slug,product_code,name,subtitle,description,additional_info,fulfillment_note,price,image_url,is_customizable,is_sold_out,fulfillment_type,stock_quantity,card_badge";
 
 async function loadProductRowById(supabase: SupabaseClient, productId: string) {
   const { data, error } = await supabase

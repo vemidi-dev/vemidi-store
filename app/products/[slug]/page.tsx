@@ -204,6 +204,12 @@ export default async function ProductDetailPage({
                   {product.title}
                 </h1>
 
+                {product.subtitle ? (
+                  <h2 className="max-w-xl font-heading text-2xl leading-snug text-boutique-muted sm:text-3xl">
+                    {product.subtitle}
+                  </h2>
+                ) : null}
+
                 {showCategoryLink ? (
                   <p className="text-sm text-boutique-muted">
                     Категория:{" "}
@@ -232,9 +238,11 @@ export default async function ProductDetailPage({
 
               </div>
 
-              <p className="mt-7 max-w-xl text-lg leading-[1.75] text-boutique-muted md:text-xl md:leading-[1.8]">
-                {product.description}
-              </p>
+              {product.description ? (
+                <p className="mt-7 max-w-xl text-lg leading-[1.75] text-boutique-muted md:text-xl md:leading-[1.8]">
+                  {product.description}
+                </p>
+              ) : null}
               {product.additionalInfo ? (
                 <p className="mt-4 max-w-xl text-sm leading-relaxed text-boutique-muted">
                   {product.additionalInfo}

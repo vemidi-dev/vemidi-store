@@ -454,6 +454,7 @@ export async function createProduct(formData: FormData) {
   const draft = makeCreateProductDraft(formData);
 
   const name = getString(formData, adminFormFields.product.name);
+  const subtitle = getOptionalString(formData, adminFormFields.product.subtitle);
   const description = getString(formData, adminFormFields.product.description);
   const additionalInfo = getOptionalString(formData, adminFormFields.product.additionalInfo);
   const fulfillmentNote = getOptionalString(formData, adminFormFields.product.fulfillmentNote);
@@ -490,10 +491,10 @@ export async function createProduct(formData: FormData) {
     redirectWith("error", slugError, activeTab, draft);
   }
 
-  if (!name || !description || price === null || categoryIds.length === 0) {
+  if (!name || price === null || categoryIds.length === 0) {
     redirectWith(
       "error",
-      "Попълнете име, описание, валидна цена и изберете поне една категория.",
+      "Попълнете име, валидна цена и изберете поне една категория.",
       activeTab,
       draft,
     );
@@ -530,6 +531,7 @@ export async function createProduct(formData: FormData) {
   const { data: productId, error: mutationError } = await createProductAtomic(supabase, {
     name,
     slug: slug!,
+    subtitle,
     description,
     additionalInfo,
     fulfillmentNote,
@@ -611,6 +613,7 @@ export async function updateProduct(formData: FormData) {
 
   const id = getString(formData, adminFormFields.common.id);
   const name = getString(formData, adminFormFields.product.name);
+  const subtitle = getOptionalString(formData, adminFormFields.product.subtitle);
   const description = getString(formData, adminFormFields.product.description);
   const additionalInfo = getOptionalString(formData, adminFormFields.product.additionalInfo);
   const fulfillmentNote = getOptionalString(formData, adminFormFields.product.fulfillmentNote);
@@ -652,7 +655,7 @@ export async function updateProduct(formData: FormData) {
     redirectWithProductEdit("error", slugError, id);
   }
 
-  if (!id || !name || !description || price === null || categoryIds.length === 0) {
+  if (!id || !name || price === null || categoryIds.length === 0) {
     redirectWith("error", "Невалидни данни за редакция.", activeTab);
   }
   if (!(await validatePrimaryProductCategory(supabase, categoryIds, primaryCategoryId))) {
@@ -689,6 +692,7 @@ export async function updateProduct(formData: FormData) {
     {
       name,
       slug: slug!,
+      subtitle,
       description,
       additionalInfo,
       fulfillmentNote,

@@ -87,6 +87,19 @@ export function ProductCreatePanel({
               </p>
             </label>
 
+            <label className="text-sm font-medium text-boutique-ink md:col-span-2">
+              Подзаглавие
+              <input
+                name={adminFormFields.product.subtitle}
+                defaultValue={draft?.subtitle ?? ""}
+                className={adminFieldClass}
+                placeholder="Кратко пояснение под името на продукта"
+              />
+              <p className={adminHelperClass}>
+                Незадължително. Показва се като H2 под името в продуктовата страница.
+              </p>
+            </label>
+
             <label className="text-sm font-medium text-boutique-ink">
               Основна цена / цена на най-евтиния вариант (евро)
               <input
@@ -109,7 +122,6 @@ export function ProductCreatePanel({
               <textarea
                 name={adminFormFields.product.description}
                 rows={4}
-                required
                 defaultValue={draft?.description ?? ""}
                 className={`${adminFieldClass} resize-y`}
                 placeholder="Опишете материала, повода и идеята на продукта..."

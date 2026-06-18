@@ -1,7 +1,7 @@
 -- Optional follow-up: copy primary_category_id when duplicating a product.
--- Run AFTER product_primary_category_seo.sql.
+-- Run AFTER product_primary_category_seo.sql and product_content_hierarchy.sql.
 -- Safe to re-run: replaces admin_duplicate_product only.
--- Does not change slug/product_code/fulfillment behavior from product_inventory_fulfillment.sql.
+-- Copies primary_category_id and subtitle without changing slug/product_code/fulfillment behavior.
 
 create or replace function public.admin_duplicate_product(
   p_product_id uuid
@@ -55,6 +55,7 @@ begin
     begin
       insert into public.products (
         name,
+        subtitle,
         description,
         additional_info,
         fulfillment_note,
@@ -71,6 +72,7 @@ begin
       )
       values (
         'Копие на ' || btrim(v_source.name),
+        v_source.subtitle,
         v_source.description,
         v_source.additional_info,
         v_source.fulfillment_note,

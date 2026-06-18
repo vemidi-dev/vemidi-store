@@ -11,6 +11,7 @@ import { parseProductOptionGroups } from "@/lib/admin/parse-option-groups";
 type CreateProductDraftPayload = {
   name: string;
   slug: string;
+  subtitle: string;
   description: string;
   additional_info: string;
   fulfillment_note: string;
@@ -213,6 +214,7 @@ export function makeCreateProductDraft(formData: FormData) {
   const draft: CreateProductDraftPayload = {
     name: getString(formData, adminFormFields.product.name),
     slug: getString(formData, adminFormFields.product.slug),
+    subtitle: getString(formData, adminFormFields.product.subtitle),
     description: getString(formData, adminFormFields.product.description),
     additional_info: getString(formData, adminFormFields.product.additionalInfo),
     fulfillment_note: getString(formData, adminFormFields.product.fulfillmentNote),

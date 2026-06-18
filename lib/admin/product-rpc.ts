@@ -10,6 +10,7 @@ import type { ProductFulfillmentType } from "@/lib/product-fulfillment";
 export type ProductMutationInput = {
   name: string;
   slug: string;
+  subtitle: string | null;
   description: string;
   additionalInfo: string | null;
   fulfillmentNote: string | null;
@@ -72,6 +73,7 @@ function toOptionGroupsPayload(groups: ParsedOptionGroup[]) {
 function toRpcInput(input: ProductMutationInput) {
   return {
     p_name: input.name,
+    p_subtitle: input.subtitle ?? "",
     p_slug: input.slug,
     p_description: input.description,
     p_additional_info: input.additionalInfo ?? "",
@@ -106,7 +108,7 @@ export async function createProductAtomic(
   supabase: SupabaseClient,
   input: ProductMutationInput,
 ) {
-  return supabase.rpc("admin_create_product_v7", toRpcInput(input));
+  return supabase.rpc("admin_create_product_v8", toRpcInput(input));
 }
 
 export async function updateProductAtomic(
@@ -114,7 +116,7 @@ export async function updateProductAtomic(
   productId: string,
   input: ProductMutationInput,
 ) {
-  return supabase.rpc("admin_update_product_v7", {
+  return supabase.rpc("admin_update_product_v8", {
     p_product_id: productId,
     ...toRpcInput(input),
   });

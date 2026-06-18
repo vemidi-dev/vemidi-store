@@ -21,7 +21,8 @@ export type ProductRow = {
   slug: string;
   product_code: string;
   name: string;
-  description: string;
+  subtitle?: string | null;
+  description: string | null;
   additional_info?: string | null;
   fulfillment_note?: string | null;
   price: number;
@@ -70,7 +71,8 @@ export function toProduct(
     slug: row.slug,
     productCode: row.product_code,
     title: row.name,
-    description: row.description,
+    subtitle: row.subtitle ?? null,
+    description: row.description ?? "",
     additionalInfo: row.additional_info,
     fulfillmentNote: row.fulfillment_note,
     price: pricing.price,
