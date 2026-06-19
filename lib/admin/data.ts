@@ -18,6 +18,8 @@ import type {
   WishTemplateOccasionRow,
   WishTemplateRow,
 } from "@/lib/admin/types";
+import { isProductLandingPagesMigrationMissing } from "@/lib/product-landing/admin-rpc";
+import type { ProductLandingPageRow } from "@/lib/product-landing/types";
 
 type QueryError = { message: string } | null;
 
@@ -41,6 +43,9 @@ export type AdminData = {
   wishTemplateIdsByProductId: Map<string, string[]>;
   featuredProductById: Map<string, HomeFeaturedProductRow>;
   relatedProductIdsByProductId: Map<string, string[]>;
+  landingPages: ProductLandingPageRow[];
+  landingPagesByProductId: Map<string, ProductLandingPageRow[]>;
+  landingPagesMigrationMissing: boolean;
   errors: {
     products: QueryError;
     categories: QueryError;
@@ -58,6 +63,7 @@ export type AdminData = {
     relatedProducts: QueryError;
     optionGroups: QueryError;
     optionValues: QueryError;
+    landingPages: QueryError;
   };
 };
 
@@ -79,6 +85,7 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
     relatedProductsResult,
     optionGroupsResult,
     optionValuesResult,
+    landingPagesResult,
   ] = await Promise.all([
     supabase.from("products").select("*").order("id", { ascending: false }),
     supabase
@@ -140,6 +147,15 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
         "id,group_id,label,key,price_delta,is_default,is_active,is_sold_out,sku,sort_order",
       )
       .order("sort_order", { ascending: true }),
+    supabase
+      .from("product_landing_pages")
+      .select(
+        "id,product_id,title,slug,campaign_code,is_primary,is_active,sort_order,created_at,updated_at",
+      )
+      .order("product_id", { ascending: true })
+      .order("is_primary", { ascending: false })
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: true }),
   ]);
 
   const products = (productsResult.data ?? []) as ProductRow[];
@@ -163,6 +179,12 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
   const relatedProducts = (relatedProductsResult.data ?? []) as RelatedProductRow[];
   const optionGroups = (optionGroupsResult.data ?? []) as ProductOptionGroupRow[];
   const optionValues = (optionValuesResult.data ?? []) as ProductOptionValueRow[];
+  const landingPagesMigrationMissing = isProductLandingPagesMigrationMissing(
+    landingPagesResult.error,
+  );
+  const landingPages = landingPagesMigrationMissing
+    ? []
+    : ((landingPagesResult.data ?? []) as ProductLandingPageRow[]);
 
   const categoryById = new Map(categories.map((category) => [category.id, category]));
   const categoryIdsByProductId = new Map<string, string[]>();
@@ -182,6 +204,7 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
   const relatedProductIdsByProductId = new Map<string, string[]>();
   const optionGroupsByProductId = new Map<string, ProductOptionGroupRow[]>();
   const optionValuesByGroupId = new Map<string, ProductOptionValueRow[]>();
+  const landingPagesByProductId = new Map<string, ProductLandingPageRow[]>();
 
   productCategories.forEach((row) => {
     const categoryIds = categoryIdsByProductId.get(row.product_id) ?? [];
@@ -248,6 +271,12 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
     optionValuesByGroupId.set(value.group_id, values);
   });
 
+  landingPages.forEach((landingPage) => {
+    const pages = landingPagesByProductId.get(landingPage.product_id) ?? [];
+    pages.push(landingPage);
+    landingPagesByProductId.set(landingPage.product_id, pages);
+  });
+
   return {
     products,
     categories,
@@ -268,6 +297,9 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
     wishTemplateIdsByProductId,
     featuredProductById,
     relatedProductIdsByProductId,
+    landingPages,
+    landingPagesByProductId,
+    landingPagesMigrationMissing,
     errors: {
       products: productsResult.error,
       categories: categoriesResult.error,
@@ -285,6 +317,7 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
       relatedProducts: relatedProductsResult.error,
       optionGroups: optionGroupsResult.error,
       optionValues: optionValuesResult.error,
+      landingPages: landingPagesMigrationMissing ? null : landingPagesResult.error,
     },
   };
 }

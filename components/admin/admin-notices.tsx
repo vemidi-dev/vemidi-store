@@ -23,6 +23,7 @@ const errorLabels: Record<keyof AdminData["errors"], string> = {
   relatedProducts: "свързани продукти",
   optionGroups: "универсални опции",
   optionValues: "стойности на опции",
+  landingPages: "landing страници",
 };
 
 export function AdminNotices({ success, error, errors }: AdminNoticesProps) {

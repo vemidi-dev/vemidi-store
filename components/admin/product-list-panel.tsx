@@ -12,6 +12,7 @@ import { DUPLICATE_MISSING_IMAGES_NOTICE } from "@/lib/admin/duplicate-product";
 import { AdminAutoOpenProductEdit } from "@/components/admin/admin-auto-open-product-edit";
 import { AdminConfirmForm } from "@/components/admin/admin-confirm-form";
 import { AdminUnsavedChangesGuard } from "@/components/admin/admin-unsaved-changes-guard";
+import { ProductLandingPagesPanel } from "@/components/admin/product-landing-pages-panel";
 import { ProductDuplicateButton } from "@/components/admin/product-duplicate-button";
 import { AdminListControls } from "@/components/admin/admin-list-controls";
 import { AdminOpenDetailsButton } from "@/components/admin/admin-open-details-button";
@@ -69,6 +70,8 @@ export function ProductListPanel({
     relatedProductIdsByProductId,
     optionGroupsByProductId,
     optionValuesByGroupId,
+    landingPagesByProductId,
+    landingPagesMigrationMissing,
   } = data;
 
   const occasionCategories = categories.filter(
@@ -702,6 +705,13 @@ export function ProductListPanel({
                       Изтрий продукта
                     </button>
                   </AdminConfirmForm>
+
+                  <ProductLandingPagesPanel
+                    productId={product.id}
+                    productSlug={product.slug}
+                    landingPages={landingPagesByProductId.get(product.id) ?? []}
+                    migrationMissing={landingPagesMigrationMissing}
+                  />
 
                   <section className="mt-5 border-t border-boutique-line/70 pt-5">
                     <div>

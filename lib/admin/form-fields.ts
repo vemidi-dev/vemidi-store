@@ -107,4 +107,15 @@ export const adminFormFields = {
     productIds: "product_ids",
     campaignId: "campaign_id",
   },
+  landingPage: {
+    id: "landing_page_id",
+    productId: "product_id",
+    productSlug: "product_slug",
+    title: "landing_title",
+    slug: "landing_slug",
+    campaignCode: "landing_campaign_code",
+    isPrimary: "landing_is_primary",
+    isActive: "landing_is_active",
+    sortOrder: "landing_sort_order",
+  },
 } as const;
