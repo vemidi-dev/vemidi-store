@@ -13,6 +13,11 @@ import { CheckoutDeliveryFields } from "@/components/checkout/checkout-delivery-
 import { useCart } from "@/components/cart/cart-provider";
 import { PageContainer } from "@/components/layout/page-container";
 import { formatEur } from "@/lib/format-eur";
+import {
+  CHECKOUT_LANDING_RETURN_LABEL,
+  getCheckoutLandingReturnLinkProps,
+  resolveCheckoutLandingReturnUrl,
+} from "@/lib/checkout/checkout-landing-return";
 import type { CheckoutPageContent } from "@/lib/content/site-content";
 
 const fieldClass =
@@ -51,6 +56,10 @@ function SubmitOrderButton({
 export function CheckoutPanel({ content }: { content: CheckoutPageContent }) {
   const { lines, subtotal, clear } = useCart();
   const router = useRouter();
+  const landingReturnUrl = resolveCheckoutLandingReturnUrl(lines);
+  const landingReturnLinkProps = landingReturnUrl
+    ? getCheckoutLandingReturnLinkProps(landingReturnUrl)
+    : null;
   const [state, formAction] = useActionState(createStoreOrder, initialState);
   const [idempotencyKey, setIdempotencyKey] = useState("");
   const [customerName, setCustomerName] = useState("");
@@ -343,6 +352,14 @@ export function CheckoutPanel({ content }: { content: CheckoutPageContent }) {
               ready={Boolean(idempotencyKey)}
               label={content["checkout.submit_button"]}
             />
+            {landingReturnLinkProps ? (
+              <a
+                {...landingReturnLinkProps}
+                className="mt-4 block max-w-full text-center text-xs font-semibold leading-snug text-boutique-sage-deep underline-offset-4 transition hover:underline"
+              >
+                {CHECKOUT_LANDING_RETURN_LABEL}
+              </a>
+            ) : null}
             <Link
               href="/cart"
               className="mt-4 block text-center text-xs font-semibold uppercase tracking-wider text-boutique-muted hover:text-boutique-ink"
