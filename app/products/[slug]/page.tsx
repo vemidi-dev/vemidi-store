@@ -4,6 +4,7 @@ import { notFound, permanentRedirect } from "next/navigation";
 
 import { ProductDetailAddToCart } from "@/components/product/product-detail-add-to-cart";
 import { ProductDetailGallery } from "@/components/product/product-detail-gallery";
+import { ProductLandingPageCta } from "@/components/product/product-landing-page-cta";
 import { PageContainer } from "@/components/layout/page-container";
 import { ProductPrice } from "@/components/product/product-price";
 import { ProductCard } from "@/components/product/product-card";
@@ -16,6 +17,8 @@ import {
   getStorefrontProductPage,
   getStorefrontProductSeoContext,
 } from "@/lib/storefront/repository";
+import { getPrimaryActiveProductLandingPage } from "@/lib/product-landing/repository";
+import { createClient } from "@/lib/supabase/server";
 import { getSiteUrl } from "@/lib/site-url";
 import { buildCampaignAttribution } from "@/lib/campaign-attribution";
 import { getCampaignProductPageOptionSelections } from "@/lib/campaign-handoff";
@@ -87,6 +90,10 @@ export default async function ProductDetailPage({
   }
 
   const product = resolution.product;
+  const supabase = await createClient();
+  const primaryLandingPage = supabase
+    ? await getPrimaryActiveProductLandingPage(supabase, product.id)
+    : null;
   const attribution = buildCampaignAttribution({
     campaign: Array.isArray(query.campaign) ? query.campaign[0] : query.campaign,
     source: Array.isArray(query.source) ? query.source[0] : query.source,
@@ -248,6 +255,8 @@ export default async function ProductDetailPage({
                   {product.additionalInfo}
                 </p>
               ) : null}
+
+              <ProductLandingPageCta landingPage={primaryLandingPage} />
 
               <ProductDetailAddToCart
                 attribution={attribution}
