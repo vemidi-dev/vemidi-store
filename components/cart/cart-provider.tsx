@@ -14,30 +14,34 @@ import {
 import { CartAddedToast } from "@/components/cart/cart-added-toast";
 import {
   buildCampaignAttribution,
-  mergeCampaignAttribution,
   type CampaignAttribution,
 } from "@/lib/campaign-attribution";
 import { CAMPAIGN_ATTRIBUTION_SESSION_KEY } from "@/lib/cart-types";
 import type { Product } from "@/lib/catalog";
-import { makeCartLineId } from "@/lib/cart-line-id";
+import {
+  ensureCampaignHandoffCartLine,
+  type CampaignHandoffCartInput,
+} from "@/lib/cart/campaign-handoff-cart";
+import {
+  mergeCartLineForAdd,
+  prepareCartLineInput,
+} from "@/lib/cart/prepare-cart-line";
+import { normalizeCartQuantityWithLimit } from "@/lib/cart/quantity-limits";
 import {
   getCartTotals,
-  normalizePersonalization,
   parseStoredCart,
 } from "@/lib/cart-storage";
-import {
-  normalizeCartQuantityWithLimit,
-} from "@/lib/cart/quantity-limits";
-import {
-  calculateEstimatedUnitPrice,
-} from "@/lib/product-option-pricing";
-import type { ProductOptionSelection } from "@/lib/product-options";
 import { CART_STORAGE_KEY, LEGACY_CART_STORAGE_KEY, type CartLine } from "@/lib/cart-types";
 import type { SelectedProductColor } from "@/lib/product-colors";
 import type { ProductPersonalizationValue } from "@/lib/product-personalization";
-import { calculatePersonalizationDelta } from "@/lib/product-personalization";
+import type { ProductOptionSelection } from "@/lib/product-options";
+
+type EnsureCampaignHandoffLineResult =
+  | { ok: true; lineId: string; persisted: true }
+  | { ok: false; lineId: string; persisted: false; notReady?: boolean };
 
 type CartContextValue = {
+  ready: boolean;
   lines: CartLine[];
   itemCount: number;
   subtotal: number;
@@ -50,6 +54,9 @@ type CartContextValue = {
     attribution?: CampaignAttribution,
     optionSelections?: ProductOptionSelection[],
   ) => void;
+  ensureCampaignHandoffLine: (
+    input: CampaignHandoffCartInput,
+  ) => EnsureCampaignHandoffLineResult;
   setQuantity: (lineId: string, quantity: number) => void;
   removeLine: (lineId: string) => void;
   clear: () => void;
@@ -90,11 +97,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   const [addedToast, setAddedToast] = useState<CartAddedToastState | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const linesRef = useRef<CartLine[]>([]);
 
   useEffect(() => {
-    setLines(readStoredLines());
+    const storedLines = readStoredLines();
+    linesRef.current = storedLines;
+    setLines(storedLines);
     setReady(true);
   }, []);
+
+  useEffect(() => {
+    linesRef.current = lines;
+  }, [lines]);
 
   useEffect(() => {
     if (!ready) {
@@ -153,110 +167,70 @@ export function CartProvider({ children }: { children: ReactNode }) {
       attribution?: CampaignAttribution,
       optionSelections?: ProductOptionSelection[],
     ) => {
-      const normalizedQuantity = normalizeCartQuantityWithLimit(
+      const prepared = prepareCartLineInput({
+        product,
         quantity,
-        product.maxCartQuantity,
-      );
-      if (
-        normalizedQuantity === 0 ||
-        !Number.isFinite(product.price) ||
-        product.price < 0 ||
-        !product.orderable
-      ) {
+        personalization,
+        selectedColors,
+        personalizationFields,
+        attribution,
+        optionSelections,
+      });
+      if (!prepared) {
         return;
       }
 
-      const storedPersonalization = normalizePersonalization(personalization);
-      const storedColors = selectedColors?.length ? selectedColors : undefined;
-      const storedPersonalizationFields = personalizationFields?.length
-        ? personalizationFields
-        : undefined;
-      const storedOptionSelections = optionSelections?.length
-        ? optionSelections
-        : undefined;
-      const storedAttribution = buildCampaignAttribution(attribution ?? {});
+      if (prepared.storedAttribution && typeof window !== "undefined") {
+        window.sessionStorage.setItem(
+          CAMPAIGN_ATTRIBUTION_SESSION_KEY,
+          JSON.stringify(prepared.storedAttribution),
+        );
+      }
+
+      setLines((prev) => mergeCartLineForAdd(prev, prepared));
+      showAddedToast(product, prepared.normalizedQuantity);
+    },
+    [showAddedToast],
+  );
+
+  const ensureCampaignHandoffLine = useCallback(
+    (input: CampaignHandoffCartInput): EnsureCampaignHandoffLineResult => {
+      if (!ready) {
+        return {
+          ok: false,
+          lineId: "",
+          persisted: false,
+          notReady: true,
+        };
+      }
+
+      const result = ensureCampaignHandoffCartLine(linesRef.current, input);
+      if (!result.ok) {
+        return {
+          ok: false,
+          lineId: result.lineId,
+          persisted: false,
+        };
+      }
+
+      linesRef.current = result.lines;
+      setLines(result.lines);
+
+      const storedAttribution = buildCampaignAttribution(input.attribution ?? {});
       if (storedAttribution && typeof window !== "undefined") {
         window.sessionStorage.setItem(
           CAMPAIGN_ATTRIBUTION_SESSION_KEY,
           JSON.stringify(storedAttribution),
         );
       }
-      const optionPrice = product.optionGroups?.length
-        ? calculateEstimatedUnitPrice(
-            product.price,
-            product.optionGroups,
-            storedOptionSelections ?? [],
-          )
-        : product.price;
-      const estimatedPrice =
-        optionPrice +
-        calculatePersonalizationDelta(
-          product.personalizationFields,
-          storedPersonalizationFields,
-        );
-      const lineId = makeCartLineId(
-        product.id,
-        storedPersonalization,
-        storedColors,
-        storedPersonalizationFields,
-        storedOptionSelections,
-      );
 
-      setLines((prev) => {
-        const existing = prev.find((l) => l.lineId === lineId);
-        if (existing) {
-          return prev.map((l) => {
-            if (l.lineId !== lineId) {
-              return l;
-            }
-
-            const mergedAttribution = mergeCampaignAttribution(
-              buildCampaignAttribution({
-                campaign: l.campaign,
-                source: l.source,
-                landingUrl: l.landingUrl,
-              }),
-              storedAttribution,
-            );
-
-            return {
-              ...l,
-              campaign: mergedAttribution?.campaign ?? l.campaign,
-              source: mergedAttribution?.source ?? l.source,
-              landingUrl: mergedAttribution?.landingUrl ?? l.landingUrl,
-              quantity: normalizeCartQuantityWithLimit(
-                l.quantity + normalizedQuantity,
-                l.maxCartQuantity ?? product.maxCartQuantity,
-              ),
-            };
-          });
-        }
-
-        return [
-          ...prev,
-          {
-            lineId,
-            productId: product.id,
-            slug: product.slug,
-            title: product.title,
-            imageSrc: product.images.find((image) => image.src)?.src,
-            price: estimatedPrice,
-            quantity: normalizedQuantity,
-            maxCartQuantity: product.maxCartQuantity,
-            campaign: storedAttribution?.campaign,
-            source: storedAttribution?.source,
-            landingUrl: storedAttribution?.landingUrl,
-            personalization: storedPersonalization,
-            personalizationFields: storedPersonalizationFields,
-            selectedColors: storedColors,
-            optionSelections: storedOptionSelections,
-          },
-        ];
-      });
-
-      showAddedToast(product, normalizedQuantity);
+      return {
+        ok: true,
+        lineId: result.lineId,
+        persisted: true,
+      };
     },
-    [showAddedToast],
+    [ready],
   );
 
   const setQuantity = useCallback((lineId: string, quantity: number) => {
@@ -281,15 +255,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const { itemCount, subtotal } = getCartTotals(lines);
 
     return {
+      ready,
       lines,
       itemCount,
       subtotal,
       addProduct,
+      ensureCampaignHandoffLine,
       setQuantity,
       removeLine,
       clear,
     };
-  }, [addProduct, clear, lines, removeLine, setQuantity]);
+  }, [addProduct, clear, ensureCampaignHandoffLine, lines, ready, removeLine, setQuantity]);
 
   return (
     <CartContext.Provider value={value}>

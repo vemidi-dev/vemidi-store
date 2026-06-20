@@ -6,6 +6,10 @@ import { useEffect, useRef } from "react";
 import { useCart } from "@/components/cart/cart-provider";
 import { CAMPAIGN_ATTRIBUTION_SESSION_KEY } from "@/lib/cart-types";
 import {
+  resolveCampaignHandoffLineId,
+  resolveCampaignHandoffRedirectGate,
+} from "@/lib/cart/campaign-handoff-cart";
+import {
   CAMPAIGN_HANDOFF_SESSION_KEY,
   type CampaignAttribution,
 } from "@/lib/campaign-attribution";
@@ -39,28 +43,16 @@ export function CampaignCheckoutBridge({
   selectedColors,
   optionSelections,
 }: CampaignCheckoutBridgeProps) {
-  const { addProduct } = useCart();
+  const { ready, lines, ensureCampaignHandoffLine } = useCart();
   const router = useRouter();
   const handled = useRef(false);
 
   useEffect(() => {
-    if (handled.current) {
+    if (!ready || handled.current) {
       return;
     }
 
-    const previousSignature = window.sessionStorage.getItem(CAMPAIGN_HANDOFF_SESSION_KEY);
-    persistAttribution(attribution);
-
-    if (previousSignature === handoffSignature) {
-      handled.current = true;
-      router.replace("/checkout");
-      return;
-    }
-
-    handled.current = true;
-    window.sessionStorage.setItem(CAMPAIGN_HANDOFF_SESSION_KEY, handoffSignature);
-
-    addProduct(
+    const handoffInput = {
       product,
       quantity,
       personalization,
@@ -68,19 +60,49 @@ export function CampaignCheckoutBridge({
       personalizationFields,
       attribution,
       optionSelections,
-    );
+    };
+    const lineId = resolveCampaignHandoffLineId(handoffInput);
+    const previousSignature = window.sessionStorage.getItem(CAMPAIGN_HANDOFF_SESSION_KEY);
+    const gate = resolveCampaignHandoffRedirectGate({
+      handoffSignature,
+      previousSignature,
+      lineId,
+      lines,
+    });
+
+    if (gate.action === "wait") {
+      return;
+    }
+
+    if (gate.action === "redirect") {
+      handled.current = true;
+      persistAttribution(attribution);
+      router.replace("/checkout");
+      return;
+    }
+
+    const ensureResult = ensureCampaignHandoffLine(handoffInput);
+    if (!ensureResult.ok || !ensureResult.persisted) {
+      return;
+    }
+
+    handled.current = true;
+    window.sessionStorage.setItem(CAMPAIGN_HANDOFF_SESSION_KEY, handoffSignature);
+    persistAttribution(attribution);
     router.replace("/checkout");
   }, [
-    addProduct,
     attribution,
+    ensureCampaignHandoffLine,
     handoffSignature,
+    lines,
+    optionSelections,
     personalization,
     personalizationFields,
     product,
     quantity,
+    ready,
     router,
     selectedColors,
-    optionSelections,
   ]);
 
   return (
