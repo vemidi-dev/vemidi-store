@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
+import { handleCampaignCheckoutHandoffMiddleware } from "@/lib/middleware/campaign-checkout-handoff";
 import { shouldRefreshSupabaseSession } from "@/lib/middleware/session-routes";
 import {
   resolveSeoRedirectUrl,
@@ -13,6 +14,11 @@ export async function middleware(request: NextRequest) {
   const seoTarget = resolveSeoRedirectUrl(request);
   if (seoTarget) {
     return NextResponse.redirect(seoTarget, SEO_REDIRECT_STATUS);
+  }
+
+  const campaignHandoffResponse = handleCampaignCheckoutHandoffMiddleware(request);
+  if (campaignHandoffResponse) {
+    return campaignHandoffResponse;
   }
 
   if (!shouldRefreshSupabaseSession(request.nextUrl.pathname)) {
@@ -44,5 +50,6 @@ export const config = {
     "/account",
     "/account/:path*",
     "/auth/:path*",
+    "/campaign-checkout",
   ],
 };
