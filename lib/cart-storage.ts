@@ -1,4 +1,5 @@
 import { normalizeCartQuantityWithLimit } from "@/lib/cart/quantity-limits";
+import { parseCartLineDisplaySnapshot } from "@/lib/cart/build-cart-line-display";
 import { isUuid } from "@/lib/is-uuid";
 import { makeCartLineId } from "@/lib/cart-line-id";
 import {
@@ -180,6 +181,7 @@ export function parseStoredCart(raw: string | null): CartLine[] {
       const normalizedOptionSelections = optionSelections.length
         ? optionSelections
         : undefined;
+      const displaySnapshot = parseCartLineDisplaySnapshot(value.displaySnapshot);
 
       lines.push({
         lineId: makeCartLineId(
@@ -203,6 +205,7 @@ export function parseStoredCart(raw: string | null): CartLine[] {
         personalizationFields: normalizedPersonalizationFields,
         selectedColors: normalizedColors,
         optionSelections: normalizedOptionSelections,
+        ...(displaySnapshot ? { displaySnapshot } : {}),
       });
     }
 

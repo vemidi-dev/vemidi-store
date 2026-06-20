@@ -10,6 +10,7 @@ import {
   type CheckoutActionState,
 } from "@/app/checkout/actions";
 import { CheckoutDeliveryFields } from "@/components/checkout/checkout-delivery-fields";
+import { CartLineSummaryDetails } from "@/components/cart/cart-line-summary-details";
 import { useCart } from "@/components/cart/cart-provider";
 import { PageContainer } from "@/components/layout/page-container";
 import { formatEur } from "@/lib/format-eur";
@@ -308,29 +309,11 @@ export function CheckoutPanel({ content }: { content: CheckoutPageContent }) {
                   <div className="flex justify-between gap-4">
                     <div>
                       <p className="font-medium text-boutique-ink">{line.title}</p>
-                      <p className="mt-1 text-boutique-muted">Количество: {line.quantity}</p>
-                      {line.personalization ? (
-                        <p className="mt-1 whitespace-pre-line text-xs text-boutique-muted">
-                          Персонализация: {line.personalization}
-                        </p>
-                      ) : null}
-                      {line.selectedColors?.map((color) => (
-                        <p key={`${color.fieldId}-${color.optionId}`} className="mt-1 text-xs text-boutique-muted">
-                          {color.fieldLabel}: {color.optionName}
-                        </p>
-                      ))}
-                      {line.optionSelections?.map((selection) => (
-                        <p key={selection.groupId} className="mt-1 text-xs text-boutique-muted">
-                          {selection.textValue
-                            ? `Опция: ${selection.textValue}`
-                            : `Опция (${selection.valueIds.length} избора)`}
-                        </p>
-                      ))}
-                      {line.campaign ? (
-                        <p className="mt-1 text-xs text-boutique-muted">
-                          Кампания: {line.campaign}
-                        </p>
-                      ) : null}
+                      <CartLineSummaryDetails
+                        line={line}
+                        showPricing
+                        className="mt-2"
+                      />
                     </div>
                     <p className="shrink-0 font-medium text-boutique-ink">
                       {formatEur(line.price * line.quantity)}

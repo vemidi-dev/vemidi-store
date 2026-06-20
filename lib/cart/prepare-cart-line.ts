@@ -4,6 +4,7 @@ import {
   type CampaignAttribution,
 } from "@/lib/campaign-attribution";
 import { makeCartLineId } from "@/lib/cart-line-id";
+import { buildCartLineDisplaySnapshot } from "@/lib/cart/build-cart-line-display";
 import { normalizePersonalization } from "@/lib/cart-storage";
 import { normalizeCartQuantityWithLimit } from "@/lib/cart/quantity-limits";
 import type { CartLine } from "@/lib/cart-types";
@@ -79,6 +80,10 @@ export function prepareCartLineInput(
     storedPersonalizationFields,
     storedOptionSelections,
   );
+  const displaySnapshot = buildCartLineDisplaySnapshot({
+    optionGroups: input.product.optionGroups,
+    optionSelections: storedOptionSelections,
+  });
 
   return {
     lineId,
@@ -100,6 +105,7 @@ export function prepareCartLineInput(
       personalizationFields: storedPersonalizationFields,
       selectedColors: storedColors,
       optionSelections: storedOptionSelections,
+      displaySnapshot,
     },
   };
 }

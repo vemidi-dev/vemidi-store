@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { useCart } from "@/components/cart/cart-provider";
+import { CartLineSummaryDetails } from "@/components/cart/cart-line-summary-details";
 import { getProductPath } from "@/lib/product-url";
 import { isCartQuantityAtLimit, resolveCartQuantityLimit } from "@/lib/cart/quantity-limits";
 import { PageContainer } from "@/components/layout/page-container";
@@ -95,36 +96,7 @@ export function CartPanel({ content }: { content: CartPageContent }) {
                         {formatEur(line.price)}
                       </p>
 
-                      {line.personalization ? (
-                        <details className="mt-3 text-xs text-boutique-muted">
-                          <summary className="cursor-pointer font-semibold text-boutique-ink/80">
-                            Персонализация
-                          </summary>
-                          <p className="mt-2 whitespace-pre-line leading-5">
-                            {line.personalization}
-                          </p>
-                        </details>
-                      ) : null}
-
-                      {line.selectedColors?.length ? (
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          {line.selectedColors.map((item) => (
-                            <span
-                              key={`${line.lineId}-${item.groupId}-${item.optionId}`}
-                              className="inline-flex items-center gap-1.5 rounded-full bg-white px-2 py-1 text-[10px] text-boutique-muted"
-                            >
-                              {item.optionHex ? (
-                                <span
-                                  aria-hidden
-                                  className="h-3 w-3 rounded-full border border-boutique-line"
-                                  style={{ backgroundColor: item.optionHex }}
-                                />
-                              ) : null}
-                              {item.optionName}
-                            </span>
-                          ))}
-                        </div>
-                      ) : null}
+                      <CartLineSummaryDetails line={line} className="mt-3" />
                     </div>
 
                     <div className="col-span-2 flex items-center justify-between gap-3 border-t border-boutique-line/70 pt-3 sm:col-span-1 sm:flex-col sm:items-end sm:justify-between sm:border-0 sm:pt-0">

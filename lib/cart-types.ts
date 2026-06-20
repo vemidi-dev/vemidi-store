@@ -2,6 +2,7 @@ import type { Product } from "@/lib/catalog";
 import type { ProductOptionSelection } from "@/lib/product-options";
 import type { SelectedProductColor } from "@/lib/product-colors";
 import type { ProductPersonalizationValue } from "@/lib/product-personalization";
+import type { CartLineDisplaySnapshot } from "@/lib/cart/build-cart-line-display";
 
 export type CartLine = {
   lineId: string;
@@ -20,6 +21,8 @@ export type CartLine = {
   personalizationFields?: ProductPersonalizationValue[];
   selectedColors?: SelectedProductColor[];
   optionSelections?: ProductOptionSelection[];
+  /** Customer-facing option labels captured at add-to-cart time. */
+  displaySnapshot?: CartLineDisplaySnapshot;
   /** Snapshot of stocked quantity limit when the line was added. */
   maxCartQuantity?: number;
 };
