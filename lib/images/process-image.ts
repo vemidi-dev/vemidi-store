@@ -113,7 +113,9 @@ export async function processImageBuffer(
   const warnings: string[] = [];
   if (getShortEdge(sourceWidth, sourceHeight) < profile.minShortEdge) {
     throw new Error(
-      `Изображението е твърде малко (късата страна е под ${profile.minShortEdge} px) и може да изглежда размазано.`,
+      profileId === "product"
+        ? `Изображението е твърде малко (късата страна е под ${profile.minShortEdge} px). Изберете по-голяма снимка.`
+        : `Изображението е твърде малко (късата страна е под ${profile.minShortEdge} px) и може да изглежда размазано.`,
     );
   }
 
@@ -141,6 +143,12 @@ export async function processImageBuffer(
 
   if (getLongEdge(width, height) > profile.maxDimension) {
     throw new Error("Неуспешна обработка на изображението.");
+  }
+
+  if (output.data.length > profile.maxFileSize) {
+    throw new Error(
+      `Оптимизираното изображение надвишава ${formatMegabytes(profile.maxFileSize)}. Използвайте по-малък файл.`,
+    );
   }
 
   return {

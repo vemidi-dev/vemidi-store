@@ -81,15 +81,15 @@ test("upload stores optimized WebP under scoped path", async () => {
   assert.match(uploaded.url, /storage\/v1\/object\/public\/product-images\//);
 });
 
-test("batch validation enforces max 12 images per product", () => {
+test("batch validation enforces max 12 images per product", async () => {
   const files = Array.from(
     { length: 3 },
-    (_, index) => new File([new Uint8Array([1, 2, 3])], `file-${index}.jpg`, { type: "image/jpeg" }),
+    (_, index) => new File([new Uint8Array([0xff, 0xd8, 0xff, index + 1])], `file-${index}.jpg`, { type: "image/jpeg" }),
   );
 
-  assert.equal(validateProductImageUploadBatch([files[0]], 11), null);
+  assert.equal(await validateProductImageUploadBatch([files[0]], 11), null);
   assert.match(
-    validateProductImageUploadBatch(files, 10) ?? "",
+    (await validateProductImageUploadBatch(files, 10)) ?? "",
     /лимит.*12/i,
   );
 });

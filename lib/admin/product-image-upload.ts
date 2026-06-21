@@ -12,16 +12,22 @@ import {
   processImageFiles,
   validateImageUploadBatch,
 } from "@/lib/images/upload-image";
+import { validateImageUploadFiles } from "@/lib/images/validate-image-file";
 
 export type ProductImageUploadDeps = ProductImageOptimizeDeps & {
   storageAdapter?: ProductImageStorageAdapter;
 };
 
-export function validateProductImageUploadBatch(
+export async function validateProductImageUploadBatch(
   files: File[],
   existingImageCount = 0,
 ) {
-  return validateImageUploadBatch("product", files, existingImageCount);
+  const syncError = validateImageUploadBatch("product", files, existingImageCount);
+  if (syncError) {
+    return syncError;
+  }
+
+  return validateImageUploadFiles("product", files, existingImageCount);
 }
 
 export async function processProductImageFiles(

@@ -471,7 +471,7 @@ export async function createProduct(formData: FormData) {
   const { slug, error: slugError } = parseSubmittedProductSlug(formData, name);
   const imageFiles = getFiles(formData, adminFormFields.product.imageFiles);
   const imageAltTexts = getProductImageAltTexts(formData);
-  const galleryUploadError = validateProductImageUploadBatch(imageFiles, 0);
+  const galleryUploadError = await validateProductImageUploadBatch(imageFiles, 0);
   const price = getPrice(formData);
   const categoryIds = getCategoryIds(formData);
   const primaryCategoryId = getPrimaryCategoryId(formData);
@@ -638,7 +638,7 @@ export async function updateProduct(formData: FormData) {
   const existingGalleryCount = id ? await getProductGalleryImageCount(supabase, id) : 0;
   const galleryUploadError =
     imageFiles.length > 0
-      ? validateProductImageUploadBatch(imageFiles, existingGalleryCount)
+      ? await validateProductImageUploadBatch(imageFiles, existingGalleryCount)
       : null;
   const { fields: colorFields, error: colorFieldsError } = await parseProductColorFields(
     supabase,
@@ -766,7 +766,7 @@ export async function addProductGalleryImages(formData: FormData) {
   const imageFiles = getFiles(formData, adminFormFields.product.imageFiles);
   const imageAltTexts = getProductImageAltTexts(formData);
   const existingGalleryCount = id ? await getProductGalleryImageCount(supabase, id) : 0;
-  const galleryUploadError = validateProductImageUploadBatch(
+  const galleryUploadError = await validateProductImageUploadBatch(
     imageFiles,
     existingGalleryCount,
   );
@@ -839,7 +839,7 @@ export async function replaceProductGalleryImage(formData: FormData) {
     redirectWithProductEdit("error", "Снимката не беше намерена.", productId);
   }
 
-  const galleryUploadError = validateProductImageUploadBatch([replaceFile], 0);
+  const galleryUploadError = await validateProductImageUploadBatch([replaceFile], 0);
   if (galleryUploadError) {
     redirectWithProductEdit("error", galleryUploadError, productId);
   }

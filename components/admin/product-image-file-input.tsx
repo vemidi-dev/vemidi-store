@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useFormStatus } from "react-dom";
 
 import {
   PRODUCT_IMAGE_MAX_FILES_PER_UPLOAD,
@@ -42,6 +43,7 @@ export function ProductImageFileInput({
   helperText,
 }: ProductImageFileInputProps) {
   const id = useId();
+  const { pending } = useFormStatus();
   const defaultHelper = useMemo(
     () =>
       helperText ??
@@ -109,9 +111,14 @@ export function ProductImageFileInput({
       <p className="text-sm font-medium text-boutique-ink">{label}</p>
       <label
         htmlFor={id}
-        className={`${className} mt-2 flex cursor-pointer flex-col items-center justify-center border-dashed bg-boutique-paper px-4 py-6 text-center transition hover:border-boutique-accent/50 hover:bg-boutique-bg`}
+        aria-disabled={pending}
+        className={`${className} mt-2 flex cursor-pointer flex-col items-center justify-center border-dashed bg-boutique-paper px-4 py-6 text-center transition hover:border-boutique-accent/50 hover:bg-boutique-bg ${
+          pending ? "pointer-events-none opacity-60" : ""
+        }`}
       >
-        <span className="text-sm font-semibold text-boutique-ink">Избери снимки</span>
+        <span className="text-sm font-semibold text-boutique-ink">
+          {pending ? "Качване…" : "Избери снимки"}
+        </span>
         <span className="mt-1 text-xs text-boutique-muted">PNG, JPG или WEBP</span>
       </label>
       <input
@@ -122,6 +129,7 @@ export function ProductImageFileInput({
         multiple
         accept={ACCEPTED_MIME_TYPES.join(",")}
         className="sr-only"
+        disabled={pending}
         onChange={(event) => {
           const input = event.currentTarget;
           const files = Array.from(input.files ?? []);
@@ -262,9 +270,12 @@ export function ProductImageFileInput({
 
       <p
         className={`${helperClassName} ${status === "error" ? "text-red-700" : ""}`}
-        role={status === "error" ? "alert" : undefined}
+        role={status === "error" || pending ? "status" : undefined}
+        aria-live={status === "error" || pending ? "polite" : undefined}
       >
-        {message}
+        {pending
+          ? "Качване и обработка на избраните снимки… Моля, изчакайте."
+          : message}
       </p>
     </div>
   );

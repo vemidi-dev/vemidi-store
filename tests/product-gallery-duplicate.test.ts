@@ -158,14 +158,14 @@ test("copied gallery files use distinct scoped storage paths", async () => {
   assert.match(copied.path, new RegExp(`^products/${TARGET_PRODUCT_ID}/`));
 });
 
-test("adding images validates against existing gallery count without replacing it", () => {
+test("adding images validates against existing gallery count without replacing it", async () => {
   const files = [
-    new File([new Uint8Array([1, 2, 3])], "new.jpg", { type: "image/jpeg" }),
+    new File([new Uint8Array([0xff, 0xd8, 0xff, 0xe0])], "new.jpg", { type: "image/jpeg" }),
   ];
 
-  assert.equal(validateProductImageUploadBatch(files, 11), null);
+  assert.equal(await validateProductImageUploadBatch(files, 11), null);
   assert.match(
-    validateProductImageUploadBatch(files, 12) ?? "",
+    (await validateProductImageUploadBatch(files, 12)) ?? "",
     /лимит.*12/i,
   );
 });

@@ -60,6 +60,13 @@ export function validateImageUploadBatch(
     if (file.size > profile.maxFileSize) {
       return `Файлът „${file.name}“ надвишава максималния размер от ${formatMegabytes(profile.maxFileSize)}.`;
     }
+
+    if (
+      file.type &&
+      !["image/jpeg", "image/png", "image/webp"].includes(file.type)
+    ) {
+      return `Файлът „${file.name}“ не е позволен формат. Използвайте JPEG, PNG или WebP.`;
+    }
   }
 
   return null;

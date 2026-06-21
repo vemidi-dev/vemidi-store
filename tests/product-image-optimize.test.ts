@@ -94,7 +94,7 @@ test("EXIF orientation is applied before resize", async () => {
   assert.equal(result.height, 1600);
 });
 
-test("files above 15 MB are rejected", () => {
+test("files above 5 MB are rejected", () => {
   assert.throws(
     () => validateProductImageInputSize(PRODUCT_IMAGE_MAX_INPUT_BYTES + 1),
     /надвишава максималния размер/,
@@ -119,11 +119,17 @@ test("unsupported or corrupted files are rejected", async () => {
   );
 });
 
-test("images below 700 px short edge are rejected", async () => {
-  const input = await createTestImage(900, 600, "jpeg");
+test("images below 480 px short edge are rejected for products", async () => {
+  const input = await createTestImage(900, 400, "jpeg");
 
   await assert.rejects(
     () => optimizeProductImageBuffer(input, input.length),
-    /размазано/i,
+    /малко/i,
   );
+});
+
+test("product images with 480 px short edge are accepted", async () => {
+  const input = await createTestImage(900, 480, "jpeg");
+  const result = await optimizeProductImageBuffer(input, input.length);
+  assert.equal(result.height, 480);
 });
