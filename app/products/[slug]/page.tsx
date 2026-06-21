@@ -256,7 +256,7 @@ export default async function ProductDetailPage({
                 </p>
               ) : null}
 
-              <ProductLandingPageCta landingPage={primaryLandingPage} />
+              <ProductLandingPageCta landingPage={primaryLandingPage} product={product} />
 
               <ProductDetailAddToCart
                 attribution={attribution}
