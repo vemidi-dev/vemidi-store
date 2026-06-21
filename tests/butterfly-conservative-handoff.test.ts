@@ -196,3 +196,24 @@ test("conservative butterfly: missing size needs configuration redirect to produ
   assert.equal(redirect.pathname, `/produkti/${BUTTERFLY_PRODUCT_SLUG}`);
   assert.equal(redirect.searchParams.get("campaign"), "butterflies");
 });
+
+test("conservative butterfly: partial landing data survives needs-configuration handoff", () => {
+  const query = parseCampaignHandoffQuery({
+    ...butterflyLandingHandoffQuery,
+    option_coloring: "paints",
+    [`pf_${BUTTERFLY_LEGACY_PERSONALIZATION_FIELD_KEY}`]: "Мария",
+  });
+  const result = evaluateCampaignHandoff(butterflyConservativeProduct, query);
+
+  assert.equal(result.status, "needs_configuration");
+  if (result.status !== "needs_configuration") {
+    return;
+  }
+
+  assert.deepEqual(result.optionSelections, [
+    { groupId: groupColoringId, valueIds: [valuePaintsId] },
+  ]);
+  assert.equal(result.personalizationFields[0]?.value, "Мария");
+  assert.deepEqual(result.selectedColors, []);
+  assert.doesNotMatch(result.redirectPath, /Мария|pf_/i);
+});

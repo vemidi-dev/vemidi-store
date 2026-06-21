@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
 
 import { CampaignCheckoutBridge } from "@/components/campaign/campaign-checkout-bridge";
+import { CampaignConfigurationRedirectBridge } from "@/components/campaign/campaign-configuration-redirect-bridge";
 import { CampaignCheckoutError } from "@/components/campaign/campaign-checkout-error";
 import { PageContainer } from "@/components/layout/page-container";
 import {
@@ -109,7 +109,16 @@ export default async function CampaignCheckoutPage({
   }
 
   if (result.status === "needs_configuration") {
-    redirect(result.redirectPath);
+    return (
+      <CampaignConfigurationRedirectBridge
+        optionSelections={result.optionSelections}
+        personalizationFields={result.personalizationFields}
+        productId={result.product.id}
+        productTitle={result.product.title}
+        redirectPath={result.redirectPath}
+        selectedColors={result.selectedColors}
+      />
+    );
   }
 
   return renderCheckoutBridge(result);

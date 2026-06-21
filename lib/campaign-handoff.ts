@@ -58,6 +58,9 @@ export type CampaignHandoffNeedsConfiguration = {
   product: Product;
   redirectPath: string;
   missing: string[];
+  selectedColors: SelectedProductColor[];
+  optionSelections: ProductOptionSelection[];
+  personalizationFields: ProductPersonalizationValue[];
 };
 
 export type CampaignHandoffInvalid = {
@@ -514,6 +517,9 @@ export function evaluateCampaignHandoff(
         resolvedOptions.selections,
       ),
       missing,
+      selectedColors: colorResult.selected,
+      optionSelections: resolvedOptions.selections,
+      personalizationFields: personalizationResult.fields,
     };
   }
 

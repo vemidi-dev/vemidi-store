@@ -1,12 +1,17 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { useCart } from "@/components/cart/cart-provider";
 import { ProductOptionsSelector } from "@/components/product/product-options-selector";
 import type { CampaignAttribution } from "@/lib/campaign-attribution";
 import type { Product } from "@/lib/catalog";
 import type { ProductOptionSelection } from "@/lib/product-options";
+import {
+  getProductConfigurationDraftKey,
+  mergeProductOptionSelections,
+  parseProductConfigurationDraft,
+} from "@/lib/product-configuration-draft";
 import { validateProductOptionSelections } from "@/lib/product-option-validation";
 import type { SelectedProductColor } from "@/lib/product-colors";
 import { formatPriceDelta } from "@/lib/product-option-pricing";
@@ -35,8 +40,8 @@ export function ProductDetailAddToCart({
 }: ProductDetailAddToCartProps) {
   const { addProduct } = useCart();
   const configuratorRef = useRef<HTMLDivElement | null>(null);
-  const fallbackFields: ProductPersonalizationField[] =
-    product.customizable && !(product.personalizationFields?.length)
+  const fallbackFields = useMemo<ProductPersonalizationField[]>(
+    () => product.customizable && !(product.personalizationFields?.length)
       ? [{
           id: "legacy",
           label: "Текст за персонализация",
@@ -48,10 +53,15 @@ export function ProductDetailAddToCart({
           required: false,
           allowsWishTemplates: true,
         }]
-      : [];
-  const fields = product.personalizationFields?.length
-    ? product.personalizationFields
-    : fallbackFields;
+      : [],
+    [product.customizable, product.personalizationFields],
+  );
+  const fields = useMemo(
+    () => product.personalizationFields?.length
+      ? product.personalizationFields
+      : fallbackFields,
+    [fallbackFields, product.personalizationFields],
+  );
   const [values, setValues] = useState<Record<string, string>>({});
   const [enabledOptionalFields, setEnabledOptionalFields] = useState<Set<string>>(
     () => new Set(),
@@ -67,8 +77,95 @@ export function ProductDetailAddToCart({
     useState<ProductOptionSelection[]>(initialOptionSelections);
   const [estimatedUnitPrice, setEstimatedUnitPrice] = useState(product.price);
   const [showMobileBar, setShowMobileBar] = useState(false);
-  const colorFields = product.colorFields ?? [];
-  const optionGroups = product.optionGroups ?? [];
+  const [draftReady, setDraftReady] = useState(false);
+  const colorFields = useMemo(() => product.colorFields ?? [], [product.colorFields]);
+  const optionGroups = useMemo(() => product.optionGroups ?? [], [product.optionGroups]);
+
+  useEffect(() => {
+    let draft = null;
+    try {
+      draft = parseProductConfigurationDraft(
+        window.localStorage.getItem(getProductConfigurationDraftKey(product.id)),
+      );
+    } catch {
+      // Storage can be unavailable in strict privacy modes; the configurator still works.
+    }
+
+    if (draft) {
+      const knownFields = new Map(fields.map((field) => [field.id, field]));
+      const restoredValues = Object.fromEntries(
+        Object.entries(draft.values)
+          .filter(([fieldId]) => knownFields.has(fieldId))
+          .map(([fieldId, value]) => [
+            fieldId,
+            value.slice(0, knownFields.get(fieldId)?.maxLength ?? 1000),
+          ]),
+      );
+      const optionalFieldIds = new Set(
+        fields
+          .filter((field) => !field.required)
+          .map((field) => field.id),
+      );
+      const restoredEnabledFields = new Set(
+        draft.enabledOptionalFieldIds.filter((fieldId) => optionalFieldIds.has(fieldId)),
+      );
+      const restoredColors = Object.fromEntries(
+        colorFields.map((field) => {
+          const knownOptionIds = new Set(field.options.map((option) => option.id));
+          return [
+            field.id,
+            (draft.selectedColorOptionIdsByFieldId[field.id] ?? [])
+              .filter((optionId) => knownOptionIds.has(optionId))
+              .slice(0, field.maxSelect),
+          ];
+        }),
+      );
+      const restoredOptions = draft.optionSelections.filter((selection) => {
+        const group = optionGroups.find((candidate) => candidate.id === selection.groupId);
+        if (!group) {
+          return false;
+        }
+        const knownValueIds = new Set(group.values.map((value) => value.id));
+        return selection.valueIds.every((valueId) => knownValueIds.has(valueId));
+      });
+
+      setValues(restoredValues);
+      setEnabledOptionalFields(restoredEnabledFields);
+      setSelectedByGroup(restoredColors);
+      setOptionSelections(
+        mergeProductOptionSelections(restoredOptions, initialOptionSelections),
+      );
+    }
+
+    setDraftReady(true);
+  }, [colorFields, fields, initialOptionSelections, optionGroups, product.id]);
+
+  useEffect(() => {
+    if (!draftReady) {
+      return;
+    }
+
+    try {
+      window.localStorage.setItem(
+        getProductConfigurationDraftKey(product.id),
+        JSON.stringify({
+          values,
+          enabledOptionalFieldIds: [...enabledOptionalFields],
+          selectedColorOptionIdsByFieldId: selectedByGroup,
+          optionSelections,
+        }),
+      );
+    } catch {
+      // Keep selection usable even if the browser refuses persistent storage.
+    }
+  }, [
+    draftReady,
+    enabledOptionalFields,
+    optionSelections,
+    product.id,
+    selectedByGroup,
+    values,
+  ]);
 
   const flattenSelectedColors = (): SelectedProductColor[] => {
     const out: SelectedProductColor[] = [];
