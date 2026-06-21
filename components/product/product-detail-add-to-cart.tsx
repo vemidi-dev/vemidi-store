@@ -11,6 +11,7 @@ import {
   getProductConfigurationDraftKey,
   mergeProductOptionSelections,
   parseProductConfigurationDraft,
+  resolveProductConfigurationDraft,
 } from "@/lib/product-configuration-draft";
 import { validateProductOptionSelections } from "@/lib/product-option-validation";
 import type { SelectedProductColor } from "@/lib/product-colors";
@@ -38,7 +39,7 @@ export function ProductDetailAddToCart({
   attribution,
   initialOptionSelections = [],
 }: ProductDetailAddToCartProps) {
-  const { addProduct } = useCart();
+  const { addProduct, lines, ready: cartReady } = useCart();
   const configuratorRef = useRef<HTMLDivElement | null>(null);
   const fallbackFields = useMemo<ProductPersonalizationField[]>(
     () => product.customizable && !(product.personalizationFields?.length)
@@ -82,16 +83,32 @@ export function ProductDetailAddToCart({
   const optionGroups = useMemo(() => product.optionGroups ?? [], [product.optionGroups]);
 
   useEffect(() => {
-    let draft = null;
+    if (!cartReady) {
+      return;
+    }
+
+    let storedDraft = null;
     try {
-      draft = parseProductConfigurationDraft(
+      storedDraft = parseProductConfigurationDraft(
         window.localStorage.getItem(getProductConfigurationDraftKey(product.id)),
       );
     } catch {
       // Storage can be unavailable in strict privacy modes; the configurator still works.
     }
 
+    const cartLine = lines.find((line) => line.productId === product.id) ?? null;
+    const draft = resolveProductConfigurationDraft(storedDraft, cartLine, fields);
+
     if (draft) {
+      try {
+        window.localStorage.setItem(
+          getProductConfigurationDraftKey(product.id),
+          JSON.stringify(draft),
+        );
+      } catch {
+        // Keep selection usable even if the browser refuses persistent storage.
+      }
+
       const knownFields = new Map(fields.map((field) => [field.id, field]));
       const restoredValues = Object.fromEntries(
         Object.entries(draft.values)
@@ -138,7 +155,15 @@ export function ProductDetailAddToCart({
     }
 
     setDraftReady(true);
-  }, [colorFields, fields, initialOptionSelections, optionGroups, product.id]);
+  }, [
+    cartReady,
+    colorFields,
+    fields,
+    initialOptionSelections,
+    lines,
+    optionGroups,
+    product.id,
+  ]);
 
   useEffect(() => {
     if (!draftReady) {

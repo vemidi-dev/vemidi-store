@@ -19,7 +19,10 @@ import {
   parseStoreOrderItems,
   type OrderRow,
 } from "@/lib/admin/orders";
-import { formatOrderOptionLine } from "@/lib/order-option-display";
+import {
+  buildStoreOrderItemDetailLines,
+  shouldShowOrderPersonalizationSummary,
+} from "@/lib/admin/order-item-display";
 import type { OrderNotificationSummary } from "@/lib/admin/order-notifications";
 import { OrderNotificationStatus } from "@/components/admin/order-notification-status";
 
@@ -36,6 +39,7 @@ export function OrderDetailsSection({
 }) {
   const storeItems = parseStoreOrderItems(order);
   const itemCount = getOrderItemCount(order);
+  const personalizationSummary = getOrderPersonalizationSummary(order);
 
   return (
     <div className="space-y-5 text-sm">
@@ -132,34 +136,14 @@ export function OrderDetailsSection({
                       Ред общо: {formatOrderPrice(item.lineTotal, order.currency)}
                     </p>
                   ) : null}
-                  {item.personalization ? (
-                    <p className="mt-2 whitespace-pre-wrap break-words text-xs text-boutique-muted">
-                      Персонализация: {item.personalization}
-                    </p>
-                  ) : null}
-                  {item.personalizationFields.map((field, fieldIndex) => (
+                  {buildStoreOrderItemDetailLines(item).map((line, lineIndex) => (
                     <p
-                      key={fieldIndex}
+                      key={lineIndex}
                       className="mt-1 whitespace-pre-wrap break-words text-xs text-boutique-muted"
                     >
-                      {field.label || "Поле"}: {field.value || "—"}
+                      {line.text}
                     </p>
                   ))}
-                  {item.selectedColors.map((color, colorIndex) => (
-                    <p key={colorIndex} className="mt-1 text-xs text-boutique-muted">
-                      {color.fieldLabel || "Цвят"}: {color.optionName || "—"}
-                    </p>
-                  ))}
-                  {item.optionSelections.map((group, groupIndex) => (
-                    <p key={groupIndex} className="mt-1 text-xs text-boutique-muted">
-                      {formatOrderOptionLine(group)}
-                    </p>
-                  ))}
-                  {item.optionDelta != null && item.optionDelta > 0 ? (
-                    <p className="mt-1 text-xs text-boutique-muted">
-                      Доплащане опции: {formatOrderPrice(item.optionDelta, order.currency)}
-                    </p>
-                  ) : null}
                 </div>
               );
             })}
@@ -227,13 +211,13 @@ export function OrderDetailsSection({
         </dl>
       </section>
 
-      {getOrderPersonalizationSummary(order) ? (
+      {shouldShowOrderPersonalizationSummary(storeItems.length, personalizationSummary) ? (
         <section>
           <h4 className="text-xs font-semibold uppercase tracking-wider text-boutique-muted">
             Персонализация
           </h4>
           <p className="mt-2 whitespace-pre-wrap break-words text-boutique-ink">
-            {getOrderPersonalizationSummary(order)}
+            {personalizationSummary}
           </p>
         </section>
       ) : null}

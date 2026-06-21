@@ -1,6 +1,10 @@
+import type { CartLine } from "@/lib/cart-types";
 import type { ProductOptionSelection } from "@/lib/product-options";
 import type { SelectedProductColor } from "@/lib/product-colors";
-import type { ProductPersonalizationValue } from "@/lib/product-personalization";
+import type {
+  ProductPersonalizationField,
+  ProductPersonalizationValue,
+} from "@/lib/product-personalization";
 
 export const PRODUCT_CONFIGURATION_DRAFT_PREFIX =
   "vemidi:product-configuration-v1";
@@ -122,13 +126,114 @@ export function mergeProductOptionSelections(
   return [...merged.values()];
 }
 
+export type ProductConfigurationDraftIncoming = {
+  optionSelections?: ProductOptionSelection[];
+  personalizationFields?: ProductPersonalizationValue[];
+  selectedColors?: SelectedProductColor[];
+};
+
+export function findCartLineForProduct(
+  lines: readonly Pick<CartLine, "productId">[],
+  productId: string,
+): Pick<
+  CartLine,
+  "personalization" | "personalizationFields" | "selectedColors" | "optionSelections"
+> | null {
+  const matches = lines.filter((line) => line.productId === productId);
+  if (matches.length === 0) {
+    return null;
+  }
+
+  return matches.reduce<
+    Pick<
+      CartLine,
+      "personalization" | "personalizationFields" | "selectedColors" | "optionSelections"
+    > | null
+  >((best, line) => {
+    const candidate = line as Pick<
+      CartLine,
+      "personalization" | "personalizationFields" | "selectedColors" | "optionSelections"
+    >;
+    if (!best) {
+      return candidate;
+    }
+
+    const candidateScore =
+      (candidate.personalizationFields?.length ?? 0) +
+      (candidate.personalization?.trim() ? 1 : 0) +
+      (candidate.optionSelections?.length ?? 0) +
+      (candidate.selectedColors?.length ?? 0);
+    const bestScore =
+      (best.personalizationFields?.length ?? 0) +
+      (best.personalization?.trim() ? 1 : 0) +
+      (best.optionSelections?.length ?? 0) +
+      (best.selectedColors?.length ?? 0);
+
+    return candidateScore >= bestScore ? candidate : best;
+  }, null);
+}
+
+export function buildConfigurationIncomingFromCartLine(
+  line: Pick<
+    CartLine,
+    "personalization" | "personalizationFields" | "selectedColors" | "optionSelections"
+  >,
+  fields: readonly ProductPersonalizationField[] = [],
+): ProductConfigurationDraftIncoming {
+  let personalizationFields = line.personalizationFields?.length
+    ? line.personalizationFields
+    : undefined;
+
+  if (!personalizationFields?.length && line.personalization?.trim() && fields.length > 0) {
+    const targetField =
+      fields.find((field) => field.key === "name")
+      ?? fields.find((field) => field.key === "personalization")
+      ?? fields[0];
+    if (targetField) {
+      personalizationFields = [{
+        fieldId: targetField.id,
+        fieldKey: targetField.key,
+        label: targetField.label,
+        value: line.personalization.trim(),
+      }];
+    }
+  }
+
+  return {
+    personalizationFields,
+    selectedColors: line.selectedColors?.length ? line.selectedColors : undefined,
+    optionSelections: line.optionSelections?.length ? line.optionSelections : undefined,
+  };
+}
+
+export function resolveProductConfigurationDraft(
+  storedDraft: ProductConfigurationDraft | null,
+  cartLine: Pick<
+    CartLine,
+    "personalization" | "personalizationFields" | "selectedColors" | "optionSelections"
+  > | null,
+  fields: readonly ProductPersonalizationField[] = [],
+): ProductConfigurationDraft | null {
+  const base = storedDraft ?? {
+    values: {},
+    enabledOptionalFieldIds: [],
+    selectedColorOptionIdsByFieldId: {},
+    optionSelections: [],
+  };
+
+  if (!cartLine) {
+    return storedDraft;
+  }
+
+  return mergeProductConfigurationDraft(
+    base,
+    buildConfigurationIncomingFromCartLine(cartLine, fields),
+  );
+}
+
 export function mergeProductConfigurationDraft(
   base: ProductConfigurationDraft,
-  incoming: {
-    optionSelections?: ProductOptionSelection[];
-    personalizationFields?: ProductPersonalizationValue[];
-    selectedColors?: SelectedProductColor[];
-  },
+  incoming: ProductConfigurationDraftIncoming,
 ): ProductConfigurationDraft {
   const values = { ...base.values };
   const enabledOptionalFieldIds = new Set(base.enabledOptionalFieldIds);
