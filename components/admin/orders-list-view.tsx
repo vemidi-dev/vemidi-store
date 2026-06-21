@@ -68,6 +68,21 @@ export function OrdersListView({
     );
   }
 
+  function toggleExpanded(orderId: string) {
+    setExpandedOrderId((current) => (current === orderId ? null : orderId));
+  }
+
+  function handleOrderRowClick(
+    event: React.MouseEvent<HTMLElement>,
+    orderId: string,
+  ) {
+    const target = event.target as HTMLElement;
+    if (target.closest('input[type="checkbox"]') || target.closest("button")) {
+      return;
+    }
+    toggleExpanded(orderId);
+  }
+
   function toggleVisibleSelection() {
     if (allVisibleSelected) {
       setSelectedIds((current) => current.filter((id) => !pageOrderIds.includes(id)));
@@ -145,9 +160,13 @@ export function OrdersListView({
                 />
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <p className="text-xs font-semibold text-boutique-ink">
+                    <button
+                      type="button"
+                      className="text-xs font-semibold text-boutique-accent underline-offset-2 hover:underline"
+                      onClick={() => toggleExpanded(order.id)}
+                    >
                       #{getOrderShortId(order)}
-                    </p>
+                    </button>
                     <span
                       className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${sourceBadgeClass(order)}`}
                     >
@@ -252,7 +271,10 @@ export function OrdersListView({
               const isExpanded = expandedOrderId === order.id;
               return (
                 <Fragment key={order.id}>
-                  <tr className={adminTableRowClass}>
+                  <tr
+                    className={`${adminTableRowClass} cursor-pointer hover:bg-boutique-bg/50`}
+                    onClick={(event) => handleOrderRowClick(event, order.id)}
+                  >
                     <td className="px-2 py-2.5 align-top">
                       <input
                         aria-label={`Избери поръчка ${getOrderShortId(order)}`}
@@ -261,8 +283,17 @@ export function OrdersListView({
                         onChange={() => toggleSelection(order.id)}
                       />
                     </td>
-                    <td className="break-all px-3 py-2.5 align-top font-mono text-xs text-boutique-ink">
-                      {getOrderShortId(order)}
+                    <td className="break-all px-3 py-2.5 align-top">
+                      <button
+                        type="button"
+                        className="font-mono text-xs font-semibold text-boutique-accent underline-offset-2 hover:underline"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          toggleExpanded(order.id);
+                        }}
+                      >
+                        {getOrderShortId(order)}
+                      </button>
                     </td>
                     <td className="px-3 py-2.5 align-top text-xs text-boutique-muted">
                       {formatOrderDate(order.created_at)}
@@ -324,12 +355,11 @@ export function OrdersListView({
                         type="button"
                         aria-controls={detailsId}
                         aria-expanded={isExpanded}
-                        className="text-xs font-semibold text-boutique-accent"
-                        onClick={() =>
-                          setExpandedOrderId((current) =>
-                            current === order.id ? null : order.id,
-                          )
-                        }
+                        className="text-xs font-semibold text-boutique-accent underline-offset-2 hover:underline"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          toggleExpanded(order.id);
+                        }}
                       >
                         {isExpanded ? "Затвори" : "Детайли"}
                       </button>

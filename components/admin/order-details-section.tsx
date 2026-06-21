@@ -5,6 +5,7 @@ import {
   formatOrderPrice,
   getCourierLabel,
   getDeliveryTypeLabel,
+  getLandingOrderColoringLabel,
   getOrderItemCount,
   getOrderItemProductCode,
   getOrderItemProductPath,
@@ -14,6 +15,7 @@ import {
   getOrderSourceLabel,
   getOrderStatusLabel,
   getPaymentMethodLabel,
+  isLandingOnlyOrder,
   parseStoreOrderItems,
   type OrderRow,
 } from "@/lib/admin/orders";
@@ -162,6 +164,35 @@ export function OrderDetailsSection({
               );
             })}
           </div>
+        </section>
+      ) : isLandingOnlyOrder(order) ? (
+        <section>
+          <h4 className="text-xs font-semibold uppercase tracking-wider text-boutique-muted">
+            Продукт (лендинг)
+          </h4>
+          <dl className="mt-3 grid gap-3 sm:grid-cols-2">
+            {[
+              ["Продукт", valueOrDash(order.kit_name || order.product_name)],
+              ["Размер", valueOrDash(order.kit_size)],
+              ["Оцветяване", getLandingOrderColoringLabel(order.coloring)],
+              [
+                "Персонализация",
+                order.personalization
+                  ? valueOrDash(order.child_name || "Да")
+                  : "Не",
+              ],
+              ["Количество", "1"],
+              ["Ред общо", formatOrderPrice(order.total_price, order.currency)],
+              ["Източник / кампания", getOrderSourceLabel(order)],
+            ].map(([label, value]) => (
+              <div key={label}>
+                <dt className="text-xs font-semibold uppercase tracking-wider text-boutique-muted">
+                  {label}
+                </dt>
+                <dd className="mt-1 break-words text-boutique-ink">{value}</dd>
+              </div>
+            ))}
+          </dl>
         </section>
       ) : (
         <section>

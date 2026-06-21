@@ -100,7 +100,7 @@ test("resolveProductLandingCta returns CTA for active primary landing", () => {
   assert.equal(cta.label, PRODUCT_LANDING_CTA_LABEL);
   assert.equal(
     cta.href,
-    "https://special.vemidi-crafts.com/valshebni-peperudi",
+    "https://special.vemidi-crafts.com/valshebni-peperudi?source=store",
   );
 });
 
@@ -197,12 +197,14 @@ test("repository selection tolerates query failures by returning null", async ()
   );
 });
 
-test("landing CTA anchor opens in the same tab", () => {
+test("landing CTA anchor opens in a new tab with source=store", () => {
   const cta = resolveProductLandingCta(activePrimaryLanding, landingBaseUrl);
   assert.ok(cta);
   const props = getProductLandingCtaAnchorProps(cta);
   assert.equal(props.href, cta.href);
-  assert.equal("target" in props, false);
+  assert.equal(props.target, "_blank");
+  assert.equal(props.rel, "noopener noreferrer");
+  assert.match(props.href, /[?&]source=store(?:&|$)/);
 });
 
 test("product page SEO metadata and breadcrumbs stay on canonical product URL", () => {
@@ -224,13 +226,19 @@ test("product page SEO metadata and breadcrumbs stay on canonical product URL", 
   );
 });
 
-test("product landing CTA component does not use target blank", () => {
-  const source = readFileSync(
+test("product landing CTA component opens landing in a new tab", () => {
+  const componentSource = readFileSync(
     new URL("../components/product/product-landing-page-cta.tsx", import.meta.url),
     "utf8",
   );
+  const ctaSource = readFileSync(
+    new URL("../lib/product-landing/storefront-cta.ts", import.meta.url),
+    "utf8",
+  );
 
-  assert.doesNotMatch(source, /target="_blank"/);
-  assert.doesNotMatch(source, /target='_blank'/);
-  assert.doesNotMatch(source, /window\.open/);
+  assert.match(componentSource, /getProductLandingCtaAnchorProps/);
+  assert.doesNotMatch(componentSource, /ProductLandingHandoffButton/);
+  assert.doesNotMatch(componentSource, /campaign-landing-handoff/);
+  assert.match(ctaSource, /target: "_blank"/);
+  assert.match(ctaSource, /source", PRODUCT_LANDING_CTA_SOURCE_PARAM/);
 });

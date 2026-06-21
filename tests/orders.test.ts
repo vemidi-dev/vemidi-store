@@ -13,6 +13,8 @@ import {
   getOrderSourceFilterValue,
   getOrderSourceKind,
   getOrderSourceLabel,
+  getLandingOrderColoringLabel,
+  isLandingOnlyOrder,
   normalizeOrderCsvColumns,
   normalizeOrderPage,
   normalizeOrderPageSize,
@@ -220,4 +222,19 @@ test("order short id and personalization summary stay readable", () => {
     ),
     /Габи/,
   );
+});
+
+test("landing-only orders expose kit fields for admin detail panels", () => {
+  const landingOrder = makeOrder({
+    kit_name: "Комплект Стандарт",
+    kit_size: "5",
+    coloring: "paints",
+    personalization: true,
+    child_name: "Мария",
+    raw_payload: { source: "campaign-butterflies" },
+  });
+
+  assert.equal(isLandingOnlyOrder(landingOrder), true);
+  assert.equal(getLandingOrderColoringLabel("paints"), "Бои");
+  assert.equal(getOrderSourceLabel(landingOrder), "Кампания (butterflies)");
 });

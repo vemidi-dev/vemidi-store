@@ -300,6 +300,16 @@ export function getRawOrderSourceValue(order: OrderRow) {
   return order.raw_payload?.source?.trim() || "";
 }
 
+export function isLandingOnlyOrder(order: OrderRow) {
+  return parseStoreOrderItems(order).length === 0 && isLegacyLandingOrder(order);
+}
+
+export function getLandingOrderColoringLabel(value: string | null) {
+  if (value === "paints") return "Бои";
+  if (value === "markers") return "Маркери";
+  return value?.trim() || "—";
+}
+
 export function isLegacyLandingOrder(order: OrderRow) {
   return Boolean(order.kit_name || order.kit_size || order.coloring);
 }
