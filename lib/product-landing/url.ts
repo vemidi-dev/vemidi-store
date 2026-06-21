@@ -8,7 +8,31 @@ const ALLOWED_LANDING_HOSTS = new Set([
   "127.0.0.1",
 ]);
 
-function sanitizeLandingBaseUrl(raw: string | null | undefined): URL {
+function parseAllowedLandingOrigins(raw: string | null | undefined): Set<string> {
+  const origins = new Set<string>();
+
+  for (const candidate of raw?.split(",") ?? []) {
+    try {
+      const url = new URL(candidate.trim());
+      if (
+        (url.protocol === "https:" || url.protocol === "http:") &&
+        !url.username &&
+        !url.password
+      ) {
+        origins.add(url.origin);
+      }
+    } catch {
+      // Ignore malformed allowlist entries.
+    }
+  }
+
+  return origins;
+}
+
+function sanitizeLandingBaseUrl(
+  raw: string | null | undefined,
+  allowedOriginsRaw: string | null | undefined,
+): URL {
   const candidate = raw?.trim() || FALLBACK_LANDING_BASE_URL;
 
   try {
@@ -18,7 +42,11 @@ function sanitizeLandingBaseUrl(raw: string | null | undefined): URL {
       return new URL(FALLBACK_LANDING_BASE_URL);
     }
 
-    if (!ALLOWED_LANDING_HOSTS.has(url.hostname.toLowerCase())) {
+    const allowedOrigins = parseAllowedLandingOrigins(allowedOriginsRaw);
+    if (
+      !ALLOWED_LANDING_HOSTS.has(url.hostname.toLowerCase()) &&
+      !allowedOrigins.has(url.origin)
+    ) {
       return new URL(FALLBACK_LANDING_BASE_URL);
     }
 
@@ -35,9 +63,14 @@ function sanitizeLandingBaseUrl(raw: string | null | undefined): URL {
   }
 }
 
-export function getLandingBaseUrl(configuredUrl?: string | null): URL {
+export function getLandingBaseUrl(
+  configuredUrl?: string | null,
+  allowedOrigins?: string | null,
+): URL {
   const fromEnv = configuredUrl ?? process.env.NEXT_PUBLIC_LANDING_BASE_URL;
-  return sanitizeLandingBaseUrl(fromEnv);
+  const allowedOriginsFromEnv =
+    allowedOrigins ?? process.env.CAMPAIGN_HANDOFF_ALLOWED_ORIGINS;
+  return sanitizeLandingBaseUrl(fromEnv, allowedOriginsFromEnv);
 }
 
 export function buildProductLandingUrl(

@@ -69,6 +69,29 @@ test("getLandingBaseUrl ignores untrusted configured hosts", () => {
   );
 });
 
+test("getLandingBaseUrl accepts an exact configured preview origin", () => {
+  const previewUrl =
+    "https://butterfly-landing-git-codex-handoff-ve-mi-di.vercel.app";
+
+  assert.equal(
+    getLandingBaseUrl(
+      `${previewUrl}/campaigns?ignored=true`,
+      `https://special.vemidi-crafts.com, ${previewUrl}`,
+    ).origin,
+    previewUrl,
+  );
+});
+
+test("getLandingBaseUrl rejects a Vercel origin that is not explicitly allowed", () => {
+  assert.equal(
+    getLandingBaseUrl(
+      "https://attacker-project.vercel.app/",
+      "https://butterfly-landing-git-codex-handoff-ve-mi-di.vercel.app",
+    ).origin,
+    FALLBACK_LANDING_BASE_URL,
+  );
+});
+
 test("validateLandingSlug and normalizeLandingSlug accept safe lowercase slugs", () => {
   const validation = validateLandingSlug("valshebni-peperudi");
   assert.equal(validation.ok, true);
