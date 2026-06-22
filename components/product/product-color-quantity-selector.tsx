@@ -62,7 +62,10 @@ export function ProductColorQuantitySelector({
         Избрани {selectedTotal} от {requiredTotal}
       </p>
 
-      <div id={optionsId} className="mt-4 grid gap-3 md:grid-cols-2">
+      <div
+        id={optionsId}
+        className="mt-3 divide-y divide-boutique-line border-y border-boutique-line"
+      >
         {visibleOptions.map((option) => {
           const quantity = quantities[option.id] ?? 0;
           const decreaseDisabled = quantity <= 0;
@@ -71,31 +74,29 @@ export function ProductColorQuantitySelector({
           return (
             <div
               key={option.id}
-              className="flex items-center justify-between gap-3 rounded-xl border border-boutique-line bg-white px-3 py-3"
+              className="grid grid-cols-[2rem_minmax(0,1fr)_auto] items-center gap-3 py-2"
             >
-              <div className="flex min-w-0 items-center gap-3">
-                <span
-                  aria-hidden="true"
-                  className="h-10 w-10 shrink-0 rounded-full border border-boutique-line shadow-inner"
-                  style={{ backgroundColor: option.hex ?? "#eee8df" }}
-                />
-                <span className="text-sm font-medium text-boutique-ink">
-                  {option.name}
-                </span>
-              </div>
+              <span
+                aria-hidden="true"
+                className="h-8 w-8 rounded-full border border-boutique-line shadow-inner"
+                style={{ backgroundColor: option.hex ?? "#eee8df" }}
+              />
+              <span className="min-w-0 break-words text-sm font-medium leading-5 text-boutique-ink">
+                {option.name}
+              </span>
 
-              <div className="flex items-center gap-2">
+              <div className="grid shrink-0 grid-cols-[2.25rem_1.75rem_2.25rem] items-center gap-1">
                 <button
                   type="button"
                   disabled={decreaseDisabled}
                   aria-label={`Намали количеството за ${option.name}`}
                   onClick={() => updateQuantity(option.id, quantity - 1)}
-                  className="grid h-10 w-10 place-items-center rounded-full border border-boutique-line text-lg font-semibold text-boutique-ink transition enabled:hover:border-boutique-sage-deep enabled:hover:text-boutique-sage-deep disabled:cursor-not-allowed disabled:opacity-40"
+                  className="grid h-9 w-9 place-items-center rounded-full border border-boutique-line bg-white text-lg font-semibold text-boutique-ink transition enabled:hover:border-boutique-sage-deep enabled:hover:text-boutique-sage-deep disabled:cursor-not-allowed disabled:opacity-35"
                 >
                   −
                 </button>
                 <span
-                  className="min-w-8 text-center text-sm font-semibold tabular-nums text-boutique-ink"
+                  className="text-center text-sm font-semibold tabular-nums text-boutique-ink"
                   aria-label={`Количество за ${option.name}`}
                 >
                   {quantity}
@@ -105,7 +106,7 @@ export function ProductColorQuantitySelector({
                   disabled={increaseDisabled}
                   aria-label={`Увеличи количеството за ${option.name}`}
                   onClick={() => updateQuantity(option.id, quantity + 1)}
-                  className="grid h-10 w-10 place-items-center rounded-full border border-boutique-line text-lg font-semibold text-boutique-ink transition enabled:hover:border-boutique-sage-deep enabled:hover:text-boutique-sage-deep disabled:cursor-not-allowed disabled:opacity-40"
+                  className="grid h-9 w-9 place-items-center rounded-full border border-boutique-line bg-white text-lg font-semibold text-boutique-ink transition enabled:hover:border-boutique-sage-deep enabled:hover:text-boutique-sage-deep disabled:cursor-not-allowed disabled:opacity-35"
                 >
                   +
                 </button>
