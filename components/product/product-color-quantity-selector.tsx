@@ -1,5 +1,7 @@
 "use client";
 
+import { useId, useMemo, useState } from "react";
+
 import type { ProductColorField } from "@/lib/product-colors";
 import type { ColorQuantitiesByOptionId } from "@/lib/product-color-quantities";
 import {
@@ -26,10 +28,19 @@ export function ProductColorQuantitySelector({
   quantities,
   onChange,
 }: ProductColorQuantitySelectorProps) {
+  const optionsId = useId();
+  const [expanded, setExpanded] = useState(false);
   const requiredTotal = field.requiredTotalQuantity ?? 0;
   const selectedTotal = sumColorQuantities(quantities);
   const validationMessage = validateColorQuantities(field, quantities);
   const canIncrease = selectedTotal < requiredTotal;
+  const hasMoreOptions = field.options.length > 6;
+  const visibleOptions = useMemo(
+    () => field.options.filter((option, index) =>
+      expanded || index < 6 || (quantities[option.id] ?? 0) > 0,
+    ),
+    [expanded, field.options, quantities],
+  );
 
   const updateQuantity = (optionId: string, nextQuantity: number) => {
     onChange({
@@ -51,8 +62,8 @@ export function ProductColorQuantitySelector({
         Избрани {selectedTotal} от {requiredTotal}
       </p>
 
-      <div className="mt-4 grid gap-4">
-        {field.options.map((option) => {
+      <div id={optionsId} className="mt-4 grid gap-3 md:grid-cols-2">
+        {visibleOptions.map((option) => {
           const quantity = quantities[option.id] ?? 0;
           const decreaseDisabled = quantity <= 0;
           const increaseDisabled = !canIncrease;
@@ -103,6 +114,24 @@ export function ProductColorQuantitySelector({
           );
         })}
       </div>
+
+      {hasMoreOptions ? (
+        <button
+          type="button"
+          aria-expanded={expanded}
+          aria-controls={optionsId}
+          onClick={() => setExpanded((current) => !current)}
+          className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-boutique-line bg-white px-4 py-3 text-sm font-semibold text-boutique-ink transition hover:border-boutique-sage-deep hover:text-boutique-sage-deep"
+        >
+          {expanded ? "Покажи по-малко" : `Виж всички цветове (${field.options.length})`}
+          <span
+            aria-hidden="true"
+            className={`transition motion-reduce:transition-none ${expanded ? "rotate-180" : ""}`}
+          >
+            ⌄
+          </span>
+        </button>
+      ) : null}
 
       {validationMessage && selectedTotal > 0 ? (
         <p className="mt-4 text-sm font-medium text-red-700" role="alert">

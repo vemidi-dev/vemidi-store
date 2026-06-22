@@ -195,12 +195,12 @@ export default async function ProductDetailPage({
         <PageContainer className="py-14 md:py-20 lg:py-24">
           <VisibleBreadcrumbs items={breadcrumbItems} />
 
-          <div className="mt-14 grid gap-16 lg:mt-20 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-20 xl:gap-24">
-            <div className="lg:sticky lg:top-32 lg:self-start">
+          <div className="mt-14 grid gap-10 lg:mt-20 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:items-start lg:gap-x-20 lg:gap-y-8 xl:gap-x-24">
+            <div className="lg:col-start-1 lg:row-start-1">
               <ProductDetailGallery images={product.images} />
             </div>
 
-            <div className="flex flex-col pb-6 lg:py-4">
+            <div className="flex flex-col pb-6 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:py-4">
               <div className="space-y-6">
                 {product.cardBadge ? (
                   <p className="text-[0.7rem] font-semibold uppercase tracking-[0.28em] text-boutique-accent">
@@ -218,18 +218,6 @@ export default async function ProductDetailPage({
                   </h2>
                 ) : null}
 
-                {showCategoryLink ? (
-                  <p className="text-sm text-boutique-muted">
-                    Категория:{" "}
-                    <Link
-                      href={getCategoryPath(primaryCategory.slug)}
-                      className="font-semibold text-boutique-sage-deep underline-offset-4 hover:underline"
-                    >
-                      {primaryCategory.name}
-                    </Link>
-                  </p>
-                ) : null}
-
                 <div className="flex flex-wrap items-center gap-3">
                   <ProductPrice product={product} size="lg" />
                   {product.promotion ? (
@@ -238,71 +226,94 @@ export default async function ProductDetailPage({
                     </span>
                   ) : null}
                   {product.availabilityLabel !== "В наличност" ? (
-                    <span className="rounded-full bg-boutique-muted/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-boutique-muted">
-                      {product.availabilityLabel}
+                    <span className="rounded-full border border-boutique-line bg-boutique-muted/10 px-2.5 py-0.5 text-[0.68rem] font-semibold tracking-[0.06em] text-boutique-muted">
+                      {product.fulfillmentType === "made_to_order"
+                        ? "По поръчка"
+                        : product.availabilityLabel}
                     </span>
                   ) : null}
                 </div>
-
               </div>
 
               {product.description ? (
-                <p className={withPlainTextClass("mt-7 max-w-xl text-base leading-[1.75] text-boutique-muted md:text-lg md:leading-[1.8]")}>
+                <p
+                  className={withPlainTextClass(
+                    "mt-7 max-w-xl text-base leading-[1.75] text-boutique-muted md:text-lg md:leading-[1.8]",
+                  )}
+                >
                   {product.description}
                 </p>
               ) : null}
               {product.additionalInfo ? (
-                <p className={withPlainTextClass("mt-4 max-w-xl text-base leading-[1.75] text-boutique-muted md:text-lg md:leading-[1.8]")}>
+                <p
+                  className={withPlainTextClass(
+                    "mt-4 max-w-xl text-base leading-[1.75] text-boutique-muted md:text-lg md:leading-[1.8]",
+                  )}
+                >
                   {product.additionalInfo}
                 </p>
               ) : null}
 
-              <ProductLandingPageCta landingPage={primaryLandingPage} />
+              {showCategoryLink ? (
+                <Link
+                  href={getCategoryPath(primaryCategory.slug)}
+                  className="mt-5 inline-flex w-fit items-center gap-2 text-sm font-semibold text-boutique-sage-deep underline-offset-4 transition hover:text-boutique-ink hover:underline"
+                >
+                  Разгледайте още от „{primaryCategory.name}“
+                  <span aria-hidden="true">→</span>
+                </Link>
+              ) : null}
 
+              <ProductLandingPageCta landingPage={primaryLandingPage} />
+            </div>
+
+            <div className="lg:col-start-1 lg:row-start-2">
               <ProductDetailAddToCart
                 attribution={attribution}
                 initialOptionSelections={initialOptionSelections}
                 product={product}
               />
+            </div>
+          </div>
 
-              <div className="mt-6 divide-y divide-boutique-line rounded-2xl border border-boutique-line bg-boutique-bg/70 text-sm shadow-sm">
-                <div className="grid gap-1 px-5 py-4 sm:grid-cols-[8rem_minmax(0,1fr)] sm:gap-5">
-                  <p className="font-semibold text-boutique-ink">Изработка</p>
-                  <p className="leading-6 text-boutique-muted">
-                    1–5 работни дни в зависимост от натоварването. Ако ви е нужен друг срок,
-                    <Link
-                      href="/kontakti"
-                      className="ml-1 font-semibold text-boutique-sage-deep underline-offset-4 hover:underline"
-                    >
-                      свържете се с нас
-                    </Link>
-                    .
-                  </p>
-                </div>
-                <div className="grid gap-1 px-5 py-4 sm:grid-cols-[8rem_minmax(0,1fr)] sm:gap-5">
-                  <p className="font-semibold text-boutique-ink">Доставка</p>
-                  <p className="leading-6 text-boutique-muted">
-                    Еконт или Спиди · наложен платеж.
-                    <Link
-                      href="/delivery"
-                      className="ml-1 font-semibold text-boutique-sage-deep underline-offset-4 hover:underline"
-                    >
-                      Виж условията
-                    </Link>
-                  </p>
-                </div>
-                <div className="grid gap-1 px-5 py-4 sm:grid-cols-[8rem_minmax(0,1fr)] sm:gap-5">
-                  <p className="font-semibold text-boutique-ink">Връщане</p>
-                  <p className="leading-6 text-boutique-muted">
-                    14 дни за неперсонализирани продукти.
-                    <Link
-                      href="/returns"
-                      className="ml-1 font-semibold text-boutique-sage-deep underline-offset-4 hover:underline"
-                    >
-                      Условия за връщане
-                    </Link>
-                  </p>
-                </div>
+          <div className="mx-auto mt-10 w-full max-w-5xl lg:mt-14">
+            <div className="mt-6 divide-y divide-boutique-line rounded-2xl border border-boutique-line bg-boutique-bg/70 text-sm shadow-sm md:grid md:grid-cols-3 md:divide-x md:divide-y-0">
+              <div className="px-5 py-4">
+                <p className="font-semibold text-boutique-ink">Изработка</p>
+                <p className="leading-6 text-boutique-muted">
+                  1–5 работни дни в зависимост от натоварването. Ако ви е нужен друг срок,
+                  <Link
+                    href="/kontakti"
+                    className="ml-1 font-semibold text-boutique-sage-deep underline-offset-4 hover:underline"
+                  >
+                    свържете се с нас
+                  </Link>
+                  .
+                </p>
+              </div>
+              <div className="px-5 py-4">
+                <p className="font-semibold text-boutique-ink">Доставка</p>
+                <p className="leading-6 text-boutique-muted">
+                  Еконт или Спиди · наложен платеж.
+                  <Link
+                    href="/delivery"
+                    className="ml-1 font-semibold text-boutique-sage-deep underline-offset-4 hover:underline"
+                  >
+                    Виж условията
+                  </Link>
+                </p>
+              </div>
+              <div className="px-5 py-4">
+                <p className="font-semibold text-boutique-ink">Връщане</p>
+                <p className="leading-6 text-boutique-muted">
+                  14 дни за неперсонализирани продукти.
+                  <Link
+                    href="/returns"
+                    className="ml-1 font-semibold text-boutique-sage-deep underline-offset-4 hover:underline"
+                  >
+                    Условия за връщане
+                  </Link>
+                </p>
               </div>
             </div>
           </div>

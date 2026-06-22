@@ -79,6 +79,9 @@ export function ProductDetailAddToCart({
     {},
   );
   const [selectedByGroup, setSelectedByGroup] = useState<Record<string, string[]>>({});
+  const [expandedColorFields, setExpandedColorFields] = useState<Set<string>>(
+    () => new Set(),
+  );
   const [quantitiesByField, setQuantitiesByField] = useState<
     Record<string, ColorQuantitiesByOptionId>
   >({});
@@ -399,7 +402,7 @@ export function ProductDetailAddToCart({
           : "Този продукт не може да бъде поръчан в момента.";
 
     return (
-      <div className="mt-8 rounded-xl border border-boutique-line bg-boutique-bg px-5 py-5">
+      <div className="rounded-xl border border-boutique-line bg-boutique-bg px-5 py-5">
         <p className="text-sm font-semibold uppercase tracking-[0.16em] text-boutique-muted">
           {product.availabilityLabel}
         </p>
@@ -413,10 +416,10 @@ export function ProductDetailAddToCart({
     <div
       id="product-configurator"
       ref={configuratorRef}
-      className="mt-8 scroll-mt-28 rounded-2xl border border-boutique-line bg-boutique-paper p-4 sm:p-5"
+      className="scroll-mt-28 rounded-2xl border border-boutique-line bg-boutique-paper p-4 sm:p-5"
     >
       {fields.length ? (
-        <div className="grid gap-4">
+        <div className="grid gap-4 md:grid-cols-2">
           {fields.map((field) => {
             const value = values[field.id] ?? "";
             const showInput = shouldShowPersonalizationInput(field, enabledOptionalFields);
@@ -569,7 +572,7 @@ export function ProductDetailAddToCart({
             );
           })}
           {fields.some((field) => field.allowsWishTemplates) ? (
-            <p className="text-xs leading-5 text-boutique-muted">
+            <p className="text-xs leading-5 text-boutique-muted md:col-span-2">
               Прегледайте и редактирайте избраното пожелание спрямо получателя – име, пол,
               възраст и конкретен повод.
             </p>
@@ -598,7 +601,7 @@ export function ProductDetailAddToCart({
       ) : null}
 
       {colorFields.length ? (
-        <div className="mt-7 grid gap-6">
+        <div className={`mt-7 grid gap-6 ${colorFields.length > 1 ? "lg:grid-cols-2" : ""}`}>
           {colorFields.map((field) =>
             isQuantityColorField(field) ? (
               <ProductColorQuantitySelector
@@ -618,59 +621,98 @@ export function ProductDetailAddToCart({
                 <legend className="px-1 text-sm font-semibold text-boutique-ink">
                   {field.label}
                 </legend>
-                <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4">
-                  {field.options.map((option) => {
-                    const selected = (selectedByGroup[field.id] ?? []).includes(option.id);
-                    return (
-                      <label
-                        key={option.id}
-                        className="group cursor-pointer rounded-2xl p-2 text-center text-xs text-boutique-muted transition hover:bg-boutique-bg"
-                      >
-                        <input
-                          className="peer sr-only"
-                          type={field.maxSelect <= 1 ? "radio" : "checkbox"}
-                          name={`color-${field.id}`}
-                          checked={selected}
-                          onChange={(event) => {
-                            const current = selectedByGroup[field.id] ?? [];
-                            const next = field.maxSelect <= 1
-                              ? event.target.checked ? [option.id] : []
-                              : event.target.checked
-                                ? [...current, option.id].slice(0, field.maxSelect)
-                                : current.filter((id) => id !== option.id);
-                            setSelectedByGroup((state) => ({ ...state, [field.id]: next }));
-                            setError(null);
-                          }}
-                        />
-                      <span
-                        className={`relative mx-auto grid h-12 w-12 place-items-center rounded-full border-4 border-white shadow-sm ring-1 transition group-hover:scale-105 peer-focus-visible:ring-2 peer-focus-visible:ring-boutique-sage-deep ${
-                          selected
-                            ? "ring-2 ring-boutique-sage-deep"
-                            : "ring-boutique-line"
-                        }`}
-                        style={{ backgroundColor: option.hex ?? "#eee8df" }}
-                      >
-                        {selected ? (
+                <div
+                  id={`color-options-${field.id}`}
+                  className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6"
+                >
+                  {field.options
+                    .filter((option, index) =>
+                      expandedColorFields.has(field.id) ||
+                      index < 8 ||
+                      (selectedByGroup[field.id] ?? []).includes(option.id),
+                    )
+                    .map((option) => {
+                      const selected = (selectedByGroup[field.id] ?? []).includes(option.id);
+                      return (
+                        <label
+                          key={option.id}
+                          className="group cursor-pointer rounded-2xl p-2 text-center text-xs text-boutique-muted transition hover:bg-boutique-bg"
+                        >
+                          <input
+                            className="peer sr-only"
+                            type={field.maxSelect <= 1 ? "radio" : "checkbox"}
+                            name={`color-${field.id}`}
+                            checked={selected}
+                            onChange={(event) => {
+                              const current = selectedByGroup[field.id] ?? [];
+                              const next = field.maxSelect <= 1
+                                ? event.target.checked
+                                  ? [option.id]
+                                  : []
+                                : event.target.checked
+                                  ? [...current, option.id].slice(0, field.maxSelect)
+                                  : current.filter((id) => id !== option.id);
+                              setSelectedByGroup((state) => ({ ...state, [field.id]: next }));
+                              setError(null);
+                            }}
+                          />
                           <span
-                            aria-hidden="true"
-                            className="grid h-5 w-5 place-items-center rounded-full bg-white/90 text-[0.65rem] font-bold text-boutique-sage-deep shadow-sm"
+                            className={`relative mx-auto grid h-12 w-12 place-items-center rounded-full border-4 border-white shadow-sm ring-1 transition group-hover:scale-105 peer-focus-visible:ring-2 peer-focus-visible:ring-boutique-sage-deep ${
+                              selected
+                                ? "ring-2 ring-boutique-sage-deep"
+                                : "ring-boutique-line"
+                            }`}
+                            style={{ backgroundColor: option.hex ?? "#eee8df" }}
                           >
-                            ✓
+                            {selected ? (
+                              <span
+                                aria-hidden="true"
+                                className="grid h-5 w-5 place-items-center rounded-full bg-white/90 text-[0.65rem] font-bold text-boutique-sage-deep shadow-sm"
+                              >
+                                ✓
+                              </span>
+                            ) : null}
                           </span>
-                        ) : null}
-                      </span>
-                      <span
-                        className={`mt-2 block leading-4 ${
-                          selected ? "font-semibold text-boutique-ink" : ""
-                        }`}
-                      >
-                        {option.name}
-                      </span>
-                    </label>
-                  );
-                })}
-              </div>
-            </fieldset>
+                          <span
+                            className={`mt-2 block leading-4 ${
+                              selected ? "font-semibold text-boutique-ink" : ""
+                            }`}
+                          >
+                            {option.name}
+                          </span>
+                        </label>
+                      );
+                    })}
+                </div>
+                {field.options.length > 8 ? (
+                  <button
+                    type="button"
+                    aria-expanded={expandedColorFields.has(field.id)}
+                    aria-controls={`color-options-${field.id}`}
+                    onClick={() => {
+                      setExpandedColorFields((current) => {
+                        const next = new Set(current);
+                        if (next.has(field.id)) next.delete(field.id);
+                        else next.add(field.id);
+                        return next;
+                      });
+                    }}
+                    className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-boutique-line bg-white px-4 py-3 text-sm font-semibold text-boutique-ink transition hover:border-boutique-sage-deep hover:text-boutique-sage-deep"
+                  >
+                    {expandedColorFields.has(field.id)
+                      ? "Покажи по-малко"
+                      : `Виж всички цветове (${field.options.length})`}
+                    <span
+                      aria-hidden="true"
+                      className={`transition motion-reduce:transition-none ${
+                        expandedColorFields.has(field.id) ? "rotate-180" : ""
+                      }`}
+                    >
+                      ⌄
+                    </span>
+                  </button>
+                ) : null}
+              </fieldset>
             ),
           )}
         </div>

@@ -270,16 +270,16 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
           Само промоции
         </label>
 
-        <div className="flex gap-2">
+        <div className="sticky bottom-2 z-10 -mx-2 flex gap-2 border-t border-boutique-line bg-boutique-paper/95 px-2 py-3 shadow-[0_-12px_24px_-20px_rgb(44_40_37_/0.45)] backdrop-blur lg:bottom-4 lg:-mx-3 lg:px-3">
           <button
             type="submit"
-            className="flex-1 rounded-lg bg-boutique-sage-deep px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-boutique-accent lg:py-3"
+            className="flex-1 rounded-lg bg-boutique-sage-deep px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-boutique-accent lg:py-3"
           >
             Приложи
           </button>
           <Link
             href="/producti#product-grid"
-            className="rounded-lg border border-boutique-line px-4 py-2.5 text-sm font-semibold text-boutique-ink lg:py-3"
+            className="rounded-lg border border-boutique-line bg-boutique-paper px-4 py-2.5 text-sm font-semibold text-boutique-ink transition hover:border-boutique-sage-deep hover:text-boutique-sage-deep lg:py-3"
           >
             Изчисти
           </Link>
@@ -347,7 +347,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
 
           <div className="grid gap-8 lg:grid-cols-[17rem_minmax(0,1fr)]">
             <aside className="hidden lg:block">
-              <form className="sticky top-28 space-y-5 rounded-xl border border-boutique-line bg-boutique-paper p-5 shadow-boutique-sm">
+              <form className="relative space-y-5 rounded-xl border border-boutique-line bg-boutique-paper p-5 shadow-boutique-sm">
                 <div className="flex items-center justify-between">
                   <h2 className="font-heading text-xl text-boutique-ink">Филтри</h2>
                   <Link href="/producti#product-grid" className="text-xs text-boutique-sage-deep hover:underline">
