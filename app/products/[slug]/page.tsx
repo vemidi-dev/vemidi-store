@@ -247,12 +247,12 @@ export default async function ProductDetailPage({
               </div>
 
               {product.description ? (
-                <p className={withPlainTextClass("mt-7 max-w-xl text-lg leading-[1.75] text-boutique-muted md:text-xl md:leading-[1.8]")}>
+                <p className={withPlainTextClass("mt-7 max-w-xl text-base leading-[1.75] text-boutique-muted md:text-lg md:leading-[1.8]")}>
                   {product.description}
                 </p>
               ) : null}
               {product.additionalInfo ? (
-                <p className={withPlainTextClass("mt-4 max-w-xl text-sm leading-relaxed text-boutique-muted")}>
+                <p className={withPlainTextClass("mt-4 max-w-xl text-base leading-[1.75] text-boutique-muted md:text-lg md:leading-[1.8]")}>
                   {product.additionalInfo}
                 </p>
               ) : null}

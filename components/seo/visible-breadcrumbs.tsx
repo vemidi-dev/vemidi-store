@@ -16,7 +16,7 @@ export function VisibleBreadcrumbs({ items, className }: VisibleBreadcrumbsProps
 
   return (
     <nav aria-label="Навигационна пътека" className={className}>
-      <ol className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-semibold uppercase tracking-[0.18em] text-boutique-sage-deep">
+      <ol className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-semibold uppercase tracking-[0.18em] text-boutique-sage-deep md:text-base">
         {items.map((item, index) => (
           <li key={`${item.path}::${item.name}`} className="flex items-center gap-2">
             {index > 0 ? (
