@@ -206,6 +206,7 @@ export default async function EventsPage() {
         eyebrow="Творчество и споделено време"
         title="Събития"
         description="Творчески работилници за деца в моето ателие – място, където въображението оживява и малките творци създават с радост."
+        descriptionAs="h2"
         imageSrc="/assets/cover-events.png"
         imageAlt="Творчески работилници за деца в ателието VeMiDi"
       />

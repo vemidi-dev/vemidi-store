@@ -156,6 +156,7 @@ export default async function BlogPage({ searchParams }: Props) {
         eyebrow="Идеи и вдъхновение"
         title="Блог"
         description="Идеи, вдъхновение и полезни съвети за специални поводи, детско творчество и персонализирани подаръци."
+        descriptionAs="h2"
         imageSrc="/assets/cover-blog.png"
         imageAlt="Идеи и вдъхновение от блога на VeMiDi crafts"
       />

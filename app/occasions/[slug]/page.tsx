@@ -110,6 +110,7 @@ export default async function OccasionPage({
         }
         title={occasion.name}
         description={description}
+        descriptionAs="h2"
         imageSrc={heroImage.src}
         imageAlt={heroImage.alt}
       />

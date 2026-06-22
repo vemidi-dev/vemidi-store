@@ -167,6 +167,7 @@ export default async function CategoriesPage() {
         }
         title={content["categories.hero_title"]}
         description={content["categories.hero_description"]}
+        descriptionAs="h2"
         imageSrc="/assets/banner-categories.webp"
         imageAlt="Ръчно изработени персонализирани подаръци по категории"
       />

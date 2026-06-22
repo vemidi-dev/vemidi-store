@@ -22,16 +22,6 @@ type OccasionWithCount = ShopCategory & {
   productCount: number;
 };
 
-const occasionIcons: Record<string, string> = {
-  abiturient: "◇",
-  bebe: "♡",
-  home: "⌂",
-  jubilej: "50",
-  rd: "✦",
-  svatba: "∞",
-  "za-uchitel": "♧",
-};
-
 function getProductLabel(count: number) {
   return count === 1 ? "1 продукт" : `${count} продукта`;
 }
@@ -61,22 +51,17 @@ function OccasionCard({ occasion }: { occasion: OccasionWithCount }) {
         )}
       </div>
 
-      <div className="flex items-center gap-2 border-t border-boutique-line bg-boutique-paper/80 px-2.5 py-2 sm:min-h-24 sm:gap-4 sm:px-5 sm:py-4">
-        <span className="hidden h-12 w-12 shrink-0 place-items-center rounded-full border border-boutique-rose/30 bg-white font-heading text-lg text-boutique-rose-deep sm:grid">
-          {occasionIcons[occasion.slug] ?? "♡"}
-        </span>
-        <div>
-          <h2 className="line-clamp-2 font-heading text-sm leading-snug text-boutique-ink transition group-hover:text-boutique-rose-deep sm:text-2xl sm:leading-tight">
-            {occasion.title}
-          </h2>
-          {occasion.productCount > 0 ? (
-            <p className="mt-1 text-xs text-boutique-muted">
-              {getProductLabel(occasion.productCount)}
-            </p>
-          ) : (
-            <p className="mt-1 text-xs text-boutique-muted">Разгледай идеи</p>
-          )}
-        </div>
+      <div className="border-t border-boutique-line bg-boutique-paper/80 px-2.5 py-2 sm:min-h-24 sm:px-5 sm:py-4">
+        <h2 className="line-clamp-2 font-heading text-sm leading-snug text-boutique-ink transition group-hover:text-boutique-rose-deep sm:text-2xl sm:leading-tight">
+          {occasion.title}
+        </h2>
+        {occasion.productCount > 0 ? (
+          <p className="mt-1 text-xs text-boutique-muted">
+            {getProductLabel(occasion.productCount)}
+          </p>
+        ) : (
+          <p className="mt-1 text-xs text-boutique-muted">Разгледай идеи</p>
+        )}
       </div>
     </Link>
   );
@@ -110,6 +95,7 @@ export default async function OccasionsPage() {
         eyebrow={content["occasions.hero_eyebrow"]}
         title={content["occasions.hero_title"]}
         description={content["occasions.hero_description"]}
+        descriptionAs="h2"
         imageSrc="/assets/povodi.png"
         imageAlt="Персонализирани подаръци за специални поводи"
       />

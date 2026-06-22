@@ -294,6 +294,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
         }
         title={content["shop.hero_title"]}
         description={content["shop.hero_description"]}
+        descriptionAs="h2"
         imageSrc="/assets/products.png"
         imageAlt="Ръчно изработени продукти от VeMiDi crafts"
       />

@@ -146,6 +146,7 @@ export default async function CategoryPage({
         }
         title={category.name}
         description={description}
+        descriptionAs="h2"
         imageSrc={heroImage.src}
         imageAlt={heroImage.alt}
       />
