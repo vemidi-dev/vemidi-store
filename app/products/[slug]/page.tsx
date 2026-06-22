@@ -35,6 +35,7 @@ import { buildBreadcrumbListSchema } from "@/lib/seo/breadcrumbs";
 import { buildProductSchemaDescription } from "@/lib/seo/product-description-seo";
 import { resolveProductPageSeo } from "@/lib/seo/product-page-seo";
 import { buildProductPageMetadata } from "@/lib/seo/product-metadata";
+import { withPlainTextClass } from "@/lib/plain-text";
 
 type ProductPageProps = {
   params: Promise<{ slug: string }>;
@@ -246,12 +247,12 @@ export default async function ProductDetailPage({
               </div>
 
               {product.description ? (
-                <p className="mt-7 max-w-xl text-lg leading-[1.75] text-boutique-muted md:text-xl md:leading-[1.8]">
+                <p className={withPlainTextClass("mt-7 max-w-xl text-lg leading-[1.75] text-boutique-muted md:text-xl md:leading-[1.8]")}>
                   {product.description}
                 </p>
               ) : null}
               {product.additionalInfo ? (
-                <p className="mt-4 max-w-xl text-sm leading-relaxed text-boutique-muted">
+                <p className={withPlainTextClass("mt-4 max-w-xl text-sm leading-relaxed text-boutique-muted")}>
                   {product.additionalInfo}
                 </p>
               ) : null}

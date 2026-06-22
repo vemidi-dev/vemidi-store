@@ -41,7 +41,7 @@ export function EventManagementPanel({
           <label className="text-sm font-medium text-boutique-ink md:col-span-2">
             Пълен текст
             <textarea name="content" required rows={9} className={`${adminFieldClass} resize-y`} />
-            <p className={adminHelperClass}>Разделяйте абзаците с празен ред.</p>
+            <p className={adminHelperClass}>Натискайте Enter за нов ред. Празен ред добавя по-голям интервал между абзаците.</p>
           </label>
           <label className="text-sm font-medium text-boutique-ink">
             Тип

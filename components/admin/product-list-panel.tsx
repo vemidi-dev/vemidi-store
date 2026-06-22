@@ -485,6 +485,7 @@ export function ProductListPanel({
                         defaultValue={product.description ?? ""}
                         className={`${adminFieldClass} resize-y`}
                       />
+                      <p className={adminHelperClass}>Натискайте Enter за нов ред в продуктовата страница.</p>
                     </label>
                     <label className="text-sm font-medium text-boutique-ink md:col-span-2">
                       Допълнителна информация
@@ -494,6 +495,7 @@ export function ProductListPanel({
                         defaultValue={product.additional_info ?? ""}
                         className={`${adminFieldClass} resize-y`}
                       />
+                      <p className={adminHelperClass}>Натискайте Enter за нов ред под основното описание.</p>
                     </label>
 
                     <div className="md:col-span-2">

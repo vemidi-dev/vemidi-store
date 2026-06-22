@@ -16,6 +16,7 @@ import {
   buildEventBreadcrumbItems,
 } from "@/lib/seo/breadcrumbs";
 import { buildEventSchema } from "@/lib/seo/event-schema";
+import { withPlainTextClass } from "@/lib/plain-text";
 import { getSiteUrl } from "@/lib/site-url";
 
 type EventPageProps = { params: Promise<{ slug: string }> };
@@ -98,9 +99,9 @@ export default async function EventPage({ params }: EventPageProps) {
           {detailRows.map(([label, value]) => <div key={label}><dt className="text-xs font-semibold uppercase tracking-wider text-boutique-muted">{label}</dt><dd className="mt-1 text-boutique-ink">{value}</dd></div>)}
         </dl>
       ) : null}
-      {event.includes_text ? <section><h2 className="font-heading text-2xl text-boutique-ink">Какво е включено</h2><p className="mt-2">{event.includes_text}</p></section> : null}
-      {event.materials_text ? <section><h2 className="font-heading text-2xl text-boutique-ink">Необходими материали</h2><p className="mt-2">{event.materials_text}</p></section> : null}
-      {event.cancellation_policy ? <section><h2 className="font-heading text-2xl text-boutique-ink">Условия за отказ</h2><p className="mt-2">{event.cancellation_policy}</p></section> : null}
+      {event.includes_text ? <section><h2 className="font-heading text-2xl text-boutique-ink">Какво е включено</h2><p className={withPlainTextClass("mt-2 text-boutique-muted")}>{event.includes_text}</p></section> : null}
+      {event.materials_text ? <section><h2 className="font-heading text-2xl text-boutique-ink">Необходими материали</h2><p className={withPlainTextClass("mt-2 text-boutique-muted")}>{event.materials_text}</p></section> : null}
+      {event.cancellation_policy ? <section><h2 className="font-heading text-2xl text-boutique-ink">Условия за отказ</h2><p className={withPlainTextClass("mt-2 text-boutique-muted")}>{event.cancellation_policy}</p></section> : null}
       {event.registration_url ? (
         <a href={event.registration_url} className="inline-flex rounded-full bg-boutique-ink px-7 py-3 text-sm font-semibold text-boutique-paper">Запиши се</a>
       ) : canRegisterInternally ? (
