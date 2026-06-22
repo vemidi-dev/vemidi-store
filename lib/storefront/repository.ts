@@ -21,6 +21,9 @@ import type {
   StorefrontProduct,
 } from "@/lib/storefront/types";
 import {
+  filterStorefrontVisibleCategories,
+} from "@/lib/category-visibility";
+import {
   resolveProductRoute,
   type ProductRouteResolution,
 } from "@/lib/product-route";
@@ -42,6 +45,7 @@ type CategoryRow = {
   cover_image_url: string | null;
   cover_image_alt: string | null;
   show_on_home: boolean;
+  is_visible?: boolean | null;
   home_sort_order: number;
   card_description: string | null;
   created_at: string | null;
@@ -59,6 +63,7 @@ function mapStorefrontCategory(row: CategoryRow): StorefrontCategory {
     cover_image_url: row.cover_image_url ?? null,
     cover_image_alt: row.cover_image_alt ?? null,
     show_on_home: row.show_on_home,
+    is_visible: row.is_visible ?? true,
     home_sort_order: row.home_sort_order,
     card_description: row.card_description,
     createdAt: row.created_at ?? null,
@@ -182,7 +187,7 @@ async function fetchStorefrontCatalog(): Promise<StorefrontCatalog> {
         .order("created_at", { ascending: false }),
       supabase
         .from("categories")
-        .select("id,name,slug,category_type,parent_id,image_url,image_alt,cover_image_url,cover_image_alt,show_on_home,home_sort_order,card_description,created_at")
+        .select("id,name,slug,category_type,parent_id,image_url,image_alt,cover_image_url,cover_image_alt,show_on_home,home_sort_order,card_description,is_visible,created_at")
         .order("name", { ascending: true }),
       supabase.from("product_categories").select("product_id,category_id"),
       supabase
@@ -317,7 +322,7 @@ async function fetchStorefrontProductSeoContext(
   const { data: directCategories } = await supabase
     .from("categories")
     .select(
-      "id,name,slug,category_type,parent_id,image_url,image_alt,cover_image_url,cover_image_alt,show_on_home,home_sort_order,card_description,created_at",
+      "id,name,slug,category_type,parent_id,image_url,image_alt,cover_image_url,cover_image_alt,show_on_home,home_sort_order,card_description,is_visible,created_at",
     )
     .in("id", categoryIds);
 
@@ -337,7 +342,7 @@ async function fetchStorefrontProductSeoContext(
     const { data: parentCategories } = await supabase
       .from("categories")
       .select(
-        "id,name,slug,category_type,parent_id,image_url,image_alt,cover_image_url,cover_image_alt,show_on_home,home_sort_order,card_description,created_at",
+        "id,name,slug,category_type,parent_id,image_url,image_alt,cover_image_url,cover_image_alt,show_on_home,home_sort_order,card_description,is_visible,created_at",
       )
       .in("id", parentIds);
     parents = ((parentCategories ?? []) as CategoryRow[]).map(
@@ -380,7 +385,8 @@ export async function getStorefrontCategories(
 
   let query = supabase
     .from("categories")
-    .select("id,name,slug,category_type,parent_id,image_url,image_alt,cover_image_url,cover_image_alt,show_on_home,home_sort_order,card_description,created_at")
+    .select("id,name,slug,category_type,parent_id,image_url,image_alt,cover_image_url,cover_image_alt,show_on_home,home_sort_order,card_description,is_visible,created_at")
+    .eq("is_visible", true)
     .order("name", { ascending: true });
 
   if (categoryType) {
@@ -390,7 +396,9 @@ export async function getStorefrontCategories(
   const { data, error } = await query;
   return error
     ? []
-    : ((data ?? []) as CategoryRow[]).map(mapStorefrontCategory);
+    : filterStorefrontVisibleCategories(
+        ((data ?? []) as CategoryRow[]).map(mapStorefrontCategory),
+      );
 }
 
 async function getProductColorFields(

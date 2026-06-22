@@ -18,6 +18,7 @@ import type { CategoryRow } from "@/lib/admin/types";
 
 type CategoryManagementViewProps = {
   categories: CategoryRow[];
+  productCountByCategoryId: Map<string, number>;
 };
 
 type CategoryTab = "product" | "occasion";
@@ -27,7 +28,10 @@ const tabLabels: Record<CategoryTab, string> = {
   occasion: "По повод",
 };
 
-export function CategoryManagementView({ categories }: CategoryManagementViewProps) {
+export function CategoryManagementView({
+  categories,
+  productCountByCategoryId,
+}: CategoryManagementViewProps) {
   const [activeTab, setActiveTab] = useState<CategoryTab>("product");
   const [query, setQuery] = useState("");
 
@@ -130,6 +134,8 @@ export function CategoryManagementView({ categories }: CategoryManagementViewPro
               ? categories.find((entry) => entry.id === category.parent_id)
               : null;
 
+            const productCount = productCountByCategoryId.get(category.id) ?? 0;
+
             return (
             <div
               key={category.id}
@@ -139,6 +145,11 @@ export function CategoryManagementView({ categories }: CategoryManagementViewPro
                 <p className="truncate font-medium text-boutique-ink">
                   {parentCategory ? "↳ " : ""}
                   {category.name}
+                  {category.is_visible === false ? (
+                    <span className="ml-2 rounded-full bg-boutique-muted/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-boutique-muted">
+                      Скрита
+                    </span>
+                  ) : null}
                 </p>
                 <p className="truncate text-xs text-boutique-muted">{category.slug}</p>
                 <p className="text-xs text-boutique-muted">
@@ -189,6 +200,11 @@ export function CategoryManagementView({ categories }: CategoryManagementViewPro
                   <p className="truncate font-medium text-boutique-ink">
                     {parentCategory ? "↳ " : ""}
                     {category.name}
+                    {category.is_visible === false ? (
+                      <span className="ml-2 rounded-full bg-boutique-muted/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-boutique-muted">
+                        Скрита
+                      </span>
+                    ) : null}
                   </p>
                   <p className="truncate text-xs text-boutique-muted">{category.slug}</p>
                 </div>
@@ -360,6 +376,23 @@ export function CategoryManagementView({ categories }: CategoryManagementViewPro
                       className={adminFieldClass}
                     />
                   </label>
+                  <label className="inline-flex items-center gap-2 text-sm font-medium text-boutique-ink md:col-span-3">
+                    <input
+                      name={adminFormFields.category.isVisible}
+                      type="checkbox"
+                      defaultChecked={category.is_visible !== false}
+                      role="switch"
+                      aria-label="Показвай в магазина"
+                      className="h-4 w-4 rounded border-boutique-line text-boutique-accent"
+                    />
+                    Показвай в магазина
+                  </label>
+                  {productCount === 0 ? (
+                    <p className="text-xs text-boutique-muted md:col-span-3">
+                      Категорията няма продукти. Можете да я оставите видима или да я
+                      скриете от магазина.
+                    </p>
+                  ) : null}
                   <label className="inline-flex items-center gap-2 text-sm font-medium text-boutique-ink md:col-span-3">
                     <input
                       name={adminFormFields.category.showOnHome}

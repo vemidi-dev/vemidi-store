@@ -9,7 +9,13 @@ import {
 import { adminFormFields } from "@/lib/admin/form-fields";
 import type { CategoryRow } from "@/lib/admin/types";
 
-export function CategoryManagementPanel({ categories }: { categories: CategoryRow[] }) {
+export function CategoryManagementPanel({
+  categories,
+  productCountByCategoryId,
+}: {
+  categories: CategoryRow[];
+  productCountByCategoryId: Map<string, number>;
+}) {
   const parentCategories = categories
     .filter(
       (category) =>
@@ -146,6 +152,17 @@ export function CategoryManagementPanel({ categories }: { categories: CategoryRo
             </label>
             <label className="inline-flex items-center gap-2 text-sm font-medium text-boutique-ink md:col-span-2 xl:col-span-4">
               <input
+                name={adminFormFields.category.isVisible}
+                type="checkbox"
+                defaultChecked
+                role="switch"
+                aria-label="Показвай в магазина"
+                className="h-4 w-4 rounded border-boutique-line text-boutique-accent"
+              />
+              Показвай в магазина
+            </label>
+            <label className="inline-flex items-center gap-2 text-sm font-medium text-boutique-ink md:col-span-2 xl:col-span-4">
+              <input
                 name={adminFormFields.category.showOnHome}
                 type="checkbox"
                 defaultChecked
@@ -168,7 +185,10 @@ export function CategoryManagementPanel({ categories }: { categories: CategoryRo
       {categories.length === 0 ? (
         <p className="mt-5 text-sm text-boutique-muted">Все още няма категории.</p>
       ) : (
-        <CategoryManagementView categories={categories} />
+        <CategoryManagementView
+          categories={categories}
+          productCountByCategoryId={productCountByCategoryId}
+        />
       )}
     </article>
   );

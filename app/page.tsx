@@ -11,6 +11,7 @@ import { getPublishedBlogPosts, getPublishedEvents } from "@/lib/content/reposit
 import { getSiteContent } from "@/lib/content/site-content";
 import { toShowcaseCategory } from "@/lib/storefront/mappers";
 import { getStorefrontCatalog } from "@/lib/storefront/repository";
+import { filterStorefrontVisibleCategories } from "@/lib/category-visibility";
 import { buildHomePageMetadata } from "@/lib/seo/page-metadata";
 import { CATEGORY_INDEX_PATH, OCCASION_INDEX_PATH } from "@/lib/category-url";
 
@@ -23,7 +24,7 @@ export default async function HomePage() {
     getPublishedEvents(),
     getSiteContent(),
   ]);
-  const homeCategories = categories
+  const homeCategories = filterStorefrontVisibleCategories(categories)
     .filter((category) => category.show_on_home)
     .sort((a, b) => {
       const positionDifference = a.home_sort_order - b.home_sort_order;

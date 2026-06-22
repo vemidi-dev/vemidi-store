@@ -11,6 +11,7 @@ export type StorefrontCategory = {
   cover_image_url?: string | null;
   cover_image_alt?: string | null;
   show_on_home: boolean;
+  is_visible?: boolean;
   home_sort_order: number;
   card_description: string | null;
   createdAt: string | null;

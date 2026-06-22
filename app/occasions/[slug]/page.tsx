@@ -46,6 +46,7 @@ export async function generateMetadata({
 
   return buildOccasionPageMetadata({
     occasion,
+    categories,
     productCategorySlugs: getProductCategorySlugs(products),
     faceted: hasContextFilterParams(query),
   });

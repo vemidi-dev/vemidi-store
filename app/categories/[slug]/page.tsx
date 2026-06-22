@@ -12,6 +12,7 @@ import {
   getCategoryFamilySlugs,
   getChildCategories,
 } from "@/lib/category-hierarchy";
+import { findVisibleProductCategoryBySlug, filterStorefrontVisibleCategories } from "@/lib/category-visibility";
 import { CATEGORY_INDEX_PATH, getCategoryPath } from "@/lib/category-url";
 import {
   filterProductsByOccasion,
@@ -45,9 +46,7 @@ export async function generateMetadata({
 }: CategoryPageProps): Promise<Metadata> {
   const [{ slug }, query] = await Promise.all([params, searchParams]);
   const { categories, products } = await getStorefrontCatalog();
-  const category = categories.find(
-    (entry) => entry.category_type === "product" && entry.slug === slug,
-  );
+  const category = findVisibleProductCategoryBySlug(categories, slug);
 
   if (!category) {
     notFound();
@@ -72,9 +71,7 @@ export default async function CategoryPage({
 }: CategoryPageProps) {
   const [{ slug }, query] = await Promise.all([params, searchParams]);
   const { categories, products } = await getStorefrontCatalog();
-  const category = categories.find(
-    (entry) => entry.category_type === "product" && entry.slug === slug,
-  );
+  const category = findVisibleProductCategoryBySlug(categories, slug);
 
   if (!category) {
     notFound();
@@ -83,7 +80,10 @@ export default async function CategoryPage({
   const parent = category.parent_id
     ? categories.find((entry) => entry.id === category.parent_id)
     : null;
-  const children = getChildCategories(categories, category.id);
+  const children = getChildCategories(
+    filterStorefrontVisibleCategories(categories),
+    category.id,
+  );
   const acceptedSlugs = new Set(getCategoryFamilySlugs(categories, category));
   const categoryProducts = products.filter((product) =>
     product.categorySlugs.some((categorySlug) =>

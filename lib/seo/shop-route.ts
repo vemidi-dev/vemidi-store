@@ -3,6 +3,10 @@ import type { Metadata } from "next";
 import { resolveCanonicalProductCategorySlug } from "@/lib/category-slug-aliases";
 import { getCategoryPath, getOccasionPath } from "@/lib/category-url";
 import {
+  findVisibleOccasionCategoryBySlug,
+  findVisibleProductCategoryBySlug,
+} from "@/lib/category-visibility";
+import {
   buildFacetedNoindexMetadata,
   buildIndexableMetadata,
 } from "@/lib/seo/faceted-metadata";
@@ -72,19 +76,14 @@ function findProductCategoryBySlug(
   slug: string,
 ) {
   const canonicalSlug = resolveCanonicalProductCategorySlug(slug);
-  return categories.find(
-    (category) =>
-      category.category_type === "product" && category.slug === canonicalSlug,
-  );
+  return findVisibleProductCategoryBySlug(categories, canonicalSlug);
 }
 
 function findOccasionBySlug(
   categories: StorefrontCategory[],
   slug: string,
 ) {
-  return categories.find(
-    (category) => category.category_type === "occasion" && category.slug === slug,
-  );
+  return findVisibleOccasionCategoryBySlug(categories, slug);
 }
 
 export function isOnlyOccasionSelector(

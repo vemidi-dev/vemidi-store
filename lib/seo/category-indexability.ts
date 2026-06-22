@@ -2,6 +2,7 @@ import {
   getCategoryFamilySlugs,
   getCategoryProductCount,
 } from "@/lib/category-hierarchy";
+import { isCategoryStorefrontVisible, buildCategoryVisibilityIndex } from "@/lib/category-visibility";
 import type { StorefrontCategory } from "@/lib/storefront/types";
 
 export function getProductCategorySlugs(
@@ -16,6 +17,11 @@ export function isProductCategoryIndexable(
   category: StorefrontCategory,
 ): boolean {
   if (category.category_type !== "product") {
+    return false;
+  }
+
+  const index = buildCategoryVisibilityIndex(categories);
+  if (!isCategoryStorefrontVisible(category, index)) {
     return false;
   }
 

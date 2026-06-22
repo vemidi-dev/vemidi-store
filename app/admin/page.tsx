@@ -21,6 +21,7 @@ import { PromotionManagementPanel } from "@/components/admin/promotion-managemen
 import { WishManagementPanel } from "@/components/admin/wish-management-panel";
 import { PageContainer } from "@/components/layout/page-container";
 import { loadAdminData } from "@/lib/admin/data";
+import { buildProductCountByCategoryId } from "@/lib/admin/category-stats";
 import {
   firstValue,
   normalizeAdminTab,
@@ -522,7 +523,12 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           <AdminNotices success={success} error={error} errors={data.errors} />
 
           {activeTab === "categories" ? (
-            <CategoryManagementPanel categories={data.categories} />
+            <CategoryManagementPanel
+              categories={data.categories}
+              productCountByCategoryId={buildProductCountByCategoryId(
+                data.categoryIdsByProductId,
+              )}
+            />
           ) : (
             <>
               <ProductCreatePanel

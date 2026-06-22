@@ -12,6 +12,7 @@ import {
   getCategoryFamilySlugs,
   sortCategoriesForDisplay,
 } from "@/lib/category-hierarchy";
+import { filterStorefrontVisibleCategories } from "@/lib/category-visibility";
 import {
   buildShopMetadata,
   parseShopSearchParams,
@@ -28,7 +29,10 @@ export async function generateMetadata({
 }: ShopPageProps): Promise<Metadata> {
   const params = await searchParams;
   const { categories } = await getStorefrontCatalog();
-  return buildShopMetadata(params, categories);
+  return buildShopMetadata(
+    params,
+    filterStorefrontVisibleCategories(categories),
+  );
 }
 
 type FilterValue = {
@@ -57,10 +61,12 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
     getSiteContent(),
   ]);
 
+  const visibleCategories = filterStorefrontVisibleCategories(categories);
+
   const categoryRedirect = resolveShopCategoryRedirect(
     params,
     parsed,
-    categories,
+    visibleCategories,
   );
   if (categoryRedirect) {
     permanentRedirect(categoryRedirect);
@@ -76,19 +82,19 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
   const promotionsOnly = parsed.promotionsOnly;
 
   const productCategoryFilters: FilterValue[] = sortCategoriesForDisplay(
-    categories.filter((category) => category.category_type === "product"),
+    visibleCategories.filter((category) => category.category_type === "product"),
   )
     .map((category) => ({
       id: category.slug,
       label: getCategoryDisplayLabel(categories, category),
     }));
-  const occasionFilters: FilterValue[] = categories
+  const occasionFilters: FilterValue[] = visibleCategories
     .filter((category) => category.category_type === "occasion")
     .map((category) => ({
     id: category.slug,
     label: category.name,
   }));
-  const legacyCategoryType = categories.find(
+  const legacyCategoryType = visibleCategories.find(
     (category) => category.slug === legacyCategory,
   )?.category_type;
   const activeProductCategory =
@@ -97,7 +103,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
   const activeOccasion =
     requestedOccasion ||
     (legacyCategoryType === "occasion" ? legacyCategory : "");
-  const selectedProductCategory = categories.find(
+  const selectedProductCategory = visibleCategories.find(
     (category) =>
       category.category_type === "product" &&
       category.slug === activeProductCategory,

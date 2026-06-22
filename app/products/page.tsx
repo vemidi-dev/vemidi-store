@@ -1,6 +1,7 @@
 import { notFound, permanentRedirect } from "next/navigation";
 
 import { resolveProductsPageRedirect } from "@/lib/seo/shop-route";
+import { filterStorefrontVisibleCategories } from "@/lib/category-visibility";
 import { getStorefrontCatalog } from "@/lib/storefront/repository";
 
 type ProductsPageProps = {
@@ -30,5 +31,10 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   }
 
   const { categories } = await getStorefrontCatalog();
-  permanentRedirect(resolveProductsPageRedirect(params, categories));
+  permanentRedirect(
+    resolveProductsPageRedirect(
+      params,
+      filterStorefrontVisibleCategories(categories),
+    ),
+  );
 }

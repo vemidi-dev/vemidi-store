@@ -2,11 +2,13 @@ import type { Metadata } from "next";
 
 import { resolveCategoryCoverImage } from "@/lib/category-image-resolution";
 import { getOccasionPath } from "@/lib/category-url";
+import { findVisibleOccasionCategoryBySlug } from "@/lib/category-visibility";
 import { isOccasionIndexable } from "@/lib/seo/occasion-indexability";
 import type { StorefrontCategory } from "@/lib/storefront/types";
 
 type BuildOccasionMetadataInput = {
   occasion: StorefrontCategory;
+  categories: StorefrontCategory[];
   productCategorySlugs: string[][];
   faceted?: boolean;
 };
@@ -15,11 +17,7 @@ export function findOccasionCategory(
   categories: StorefrontCategory[],
   slug: string,
 ): StorefrontCategory | null {
-  return (
-    categories.find(
-      (entry) => entry.category_type === "occasion" && entry.slug === slug,
-    ) ?? null
-  );
+  return findVisibleOccasionCategoryBySlug(categories, slug);
 }
 
 export function buildInvalidOccasionMetadata(): Metadata {
@@ -41,12 +39,14 @@ export function resolveOccasionPageMetadata(
 
   return buildOccasionPageMetadata({
     occasion,
+    categories,
     productCategorySlugs,
   });
 }
 
 export function buildOccasionPageMetadata({
   occasion,
+  categories,
   productCategorySlugs,
   faceted = false,
 }: BuildOccasionMetadataInput): Metadata {
@@ -55,7 +55,7 @@ export function buildOccasionPageMetadata({
     occasion.card_description?.trim() ||
     `Открийте персонализирани подаръци за „${occasion.name}“ от VeMiDi crafts.`;
   const canonicalPath = getOccasionPath(occasion.slug);
-  const indexable = isOccasionIndexable(productCategorySlugs, occasion);
+  const indexable = isOccasionIndexable(categories, productCategorySlugs, occasion);
 
   return {
     title: occasion.name,

@@ -15,6 +15,7 @@ import {
   getCategoryProductCount,
 } from "@/lib/category-hierarchy";
 import { CATEGORY_INDEX_PATH, OCCASION_INDEX_PATH, getCategoryListingHref } from "@/lib/category-url";
+import { filterStorefrontVisibleCategories } from "@/lib/category-visibility";
 import { toShowcaseCategory } from "@/lib/storefront/mappers";
 import { getStorefrontCatalog } from "@/lib/storefront/repository";
 
@@ -138,12 +139,13 @@ export default async function CategoriesPage() {
     getStorefrontCatalog(),
     getSiteContent(),
   ]);
-  const withCounts = categories.map(
+  const visibleCategories = filterStorefrontVisibleCategories(categories);
+  const withCounts = visibleCategories.map(
     (category): CategoryWithCount => ({
       ...toShowcaseCategory(category),
       productCount: getCategoryProductCount(
         products.map((product) => product.categorySlugs),
-        getCategoryFamilySlugs(categories, category),
+        getCategoryFamilySlugs(visibleCategories, category),
       ),
     }),
   );

@@ -1,4 +1,5 @@
 import { sortCategoriesForDisplay } from "@/lib/category-hierarchy";
+import { filterStorefrontVisibleCategories } from "@/lib/category-visibility";
 import {
   CATEGORY_INDEX_PATH,
   OCCASION_INDEX_PATH,
@@ -18,7 +19,9 @@ export function buildProductCategoryNavItems(
   categories: StorefrontCategory[],
 ): HeaderNavDropdownItem[] {
   return sortCategoriesForDisplay(
-    categories.filter((category) => category.category_type === "product"),
+    filterStorefrontVisibleCategories(categories).filter(
+      (category) => category.category_type === "product",
+    ),
   ).map((category) => ({
     id: category.id,
     name: category.name,
@@ -30,7 +33,7 @@ export function buildProductCategoryNavItems(
 export function buildOccasionCategoryNavItems(
   categories: StorefrontCategory[],
 ): HeaderNavDropdownItem[] {
-  return categories
+  return filterStorefrontVisibleCategories(categories)
     .filter((category) => category.category_type === "occasion")
     .sort(
       (left, right) =>

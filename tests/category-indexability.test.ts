@@ -50,6 +50,23 @@ const products = [
   { categorySlugs: ["bijuta"] },
 ];
 
+test("hidden category is not indexable even with products", () => {
+  const slugs = getProductCategorySlugs(products);
+  const hiddenParent = { ...categories[0], is_visible: false };
+
+  assert.equal(
+    isProductCategoryIndexable(categories, slugs, hiddenParent),
+    false,
+  );
+  assert.deepEqual(
+    filterIndexableProductCategories(
+      [hiddenParent, ...categories.slice(1)],
+      slugs,
+    ).map((category) => category.slug),
+    [],
+  );
+});
+
 test("empty category is not indexable", () => {
   const slugs = getProductCategorySlugs(products);
   const empty = categories[2];

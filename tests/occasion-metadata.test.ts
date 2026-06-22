@@ -27,6 +27,7 @@ const occasion = categories[0];
 test("occasion metadata is indexable when products exist", () => {
   const metadata = buildOccasionPageMetadata({
     occasion,
+    categories,
     productCategorySlugs: [["svatba"]],
   });
 
@@ -41,6 +42,7 @@ test("occasion metadata is indexable when products exist", () => {
 test("empty occasion metadata is noindex", () => {
   const metadata = buildOccasionPageMetadata({
     occasion,
+    categories,
     productCategorySlugs: [],
   });
 
@@ -50,6 +52,7 @@ test("empty occasion metadata is noindex", () => {
 test("filtered occasion metadata is noindex with the clean canonical", () => {
   const metadata = buildOccasionPageMetadata({
     occasion,
+    categories,
     productCategorySlugs: [["svatba"]],
     faceted: true,
   });

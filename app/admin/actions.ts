@@ -1237,6 +1237,7 @@ export async function createCategory(formData: FormData) {
   const parentId =
     getString(formData, adminFormFields.category.parentId) || null;
   const showOnHome = isChecked(formData, adminFormFields.category.showOnHome);
+  const isVisible = isChecked(formData, adminFormFields.category.isVisible);
   const cardDescription =
     getString(formData, adminFormFields.category.cardDescription).trim() || null;
   const imageFile = getFile(formData, adminFormFields.category.imageFile);
@@ -1330,6 +1331,7 @@ export async function createCategory(formData: FormData) {
       cover_image_url: uploadedCoverImage?.url ?? null,
       cover_image_alt: coverImageAlt,
       show_on_home: parentId ? false : showOnHome,
+      is_visible: isVisible,
       home_sort_order: homeSortOrder,
       card_description: cardDescription,
     });
@@ -1357,6 +1359,7 @@ export async function updateCategory(formData: FormData) {
   const parentId =
     getString(formData, adminFormFields.category.parentId) || null;
   const showOnHome = isChecked(formData, adminFormFields.category.showOnHome);
+  const isVisible = isChecked(formData, adminFormFields.category.isVisible);
   const cardDescription =
     getString(formData, adminFormFields.category.cardDescription).trim() || null;
   const imageFile = getFile(formData, adminFormFields.category.imageFile);
@@ -1468,6 +1471,7 @@ export async function updateCategory(formData: FormData) {
       ...(uploadedCoverImage ? { cover_image_url: uploadedCoverImage.url } : {}),
       cover_image_alt: coverImageAlt,
       show_on_home: parentId ? false : showOnHome,
+      is_visible: isVisible,
       home_sort_order: homeSortOrder,
       card_description: cardDescription,
     })

@@ -3,6 +3,7 @@ import {
   getCategoryFamilySlugs,
   sortCategoriesForDisplay,
 } from "@/lib/category-hierarchy";
+import { filterStorefrontVisibleCategories } from "@/lib/category-visibility";
 import type {
   StorefrontCategory,
   StorefrontProduct,
@@ -30,7 +31,7 @@ export function getOccasionFilterOptions(
   categories: StorefrontCategory[],
   products: StorefrontProduct[],
 ): ContextFilterOption[] {
-  return categories
+  return filterStorefrontVisibleCategories(categories)
     .filter((category) => category.category_type === "occasion")
     .map((category) => ({
       value: category.slug,
@@ -48,7 +49,9 @@ export function getProductCategoryFilterOptions(
   products: StorefrontProduct[],
 ): ContextFilterOption[] {
   return sortCategoriesForDisplay(
-    categories.filter((category) => category.category_type === "product"),
+    filterStorefrontVisibleCategories(categories).filter(
+      (category) => category.category_type === "product",
+    ),
   )
     .map((category) => {
       const familySlugs = new Set(getCategoryFamilySlugs(categories, category));

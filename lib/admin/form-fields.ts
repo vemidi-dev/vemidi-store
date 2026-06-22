@@ -35,6 +35,7 @@ export const adminFormFields = {
     coverImageAlt: "category_cover_image_alt",
     cardDescription: "card_description",
     showOnHome: "show_on_home",
+    isVisible: "is_visible",
     direction: "direction",
   },
   productImage: {

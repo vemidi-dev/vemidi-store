@@ -6,6 +6,7 @@ import { PageContainer } from "@/components/layout/page-container";
 import { VisualPageHero } from "@/components/layout/visual-page-hero";
 import { MediaPlaceholder } from "@/components/ui/media-placeholder";
 import { OCCASION_INDEX_PATH, getCategoryListingHref } from "@/lib/category-url";
+import { filterStorefrontVisibleCategories } from "@/lib/category-visibility";
 import { getSiteContent } from "@/lib/content/site-content";
 import type { ShopCategory } from "@/lib/shop-categories";
 import { toShowcaseCategory } from "@/lib/storefront/mappers";
@@ -80,7 +81,7 @@ export default async function OccasionsPage() {
     });
   });
 
-  const occasions = categories
+  const occasions = filterStorefrontVisibleCategories(categories)
     .filter((category) => category.category_type === "occasion")
     .map(
       (category): OccasionWithCount => ({
