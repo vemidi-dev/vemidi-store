@@ -1,5 +1,8 @@
 -- Bouquet color quantity mode for product_color_fields.
+-- Run after product_inventory_checkout_hardening.sql (#36).
 -- Do not run on production without explicit approval.
+
+begin;
 
 alter table public.product_color_fields
   add column if not exists selection_mode text not null default 'choice',
@@ -211,7 +214,8 @@ begin
 end;
 $$;
 
--- Patches create_store_order color validation and persisted quantity metadata.
+drop function if exists public.create_store_order(jsonb, jsonb, jsonb, text, uuid);
+
 create or replace function public.create_store_order(
   p_customer jsonb,
   p_delivery jsonb,
@@ -223,12 +227,11 @@ create or replace function public.create_store_order(
 returns uuid
 language plpgsql
 security definer
-set search_path = ''
+set search_path = public
 as $$
 declare
   v_item jsonb;
   v_product record;
-  v_promo record;
   v_field record;
   v_color record;
   v_color_input jsonb;
@@ -237,7 +240,6 @@ declare
   v_option_id uuid;
   v_quantity integer;
   v_color_quantity integer;
-  v_selected_count integer;
   v_personalization text;
   v_items jsonb := '[]'::jsonb;
   v_colors jsonb;
@@ -262,6 +264,10 @@ declare
   v_order_source text := coalesce(nullif(trim(p_attribution ->> 'source'), ''), 'vemidi-store');
   v_order_campaign text := nullif(left(trim(coalesce(p_attribution ->> 'campaign', '')), 64), '');
   v_order_landing_url text := nullif(left(trim(coalesce(p_attribution ->> 'landingUrl', '')), 240), '');
+  v_demand record;
+  v_stock_before integer;
+  v_stock_after integer;
+  v_stock_snapshots jsonb := '{}'::jsonb;
 begin
   if p_idempotency_key is null then
     raise exception 'invalid_idempotency_key' using errcode = '22023';
@@ -326,6 +332,11 @@ begin
     raise exception 'too_many_items' using errcode = '22023';
   end if;
 
+  create temporary table _order_demand (
+    product_id uuid primary key,
+    quantity integer not null check (quantity > 0)
+  ) on commit drop;
+
   for v_item in select value from jsonb_array_elements(p_items)
   loop
     begin
@@ -340,7 +351,76 @@ begin
       raise exception 'invalid_quantity' using errcode = '22023';
     end if;
 
-    select id, name, price, is_customizable, is_sold_out
+    insert into _order_demand (product_id, quantity)
+    values (v_product_id, v_quantity)
+    on conflict (product_id)
+    do update set quantity = _order_demand.quantity + excluded.quantity;
+  end loop;
+
+  for v_demand in
+    select d.product_id, d.quantity
+    from _order_demand d
+    order by d.product_id
+  loop
+    select
+      id,
+      is_sold_out,
+      fulfillment_type,
+      stock_quantity
+    into v_product
+    from public.products
+    where id = v_demand.product_id
+    for update;
+
+    if not found then
+      raise exception 'product_not_found' using errcode = 'P0002';
+    end if;
+
+    if coalesce(v_product.is_sold_out, false) then
+      raise exception 'product_sold_out' using errcode = '22023';
+    end if;
+
+    if v_product.fulfillment_type = 'unavailable' then
+      raise exception 'product_unavailable' using errcode = '22023';
+    end if;
+
+    if v_product.fulfillment_type = 'stocked' then
+      if coalesce(v_product.stock_quantity, 0) < v_demand.quantity then
+        raise exception 'insufficient_stock' using errcode = '22023';
+      end if;
+
+      v_stock_before := v_product.stock_quantity;
+      v_stock_after := v_stock_before - v_demand.quantity;
+      v_stock_snapshots := v_stock_snapshots || jsonb_build_object(
+        v_demand.product_id::text,
+        jsonb_build_object(
+          'stockQuantityBefore', v_stock_before,
+          'stockQuantityAfter', v_stock_after
+        )
+      );
+    end if;
+  end loop;
+
+  for v_item in select value from jsonb_array_elements(p_items)
+  loop
+    begin
+      v_product_id := (v_item ->> 'productId')::uuid;
+      v_quantity := (v_item ->> 'quantity')::integer;
+    exception
+      when others then
+        raise exception 'invalid_order_item' using errcode = '22023';
+    end;
+
+    select
+      id,
+      name,
+      price,
+      is_customizable,
+      is_sold_out,
+      slug,
+      product_code,
+      fulfillment_type,
+      stock_quantity
       into v_product
       from public.products
       where id = v_product_id;
@@ -351,6 +431,15 @@ begin
 
     if coalesce(v_product.is_sold_out, false) then
       raise exception 'product_sold_out' using errcode = '22023';
+    end if;
+
+    if v_product.fulfillment_type = 'unavailable' then
+      raise exception 'product_unavailable' using errcode = '22023';
+    end if;
+
+    if v_product.fulfillment_type = 'stocked'
+      and coalesce(v_product.stock_quantity, 0) < v_quantity then
+      raise exception 'insufficient_stock' using errcode = '22023';
     end if;
 
     if v_product.price is null or v_product.price < 0 then
@@ -466,12 +555,24 @@ begin
       );
     end loop;
 
+    v_stock_before := null;
+    v_stock_after := null;
+    if v_product.fulfillment_type = 'stocked' then
+      v_stock_before := (v_stock_snapshots -> v_product.id::text ->> 'stockQuantityBefore')::integer;
+      v_stock_after := (v_stock_snapshots -> v_product.id::text ->> 'stockQuantityAfter')::integer;
+    end if;
+
     v_total := v_total + (v_unit_price * v_quantity);
     v_product_names := array_append(v_product_names, v_product.name);
     v_items := v_items || jsonb_build_array(
       jsonb_build_object(
         'productId', v_product.id,
+        'productCode', v_product.product_code,
+        'productSlug', v_product.slug,
         'name', v_product.name,
+        'fulfillmentType', v_product.fulfillment_type,
+        'stockQuantityBefore', v_stock_before,
+        'stockQuantityAfter', v_stock_after,
         'baseUnitPrice', v_base_unit_price,
         'effectiveBasePrice', v_effective_base,
         'optionDelta', v_option_delta,
@@ -486,6 +587,12 @@ begin
       )
     );
   end loop;
+
+  update public.products product
+  set stock_quantity = product.stock_quantity - demand.quantity
+  from _order_demand demand
+  where product.id = demand.product_id
+    and product.fulfillment_type = 'stocked';
 
   insert into public.orders (
     status,
@@ -563,3 +670,6 @@ $$;
 revoke all on function public.create_store_order(jsonb, jsonb, jsonb, text, uuid, jsonb) from public;
 revoke all on function public.create_store_order(jsonb, jsonb, jsonb, text, uuid, jsonb) from anon;
 revoke all on function public.create_store_order(jsonb, jsonb, jsonb, text, uuid, jsonb) from authenticated;
+grant execute on function public.create_store_order(jsonb, jsonb, jsonb, text, uuid, jsonb) to service_role;
+
+commit;
