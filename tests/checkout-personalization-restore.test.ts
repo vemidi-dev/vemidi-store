@@ -99,6 +99,7 @@ test("checkout back maps legacy cart personalization string to the name field", 
     values: {},
     enabledOptionalFieldIds: [],
     selectedColorOptionIdsByFieldId: {},
+    selectedColorQuantitiesByFieldId: {},
     optionSelections: [],
   }, incoming);
 
