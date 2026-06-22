@@ -159,6 +159,12 @@ export function makeCreateProductDraft(formData: FormData) {
   const optionIds = formData
     .getAll(adminFormFields.colorField.optionIds)
     .map((value) => String(value ?? "").trim());
+  const selectionModes = formData
+    .getAll(adminFormFields.colorField.selectionModes)
+    .map((value) => String(value ?? "").trim());
+  const requiredTotals = formData
+    .getAll(adminFormFields.colorField.requiredTotalQuantities)
+    .map((value) => String(value ?? "").trim());
 
   const longestLength = Math.max(
     labels.length,
@@ -166,6 +172,8 @@ export function makeCreateProductDraft(formData: FormData) {
     mins.length,
     maxes.length,
     optionIds.length,
+    selectionModes.length,
+    requiredTotals.length,
   );
   const colorFields = Array.from({ length: longestLength }, (_, index) => ({
     label: labels[index] ?? "",
@@ -173,6 +181,8 @@ export function makeCreateProductDraft(formData: FormData) {
     min_select: mins[index] ?? "",
     max_select: maxes[index] ?? "",
     option_ids: optionIds[index] ?? "",
+    selection_mode: selectionModes[index] ?? "choice",
+    required_total_quantity: requiredTotals[index] ?? "",
   })).filter((field) => field.label || field.group_id || field.option_ids);
 
   const personalizationLabels = formData

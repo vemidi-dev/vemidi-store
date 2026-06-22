@@ -8,6 +8,7 @@ import {
   resolveHandoffOptionSelections,
 } from "@/lib/campaign-option-keys";
 import { normalizeCartQuantity } from "@/lib/cart-storage";
+import { isQuantityColorField } from "@/lib/product-color-quantities";
 import type { Product } from "@/lib/catalog";
 import type { ProductOptionSelection } from "@/lib/product-options";
 import { validateProductOptionSelections } from "@/lib/product-option-validation";
@@ -317,12 +318,29 @@ function getMissingRequirements(
 ) {
   const missing: string[] = [];
   const selectedByField = new Map<string, number>();
+  const quantityTotalsByField = new Map<string, number>();
 
   selectedColors.forEach((color) => {
+    if (color.quantity !== undefined) {
+      quantityTotalsByField.set(
+        color.fieldId,
+        (quantityTotalsByField.get(color.fieldId) ?? 0) + color.quantity,
+      );
+      return;
+    }
+
     selectedByField.set(color.fieldId, (selectedByField.get(color.fieldId) ?? 0) + 1);
   });
 
   for (const field of product.colorFields ?? []) {
+    if (isQuantityColorField(field)) {
+      const total = quantityTotalsByField.get(field.id) ?? 0;
+      if (total !== (field.requiredTotalQuantity ?? 0)) {
+        missing.push(`цвят: ${field.label}`);
+      }
+      continue;
+    }
+
     const count = selectedByField.get(field.id) ?? 0;
     if (count < field.minSelect) {
       missing.push(`цвят: ${field.label}`);

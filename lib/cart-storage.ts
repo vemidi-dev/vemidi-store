@@ -52,6 +52,9 @@ function parseSelectedColor(value: unknown): SelectedProductColor | null {
     optionId,
     optionName,
     optionHex,
+    ...(typeof value.quantity === "number" && Number.isFinite(value.quantity)
+      ? { quantity: Math.max(0, Math.min(99, Math.trunc(value.quantity))) }
+      : {}),
   };
 }
 

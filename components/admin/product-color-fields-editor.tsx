@@ -23,6 +23,8 @@ type InitialColorField = {
   minSelect: number;
   maxSelect: number;
   optionIds: string[];
+  selectionMode?: "choice" | "quantity";
+  requiredTotalQuantity?: number | null;
 };
 
 type ProductColorFieldsEditorProps = {
@@ -40,6 +42,8 @@ type LocalColorField = {
   minSelect: number;
   maxSelect: number;
   optionIds: string[];
+  selectionMode: "choice" | "quantity";
+  requiredTotalQuantity: number;
 };
 
 function makeEmptyField(groupId: string): LocalColorField {
@@ -50,6 +54,8 @@ function makeEmptyField(groupId: string): LocalColorField {
     minSelect: 1,
     maxSelect: 1,
     optionIds: [],
+    selectionMode: "choice",
+    requiredTotalQuantity: 12,
   };
 }
 
@@ -70,6 +76,11 @@ export function ProductColorFieldsEditor({
           minSelect: field.minSelect,
           maxSelect: field.maxSelect,
           optionIds: field.optionIds,
+          selectionMode: field.selectionMode === "quantity" ? "quantity" : "choice",
+          requiredTotalQuantity:
+            field.selectionMode === "quantity"
+              ? Math.max(1, field.requiredTotalQuantity ?? 12)
+              : 12,
         }))
       : [],
   );
@@ -161,44 +172,96 @@ export function ProductColorFieldsEditor({
               </select>
             </label>
 
-            <div className="grid gap-3 sm:grid-cols-2">
-              <label className="inline-flex items-center gap-2 self-end rounded-lg border border-boutique-line bg-white px-3 py-3 text-sm text-boutique-ink">
-                <input
-                  type="checkbox"
-                  checked={field.minSelect > 0}
-                  onChange={(event) => {
-                    const minSelect = event.currentTarget.checked ? 1 : 0;
-                    setFields((prev) =>
-                      prev.map((item) =>
-                        item.uid === field.uid ? { ...item, minSelect } : item,
-                      ),
-                    );
-                  }}
-                />
-                Изборът е задължителен
-              </label>
+            <label className="inline-flex items-center gap-2 self-end rounded-lg border border-boutique-line bg-white px-3 py-3 text-sm text-boutique-ink">
+              <input
+                type="checkbox"
+                checked={field.selectionMode === "quantity"}
+                onChange={(event) => {
+                  const quantityMode = event.currentTarget.checked;
+                  setFields((prev) =>
+                    prev.map((item) =>
+                      item.uid === field.uid
+                        ? {
+                            ...item,
+                            selectionMode: quantityMode ? "quantity" : "choice",
+                            minSelect: quantityMode ? 1 : item.minSelect,
+                            maxSelect: quantityMode ? 1 : item.maxSelect,
+                          }
+                        : item,
+                    ),
+                  );
+                }}
+              />
+              Цветове с количества
+            </label>
+
+            {field.selectionMode === "quantity" ? (
               <label className="text-sm font-medium text-boutique-ink">
-                Брой цветове
-                <select
-                  value={field.maxSelect > 1 ? "multiple" : "single"}
+                Общ брой елементи
+                <input
+                  type="number"
+                  min="1"
+                  max="99"
+                  value={field.requiredTotalQuantity}
                   onChange={(event) => {
-                    const maxSelect =
-                      event.currentTarget.value === "multiple" ? 2 : 1;
+                    const requiredTotalQuantity = Math.max(
+                      1,
+                      Math.min(99, Number(event.currentTarget.value) || 1),
+                    );
                     setFields((prev) =>
                       prev.map((item) =>
-                        item.uid === field.uid ? { ...item, maxSelect } : item,
+                        item.uid === field.uid
+                          ? { ...item, requiredTotalQuantity }
+                          : item,
                       ),
                     );
                   }}
                   className={fieldClassName}
-                >
-                  <option value="single">Един цвят</option>
-                  <option value="multiple">Няколко цвята</option>
-                </select>
+                />
+                <span className={helperClassName}>
+                  Клиентът разпределя този брой между наличните цветове.
+                </span>
               </label>
-            </div>
+            ) : (
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="inline-flex items-center gap-2 self-end rounded-lg border border-boutique-line bg-white px-3 py-3 text-sm text-boutique-ink">
+                  <input
+                    type="checkbox"
+                    checked={field.minSelect > 0}
+                    onChange={(event) => {
+                      const minSelect = event.currentTarget.checked ? 1 : 0;
+                      setFields((prev) =>
+                        prev.map((item) =>
+                          item.uid === field.uid ? { ...item, minSelect } : item,
+                        ),
+                      );
+                    }}
+                  />
+                  Изборът е задължителен
+                </label>
+                <label className="text-sm font-medium text-boutique-ink">
+                  Брой цветове
+                  <select
+                    value={field.maxSelect > 1 ? "multiple" : "single"}
+                    onChange={(event) => {
+                      const maxSelect =
+                        event.currentTarget.value === "multiple" ? 2 : 1;
+                      setFields((prev) =>
+                        prev.map((item) =>
+                          item.uid === field.uid ? { ...item, maxSelect } : item,
+                        ),
+                      );
+                    }}
+                    className={fieldClassName}
+                  >
+                    <option value="single">Един цвят</option>
+                    <option value="multiple">Няколко цвята</option>
+                  </select>
+                </label>
+              </div>
+            )}
 
-            {field.maxSelect > 1 ? (
+            {field.selectionMode === "choice" && field.maxSelect > 1 ? (
               <label className="block max-w-xs text-sm font-medium text-boutique-ink">
                 Най-много избрани цветове
                 <input
@@ -299,9 +362,31 @@ export function ProductColorFieldsEditor({
 
             <input type="hidden" name={adminFormFields.colorField.labels} value={field.label} />
             <input type="hidden" name={adminFormFields.colorField.groupIds} value={field.groupId} />
-            <input type="hidden" name={adminFormFields.colorField.minSelects} value={String(field.minSelect)} />
-            <input type="hidden" name={adminFormFields.colorField.maxSelects} value={String(field.maxSelect)} />
+            <input
+              type="hidden"
+              name={adminFormFields.colorField.minSelects}
+              value={String(field.selectionMode === "quantity" ? 1 : field.minSelect)}
+            />
+            <input
+              type="hidden"
+              name={adminFormFields.colorField.maxSelects}
+              value={String(field.selectionMode === "quantity" ? 1 : field.maxSelect)}
+            />
             <input type="hidden" name={adminFormFields.colorField.optionIds} value={field.optionIds.join(",")} />
+            <input
+              type="hidden"
+              name={adminFormFields.colorField.selectionModes}
+              value={field.selectionMode}
+            />
+            <input
+              type="hidden"
+              name={adminFormFields.colorField.requiredTotalQuantities}
+              value={
+                field.selectionMode === "quantity"
+                  ? String(field.requiredTotalQuantity)
+                  : ""
+              }
+            />
           </fieldset>
         );
       })}

@@ -30,7 +30,13 @@ function serializeColors(selectedColors?: SelectedProductColor[]) {
       }
       return a.optionId.localeCompare(b.optionId);
     })
-    .map((item) => `${item.fieldId}:${item.optionId}`)
+    .map((item) => {
+      if (item.quantity !== undefined) {
+        return `${item.fieldId}:${item.optionId}:${item.quantity}`;
+      }
+
+      return `${item.fieldId}:${item.optionId}`;
+    })
     .join("|");
 }
 

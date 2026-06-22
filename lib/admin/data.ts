@@ -103,7 +103,7 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
       .order("sort_order", { ascending: true }),
     supabase
       .from("product_color_fields")
-      .select("id,product_id,group_id,label,enabled,min_select,max_select,sort_order"),
+      .select("id,product_id,group_id,label,enabled,min_select,max_select,sort_order,selection_mode,required_total_quantity"),
     supabase.from("product_color_field_options").select("field_id,color_option_id"),
     supabase
       .from("product_images")

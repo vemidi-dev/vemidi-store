@@ -274,6 +274,12 @@ async function parseProductColorFields(
   const optionCsvs = formData
     .getAll(adminFormFields.colorField.optionIds)
     .map((value) => String(value ?? "").trim());
+  const selectionModes = formData
+    .getAll(adminFormFields.colorField.selectionModes)
+    .map((value) => String(value ?? "").trim());
+  const requiredTotals = formData
+    .getAll(adminFormFields.colorField.requiredTotalQuantities)
+    .map((value) => String(value ?? "").trim());
 
   const parsedFields: ParsedColorField[] = [];
 
@@ -283,6 +289,9 @@ async function parseProductColorFields(
     const minRaw = mins[index] ?? "";
     const maxRaw = maxes[index] ?? "";
     const optionCsv = optionCsvs[index] ?? "";
+    const selectionModeRaw = selectionModes[index] ?? "choice";
+    const selectionMode = selectionModeRaw === "quantity" ? "quantity" : "choice";
+    const requiredTotalRaw = requiredTotals[index] ?? "";
 
     if (!label && !groupId && !optionCsv) {
       continue;
@@ -296,8 +305,22 @@ async function parseProductColorFields(
       return { fields: [], error: "Избрана е невалидна цветова палитра." };
     }
 
-    const minSelect = parseSelectLimit(minRaw, 0);
-    const maxSelect = parseSelectLimit(maxRaw, 1);
+    let minSelect = parseSelectLimit(minRaw, 0);
+    let maxSelect = parseSelectLimit(maxRaw, 1);
+    let requiredTotalQuantity: number | null = null;
+
+    if (selectionMode === "quantity") {
+      const parsedRequiredTotal = Number(requiredTotalRaw);
+      if (!Number.isFinite(parsedRequiredTotal) || parsedRequiredTotal < 1) {
+        return {
+          fields: [],
+          error: "Задайте валиден общ брой елементи за режим „Цветове с количества“.",
+        };
+      }
+      requiredTotalQuantity = Math.trunc(parsedRequiredTotal);
+      minSelect = 1;
+      maxSelect = 1;
+    }
 
     if (minSelect === null || maxSelect === null || maxSelect < 1 || minSelect > maxSelect) {
       return { fields: [], error: "Настройката за броя избирани цветове е невалидна." };
@@ -315,7 +338,10 @@ async function parseProductColorFields(
     if (optionIds.length === 0) {
       return { fields: [], error: "Изберете поне един разрешен цвят за всяко цветово поле." };
     }
-    if (optionIds.length < minSelect || optionIds.length < maxSelect) {
+    if (
+      selectionMode !== "quantity" &&
+      (optionIds.length < minSelect || optionIds.length < maxSelect)
+    ) {
       return {
         fields: [],
         error: "Изберете достатъчно налични цветове за зададения брой клиентски избори.",
@@ -334,6 +360,8 @@ async function parseProductColorFields(
       maxSelect,
       optionIds,
       sortOrder: index,
+      selectionMode,
+      requiredTotalQuantity,
     });
   }
 

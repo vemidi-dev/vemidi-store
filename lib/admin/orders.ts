@@ -104,8 +104,10 @@ export type StoreOrderItem = {
   personalization: string | null;
   personalizationFields: Array<{ label?: string; value?: string }>;
   selectedColors: Array<{
+    fieldId?: string;
     fieldLabel?: string;
     optionName?: string;
+    quantity?: number;
   }>;
   optionSelections: ProductOptionSelectionSnapshot[];
 };

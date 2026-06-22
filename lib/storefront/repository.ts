@@ -89,6 +89,8 @@ type ColorFieldRow = {
   min_select: number;
   max_select: number;
   sort_order: number | null;
+  selection_mode?: string | null;
+  required_total_quantity?: number | null;
 };
 
 type ColorFieldOptionRow = {
@@ -399,7 +401,7 @@ async function getProductColorFields(
     supabase.from("color_groups").select("id,key,label"),
     supabase
       .from("product_color_fields")
-      .select("id,group_id,label,min_select,max_select,sort_order")
+      .select("id,group_id,label,min_select,max_select,sort_order,selection_mode,required_total_quantity")
       .eq("product_id", productId)
       .eq("enabled", true),
   ]);
@@ -470,6 +472,18 @@ async function getProductColorFields(
         groupLabel: group.label,
         minSelect: Math.max(0, Number(field.min_select) || 0),
         maxSelect: Math.max(1, Number(field.max_select) || 1),
+        selectionMode:
+          field.selection_mode === "quantity" ? "quantity" : "choice",
+        ...(field.selection_mode === "quantity" &&
+        field.required_total_quantity !== null &&
+        field.required_total_quantity !== undefined
+          ? {
+              requiredTotalQuantity: Math.max(
+                1,
+                Number(field.required_total_quantity) || 1,
+              ),
+            }
+          : {}),
         options,
       };
     })

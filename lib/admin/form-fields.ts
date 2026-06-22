@@ -62,6 +62,8 @@ export const adminFormFields = {
     minSelects: "color_field_min_select[]",
     maxSelects: "color_field_max_select[]",
     optionIds: "color_field_option_ids[]",
+    selectionModes: "color_field_selection_mode[]",
+    requiredTotalQuantities: "color_field_required_total_quantity[]",
   },
   personalizationField: {
     labels: "personalization_label[]",

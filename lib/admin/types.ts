@@ -211,6 +211,8 @@ export type ProductColorFieldRow = {
   min_select: number;
   max_select: number;
   sort_order: number;
+  selection_mode?: string | null;
+  required_total_quantity?: number | null;
 };
 
 export type ProductColorFieldOptionRow = {
@@ -224,6 +226,8 @@ export type ProductDraftColorField = {
   minSelect: number;
   maxSelect: number;
   optionIds: string[];
+  selectionMode?: "choice" | "quantity";
+  requiredTotalQuantity?: number | null;
 };
 
 export type ProductDraftPersonalizationField = {
@@ -265,6 +269,8 @@ export type ParsedColorField = {
   maxSelect: number;
   optionIds: string[];
   sortOrder: number;
+  selectionMode: "choice" | "quantity";
+  requiredTotalQuantity: number | null;
 };
 
 export type ParsedPersonalizationField =

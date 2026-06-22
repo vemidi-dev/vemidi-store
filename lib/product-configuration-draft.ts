@@ -1,6 +1,8 @@
-import type { CartLine } from "@/lib/cart-types";
+﻿import type { CartLine } from "@/lib/cart-types";
 import type { ProductOptionSelection } from "@/lib/product-options";
 import type { SelectedProductColor } from "@/lib/product-colors";
+import type { ColorQuantitiesByOptionId } from "@/lib/product-color-quantities";
+import { quantitiesFromSelectedColors } from "@/lib/product-color-quantities";
 import type {
   ProductPersonalizationField,
   ProductPersonalizationValue,
@@ -13,6 +15,7 @@ export type ProductConfigurationDraft = {
   values: Record<string, string>;
   enabledOptionalFieldIds: string[];
   selectedColorOptionIdsByFieldId: Record<string, string[]>;
+  selectedColorQuantitiesByFieldId: Record<string, ColorQuantitiesByOptionId>;
   optionSelections: ProductOptionSelection[];
 };
 
@@ -56,6 +59,33 @@ function parseSelectedColors(value: unknown): Record<string, string[]> {
     Object.entries(value)
       .slice(0, 20)
       .map(([fieldId, optionIds]) => [fieldId.slice(0, 100), parseStringArray(optionIds)]),
+  );
+}
+
+function parseColorQuantities(value: unknown): Record<string, ColorQuantitiesByOptionId> {
+  if (!isRecord(value)) {
+    return {};
+  }
+
+  return Object.fromEntries(
+    Object.entries(value)
+      .slice(0, 20)
+      .map(([fieldId, optionQuantities]) => {
+        if (!isRecord(optionQuantities)) {
+          return [fieldId.slice(0, 100), {}];
+        }
+
+        const quantities = Object.fromEntries(
+          Object.entries(optionQuantities)
+            .slice(0, 30)
+            .map(([optionId, quantity]) => [
+              optionId.slice(0, 100),
+              Math.max(0, Math.min(99, Number(quantity) || 0)),
+            ]),
+        );
+
+        return [fieldId.slice(0, 100), quantities];
+      }),
   );
 }
 
@@ -107,6 +137,9 @@ export function parseProductConfigurationDraft(
       enabledOptionalFieldIds: parseStringArray(parsed.enabledOptionalFieldIds),
       selectedColorOptionIdsByFieldId: parseSelectedColors(
         parsed.selectedColorOptionIdsByFieldId,
+      ),
+      selectedColorQuantitiesByFieldId: parseColorQuantities(
+        parsed.selectedColorQuantitiesByFieldId,
       ),
       optionSelections: parseOptionSelections(parsed.optionSelections),
     };
@@ -218,6 +251,7 @@ export function resolveProductConfigurationDraft(
     values: {},
     enabledOptionalFieldIds: [],
     selectedColorOptionIdsByFieldId: {},
+    selectedColorQuantitiesByFieldId: {},
     optionSelections: [],
   };
 
@@ -240,19 +274,46 @@ export function mergeProductConfigurationDraft(
   const selectedColorOptionIdsByFieldId = {
     ...base.selectedColorOptionIdsByFieldId,
   };
+  const selectedColorQuantitiesByFieldId = {
+    ...base.selectedColorQuantitiesByFieldId,
+  };
 
   for (const field of incoming.personalizationFields ?? []) {
     values[field.fieldId] = field.value;
     enabledOptionalFieldIds.add(field.fieldId);
   }
+
+  const quantityColors = (incoming.selectedColors ?? []).filter(
+    (color) => color.quantity !== undefined,
+  );
+  if (quantityColors.length > 0) {
+    Object.assign(
+      selectedColorQuantitiesByFieldId,
+      quantitiesFromSelectedColors(quantityColors),
+    );
+  }
+
+  const incomingChoiceByField = new Map<string, string[]>();
   for (const color of incoming.selectedColors ?? []) {
-    selectedColorOptionIdsByFieldId[color.fieldId] = [color.optionId];
+    if (color.quantity !== undefined) {
+      continue;
+    }
+
+    const optionIds = incomingChoiceByField.get(color.fieldId) ?? [];
+    if (!optionIds.includes(color.optionId)) {
+      incomingChoiceByField.set(color.fieldId, [...optionIds, color.optionId]);
+    }
+  }
+
+  for (const [fieldId, optionIds] of incomingChoiceByField) {
+    selectedColorOptionIdsByFieldId[fieldId] = optionIds;
   }
 
   return {
     values,
     enabledOptionalFieldIds: [...enabledOptionalFieldIds],
     selectedColorOptionIdsByFieldId,
+    selectedColorQuantitiesByFieldId,
     optionSelections: mergeProductOptionSelections(
       base.optionSelections,
       incoming.optionSelections ?? [],

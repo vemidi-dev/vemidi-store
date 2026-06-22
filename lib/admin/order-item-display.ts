@@ -1,5 +1,9 @@
-import type { StoreOrderItem } from "@/lib/admin/orders";
+﻿import type { StoreOrderItem } from "@/lib/admin/orders";
 import { formatOrderOptionLine } from "@/lib/order-option-display";
+import {
+  formatSelectedColorQuantityLabel,
+  formatSelectedColorsQuantitySummary,
+} from "@/lib/product-color-quantities";
 
 export type StoreOrderItemDetailLine = {
   text: string;
@@ -27,14 +31,43 @@ export function buildStoreOrderItemDetailLines(
     }
   } else if (item.personalization?.trim()) {
     lines.push({
-      text: `Персонализация: ${item.personalization.trim()}`,
+      text: `╨Я╨╡╤А╤Б╨╛╨╜╨░╨╗╨╕╨╖╨░╤Ж╨╕╤П: ${item.personalization.trim()}`,
     });
   }
 
+  const colorsByField = new Map<string, NonNullable<StoreOrderItem["selectedColors"]>>();
+
   for (const color of item.selectedColors ?? []) {
-    lines.push({
-      text: `${color.fieldLabel || "Цвят"}: ${color.optionName || "—"}`,
-    });
+    const fieldColors = colorsByField.get(color.fieldId ?? color.fieldLabel ?? "") ?? [];
+    fieldColors.push(color);
+    colorsByField.set(color.fieldId ?? color.fieldLabel ?? "", fieldColors);
+  }
+
+  for (const colors of colorsByField.values()) {
+    const usesQuantities = colors.some(
+      (color) => typeof color.quantity === "number" && color.quantity > 0,
+    );
+
+    if (usesQuantities) {
+      lines.push({
+        text: `${colors[0]?.fieldLabel || "╨ж╨▓╤П╤В"}: ${formatSelectedColorsQuantitySummary(
+          colors.map((color) => ({
+            optionName: color.optionName || "тАФ",
+            quantity: color.quantity,
+          })),
+        )}`,
+      });
+      continue;
+    }
+
+    for (const color of colors) {
+      lines.push({
+        text: `${color.fieldLabel || "╨ж╨▓╤П╤В"}: ${formatSelectedColorQuantityLabel({
+          optionName: color.optionName || "тАФ",
+          quantity: color.quantity,
+        })}`,
+      });
+    }
   }
 
   for (const group of item.optionSelections) {

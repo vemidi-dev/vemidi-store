@@ -37,6 +37,8 @@ function toColorFieldsPayload(fields: ParsedColorField[]) {
     max_select: field.maxSelect,
     option_ids: field.optionIds,
     sort_order: field.sortOrder,
+    selection_mode: field.selectionMode,
+    required_total_quantity: field.requiredTotalQuantity,
   }));
 }
 

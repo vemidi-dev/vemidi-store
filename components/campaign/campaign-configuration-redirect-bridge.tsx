@@ -26,6 +26,7 @@ const EMPTY_DRAFT: ProductConfigurationDraft = {
   values: {},
   enabledOptionalFieldIds: [],
   selectedColorOptionIdsByFieldId: {},
+  selectedColorQuantitiesByFieldId: {},
   optionSelections: [],
 };
 

@@ -177,6 +177,12 @@ export function ProductListPanel({
               optionIds: [
                 ...(selectedColorOptionIdsByFieldId.get(field.id) ?? new Set<string>()),
               ],
+              selectionMode:
+                field.selection_mode === "quantity" ? ("quantity" as const) : ("choice" as const),
+              requiredTotalQuantity:
+                field.selection_mode === "quantity"
+                  ? field.required_total_quantity ?? null
+                  : null,
             }));
             const productImages = imagesByProductId.get(product.id) ?? [];
             const storedPersonalizationFields =

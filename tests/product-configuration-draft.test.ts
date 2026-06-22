@@ -23,6 +23,7 @@ test("product configuration draft restores every customer selection", () => {
     values: { personalization: "Мария" },
     enabledOptionalFieldIds: ["personalization"],
     selectedColorOptionIdsByFieldId: { color: ["pink"] },
+    selectedColorQuantitiesByFieldId: {},
     optionSelections: [
       { groupId: "size", valueIds: ["mini"] },
       { groupId: "coloring", valueIds: ["markers"] },
@@ -58,6 +59,7 @@ test("partial landing handoff merges personalization colors and options into the
     values: { old: "Запази" },
     enabledOptionalFieldIds: ["old"],
     selectedColorOptionIdsByFieldId: { frame: ["white"] },
+    selectedColorQuantitiesByFieldId: {},
     optionSelections: [{ groupId: "size", valueIds: ["standard"] }],
   }, {
     personalizationFields: [{
@@ -83,6 +85,7 @@ test("partial landing handoff merges personalization colors and options into the
     values: { old: "Запази", "name-id": "Мария" },
     enabledOptionalFieldIds: ["old", "name-id"],
     selectedColorOptionIdsByFieldId: { frame: ["pink"] },
+    selectedColorQuantitiesByFieldId: {},
     optionSelections: [{ groupId: "size", valueIds: ["maxi"] }],
   });
 });

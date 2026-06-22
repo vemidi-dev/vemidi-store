@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { ProductColorQuantitySelector } from "@/components/product/product-color-quantity-selector";
 import { useCart } from "@/components/cart/cart-provider";
 import { ProductOptionsSelector } from "@/components/product/product-options-selector";
 import type { CampaignAttribution } from "@/lib/campaign-attribution";
@@ -15,6 +16,13 @@ import {
 } from "@/lib/product-configuration-draft";
 import { validateProductOptionSelections } from "@/lib/product-option-validation";
 import type { SelectedProductColor } from "@/lib/product-colors";
+import {
+  filterSelectedColorsForOrder,
+  flattenSelectedColorsFromQuantities,
+  isQuantityColorField,
+  validateColorQuantities,
+} from "@/lib/product-color-quantities";
+import type { ColorQuantitiesByOptionId } from "@/lib/product-color-quantities";
 import { formatPriceDelta } from "@/lib/product-option-pricing";
 import { formatEur } from "@/lib/format-eur";
 import type { ProductPersonalizationField } from "@/lib/product-personalization";
@@ -71,6 +79,9 @@ export function ProductDetailAddToCart({
     {},
   );
   const [selectedByGroup, setSelectedByGroup] = useState<Record<string, string[]>>({});
+  const [quantitiesByField, setQuantitiesByField] = useState<
+    Record<string, ColorQuantitiesByOptionId>
+  >({});
   const [added, setAdded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [wishFieldId, setWishFieldId] = useState<string | null>(null);
@@ -128,6 +139,10 @@ export function ProductDetailAddToCart({
       );
       const restoredColors = Object.fromEntries(
         colorFields.map((field) => {
+          if (isQuantityColorField(field)) {
+            return [field.id, [] as string[]];
+          }
+
           const knownOptionIds = new Set(field.options.map((option) => option.id));
           return [
             field.id,
@@ -136,7 +151,23 @@ export function ProductDetailAddToCart({
               .slice(0, field.maxSelect),
           ];
         }),
-      );
+      ) as Record<string, string[]>;
+      const restoredQuantities = Object.fromEntries(
+        colorFields.map((field) => {
+          if (!isQuantityColorField(field)) {
+            return [field.id, {} satisfies ColorQuantitiesByOptionId];
+          }
+
+          const knownOptionIds = new Set(field.options.map((option) => option.id));
+          const fromDraft = draft.selectedColorQuantitiesByFieldId[field.id] ?? {};
+          return [
+            field.id,
+            Object.fromEntries(
+              Object.entries(fromDraft).filter(([optionId]) => knownOptionIds.has(optionId)),
+            ) satisfies ColorQuantitiesByOptionId,
+          ];
+        }),
+      ) as Record<string, ColorQuantitiesByOptionId>;
       const restoredOptions = draft.optionSelections.filter((selection) => {
         const group = optionGroups.find((candidate) => candidate.id === selection.groupId);
         if (!group) {
@@ -149,6 +180,7 @@ export function ProductDetailAddToCart({
       setValues(restoredValues);
       setEnabledOptionalFields(restoredEnabledFields);
       setSelectedByGroup(restoredColors);
+      setQuantitiesByField(restoredQuantities);
       setOptionSelections(
         mergeProductOptionSelections(restoredOptions, initialOptionSelections),
       );
@@ -177,6 +209,7 @@ export function ProductDetailAddToCart({
           values,
           enabledOptionalFieldIds: [...enabledOptionalFields],
           selectedColorOptionIdsByFieldId: selectedByGroup,
+          selectedColorQuantitiesByFieldId: quantitiesByField,
           optionSelections,
         }),
       );
@@ -189,16 +222,26 @@ export function ProductDetailAddToCart({
     optionSelections,
     product.id,
     selectedByGroup,
+    quantitiesByField,
     values,
   ]);
 
   const flattenSelectedColors = (): SelectedProductColor[] => {
-    const out: SelectedProductColor[] = [];
+    const quantityColors = flattenSelectedColorsFromQuantities(
+      colorFields,
+      quantitiesByField,
+    );
+    const choiceColors: SelectedProductColor[] = [];
+
     colorFields.forEach((field) => {
+      if (isQuantityColorField(field)) {
+        return;
+      }
+
       (selectedByGroup[field.id] ?? []).forEach((optionId) => {
         const option = field.options.find((candidate) => candidate.id === optionId);
         if (option) {
-          out.push({
+          choiceColors.push({
             fieldId: field.id,
             fieldLabel: field.label,
             groupId: field.groupId,
@@ -211,7 +254,8 @@ export function ProductDetailAddToCart({
         }
       });
     });
-    return out;
+
+    return [...quantityColors, ...choiceColors];
   };
 
   const validate = () => {
@@ -230,6 +274,17 @@ export function ProductDetailAddToCart({
       }
     }
     for (const field of colorFields) {
+      if (isQuantityColorField(field)) {
+        const quantityError = validateColorQuantities(
+          field,
+          quantitiesByField[field.id] ?? {},
+        );
+        if (quantityError) {
+          return quantityError;
+        }
+        continue;
+      }
+
       const count = (selectedByGroup[field.id] ?? []).length;
       if (count < field.minSelect || count > field.maxSelect) {
         return `Изберете ${field.minSelect === field.maxSelect ? field.minSelect : `${field.minSelect}–${field.maxSelect}`} цвята за „${field.label}“.`;
@@ -261,6 +316,7 @@ export function ProductDetailAddToCart({
     personalizationFields,
     enabledOptionalFields,
   );
+  const canAddToCart = validate() === null;
   const displayedUnitPrice = optionGroups.length
     ? estimatedUnitPrice
     : product.price + personalizationDelta;
@@ -324,7 +380,7 @@ export function ProductDetailAddToCart({
       product,
       1,
       personalization || undefined,
-      flattenSelectedColors() || undefined,
+      filterSelectedColorsForOrder(flattenSelectedColors()) || undefined,
       personalizationFields,
       attribution,
       optionSelections.length ? optionSelections : undefined,
@@ -543,35 +599,49 @@ export function ProductDetailAddToCart({
 
       {colorFields.length ? (
         <div className="mt-7 grid gap-6">
-          {colorFields.map((field) => (
-            <fieldset key={field.id} className="rounded-2xl border border-boutique-line bg-white/60 p-4">
-              <legend className="px-1 text-sm font-semibold text-boutique-ink">
-                {field.label}
-              </legend>
-              <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4">
-                {field.options.map((option) => {
-                  const selected = (selectedByGroup[field.id] ?? []).includes(option.id);
-                  return (
-                    <label
-                      key={option.id}
-                      className="group cursor-pointer rounded-2xl p-2 text-center text-xs text-boutique-muted transition hover:bg-boutique-bg"
-                    >
-                      <input
-                        className="peer sr-only"
-                        type={field.maxSelect <= 1 ? "radio" : "checkbox"}
-                        name={`color-${field.id}`}
-                        checked={selected}
-                        onChange={(event) => {
-                          const current = selectedByGroup[field.id] ?? [];
-                          const next = field.maxSelect <= 1
-                            ? event.target.checked ? [option.id] : []
-                            : event.target.checked
-                              ? [...current, option.id].slice(0, field.maxSelect)
-                              : current.filter((id) => id !== option.id);
-                          setSelectedByGroup((state) => ({ ...state, [field.id]: next }));
-                          setError(null);
-                        }}
-                      />
+          {colorFields.map((field) =>
+            isQuantityColorField(field) ? (
+              <ProductColorQuantitySelector
+                key={field.id}
+                field={field}
+                quantities={quantitiesByField[field.id] ?? {}}
+                onChange={(quantities) => {
+                  setQuantitiesByField((state) => ({ ...state, [field.id]: quantities }));
+                  setError(null);
+                }}
+              />
+            ) : (
+              <fieldset
+                key={field.id}
+                className="rounded-2xl border border-boutique-line bg-white/60 p-4"
+              >
+                <legend className="px-1 text-sm font-semibold text-boutique-ink">
+                  {field.label}
+                </legend>
+                <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4">
+                  {field.options.map((option) => {
+                    const selected = (selectedByGroup[field.id] ?? []).includes(option.id);
+                    return (
+                      <label
+                        key={option.id}
+                        className="group cursor-pointer rounded-2xl p-2 text-center text-xs text-boutique-muted transition hover:bg-boutique-bg"
+                      >
+                        <input
+                          className="peer sr-only"
+                          type={field.maxSelect <= 1 ? "radio" : "checkbox"}
+                          name={`color-${field.id}`}
+                          checked={selected}
+                          onChange={(event) => {
+                            const current = selectedByGroup[field.id] ?? [];
+                            const next = field.maxSelect <= 1
+                              ? event.target.checked ? [option.id] : []
+                              : event.target.checked
+                                ? [...current, option.id].slice(0, field.maxSelect)
+                                : current.filter((id) => id !== option.id);
+                            setSelectedByGroup((state) => ({ ...state, [field.id]: next }));
+                            setError(null);
+                          }}
+                        />
                       <span
                         className={`relative mx-auto grid h-12 w-12 place-items-center rounded-full border-4 border-white shadow-sm ring-1 transition group-hover:scale-105 peer-focus-visible:ring-2 peer-focus-visible:ring-boutique-sage-deep ${
                           selected
@@ -601,7 +671,8 @@ export function ProductDetailAddToCart({
                 })}
               </div>
             </fieldset>
-          ))}
+            ),
+          )}
         </div>
       ) : null}
 
@@ -609,8 +680,9 @@ export function ProductDetailAddToCart({
       <button
         type="button"
         aria-live="polite"
+        disabled={!canAddToCart}
         onClick={handleAddToCart}
-        className={`mt-5 w-full rounded-xl px-8 py-3.5 text-sm font-semibold text-white transition ${
+        className={`mt-5 w-full rounded-xl px-8 py-3.5 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-50 ${
           added
             ? "bg-boutique-sage shadow-boutique-sm"
             : "bg-boutique-sage-deep hover:bg-boutique-ink"
@@ -685,8 +757,9 @@ export function ProductDetailAddToCart({
           </div>
           <button
             type="button"
+            disabled={!canAddToCart}
             onClick={handleAddToCart}
-            className={`min-h-12 shrink-0 rounded-xl px-5 text-sm font-semibold text-white transition ${
+            className={`min-h-12 shrink-0 rounded-xl px-5 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-50 ${
               added
                 ? "bg-boutique-sage shadow-boutique-sm"
                 : "bg-boutique-sage-deep hover:bg-boutique-ink"

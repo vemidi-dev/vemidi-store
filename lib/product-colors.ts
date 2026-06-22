@@ -4,6 +4,8 @@ export type ProductColorOption = {
   hex: string | null;
 };
 
+export type ProductColorSelectionMode = "choice" | "quantity";
+
 export type ProductColorField = {
   id: string;
   label: string;
@@ -12,6 +14,8 @@ export type ProductColorField = {
   groupLabel: string;
   minSelect: number;
   maxSelect: number;
+  selectionMode?: ProductColorSelectionMode;
+  requiredTotalQuantity?: number;
   options: ProductColorOption[];
 };
 
@@ -24,4 +28,5 @@ export type SelectedProductColor = {
   optionId: string;
   optionName: string;
   optionHex: string | null;
+  quantity?: number;
 };
