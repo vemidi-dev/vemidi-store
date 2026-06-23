@@ -17,6 +17,7 @@ import { EventGalleryManagementPanel } from "@/components/admin/event-gallery-ma
 import { EventRegistrationsPanel } from "@/components/admin/event-registrations-panel";
 import { SubscriberManagementPanel } from "@/components/admin/subscriber-management-panel";
 import { SiteContentManagementPanel } from "@/components/admin/site-content-management-panel";
+import { SiteMediaManagementPanel } from "@/components/admin/site-media-management-panel";
 import { PromotionManagementPanel } from "@/components/admin/promotion-management-panel";
 import { WishManagementPanel } from "@/components/admin/wish-management-panel";
 import { PageContainer } from "@/components/layout/page-container";
@@ -40,6 +41,7 @@ import {
   normalizeSubscriberStatus,
   normalizeSubscriberTopic,
 } from "@/lib/admin/subscriptions";
+import type { SiteMediaRow } from "@/lib/content/site-media-types";
 
 type AdminPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -190,11 +192,19 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   }
 
   if (activeTab === "content") {
-    const result = await supabase
-      .from("site_content")
-      .select("key,value,label,section,sort_order,is_multiline")
-      .order("section", { ascending: true })
-      .order("sort_order", { ascending: true });
+    const [siteContentResult, siteMediaResult] = await Promise.all([
+      supabase
+        .from("site_content")
+        .select("key,value,label,section,sort_order,is_multiline")
+        .order("section", { ascending: true })
+        .order("sort_order", { ascending: true }),
+      supabase
+        .from("site_media")
+        .select("key,label,section,sort_order,image_url,image_alt,updated_at")
+        .order("section", { ascending: true })
+        .order("sort_order", { ascending: true })
+        .order("key", { ascending: true }),
+    ]);
 
     return (
       <section className="pb-24 pt-10">
@@ -214,9 +224,13 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             ) : null}
             <SiteContentManagementPanel
               fields={
-                (result.data ?? []) as import("@/lib/content/site-content").SiteContentRow[]
+                (siteContentResult.data ?? []) as import("@/lib/content/site-content").SiteContentRow[]
               }
-              error={result.error?.message ?? null}
+              error={siteContentResult.error?.message ?? null}
+            />
+            <SiteMediaManagementPanel
+              rows={(siteMediaResult.data ?? []) as SiteMediaRow[]}
+              error={siteMediaResult.error?.message ?? null}
             />
           </div>
         </PageContainer>

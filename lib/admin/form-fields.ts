@@ -121,4 +121,9 @@ export const adminFormFields = {
     isActive: "landing_is_active",
     sortOrder: "landing_sort_order",
   },
+  siteMedia: {
+    key: "site_media_key",
+    imageFile: "site_media_image_file",
+    imageAlt: "site_media_image_alt",
+  },
 } as const;
