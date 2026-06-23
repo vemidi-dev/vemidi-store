@@ -8,6 +8,10 @@ import { VisualPageHero } from "@/components/layout/visual-page-hero";
 import { isProductOnPromotion } from "@/lib/product-pricing";
 import { getSiteContent } from "@/lib/content/site-content";
 import {
+  getSiteMediaMap,
+  resolveSiteMediaFromMap,
+} from "@/lib/content/site-media";
+import {
   getCategoryDisplayLabel,
   getCategoryFamilySlugs,
   sortCategoriesForDisplay,
@@ -56,10 +60,12 @@ function getPriceBucket(price: number): FilterValue["id"] {
 export default async function ShopPage({ searchParams }: ShopPageProps) {
   const params = await searchParams;
   const parsed = parseShopSearchParams(params);
-  const [{ categories, products }, content] = await Promise.all([
+  const [{ categories, products }, content, siteMediaMap] = await Promise.all([
     getStorefrontCatalog(),
     getSiteContent(),
+    getSiteMediaMap(),
   ]);
+  const heroImage = resolveSiteMediaFromMap(siteMediaMap, "shop.hero");
 
   const visibleCategories = filterStorefrontVisibleCategories(categories);
 
@@ -301,8 +307,8 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
         title={content["shop.hero_title"]}
         description={content["shop.hero_description"]}
         descriptionAs="h2"
-        imageSrc="/assets/products.png"
-        imageAlt="Ръчно изработени продукти от VeMiDi crafts"
+        imageSrc={heroImage.src}
+        imageAlt={heroImage.alt}
       />
 
       <section id="product-grid" className="bg-white py-10 md:py-14">

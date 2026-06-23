@@ -8,6 +8,10 @@ import { MediaPlaceholder } from "@/components/ui/media-placeholder";
 import { OCCASION_INDEX_PATH, getCategoryListingHref } from "@/lib/category-url";
 import { filterStorefrontVisibleCategories } from "@/lib/category-visibility";
 import { getSiteContent } from "@/lib/content/site-content";
+import {
+  getSiteMediaMap,
+  resolveSiteMediaFromMap,
+} from "@/lib/content/site-media";
 import type { ShopCategory } from "@/lib/shop-categories";
 import { toShowcaseCategory } from "@/lib/storefront/mappers";
 import { getStorefrontCatalog } from "@/lib/storefront/repository";
@@ -69,10 +73,12 @@ function OccasionCard({ occasion }: { occasion: OccasionWithCount }) {
 }
 
 export default async function OccasionsPage() {
-  const [{ categories, products }, content] = await Promise.all([
+  const [{ categories, products }, content, siteMediaMap] = await Promise.all([
     getStorefrontCatalog(),
     getSiteContent(),
+    getSiteMediaMap(),
   ]);
+  const heroImage = resolveSiteMediaFromMap(siteMediaMap, "occasions.hero");
   const counts = new Map<string, number>();
 
   products.forEach((product) => {
@@ -97,8 +103,8 @@ export default async function OccasionsPage() {
         title={content["occasions.hero_title"]}
         description={content["occasions.hero_description"]}
         descriptionAs="h2"
-        imageSrc="/assets/povodi.png"
-        imageAlt="Персонализирани подаръци за специални поводи"
+        imageSrc={heroImage.src}
+        imageAlt={heroImage.alt}
       />
 
       <section className="py-6 md:py-16">

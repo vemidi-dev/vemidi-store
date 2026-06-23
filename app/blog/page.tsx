@@ -9,6 +9,10 @@ import { MediaPlaceholder } from "@/components/ui/media-placeholder";
 import type { BlogPostRow } from "@/lib/admin/types";
 import { getCategoryListingHref } from "@/lib/category-url";
 import { getPublishedBlogPosts } from "@/lib/content/repository";
+import {
+  getSiteMediaMap,
+  resolveSiteMediaFromMap,
+} from "@/lib/content/site-media";
 import { buildBlogMetadata } from "@/lib/seo/blog-route";
 import { getStorefrontCatalog } from "@/lib/storefront/repository";
 
@@ -112,10 +116,12 @@ export default async function BlogPage({ searchParams }: Props) {
   const query = first(params.q).trim().toLocaleLowerCase("bg");
   const category = first(params.category);
   const sort = first(params.sort) || "newest";
-  const [posts, catalog] = await Promise.all([
+  const [posts, catalog, siteMediaMap] = await Promise.all([
     getPublishedBlogPosts(),
     getStorefrontCatalog(),
+    getSiteMediaMap(),
   ]);
+  const heroImage = resolveSiteMediaFromMap(siteMediaMap, "blog.hero");
   const categories = [
     ...new Set(posts.map((post) => post.category).filter(Boolean)),
   ] as string[];
@@ -157,8 +163,8 @@ export default async function BlogPage({ searchParams }: Props) {
         title="Блог"
         description="Идеи, вдъхновение и полезни съвети за специални поводи, детско творчество и персонализирани подаръци."
         descriptionAs="h2"
-        imageSrc="/assets/cover-blog.png"
-        imageAlt="Идеи и вдъхновение от блога на VeMiDi crafts"
+        imageSrc={heroImage.src}
+        imageAlt={heroImage.alt}
       />
 
       {topicCategories.length ? (

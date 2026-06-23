@@ -2,9 +2,16 @@ import Image from "next/image";
 import Link from "next/link";
 
 import type { SiteContent } from "@/lib/content/site-content";
+import type { ResolvedSiteMedia } from "@/lib/content/site-media-types";
 import { CATEGORY_INDEX_PATH, OCCASION_INDEX_PATH } from "@/lib/category-url";
 
-export function HomeHero({ content }: { content: SiteContent }) {
+export function HomeHero({
+  content,
+  heroImage,
+}: {
+  content: SiteContent;
+  heroImage: ResolvedSiteMedia;
+}) {
   const quickPaths = [
     {
       href: OCCASION_INDEX_PATH,
@@ -70,12 +77,12 @@ export function HomeHero({ content }: { content: SiteContent }) {
 
         <div className="relative order-1 min-h-[17rem] overflow-hidden sm:min-h-[22rem] lg:order-2 lg:min-h-full">
           <Image
-            alt="Персонализиран дървен подарък за кръщене"
+            alt={heroImage.alt}
             className="object-cover"
             fill
             priority
             sizes="(max-width: 1024px) 100vw, 55vw"
-            src="/assets/home-hero.webp"
+            src={heroImage.src}
           />
         </div>
       </div>

@@ -6,6 +6,10 @@ import { PageContainer } from "@/components/layout/page-container";
 import { PageHero } from "@/components/ui/page-hero";
 import { splitParagraphs } from "@/lib/content/format-content";
 import { getSiteContent } from "@/lib/content/site-content";
+import {
+  getSiteMediaMap,
+  resolveSiteMediaFromMap,
+} from "@/lib/content/site-media";
 
 export const metadata: Metadata = {
   title: "За нас",
@@ -15,7 +19,11 @@ export const metadata: Metadata = {
 };
 
 export default async function AboutPage() {
-  const content = await getSiteContent();
+  const [content, siteMediaMap] = await Promise.all([
+    getSiteContent(),
+    getSiteMediaMap(),
+  ]);
+  const heroImage = resolveSiteMediaFromMap(siteMediaMap, "about.hero");
   const sections = [
     {
       title: content["about.section_1_title"],
@@ -43,8 +51,8 @@ export default async function AboutPage() {
         <PageContainer className="grid items-center gap-10 lg:grid-cols-2 lg:gap-14">
           <div className="relative aspect-[4/3] overflow-hidden rounded-3xl border border-boutique-line bg-boutique-paper shadow-boutique-sm">
             <Image
-              src="/assets/za-nas.png"
-              alt="Ръчно изработени персонализирани подаръци в ателието VeMiDi Crafts"
+              src={heroImage.src}
+              alt={heroImage.alt}
               fill
               sizes="(max-width: 1024px) 100vw, 50vw"
               className="object-cover"

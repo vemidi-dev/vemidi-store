@@ -11,6 +11,10 @@ import {
 } from "@/lib/shop-categories";
 import { getSiteContent } from "@/lib/content/site-content";
 import {
+  getSiteMediaMap,
+  resolveSiteMediaFromMap,
+} from "@/lib/content/site-media";
+import {
   getCategoryFamilySlugs,
   getCategoryProductCount,
 } from "@/lib/category-hierarchy";
@@ -135,10 +139,12 @@ function OccasionCategoryLink({ category }: { category: CategoryWithCount }) {
 }
 
 export default async function CategoriesPage() {
-  const [{ categories, products }, content] = await Promise.all([
+  const [{ categories, products }, content, siteMediaMap] = await Promise.all([
     getStorefrontCatalog(),
     getSiteContent(),
+    getSiteMediaMap(),
   ]);
+  const heroImage = resolveSiteMediaFromMap(siteMediaMap, "categories.hero");
   const visibleCategories = filterStorefrontVisibleCategories(categories);
   const withCounts = visibleCategories.map(
     (category): CategoryWithCount => ({
@@ -170,8 +176,8 @@ export default async function CategoriesPage() {
         title={content["categories.hero_title"]}
         description={content["categories.hero_description"]}
         descriptionAs="h2"
-        imageSrc="/assets/banner-categories.webp"
-        imageAlt="Ръчно изработени персонализирани подаръци по категории"
+        imageSrc={heroImage.src}
+        imageAlt={heroImage.alt}
       />
 
       <section className="py-6 md:py-16">

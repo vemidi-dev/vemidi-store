@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { PageContainer } from "@/components/layout/page-container";
 import type { SiteContent } from "@/lib/content/site-content";
+import type { ResolvedSiteMedia } from "@/lib/content/site-media-types";
 
 const benefits = [
   {
@@ -130,17 +131,23 @@ export function HomeProcess({ content }: { content: SiteContent }) {
   );
 }
 
-export function HomeAtelier({ content }: { content: SiteContent }) {
+export function HomeAtelier({
+  content,
+  atelierImage,
+}: {
+  content: SiteContent;
+  atelierImage: ResolvedSiteMedia;
+}) {
   return (
     <section className="border-b border-boutique-line bg-boutique-blush/40">
       <div className="grid lg:grid-cols-2">
         <div className="relative min-h-[20rem] overflow-hidden sm:min-h-[26rem] lg:min-h-[34rem]">
           <Image
-            alt="Опаковане на ръчно изработени подаръци в ателието на VeMiDi"
+            alt={atelierImage.alt}
             className="object-cover"
             fill
             sizes="(max-width: 1024px) 100vw, 50vw"
-            src="/assets/home-atelier.webp"
+            src={atelierImage.src}
           />
         </div>
         <div className="flex items-center px-6 py-12 sm:px-12 sm:py-16 lg:px-20">

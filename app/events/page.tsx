@@ -8,6 +8,10 @@ import { PageContainer } from "@/components/layout/page-container";
 import { VisualPageHero } from "@/components/layout/visual-page-hero";
 import type { EventRow } from "@/lib/admin/types";
 import { getPublishedEvents } from "@/lib/content/repository";
+import {
+  getSiteMediaMap,
+  resolveSiteMediaFromMap,
+} from "@/lib/content/site-media";
 import { formatEur } from "@/lib/format-eur";
 
 export const metadata: Metadata = {
@@ -178,7 +182,11 @@ function NoUpcomingEvents() {
 }
 
 export default async function EventsPage() {
-  const events = await getPublishedEvents();
+  const [events, siteMediaMap] = await Promise.all([
+    getPublishedEvents(),
+    getSiteMediaMap(),
+  ]);
+  const heroImage = resolveSiteMediaFromMap(siteMediaMap, "events.hero");
   const now = Date.now();
   const upcomingEvents = events
     .filter((event) => {
@@ -207,8 +215,8 @@ export default async function EventsPage() {
         title="Събития"
         description="Творчески работилници за деца в моето ателие – място, където въображението оживява и малките творци създават с радост."
         descriptionAs="h2"
-        imageSrc="/assets/cover-events.png"
-        imageAlt="Творчески работилници за деца в ателието VeMiDi"
+        imageSrc={heroImage.src}
+        imageAlt={heroImage.alt}
       />
 
       {upcomingEvents.length ? <UpcomingEvents events={upcomingEvents} /> : null}

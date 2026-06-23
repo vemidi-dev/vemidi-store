@@ -9,6 +9,10 @@ import { HomeAtelier, HomeBenefits, HomeProcess } from "@/components/home/home-s
 import { PageContainer } from "@/components/layout/page-container";
 import { getPublishedBlogPosts, getPublishedEvents } from "@/lib/content/repository";
 import { getSiteContent } from "@/lib/content/site-content";
+import {
+  getSiteMediaMap,
+  resolveSiteMediaFromMap,
+} from "@/lib/content/site-media";
 import { toShowcaseCategory } from "@/lib/storefront/mappers";
 import { getStorefrontCatalog } from "@/lib/storefront/repository";
 import { filterStorefrontVisibleCategories } from "@/lib/category-visibility";
@@ -18,12 +22,15 @@ import { CATEGORY_INDEX_PATH, OCCASION_INDEX_PATH } from "@/lib/category-url";
 export const metadata: Metadata = buildHomePageMetadata();
 
 export default async function HomePage() {
-  const [{ categories, products, featuredProductIds }, blogPosts, events, content] = await Promise.all([
+  const [{ categories, products, featuredProductIds }, blogPosts, events, content, siteMediaMap] = await Promise.all([
     getStorefrontCatalog(),
     getPublishedBlogPosts(),
     getPublishedEvents(),
     getSiteContent(),
+    getSiteMediaMap(),
   ]);
+  const heroImage = resolveSiteMediaFromMap(siteMediaMap, "home.hero");
+  const atelierImage = resolveSiteMediaFromMap(siteMediaMap, "home.atelier");
   const homeCategories = filterStorefrontVisibleCategories(categories)
     .filter((category) => category.show_on_home)
     .sort((a, b) => {
@@ -76,7 +83,7 @@ export default async function HomePage() {
 
   return (
     <div>
-      <HomeHero content={content} />
+      <HomeHero content={content} heroImage={heroImage} />
       <HomeBenefits />
 
       {homeProducts.length ? (
@@ -176,7 +183,7 @@ export default async function HomePage() {
       </section>
 
       <HomeProcess content={content} />
-      <HomeAtelier content={content} />
+      <HomeAtelier content={content} atelierImage={atelierImage} />
       <HomeContentGrid
         posts={latestPosts}
         upcomingEvents={upcomingEvents}

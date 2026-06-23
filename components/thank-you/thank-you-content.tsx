@@ -9,8 +9,13 @@ import {
   ORDER_CONFIRMATION_STORAGE_KEY,
   parseOrderConfirmationPayload,
 } from "@/lib/checkout/order-confirmation";
+import type { ResolvedSiteMedia } from "@/lib/content/site-media-types";
 
-export function ThankYouContent() {
+export function ThankYouContent({
+  heroImage,
+}: {
+  heroImage: ResolvedSiteMedia;
+}) {
   const [orderRef, setOrderRef] = useState<string | null>(null);
   const [checked, setChecked] = useState(false);
 
@@ -38,8 +43,8 @@ export function ThankYouContent() {
       <section className="mx-auto grid max-w-5xl overflow-hidden rounded-3xl border border-boutique-line bg-boutique-paper shadow-boutique-sm lg:grid-cols-[0.9fr_1.1fr]">
         <div className="relative min-h-72 bg-boutique-warm lg:min-h-[34rem]">
           <Image
-            src="/assets/thank-you.webp"
-            alt="Ръчно изработен персонализиран подарък от VeMiDi crafts"
+            src={heroImage.src}
+            alt={heroImage.alt}
             fill
             priority
             sizes="(max-width: 1024px) 100vw, 45vw"
