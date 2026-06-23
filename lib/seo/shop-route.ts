@@ -19,6 +19,7 @@ import {
   buildFacetedNoindexMetadata,
   buildIndexableMetadata,
 } from "@/lib/seo/faceted-metadata";
+import type { SeoSocialImage } from "@/lib/seo/social-images";
 import type { StorefrontCategory } from "@/lib/storefront/types";
 
 const SHOP_METADATA_BASE = {
@@ -278,6 +279,7 @@ export function resolveProductsPageRedirect(
 export function buildShopMetadata(
   params: Record<string, string | string[] | undefined>,
   categories: StorefrontCategory[],
+  socialImage?: SeoSocialImage | null,
 ): Metadata {
   const parsed = parseShopSearchParams(params);
 
@@ -291,5 +293,5 @@ export function buildShopMetadata(
     return buildFacetedNoindexMetadata("/producti", SHOP_METADATA_BASE);
   }
 
-  return buildIndexableMetadata("/producti", SHOP_METADATA_BASE);
+  return buildIndexableMetadata("/producti", SHOP_METADATA_BASE, socialImage);
 }

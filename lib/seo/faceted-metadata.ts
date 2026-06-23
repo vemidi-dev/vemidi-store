@@ -1,5 +1,10 @@
 import type { Metadata } from "next";
 
+import {
+  appendOpenGraphAndTwitterImages,
+  type SeoSocialImage,
+} from "@/lib/seo/social-images";
+
 type PageMetadataBase = {
   title: string;
   description: string;
@@ -8,24 +13,28 @@ type PageMetadataBase = {
 export function buildIndexableMetadata(
   canonicalPath: string,
   base: PageMetadataBase,
+  socialImage?: SeoSocialImage | null,
 ): Metadata {
-  return {
-    title: base.title,
-    description: base.description,
-    alternates: { canonical: canonicalPath },
-    robots: { index: true, follow: true },
-    openGraph: {
-      type: "website",
+  return appendOpenGraphAndTwitterImages(
+    {
       title: base.title,
       description: base.description,
-      url: canonicalPath,
+      alternates: { canonical: canonicalPath },
+      robots: { index: true, follow: true },
+      openGraph: {
+        type: "website",
+        title: base.title,
+        description: base.description,
+        url: canonicalPath,
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: base.title,
+        description: base.description,
+      },
     },
-    twitter: {
-      card: "summary_large_image",
-      title: base.title,
-      description: base.description,
-    },
-  };
+    socialImage,
+  );
 }
 
 export function buildFacetedNoindexMetadata(

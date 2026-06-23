@@ -19,6 +19,7 @@ import {
 import { filterStorefrontVisibleCategories } from "@/lib/category-visibility";
 import {
   buildShopMetadata,
+  isShopFaceted,
   parseShopSearchParams,
   resolveShopCategoryRedirect,
 } from "@/lib/seo/shop-route";
@@ -32,11 +33,20 @@ export async function generateMetadata({
   searchParams,
 }: ShopPageProps): Promise<Metadata> {
   const params = await searchParams;
-  const { categories } = await getStorefrontCatalog();
-  return buildShopMetadata(
-    params,
-    filterStorefrontVisibleCategories(categories),
-  );
+  const [{ categories }, siteMediaMap] = await Promise.all([
+    getStorefrontCatalog(),
+    getSiteMediaMap(),
+  ]);
+  const visibleCategories = filterStorefrontVisibleCategories(categories);
+  const parsed = parseShopSearchParams(params);
+  const shopHero = resolveSiteMediaFromMap(siteMediaMap, "shop.hero");
+  const socialImage =
+    !resolveShopCategoryRedirect(params, parsed, visibleCategories) &&
+    !isShopFaceted(params, parsed, visibleCategories)
+      ? { src: shopHero.src, alt: shopHero.alt }
+      : undefined;
+
+  return buildShopMetadata(params, visibleCategories, socialImage);
 }
 
 type FilterValue = {

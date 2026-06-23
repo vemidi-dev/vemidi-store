@@ -10,13 +10,14 @@ import {
   getSiteMediaMap,
   resolveSiteMediaFromMap,
 } from "@/lib/content/site-media";
+import { buildAboutPageMetadata } from "@/lib/seo/page-metadata";
 
-export const metadata: Metadata = {
-  title: "За нас",
-  description:
-    "VeMiDi Crafts създава персонализирани подаръци и декорации от дърво с лазерно изрязване, гравиране и ръчна довършителна работа.",
-  alternates: { canonical: "/za-nas" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const siteMediaMap = await getSiteMediaMap();
+  const heroImage = resolveSiteMediaFromMap(siteMediaMap, "about.hero");
+
+  return buildAboutPageMetadata({ src: heroImage.src, alt: heroImage.alt });
+}
 
 export default async function AboutPage() {
   const [content, siteMediaMap] = await Promise.all([

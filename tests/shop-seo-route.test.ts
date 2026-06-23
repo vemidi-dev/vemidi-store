@@ -10,6 +10,7 @@ import {
   resolveShopProductCategoryRedirect,
 } from "@/lib/seo/shop-route";
 import type { StorefrontCategory } from "@/lib/storefront/types";
+import { firstOpenGraphImage, twitterImages } from "@/tests/metadata-test-helpers";
 
 const categories: StorefrontCategory[] = [
   {
@@ -40,6 +41,26 @@ test("bare shop is indexable with canonical /producti", () => {
   const metadata = buildShopMetadata({}, categories);
   assert.equal(metadata.alternates?.canonical, "/producti");
   assert.deepEqual(metadata.robots, { index: true, follow: true });
+});
+
+test("bare shop metadata includes shop.hero when social image is provided", () => {
+  const metadata = buildShopMetadata({}, categories, {
+    src: "/assets/products.png",
+    alt: "Продукти",
+  });
+
+  assert.equal(firstOpenGraphImage(metadata)?.url, "/assets/products.png");
+  assert.deepEqual(twitterImages(metadata), ["/assets/products.png"]);
+});
+
+test("faceted shop metadata omits social images", () => {
+  const metadata = buildShopMetadata({ sort: "price-asc" }, categories, {
+    src: "/assets/products.png",
+    alt: "Продукти",
+  });
+
+  assert.deepEqual(metadata.robots, { index: false, follow: true });
+  assert.equal(metadata.openGraph?.images, undefined);
 });
 
 test("shop search query is noindex with canonical /producti", () => {

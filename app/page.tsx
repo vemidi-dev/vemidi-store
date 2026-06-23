@@ -1,5 +1,4 @@
 import Link from "next/link";
-import type { Metadata } from "next";
 
 import CategoryShowcaseCard from "@/components/category/category-showcase-card";
 import { HomeFeaturedProducts } from "@/components/home/home-featured-products";
@@ -19,7 +18,12 @@ import { filterStorefrontVisibleCategories } from "@/lib/category-visibility";
 import { buildHomePageMetadata } from "@/lib/seo/page-metadata";
 import { CATEGORY_INDEX_PATH, OCCASION_INDEX_PATH } from "@/lib/category-url";
 
-export const metadata: Metadata = buildHomePageMetadata();
+export async function generateMetadata() {
+  const siteMediaMap = await getSiteMediaMap();
+  const heroImage = resolveSiteMediaFromMap(siteMediaMap, "home.hero");
+
+  return buildHomePageMetadata({ src: heroImage.src, alt: heroImage.alt });
+}
 
 export default async function HomePage() {
   const [{ categories, products, featuredProductIds }, blogPosts, events, content, siteMediaMap] = await Promise.all([

@@ -6,6 +6,12 @@ import {
   buildHomePageMetadata,
   notFoundPageMetadata,
 } from "@/lib/seo/page-metadata";
+import { siteMediaDefaults } from "@/lib/content/site-media-defaults";
+import { resolveSiteMedia } from "@/lib/content/site-media";
+import {
+  firstOpenGraphImage,
+  twitterImages,
+} from "@/tests/metadata-test-helpers";
 
 test("homepage metadata uses siteConfig without layout duplication", () => {
   const metadata = buildHomePageMetadata();
@@ -17,6 +23,14 @@ test("homepage metadata uses siteConfig without layout duplication", () => {
   assert.equal(metadata.openGraph?.title, expectedTitle);
   assert.equal(metadata.openGraph?.url, "/");
   assert.equal(metadata.twitter?.title, expectedTitle);
+});
+
+test("homepage metadata accepts optional social image", () => {
+  const hero = resolveSiteMedia("home.hero");
+  const metadata = buildHomePageMetadata({ src: hero.src, alt: hero.alt });
+
+  assert.equal(firstOpenGraphImage(metadata)?.url, siteMediaDefaults["home.hero"].src);
+  assert.deepEqual(twitterImages(metadata), [siteMediaDefaults["home.hero"].src]);
 });
 
 test("not-found metadata is noindex and nofollow", () => {
