@@ -9,6 +9,7 @@ import { MediaPlaceholder } from "@/components/ui/media-placeholder";
 
 type ProductDetailGalleryProps = {
   images: ProductImage[];
+  className?: string;
 };
 
 function GalleryMainImage({
@@ -87,7 +88,7 @@ function GalleryThumbnailButton({
   );
 }
 
-export function ProductDetailGallery({ images }: ProductDetailGalleryProps) {
+export function ProductDetailGallery({ images, className }: ProductDetailGalleryProps) {
   const [active, setActive] = useState(0);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   const safeIndex = Math.min(active, Math.max(0, images.length - 1));
@@ -172,7 +173,7 @@ export function ProductDetailGallery({ images }: ProductDetailGalleryProps) {
   );
 
   return (
-    <div className="flex flex-col gap-4 lg:gap-5">
+    <div className={`flex flex-col gap-4 lg:gap-5 ${className ?? ""}`}>
       <div className="hidden lg:flex lg:items-start lg:gap-4">
         {hasMultipleImages ? (
           <ul

@@ -195,12 +195,13 @@ export default async function ProductDetailPage({
         <PageContainer className="py-14 md:py-20 lg:py-24">
           <VisibleBreadcrumbs items={breadcrumbItems} />
 
-          <div className="mt-14 grid gap-10 lg:mt-20 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:items-start lg:gap-x-20 lg:gap-y-8 xl:gap-x-24">
-            <div className="lg:col-start-1 lg:row-start-1">
-              <ProductDetailGallery images={product.images} />
-            </div>
+          <div className="mt-14 flex flex-col gap-10 lg:mt-20 lg:grid lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:items-start lg:gap-x-20 xl:gap-x-24">
+            <ProductDetailGallery
+              className="lg:hidden"
+              images={product.images}
+            />
 
-            <div className="flex flex-col pb-6 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:py-4">
+            <div className="flex flex-col pb-6 lg:col-start-2 lg:row-start-1 lg:py-4">
               <div className="space-y-6">
                 {product.cardBadge ? (
                   <p className="text-[0.7rem] font-semibold uppercase tracking-[0.28em] text-boutique-accent">
@@ -267,7 +268,11 @@ export default async function ProductDetailPage({
               <ProductLandingPageCta landingPage={primaryLandingPage} />
             </div>
 
-            <div className="lg:col-start-1 lg:row-start-2">
+            <div className="flex flex-col gap-6 lg:col-start-1 lg:row-start-1 lg:gap-8 lg:self-start">
+              <ProductDetailGallery
+                className="hidden lg:block"
+                images={product.images}
+              />
               <ProductDetailAddToCart
                 attribution={attribution}
                 initialOptionSelections={initialOptionSelections}

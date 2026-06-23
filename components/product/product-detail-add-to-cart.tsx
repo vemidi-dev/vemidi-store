@@ -419,7 +419,7 @@ export function ProductDetailAddToCart({
       className="scroll-mt-28 rounded-2xl border border-boutique-line bg-boutique-paper p-4 transition-shadow duration-300 ease-out hover:shadow-boutique-sm motion-reduce:transition-none sm:p-5"
     >
       {fields.length ? (
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4">
           {fields.map((field) => {
             const value = values[field.id] ?? "";
             const showInput = shouldShowPersonalizationInput(field, enabledOptionalFields);
@@ -457,7 +457,7 @@ export function ProductDetailAddToCart({
                 >
                   <label
                     htmlFor={`personalization-toggle-${field.id}`}
-                    className="flex cursor-pointer items-center gap-3 rounded-xl border border-boutique-line bg-boutique-bg px-4 py-3 transition duration-200 ease-out hover:border-boutique-sage-deep/40 hover:bg-white hover:shadow-boutique-sm motion-reduce:transition-none"
+                    className="flex cursor-pointer flex-col items-start gap-3 rounded-xl border border-boutique-line bg-boutique-bg px-4 py-3 transition duration-200 ease-out hover:border-boutique-sage-deep/40 hover:bg-white hover:shadow-boutique-sm motion-reduce:transition-none"
                   >
                     <input
                       id={`personalization-toggle-${field.id}`}
@@ -572,7 +572,7 @@ export function ProductDetailAddToCart({
             );
           })}
           {fields.some((field) => field.allowsWishTemplates) ? (
-            <p className="text-xs leading-5 text-boutique-muted md:col-span-2">
+            <p className="text-xs leading-5 text-boutique-muted">
               Прегледайте и редактирайте избраното пожелание спрямо получателя – име, пол,
               възраст и конкретен повод.
             </p>
