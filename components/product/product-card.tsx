@@ -19,12 +19,12 @@ export function ProductCard({ product, variant = "default" }: ProductCardProps) 
   const statusLabel = resolveProductCardStatusLabel(product);
   const ctaLabel = getProductCardCtaLabel(product);
   const ctaClassName = compact
-    ? "mt-2 inline-flex min-h-9 items-center text-xs font-semibold text-boutique-sage-deep underline-offset-4 hover:underline sm:mt-3 sm:text-sm"
-    : "mt-4 block w-full rounded-full bg-boutique-ink py-3.5 text-center text-sm font-semibold tracking-wide text-boutique-paper shadow-sm transition duration-300 hover:bg-boutique-accent hover:shadow-md";
+    ? "mt-2 inline-flex min-h-9 items-center text-xs font-semibold text-boutique-sage-deep underline-offset-4 transition-colors duration-200 ease-out hover:text-boutique-ink hover:underline sm:mt-3 sm:text-sm"
+    : "mt-4 block w-full rounded-full bg-boutique-ink py-3.5 text-center text-sm font-semibold tracking-wide text-boutique-paper shadow-sm transition duration-300 ease-out hover:-translate-y-0.5 hover:bg-boutique-accent hover:shadow-md active:translate-y-0 motion-reduce:transition-none motion-reduce:hover:translate-y-0";
 
   return (
     <article
-      className={`group flex flex-col overflow-hidden border border-boutique-line/70 bg-boutique-paper transition duration-500 ease-out hover:-translate-y-1 hover:border-boutique-sage/40 hover:shadow-boutique ${
+      className={`group flex flex-col overflow-hidden border border-boutique-line/70 bg-boutique-paper transition duration-500 ease-out hover:-translate-y-1 hover:border-boutique-sage/40 hover:shadow-boutique focus-within:border-boutique-sage/50 focus-within:shadow-boutique motion-reduce:transition-none motion-reduce:hover:translate-y-0 ${
         compact
           ? "rounded-xl shadow-boutique-sm"
           : "rounded-3xl shadow-[0_18px_40px_-18px_rgb(44_40_37_/0.12)]"
@@ -56,7 +56,7 @@ export function ProductCard({ product, variant = "default" }: ProductCardProps) 
           className={`block focus:outline-none ${statusLabel && !compact ? "mt-2" : compact && statusLabel ? "sm:mt-2" : ""}`}
         >
           <h2
-            className={`font-heading text-boutique-ink transition duration-300 group-hover:text-boutique-sage-deep ${
+            className={`font-heading text-boutique-ink transition-colors duration-300 ease-out group-hover:text-boutique-sage-deep ${
               compact
                 ? "line-clamp-2 text-sm leading-snug sm:text-lg"
                 : "text-xl leading-snug"

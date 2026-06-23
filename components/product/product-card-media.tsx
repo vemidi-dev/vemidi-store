@@ -99,10 +99,10 @@ export function ProductCardMedia({
               alt={cover.alt}
               fill
               sizes="(max-width: 640px) 50vw, (max-width: 768px) 50vw, 33vw"
-              className="object-cover transition duration-700 ease-out group-hover:scale-[1.04]"
+              className="object-cover transition duration-700 ease-out group-hover:scale-[1.025] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
             />
             <div
-              className={`pointer-events-none absolute inset-0 bg-gradient-to-t from-boutique-ink/35 via-transparent to-transparent transition duration-500 group-hover:opacity-80 ${
+              className={`pointer-events-none absolute inset-0 bg-gradient-to-t from-boutique-ink/35 via-transparent to-transparent transition-opacity duration-500 ease-out group-hover:opacity-75 motion-reduce:transition-none ${
                 compact ? "opacity-40 sm:opacity-60" : "opacity-60"
               }`}
               aria-hidden
@@ -144,7 +144,7 @@ export function ProductCardMedia({
               showPrevious();
             }}
             aria-label="Предишна снимка"
-            className="absolute left-1 top-1/2 z-10 grid h-9 w-7 -translate-y-1/2 place-items-center bg-transparent text-3xl leading-none text-white opacity-100 drop-shadow-[0_2px_5px_rgba(44,40,37,0.75)] transition hover:scale-110 hover:text-boutique-paper sm:left-2 sm:opacity-0 sm:group-hover:opacity-100"
+            className="absolute left-1 top-1/2 z-10 grid h-9 w-7 -translate-y-1/2 place-items-center bg-transparent text-3xl leading-none text-white opacity-100 drop-shadow-[0_2px_5px_rgba(44,40,37,0.75)] transition duration-200 ease-out hover:scale-110 hover:text-boutique-paper sm:left-2 sm:opacity-0 sm:group-hover:opacity-100 motion-reduce:transition-none motion-reduce:hover:scale-100"
           >
             ‹
           </button>
@@ -155,7 +155,7 @@ export function ProductCardMedia({
               showNext();
             }}
             aria-label="Следваща снимка"
-            className="absolute right-1 top-1/2 z-10 grid h-9 w-7 -translate-y-1/2 place-items-center bg-transparent text-3xl leading-none text-white opacity-100 drop-shadow-[0_2px_5px_rgba(44,40,37,0.75)] transition hover:scale-110 hover:text-boutique-paper sm:right-2 sm:opacity-0 sm:group-hover:opacity-100"
+            className="absolute right-1 top-1/2 z-10 grid h-9 w-7 -translate-y-1/2 place-items-center bg-transparent text-3xl leading-none text-white opacity-100 drop-shadow-[0_2px_5px_rgba(44,40,37,0.75)] transition duration-200 ease-out hover:scale-110 hover:text-boutique-paper sm:right-2 sm:opacity-0 sm:group-hover:opacity-100 motion-reduce:transition-none motion-reduce:hover:scale-100"
           >
             ›
           </button>
@@ -175,11 +175,11 @@ export function ProductCardMedia({
                   }}
                   aria-label={`Покажи снимка ${index + 1}`}
                   aria-current={index === safeImageIndex ? "true" : undefined}
-                  className="group/dot grid h-11 w-11 shrink-0 place-items-center rounded-full transition focus-visible:outline-offset-[-3px]"
+                  className="group/dot grid h-11 w-11 shrink-0 place-items-center rounded-full transition duration-200 ease-out focus-visible:outline-offset-[-3px] motion-reduce:transition-none"
                 >
                   <span
                     aria-hidden
-                    className={`block rounded-full transition ${
+                    className={`block rounded-full transition-all duration-300 ease-out ${
                       compact ? "h-1" : "h-1.5"
                     } ${
                       index === safeImageIndex

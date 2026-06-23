@@ -117,7 +117,7 @@ export function ProductOptionsSelector({
                   {group.isRequired ? " *" : ""}
                 </legend>
                 <label
-                  className={`mt-2.5 flex items-center gap-3 rounded-xl border border-boutique-line bg-boutique-bg px-4 py-3 transition ${
+                  className={`mt-2.5 flex items-center gap-3 rounded-xl border border-boutique-line bg-boutique-bg px-4 py-3 transition duration-200 ease-out hover:border-boutique-sage-deep/35 hover:bg-white motion-reduce:transition-none ${
                     booleanValues.yes.isSoldOut
                       ? "cursor-not-allowed opacity-60"
                       : "cursor-pointer"
@@ -140,12 +140,12 @@ export function ProductOptionsSelector({
                     }
                   />
                   <span
-                    className={`relative h-6 w-11 shrink-0 rounded-full transition ${
+                    className={`relative h-6 w-11 shrink-0 rounded-full transition-colors duration-200 ease-out motion-reduce:transition-none ${
                       selected ? "bg-boutique-sage" : "bg-boutique-line"
                     }`}
                   >
                     <span
-                      className={`absolute left-1 top-1 h-4 w-4 rounded-full bg-white shadow-sm transition ${
+                      className={`absolute left-1 top-1 h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-200 ease-out motion-reduce:transition-none ${
                         selected ? "translate-x-5" : ""
                       }`}
                     />
@@ -183,7 +183,7 @@ export function ProductOptionsSelector({
                     return (
                       <label
                         key={option.id}
-                        className={`relative grid min-h-[4.5rem] cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 text-sm transition ${
+                        className={`relative grid min-h-[4.5rem] cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 text-sm transition duration-200 ease-out motion-reduce:transition-none ${
                           priceLabel
                             ? "grid-cols-[auto_minmax(0,1fr)_auto]"
                             : "grid-cols-[auto_minmax(0,1fr)]"
@@ -192,7 +192,7 @@ export function ProductOptionsSelector({
                             ? "cursor-not-allowed border-boutique-line/60 bg-boutique-bg text-boutique-muted opacity-60"
                             : selected
                               ? "border-boutique-sage-deep bg-boutique-sage/10 shadow-boutique-sm"
-                              : "border-boutique-line bg-white hover:border-boutique-sage-deep/50"
+                              : "border-boutique-line bg-white hover:-translate-y-0.5 hover:border-boutique-sage-deep/50 hover:shadow-boutique-sm motion-reduce:hover:translate-y-0"
                         }`}
                       >
                         <input
@@ -258,7 +258,7 @@ export function ProductOptionsSelector({
                 textValue: event.target.value.slice(0, group.maxLength ?? 1000),
               }),
             className:
-              "mt-2 w-full rounded-xl border border-boutique-line bg-white px-4 py-3 text-sm text-boutique-ink outline-none focus:border-boutique-rose-deep",
+              "mt-2 w-full rounded-xl border border-boutique-line bg-white px-4 py-3 text-sm text-boutique-ink outline-none transition duration-200 ease-out focus:border-boutique-rose-deep focus:ring-2 focus:ring-boutique-rose/15 motion-reduce:transition-none",
           };
 
           return (

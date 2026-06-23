@@ -416,7 +416,7 @@ export function ProductDetailAddToCart({
     <div
       id="product-configurator"
       ref={configuratorRef}
-      className="scroll-mt-28 rounded-2xl border border-boutique-line bg-boutique-paper p-4 sm:p-5"
+      className="scroll-mt-28 rounded-2xl border border-boutique-line bg-boutique-paper p-4 transition-shadow duration-300 ease-out hover:shadow-boutique-sm motion-reduce:transition-none sm:p-5"
     >
       {fields.length ? (
         <div className="grid gap-4 md:grid-cols-2">
@@ -442,7 +442,7 @@ export function ProductDetailAddToCart({
                 setError(null);
               },
               className:
-                "mt-2 w-full rounded-xl border border-boutique-line bg-white px-4 py-3 text-sm text-boutique-ink outline-none transition focus:border-boutique-sage-deep focus:ring-2 focus:ring-boutique-sage/25",
+                "mt-2 w-full rounded-xl border border-boutique-line bg-white px-4 py-3 text-sm text-boutique-ink outline-none transition duration-200 ease-out focus:border-boutique-sage-deep focus:ring-2 focus:ring-boutique-sage/25 motion-reduce:transition-none",
               ref: (element: HTMLInputElement | HTMLTextAreaElement | null) => {
                 fieldInputRefs.current[field.id] = element;
               },
@@ -457,7 +457,7 @@ export function ProductDetailAddToCart({
                 >
                   <label
                     htmlFor={`personalization-toggle-${field.id}`}
-                    className="flex cursor-pointer items-center gap-3 rounded-xl border border-boutique-line bg-boutique-bg px-4 py-3 transition hover:border-boutique-sage-deep/40"
+                    className="flex cursor-pointer items-center gap-3 rounded-xl border border-boutique-line bg-boutique-bg px-4 py-3 transition duration-200 ease-out hover:border-boutique-sage-deep/40 hover:bg-white hover:shadow-boutique-sm motion-reduce:transition-none"
                   >
                     <input
                       id={`personalization-toggle-${field.id}`}
@@ -472,12 +472,12 @@ export function ProductDetailAddToCart({
                     />
                     <span
                       aria-hidden="true"
-                      className={`relative h-6 w-11 shrink-0 rounded-full transition ${
+                      className={`relative h-6 w-11 shrink-0 rounded-full transition-colors duration-200 ease-out motion-reduce:transition-none ${
                         enabled ? "bg-boutique-sage" : "bg-boutique-line"
                       }`}
                     >
                       <span
-                        className={`absolute left-1 top-1 h-4 w-4 rounded-full bg-white shadow-sm transition ${
+                        className={`absolute left-1 top-1 h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-200 ease-out motion-reduce:transition-none ${
                           enabled ? "translate-x-5" : ""
                         }`}
                       />
@@ -522,7 +522,7 @@ export function ProductDetailAddToCart({
                               <button
                                 type="button"
                                 onClick={() => setWishFieldId(field.id)}
-                                className="rounded-full border border-boutique-rose/40 px-3 py-1 text-xs font-semibold text-boutique-rose-deep"
+                    className="rounded-full border border-boutique-rose/40 px-3 py-1 text-xs font-semibold text-boutique-rose-deep transition duration-200 ease-out hover:border-boutique-rose-deep hover:bg-boutique-blush motion-reduce:transition-none"
                               >
                                 ♡ Идеи за пожелание
                               </button>
@@ -616,7 +616,7 @@ export function ProductDetailAddToCart({
             ) : (
               <fieldset
                 key={field.id}
-                className="rounded-2xl border border-boutique-line bg-white/60 p-4"
+                className="rounded-2xl border border-boutique-line bg-white/60 p-4 transition-shadow duration-300 ease-out hover:shadow-boutique-sm motion-reduce:transition-none"
               >
                 <legend className="px-1 text-sm font-semibold text-boutique-ink">
                   {field.label}
@@ -636,7 +636,7 @@ export function ProductDetailAddToCart({
                       return (
                         <label
                           key={option.id}
-                          className="group cursor-pointer rounded-2xl p-2 text-center text-xs text-boutique-muted transition hover:bg-boutique-bg"
+                          className="group cursor-pointer rounded-2xl p-2 text-center text-xs text-boutique-muted transition duration-200 ease-out hover:bg-boutique-bg motion-reduce:transition-none"
                         >
                           <input
                             className="peer sr-only"
@@ -657,7 +657,7 @@ export function ProductDetailAddToCart({
                             }}
                           />
                           <span
-                            className={`relative mx-auto grid h-12 w-12 place-items-center rounded-full border-4 border-white shadow-sm ring-1 transition group-hover:scale-105 peer-focus-visible:ring-2 peer-focus-visible:ring-boutique-sage-deep ${
+                            className={`relative mx-auto grid h-12 w-12 place-items-center rounded-full border-4 border-white shadow-sm ring-1 transition duration-200 ease-out group-hover:scale-[1.04] peer-focus-visible:ring-2 peer-focus-visible:ring-boutique-sage-deep motion-reduce:transition-none motion-reduce:group-hover:scale-100 ${
                               selected
                                 ? "ring-2 ring-boutique-sage-deep"
                                 : "ring-boutique-line"
@@ -697,7 +697,7 @@ export function ProductDetailAddToCart({
                         return next;
                       });
                     }}
-                    className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-boutique-line bg-white px-4 py-3 text-sm font-semibold text-boutique-ink transition hover:border-boutique-sage-deep hover:text-boutique-sage-deep"
+                    className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-boutique-line bg-white px-4 py-3 text-sm font-semibold text-boutique-ink transition duration-200 ease-out hover:-translate-y-0.5 hover:border-boutique-sage-deep hover:text-boutique-sage-deep hover:shadow-boutique-sm active:translate-y-0 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
                   >
                     {expandedColorFields.has(field.id)
                       ? "Покажи по-малко"
@@ -724,7 +724,7 @@ export function ProductDetailAddToCart({
         aria-live="polite"
         disabled={!canAddToCart}
         onClick={handleAddToCart}
-        className={`mt-5 w-full rounded-xl px-8 py-3.5 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-50 ${
+        className={`mt-5 w-full rounded-xl px-8 py-3.5 text-sm font-semibold text-white transition duration-200 ease-out hover:-translate-y-0.5 hover:shadow-boutique active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none motion-reduce:transition-none motion-reduce:hover:translate-y-0 ${
           added
             ? "bg-boutique-sage shadow-boutique-sm"
             : "bg-boutique-sage-deep hover:bg-boutique-ink"
@@ -772,7 +772,7 @@ export function ProductDetailAddToCart({
                       setError(null);
                       setWishFieldId(null);
                     }}
-                    className="mt-3 rounded-lg bg-boutique-sage-deep px-4 py-2 text-xs font-semibold text-white"
+                    className="mt-3 rounded-lg bg-boutique-sage-deep px-4 py-2 text-xs font-semibold text-white transition duration-200 ease-out hover:bg-boutique-ink motion-reduce:transition-none"
                   >
                     Избери текста
                   </button>
@@ -801,7 +801,7 @@ export function ProductDetailAddToCart({
             type="button"
             disabled={!canAddToCart}
             onClick={handleAddToCart}
-            className={`min-h-12 shrink-0 rounded-xl px-5 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-50 ${
+            className={`min-h-12 shrink-0 rounded-xl px-5 text-sm font-semibold text-white transition duration-200 ease-out hover:-translate-y-0.5 hover:shadow-boutique-sm active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none motion-reduce:transition-none motion-reduce:hover:translate-y-0 ${
               added
                 ? "bg-boutique-sage shadow-boutique-sm"
                 : "bg-boutique-sage-deep hover:bg-boutique-ink"

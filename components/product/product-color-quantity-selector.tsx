@@ -50,7 +50,7 @@ export function ProductColorQuantitySelector({
   };
 
   return (
-    <fieldset className="rounded-2xl border border-boutique-line bg-white/60 p-4">
+    <fieldset className="rounded-2xl border border-boutique-line bg-white/60 p-4 transition-shadow duration-300 ease-out hover:shadow-boutique-sm motion-reduce:transition-none">
       <legend className="px-1 text-sm font-semibold text-boutique-ink">
         {field.label}
       </legend>
@@ -74,11 +74,11 @@ export function ProductColorQuantitySelector({
           return (
             <div
               key={option.id}
-              className="grid grid-cols-[2rem_minmax(0,1fr)_auto] items-center gap-3 py-2"
+              className="grid grid-cols-[2rem_minmax(0,1fr)_auto] items-center gap-3 py-2 transition-colors duration-200 ease-out hover:bg-boutique-bg/55 motion-reduce:transition-none"
             >
               <span
                 aria-hidden="true"
-                className="h-8 w-8 rounded-full border border-boutique-line shadow-inner"
+                className="h-8 w-8 rounded-full border border-boutique-line shadow-inner transition-transform duration-200 ease-out motion-reduce:transition-none"
                 style={{ backgroundColor: option.hex ?? "#eee8df" }}
               />
               <span className="min-w-0 break-words text-sm font-medium leading-5 text-boutique-ink">
@@ -91,7 +91,7 @@ export function ProductColorQuantitySelector({
                   disabled={decreaseDisabled}
                   aria-label={`Намали количеството за ${option.name}`}
                   onClick={() => updateQuantity(option.id, quantity - 1)}
-                  className="grid h-9 w-9 place-items-center rounded-full border border-boutique-line bg-white text-lg font-semibold text-boutique-ink transition enabled:hover:border-boutique-sage-deep enabled:hover:text-boutique-sage-deep disabled:cursor-not-allowed disabled:opacity-35"
+                  className="grid h-9 w-9 place-items-center rounded-full border border-boutique-line bg-white text-lg font-semibold text-boutique-ink transition duration-200 ease-out enabled:hover:-translate-y-0.5 enabled:hover:border-boutique-sage-deep enabled:hover:text-boutique-sage-deep enabled:hover:shadow-boutique-sm enabled:active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-35 motion-reduce:transition-none motion-reduce:enabled:hover:translate-y-0"
                 >
                   −
                 </button>
@@ -106,7 +106,7 @@ export function ProductColorQuantitySelector({
                   disabled={increaseDisabled}
                   aria-label={`Увеличи количеството за ${option.name}`}
                   onClick={() => updateQuantity(option.id, quantity + 1)}
-                  className="grid h-9 w-9 place-items-center rounded-full border border-boutique-line bg-white text-lg font-semibold text-boutique-ink transition enabled:hover:border-boutique-sage-deep enabled:hover:text-boutique-sage-deep disabled:cursor-not-allowed disabled:opacity-35"
+                  className="grid h-9 w-9 place-items-center rounded-full border border-boutique-line bg-white text-lg font-semibold text-boutique-ink transition duration-200 ease-out enabled:hover:-translate-y-0.5 enabled:hover:border-boutique-sage-deep enabled:hover:text-boutique-sage-deep enabled:hover:shadow-boutique-sm enabled:active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-35 motion-reduce:transition-none motion-reduce:enabled:hover:translate-y-0"
                 >
                   +
                 </button>
@@ -122,7 +122,7 @@ export function ProductColorQuantitySelector({
           aria-expanded={expanded}
           aria-controls={optionsId}
           onClick={() => setExpanded((current) => !current)}
-          className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-boutique-line bg-white px-4 py-3 text-sm font-semibold text-boutique-ink transition hover:border-boutique-sage-deep hover:text-boutique-sage-deep"
+          className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-boutique-line bg-white px-4 py-3 text-sm font-semibold text-boutique-ink transition duration-200 ease-out hover:-translate-y-0.5 hover:border-boutique-sage-deep hover:text-boutique-sage-deep hover:shadow-boutique-sm active:translate-y-0 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
         >
           {expanded ? "Покажи по-малко" : `Виж всички цветове (${field.options.length})`}
           <span

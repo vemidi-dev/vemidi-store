@@ -24,7 +24,7 @@ function GalleryMainImage({
 }) {
   return (
     <div
-      className={`relative aspect-[4/5] overflow-hidden rounded-2xl border border-boutique-line/80 bg-white shadow-boutique ${className ?? ""}`}
+      className={`relative aspect-[4/5] overflow-hidden rounded-2xl border border-boutique-line/80 bg-white shadow-boutique transition-shadow duration-300 ease-out ${className ?? ""}`}
     >
       {image?.src ? (
         <Image
@@ -34,7 +34,7 @@ function GalleryMainImage({
           fill
           priority={priority}
           sizes={sizes}
-          className="object-contain p-1"
+          className="object-contain p-1 transition-opacity duration-300 ease-out motion-reduce:transition-none"
         />
       ) : (
         <MediaPlaceholder label="Основна снимка на продукта" />
@@ -64,10 +64,10 @@ function GalleryThumbnailButton({
     <button
       type="button"
       onClick={onSelect}
-      className={`relative overflow-hidden rounded-xl border-2 bg-white transition focus:outline-none focus-visible:ring-2 focus-visible:ring-boutique-sage focus-visible:ring-offset-2 ${
+      className={`relative overflow-hidden rounded-xl border-2 bg-white transition duration-300 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-boutique-sage focus-visible:ring-offset-2 motion-reduce:transition-none ${
         isActive
           ? "border-boutique-ink shadow-md"
-          : "border-transparent opacity-80 ring-1 ring-boutique-line/80 hover:opacity-100"
+          : "border-transparent opacity-80 ring-1 ring-boutique-line/80 hover:-translate-y-0.5 hover:opacity-100 motion-reduce:hover:translate-y-0"
       } ${className ?? ""}`}
       aria-label={`Покажи снимка ${index + 1}`}
       aria-current={isActive ? "true" : undefined}
@@ -78,7 +78,7 @@ function GalleryThumbnailButton({
           alt={image.alt || `Миниатюра ${index + 1}`}
           fill
           sizes="80px"
-          className="object-contain p-1"
+          className="object-contain p-1 transition-transform duration-300 ease-out hover:scale-[1.03] motion-reduce:transition-none motion-reduce:hover:scale-100"
         />
       ) : (
         <MediaPlaceholder label={`Снимка ${index + 1}`} />
@@ -153,7 +153,7 @@ export function ProductDetailGallery({ images }: ProductDetailGalleryProps) {
           <button
             type="button"
             onClick={showPreviousImage}
-            className="absolute left-4 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/70 bg-white/90 text-2xl leading-none text-boutique-ink shadow-lg transition hover:-translate-x-0.5 hover:bg-white focus:outline-none focus:ring-2 focus:ring-boutique-sage"
+            className="absolute left-4 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/70 bg-white/90 text-2xl leading-none text-boutique-ink shadow-lg transition duration-200 ease-out hover:-translate-x-0.5 hover:bg-white hover:shadow-boutique focus:outline-none focus:ring-2 focus:ring-boutique-sage motion-reduce:transition-none motion-reduce:hover:translate-x-0"
             aria-label="Предишна снимка"
           >
             ‹
@@ -161,7 +161,7 @@ export function ProductDetailGallery({ images }: ProductDetailGalleryProps) {
           <button
             type="button"
             onClick={showNextImage}
-            className="absolute right-4 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/70 bg-white/90 text-2xl leading-none text-boutique-ink shadow-lg transition hover:translate-x-0.5 hover:bg-white focus:outline-none focus:ring-2 focus:ring-boutique-sage"
+            className="absolute right-4 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/70 bg-white/90 text-2xl leading-none text-boutique-ink shadow-lg transition duration-200 ease-out hover:translate-x-0.5 hover:bg-white hover:shadow-boutique focus:outline-none focus:ring-2 focus:ring-boutique-sage motion-reduce:transition-none motion-reduce:hover:translate-x-0"
             aria-label="Следваща снимка"
           >
             ›

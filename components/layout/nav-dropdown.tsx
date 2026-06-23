@@ -6,10 +6,10 @@ import { useEffect, useId, useRef, useState } from "react";
 import type { HeaderNavDropdownItem } from "@/lib/category-navigation";
 
 const triggerClass =
-  "inline-flex items-center gap-1 rounded-sm text-sm font-medium text-boutique-muted transition-colors duration-200 hover:text-boutique-rose-deep focus:outline-none focus-visible:ring-2 focus-visible:ring-boutique-sage focus-visible:ring-offset-2";
+  "inline-flex items-center gap-1 rounded-sm text-sm font-medium text-boutique-muted transition-colors duration-200 ease-out hover:text-boutique-rose-deep focus:outline-none focus-visible:ring-2 focus-visible:ring-boutique-sage focus-visible:ring-offset-2";
 
 const dropdownLinkClass =
-  "block rounded-md px-3 py-2 text-sm text-boutique-ink transition-colors hover:bg-boutique-paper hover:text-boutique-rose-deep focus:outline-none focus-visible:ring-2 focus-visible:ring-boutique-sage";
+  "block rounded-md px-3 py-2 text-sm text-boutique-ink transition duration-200 ease-out hover:translate-x-0.5 hover:bg-boutique-paper hover:text-boutique-rose-deep focus:outline-none focus-visible:ring-2 focus-visible:ring-boutique-sage motion-reduce:transition-none motion-reduce:hover:translate-x-0";
 
 type NavDropdownProps = {
   label: string;
@@ -117,7 +117,7 @@ export function NavDropdown({
         <svg
           aria-hidden="true"
           viewBox="0 0 16 16"
-          className={`h-3.5 w-3.5 transition-transform ${open ? "rotate-180" : ""}`}
+          className={`h-3.5 w-3.5 transition-transform duration-200 ease-out motion-reduce:transition-none ${open ? "rotate-180" : ""}`}
           fill="none"
           stroke="currentColor"
           strokeWidth="1.75"
@@ -129,12 +129,12 @@ export function NavDropdown({
       <div
         id={panelId}
         role="menu"
-        className={`absolute left-0 top-full z-50 min-w-[14rem] max-w-[18rem] pt-2 transition duration-150 ${
+        className={`absolute left-0 top-full z-50 min-w-[14rem] max-w-[18rem] origin-top pt-2 transition duration-200 ease-out motion-reduce:transition-none ${
           open
-            ? "visible translate-y-0 opacity-100"
+            ? "visible translate-y-0 scale-100 opacity-100"
             : suppressHover
-              ? "invisible translate-y-1 opacity-0 pointer-events-none"
-              : "invisible translate-y-1 opacity-0 pointer-events-none group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100 group-focus-within:pointer-events-auto"
+              ? "invisible translate-y-1 scale-[0.98] opacity-0 pointer-events-none"
+              : "invisible translate-y-1 scale-[0.98] opacity-0 pointer-events-none group-hover:visible group-hover:translate-y-0 group-hover:scale-100 group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:scale-100 group-focus-within:opacity-100 group-focus-within:pointer-events-auto"
         }`}
         onMouseEnter={clearCloseTimer}
         onMouseLeave={scheduleClose}
