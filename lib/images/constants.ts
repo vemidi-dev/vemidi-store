@@ -10,6 +10,9 @@ export const IMAGE_ACCEPTED_MIME_TYPES = [
   "image/webp",
 ] as const;
 
+/** Fixed scope for site-wide hero/hub images managed in admin. */
+export const SITE_MEDIA_SCOPE_ID = "site-media";
+
 /** Fixed scope for the flat public events gallery (no per-event rows). */
 export const EVENT_GALLERY_SCOPE_ID = "gallery";
 
