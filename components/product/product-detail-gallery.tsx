@@ -24,7 +24,7 @@ function GalleryMainImage({
 }) {
   return (
     <div
-      className={`relative aspect-[4/5] overflow-hidden rounded-2xl border border-boutique-line/80 bg-white shadow-boutique transition-shadow duration-300 ease-out ${className ?? ""}`}
+      className={`relative aspect-[4/5] overflow-hidden rounded-2xl border border-boutique-line/80 bg-boutique-bg shadow-boutique transition-shadow duration-300 ease-out ${className ?? ""}`}
     >
       {image?.src ? (
         <Image
@@ -34,7 +34,7 @@ function GalleryMainImage({
           fill
           priority={priority}
           sizes={sizes}
-          className="object-contain p-1 transition-opacity duration-300 ease-out motion-reduce:transition-none"
+          className="object-cover object-center transition-opacity duration-300 ease-out motion-reduce:transition-none"
         />
       ) : (
         <MediaPlaceholder label="Основна снимка на продукта" />
