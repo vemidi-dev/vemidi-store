@@ -82,7 +82,7 @@ function isValidSiteMediaKey(key: string): key is SiteMediaKey {
   return (SITE_MEDIA_KEYS as readonly string[]).includes(key);
 }
 
-export function revalidateSiteMediaPaths() {
+function revalidateSiteMediaPaths() {
   revalidatePath("/");
   revalidatePath("/za-nas");
   revalidatePath("/producti");
