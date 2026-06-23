@@ -216,3 +216,20 @@ test("products page redirects occasion filters to /povodi/{slug}", () => {
 test("products page bare redirect goes to /producti", () => {
   assert.equal(resolveProductsPageRedirect({}, categories), "/producti");
 });
+
+test("canonical povod filter on shop stays faceted without redirect", () => {
+  const params = { povod: "svatba" };
+  const parsed = parseShopSearchParams(params);
+  assert.equal(resolveShopOccasionRedirect(params, parsed, categories), null);
+  assert.equal(isShopFaceted(params, parsed, categories), true);
+});
+
+test("canonical vid filter on shop stays faceted without redirect", () => {
+  const params = { vid: "kutii" };
+  const parsed = parseShopSearchParams(params);
+  assert.equal(
+    resolveShopProductCategoryRedirect(params, parsed, categories),
+    null,
+  );
+  assert.equal(isShopFaceted(params, parsed, categories), true);
+});

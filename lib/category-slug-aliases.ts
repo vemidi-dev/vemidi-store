@@ -18,24 +18,10 @@ export function getLegacyProductCategoryRedirect(slug: string): string | null {
   return LEGACY_PRODUCT_CATEGORY_SLUGS[slug] ?? null;
 }
 
+import { normalizeCatalogFilterSearchParams } from "@/lib/catalog-filter-query-params";
+
 export function normalizeProductCategoryQueryParams(
   searchParams: URLSearchParams,
 ): URLSearchParams | null {
-  let changed = false;
-  const normalized = new URLSearchParams();
-
-  for (const [key, value] of searchParams.entries()) {
-    if (key === "product") {
-      const canonical = resolveCanonicalProductCategorySlug(value);
-      normalized.append(key, canonical);
-      if (canonical !== value) {
-        changed = true;
-      }
-      continue;
-    }
-
-    normalized.append(key, value);
-  }
-
-  return changed ? normalized : null;
+  return normalizeCatalogFilterSearchParams(searchParams);
 }

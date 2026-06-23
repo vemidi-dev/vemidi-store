@@ -9,10 +9,10 @@ import { VisualPageHero } from "@/components/layout/visual-page-hero";
 import { ProductCard } from "@/components/product/product-card";
 import {
   filterProductsByProductCategory,
-  firstContextFilterValue,
   getProductCategoryFilterOptions,
   hasContextFilterParams,
 } from "@/lib/catalog-context-filters";
+import { readCatalogProductCategoryFilterValue } from "@/lib/catalog-filter-query-params";
 import { resolveCategoryCoverImage } from "@/lib/category-image-resolution";
 import {
   buildBreadcrumbListSchema,
@@ -71,7 +71,7 @@ export default async function OccasionPage({
     categories,
     occasionProducts,
   );
-  const requestedProduct = firstContextFilterValue(query.product);
+  const requestedProduct = readCatalogProductCategoryFilterValue(query);
   const activeProduct = productOptions.some(
     (option) => option.value === requestedProduct,
   )
@@ -136,7 +136,7 @@ export default async function OccasionPage({
           <ContextFilter
             action={getOccasionPath(occasion.slug)}
             label="Вид продукт"
-            name="product"
+            name="vid"
             value={activeProduct}
             allLabel="Всички видове продукти"
             options={productOptions}

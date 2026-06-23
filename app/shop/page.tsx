@@ -186,14 +186,14 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
           <legend className="font-heading text-base text-boutique-ink lg:text-lg">По повод</legend>
           <div className="mt-2.5 space-y-2 lg:mt-3 lg:space-y-2.5">
             <label className="flex items-center gap-2 text-sm text-boutique-muted">
-              <input type="radio" name="occasion" value="" defaultChecked={!activeOccasion} />
+              <input type="radio" name="povod" value="" defaultChecked={!activeOccasion} />
               Всички поводи
             </label>
             {occasionFilters.map((item) => (
               <label key={item.id} className="flex items-center gap-2 text-sm text-boutique-muted">
                 <input
                   type="radio"
-                  name="occasion"
+                  name="povod"
                   value={item.id}
                   defaultChecked={activeOccasion === item.id}
                   className="accent-boutique-sage-deep"
@@ -208,14 +208,14 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
           <legend className="font-heading text-base text-boutique-ink lg:text-lg">По вид продукт</legend>
           <div className="mt-2.5 space-y-2 lg:mt-3 lg:space-y-2.5">
             <label className="flex items-center gap-2 text-sm text-boutique-muted">
-              <input type="radio" name="product" value="" defaultChecked={!activeProductCategory} />
+              <input type="radio" name="vid" value="" defaultChecked={!activeProductCategory} />
               Всички продукти
             </label>
             {productCategoryFilters.map((item) => (
               <label key={item.id} className="flex items-center gap-2 text-sm text-boutique-muted">
                 <input
                   type="radio"
-                  name="product"
+                  name="vid"
                   value={item.id}
                   defaultChecked={activeProductCategory === item.id}
                   className="accent-boutique-sage-deep"
@@ -308,8 +308,8 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
       <section id="product-grid" className="bg-white py-10 md:py-14">
         <PageContainer>
           <form className="mb-3 flex gap-2 sm:mb-6">
-            <input type="hidden" name="product" value={activeProductCategory} />
-            <input type="hidden" name="occasion" value={activeOccasion} />
+            <input type="hidden" name="vid" value={activeProductCategory} />
+            <input type="hidden" name="povod" value={activeOccasion} />
             <input type="hidden" name="price" value={activePrice} />
             <input type="hidden" name="sort" value={activeSort} />
             {personalizationOnly ? (
@@ -377,8 +377,8 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
                 </div>
                 <form className="flex flex-wrap items-center gap-2 sm:gap-3">
                   <input type="hidden" name="q" value={query} />
-                  <input type="hidden" name="product" value={activeProductCategory} />
-                  <input type="hidden" name="occasion" value={activeOccasion} />
+                  <input type="hidden" name="vid" value={activeProductCategory} />
+                  <input type="hidden" name="povod" value={activeOccasion} />
                   <input type="hidden" name="price" value={activePrice} />
                   {personalizationOnly ? <input type="hidden" name="personalization" value="only" /> : null}
                   {promotionsOnly ? <input type="hidden" name="promotions" value="only" /> : null}

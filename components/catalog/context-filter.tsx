@@ -1,6 +1,11 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import {
+  CATALOG_OCCASION_FILTER_PARAM,
+  CATALOG_PRODUCT_CATEGORY_FILTER_PARAM,
+} from "@/lib/catalog-filter-query-params";
+
 type ContextFilterOption = {
   value: string;
   label: string;
@@ -10,7 +15,7 @@ type ContextFilterOption = {
 type ContextFilterProps = {
   action: string;
   label: string;
-  name: "occasion" | "product";
+  name: typeof CATALOG_OCCASION_FILTER_PARAM | typeof CATALOG_PRODUCT_CATEGORY_FILTER_PARAM;
   value: string;
   allLabel: string;
   options: ContextFilterOption[];

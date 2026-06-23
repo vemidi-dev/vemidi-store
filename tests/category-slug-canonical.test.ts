@@ -45,7 +45,7 @@ test("legacy category path preserves safe query params", () => {
     ),
     {
       pathname: "/categorii/plikove-za-pari",
-      search: "occasion=svatba",
+      search: "povod=svatba",
     },
   );
 });
@@ -68,7 +68,7 @@ test("legacy product query on occasion page normalizes to canonical slug", () =>
     ),
     {
       pathname: "/povodi/svatba",
-      search: "product=plikove-za-pari",
+      search: "vid=plikove-za-pari",
     },
   );
 });
@@ -81,7 +81,7 @@ test("legacy product query preserves other safe query params", () => {
     ),
     {
       pathname: "/povodi/svatba",
-      search: "product=plikove-za-pari&utm_source=newsletter",
+      search: "vid=plikove-za-pari&utm_source=newsletter",
     },
   );
 });
@@ -90,7 +90,7 @@ test("canonical occasion product query does not redirect", () => {
   assert.equal(
     resolveSeoRedirectTarget(
       "/povodi/svatba",
-      params({ product: "plikove-za-pari" }),
+      params({ vid: "plikove-za-pari" }),
     ),
     null,
   );
@@ -118,7 +118,7 @@ test("faceted shop URL normalizes legacy product slug without dropping params", 
     ),
     {
       pathname: "/producti",
-      search: "product=plikove-za-pari&sort=featured",
+      search: "vid=plikove-za-pari&sort=featured",
     },
   );
 });
@@ -131,7 +131,7 @@ test("canonical category path normalizes legacy product query param", () => {
     ),
     {
       pathname: "/categorii/plikove-za-pari",
-      search: "product=plikove-za-pari",
+      search: "vid=plikove-za-pari",
     },
   );
 });
@@ -161,7 +161,7 @@ test("legacy slugs are excluded from sitemap candidate paths", () => {
 
 test("normalizeProductCategoryQueryParams is a no-op for canonical values", () => {
   assert.equal(
-    normalizeProductCategoryQueryParams(params({ product: "plikove-za-pari" })),
+    normalizeProductCategoryQueryParams(params({ vid: "plikove-za-pari" })),
     null,
   );
 });

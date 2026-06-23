@@ -2,9 +2,16 @@ import type { NextRequest } from "next/server";
 
 import {
   getLegacyProductCategoryRedirect,
-  normalizeProductCategoryQueryParams,
   resolveCanonicalProductCategorySlug,
 } from "@/lib/category-slug-aliases";
+import {
+  CATALOG_OCCASION_FILTER_PARAM,
+  CATALOG_PRODUCT_CATEGORY_FILTER_PARAM,
+  isCatalogProductCategoryFilterSlug,
+  LEGACY_CATALOG_OCCASION_FILTER_PARAM,
+  LEGACY_CATALOG_PRODUCT_CATEGORY_FILTER_PARAM,
+  normalizeCatalogFilterSearchParams,
+} from "@/lib/catalog-filter-query-params";
 import {
   CATEGORY_INDEX_PATH,
   OCCASION_INDEX_PATH,
@@ -70,6 +77,33 @@ function redirectWithSearch(
   return search ? { pathname, search } : { pathname };
 }
 
+function normalizeCatalogSearchParams(
+  searchParams: URLSearchParams,
+): URLSearchParams | null {
+  return normalizeCatalogFilterSearchParams(searchParams);
+}
+
+function resolveCatalogFilterPathRedirect(
+  single: { key: string; value: string },
+): RedirectTarget | null {
+  if (
+    single.key === CATALOG_PRODUCT_CATEGORY_FILTER_PARAM ||
+    (single.key === LEGACY_CATALOG_PRODUCT_CATEGORY_FILTER_PARAM &&
+      isCatalogProductCategoryFilterSlug(single.value))
+  ) {
+    return categoryPath(resolveCanonicalProductCategorySlug(single.value));
+  }
+
+  if (
+    single.key === CATALOG_OCCASION_FILTER_PARAM ||
+    single.key === LEGACY_CATALOG_OCCASION_FILTER_PARAM
+  ) {
+    return occasionPath(single.value);
+  }
+
+  return null;
+}
+
 function resolveLegacyCategoryPathRedirect(
   pathname: string,
   searchParams: URLSearchParams,
@@ -86,7 +120,7 @@ function resolveLegacyCategoryPathRedirect(
     }
 
     const canonicalSlug = getLegacyProductCategoryRedirect(slug) ?? slug;
-    const normalizedSearch = normalizeProductCategoryQueryParams(searchParams);
+    const normalizedSearch = normalizeCatalogSearchParams(searchParams);
     return redirectWithSearch(getCategoryPath(canonicalSlug), normalizedSearch ?? searchParams);
   }
 
@@ -101,7 +135,7 @@ function resolveLegacyCategoryPathRedirect(
   }
 
   const canonicalSlug = getLegacyProductCategoryRedirect(slug);
-  const normalizedSearch = normalizeProductCategoryQueryParams(searchParams);
+  const normalizedSearch = normalizeCatalogSearchParams(searchParams);
   const nextSearch = normalizedSearch ?? searchParams;
 
   if (canonicalSlug) {
@@ -130,7 +164,7 @@ function resolveContextFilterQueryRedirect(
       return null;
     }
 
-    const normalizedSearch = normalizeProductCategoryQueryParams(searchParams);
+    const normalizedSearch = normalizeCatalogSearchParams(searchParams);
     return redirectWithSearch(getOccasionPath(slug), normalizedSearch ?? searchParams);
   }
 
@@ -144,7 +178,7 @@ function resolveContextFilterQueryRedirect(
     return null;
   }
 
-  const normalizedSearch = normalizeProductCategoryQueryParams(searchParams);
+  const normalizedSearch = normalizeCatalogSearchParams(searchParams);
   if (!normalizedSearch) {
     return null;
   }
@@ -211,7 +245,7 @@ export function resolveSeoRedirectTarget(
   if (pathname === "/products") {
     const single = singleQueryParam(searchParams);
     if (!single) {
-      const normalizedSearch = normalizeProductCategoryQueryParams(searchParams);
+      const normalizedSearch = normalizeCatalogSearchParams(searchParams);
       if (normalizedSearch) {
         return redirectWithSearch(pathname, normalizedSearch);
       }
@@ -222,12 +256,9 @@ export function resolveSeoRedirectTarget(
       return null;
     }
 
-    if (single.key === "product") {
-      return categoryPath(resolveCanonicalProductCategorySlug(single.value));
-    }
-
-    if (single.key === "occasion") {
-      return occasionPath(single.value);
+    const catalogFilterRedirect = resolveCatalogFilterPathRedirect(single);
+    if (catalogFilterRedirect) {
+      return catalogFilterRedirect;
     }
 
     // `category=` may map to product or occasion — resolved in app route with catalog.
@@ -237,7 +268,7 @@ export function resolveSeoRedirectTarget(
   if (pathname === "/shop") {
     const single = singleQueryParam(searchParams);
     if (!single) {
-      const normalizedSearch = normalizeProductCategoryQueryParams(searchParams);
+      const normalizedSearch = normalizeCatalogSearchParams(searchParams);
       if (normalizedSearch) {
         return redirectWithSearch("/producti", normalizedSearch);
       }
@@ -245,32 +276,16 @@ export function resolveSeoRedirectTarget(
       return redirectWithSearch("/producti", searchParams);
     }
 
-    if (single.key === "product") {
-      return categoryPath(resolveCanonicalProductCategorySlug(single.value));
-    }
-
-    if (single.key === "occasion") {
-      return occasionPath(single.value);
+    const catalogFilterRedirect = resolveCatalogFilterPathRedirect(single);
+    if (catalogFilterRedirect) {
+      return catalogFilterRedirect;
     }
 
     return redirectWithSearch("/producti", searchParams);
   }
 
   if (pathname === "/producti") {
-    const single = singleQueryParam(searchParams);
-    if (single) {
-      if (single.key === "product") {
-        return categoryPath(resolveCanonicalProductCategorySlug(single.value));
-      }
-
-      if (single.key === "occasion") {
-        return occasionPath(single.value);
-      }
-
-      return null;
-    }
-
-    const normalizedSearch = normalizeProductCategoryQueryParams(searchParams);
+    const normalizedSearch = normalizeCatalogSearchParams(searchParams);
     if (normalizedSearch) {
       return redirectWithSearch(pathname, normalizedSearch);
     }

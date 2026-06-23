@@ -1,5 +1,14 @@
 import type { Metadata } from "next";
 
+import {
+  CATALOG_OCCASION_FILTER_PARAM,
+  CATALOG_PRODUCT_CATEGORY_FILTER_PARAM,
+  isCatalogProductCategoryFilterSlug,
+  LEGACY_CATALOG_OCCASION_FILTER_PARAM,
+  LEGACY_CATALOG_PRODUCT_CATEGORY_FILTER_PARAM,
+  readCatalogOccasionFilterValue,
+  readCatalogProductCategoryFilterValue,
+} from "@/lib/catalog-filter-query-params";
 import { resolveCanonicalProductCategorySlug } from "@/lib/category-slug-aliases";
 import { getCategoryPath, getOccasionPath } from "@/lib/category-url";
 import {
@@ -19,8 +28,10 @@ const SHOP_METADATA_BASE = {
 } as const;
 
 export const SHOP_KNOWN_PARAMS = new Set([
-  "product",
-  "occasion",
+  CATALOG_PRODUCT_CATEGORY_FILTER_PARAM,
+  CATALOG_OCCASION_FILTER_PARAM,
+  LEGACY_CATALOG_PRODUCT_CATEGORY_FILTER_PARAM,
+  LEGACY_CATALOG_OCCASION_FILTER_PARAM,
   "category",
   "price",
   "sort",
@@ -59,8 +70,8 @@ export function parseShopSearchParams(
   );
 
   return {
-    product: firstSearchParam(params.product),
-    occasion: firstSearchParam(params.occasion),
+    product: readCatalogProductCategoryFilterValue(params),
+    occasion: readCatalogOccasionFilterValue(params),
     legacyCategory: firstSearchParam(params.category),
     price: firstSearchParam(params.price),
     sort: firstSearchParam(params.sort),
@@ -96,7 +107,7 @@ export function isOnlyOccasionSelector(
   }
 
   const onlyKey = keys[0];
-  if (onlyKey === "occasion" && parsed.occasion) {
+  if (onlyKey === LEGACY_CATALOG_OCCASION_FILTER_PARAM && parsed.occasion) {
     return true;
   }
 
@@ -131,11 +142,21 @@ export function isOnlyProductCategorySelector(
   }
 
   const onlyKey = keys[0];
-  if (onlyKey !== "product" && onlyKey !== "category") {
+  if (
+    onlyKey !== LEGACY_CATALOG_PRODUCT_CATEGORY_FILTER_PARAM &&
+    onlyKey !== "category"
+  ) {
     return false;
   }
 
-  if (onlyKey === "product" && !parsed.product) {
+  if (onlyKey === LEGACY_CATALOG_PRODUCT_CATEGORY_FILTER_PARAM && !parsed.product) {
+    return false;
+  }
+
+  if (
+    onlyKey === LEGACY_CATALOG_PRODUCT_CATEGORY_FILTER_PARAM &&
+    !isCatalogProductCategoryFilterSlug(parsed.product)
+  ) {
     return false;
   }
 
@@ -191,11 +212,11 @@ export function buildShopQueryString(parsed: ParsedShopParams): string {
   const queryParams = new URLSearchParams();
 
   if (parsed.product) {
-    queryParams.set("product", parsed.product);
+    queryParams.set(CATALOG_PRODUCT_CATEGORY_FILTER_PARAM, parsed.product);
   }
 
   if (parsed.occasion) {
-    queryParams.set("occasion", parsed.occasion);
+    queryParams.set(CATALOG_OCCASION_FILTER_PARAM, parsed.occasion);
   }
 
   if (!parsed.product && !parsed.occasion && parsed.legacyCategory) {

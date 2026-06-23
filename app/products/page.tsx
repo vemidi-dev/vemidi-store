@@ -1,6 +1,12 @@
 import { notFound, permanentRedirect } from "next/navigation";
 
 import { resolveProductsPageRedirect } from "@/lib/seo/shop-route";
+import {
+  CATALOG_OCCASION_FILTER_PARAM,
+  CATALOG_PRODUCT_CATEGORY_FILTER_PARAM,
+  LEGACY_CATALOG_OCCASION_FILTER_PARAM,
+  LEGACY_CATALOG_PRODUCT_CATEGORY_FILTER_PARAM,
+} from "@/lib/catalog-filter-query-params";
 import { filterStorefrontVisibleCategories } from "@/lib/category-visibility";
 import { getStorefrontCatalog } from "@/lib/storefront/repository";
 
@@ -9,6 +15,8 @@ type ProductsPageProps = {
     category?: string | string[];
     product?: string | string[];
     occasion?: string | string[];
+    vid?: string | string[];
+    povod?: string | string[];
   }>;
 };
 
@@ -17,8 +25,10 @@ function hasLegacyProductsQuery(
 ): boolean {
   return (
     params.category !== undefined ||
-    params.product !== undefined ||
-    params.occasion !== undefined
+    params[CATALOG_PRODUCT_CATEGORY_FILTER_PARAM] !== undefined ||
+    params[CATALOG_OCCASION_FILTER_PARAM] !== undefined ||
+    params[LEGACY_CATALOG_PRODUCT_CATEGORY_FILTER_PARAM] !== undefined ||
+    params[LEGACY_CATALOG_OCCASION_FILTER_PARAM] !== undefined
   );
 }
 

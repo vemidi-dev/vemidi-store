@@ -109,7 +109,7 @@ test("/shop legacy category param stays on RSC route", () => {
 test("faceted shop URL redirects to the Bulgarian catalog path", () => {
   assert.deepEqual(
     resolveSeoRedirectTarget("/shop", params({ product: "kutii", sort: "featured" })),
-    { pathname: "/producti", search: "product=kutii&sort=featured" },
+    { pathname: "/producti", search: "vid=kutii&sort=featured" },
   );
   assert.deepEqual(
     resolveSeoRedirectTarget("/shop", params({ q: "test" })),
@@ -139,15 +139,15 @@ test("isValidRedirectSlug rejects empty, spaced, encoded-space and invalid slugs
 test("invalid slug query values are not redirected", () => {
   assert.deepEqual(
     resolveSeoRedirectTarget("/shop", params({ product: "sakndinavski muh" })),
-    { pathname: "/producti", search: "product=sakndinavski+muh" },
+    { pathname: "/producti", search: "vid=sakndinavski+muh" },
   );
   assert.deepEqual(
     resolveSeoRedirectTarget("/shop", params({ product: "foo/bar" })),
-    { pathname: "/producti", search: "product=foo%2Fbar" },
+    { pathname: "/producti", search: "vid=foo%2Fbar" },
   );
   assert.deepEqual(
     resolveSeoRedirectTarget("/shop", params({ occasion: "Svatba" })),
-    { pathname: "/producti", search: "occasion=Svatba" },
+    { pathname: "/producti", search: "povod=Svatba" },
   );
   assert.deepEqual(
     resolveSeoRedirectTarget("/shop", params({ product: "" })),
@@ -158,7 +158,55 @@ test("invalid slug query values are not redirected", () => {
       "/shop",
       new URLSearchParams("product=sakndinavski%20muh"),
     ),
-    { pathname: "/producti", search: "product=sakndinavski+muh" },
+    { pathname: "/producti", search: "vid=sakndinavski+muh" },
+  );
+});
+
+test("legacy catalog filter params normalize on Bulgarian storefront paths", () => {
+  assert.deepEqual(
+    resolveSeoRedirectTarget(
+      "/categorii/plikove-za-pari",
+      params({ occasion: "krashtene" }),
+    ),
+    {
+      pathname: "/categorii/plikove-za-pari",
+      search: "povod=krashtene",
+    },
+  );
+  assert.deepEqual(
+    resolveSeoRedirectTarget("/producti", params({ occasion: "krashtene" })),
+    {
+      pathname: "/producti",
+      search: "povod=krashtene",
+    },
+  );
+  assert.deepEqual(
+    resolveSeoRedirectTarget(
+      "/povodi/krashtene",
+      params({ product: "plikove-za-pari" }),
+    ),
+    {
+      pathname: "/povodi/krashtene",
+      search: "vid=plikove-za-pari",
+    },
+  );
+  assert.deepEqual(
+    resolveSeoRedirectTarget("/producti", params({ product: "plikove-za-pari" })),
+    {
+      pathname: "/producti",
+      search: "vid=plikove-za-pari",
+    },
+  );
+});
+
+test("/producti sole canonical filter params stay on shop without path redirect", () => {
+  assert.equal(
+    resolveSeoRedirectTarget("/producti", params({ povod: "krashtene" })),
+    null,
+  );
+  assert.equal(
+    resolveSeoRedirectTarget("/producti", params({ vid: "plikove-za-pari" })),
+    null,
   );
 });
 

@@ -16,10 +16,10 @@ import { findVisibleProductCategoryBySlug, filterStorefrontVisibleCategories } f
 import { CATEGORY_INDEX_PATH, getCategoryPath } from "@/lib/category-url";
 import {
   filterProductsByOccasion,
-  firstContextFilterValue,
   getOccasionFilterOptions,
   hasContextFilterParams,
 } from "@/lib/catalog-context-filters";
+import { readCatalogOccasionFilterValue } from "@/lib/catalog-filter-query-params";
 import { resolveCategoryCoverImage } from "@/lib/category-image-resolution";
 import { toShowcaseCategory } from "@/lib/storefront/mappers";
 import { getStorefrontCatalog } from "@/lib/storefront/repository";
@@ -94,7 +94,7 @@ export default async function CategoryPage({
     categories,
     categoryProducts,
   );
-  const requestedOccasion = firstContextFilterValue(query.occasion);
+  const requestedOccasion = readCatalogOccasionFilterValue(query);
   const activeOccasion = occasionOptions.some(
     (option) => option.value === requestedOccasion,
   )
@@ -190,7 +190,7 @@ export default async function CategoryPage({
           <ContextFilter
             action={getCategoryPath(category.slug)}
             label="По повод"
-            name="occasion"
+            name="povod"
             value={activeOccasion}
             allLabel="Всички поводи"
             options={occasionOptions}
