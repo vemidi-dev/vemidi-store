@@ -192,7 +192,7 @@ export function ProductOptionsSelector({
                             ? "cursor-not-allowed border-boutique-line/60 bg-boutique-bg text-boutique-muted opacity-60"
                             : selected
                               ? "border-boutique-sage-deep bg-boutique-sage/10 shadow-boutique-sm"
-                              : "border-boutique-line bg-white hover:-translate-y-0.5 hover:border-boutique-sage-deep/50 hover:shadow-boutique-sm motion-reduce:hover:translate-y-0"
+                              : "border-boutique-line bg-white hover:-translate-y-1 hover:border-boutique-sage-deep/55 hover:shadow-[0_12px_24px_-10px_rgb(44_40_37_/0.14)] motion-reduce:hover:translate-y-0"
                         }`}
                       >
                         <input

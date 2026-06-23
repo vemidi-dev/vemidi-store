@@ -273,13 +273,13 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
         <div className="sticky bottom-2 z-10 -mx-2 flex gap-2 border-t border-boutique-line bg-boutique-paper/95 px-2 py-3 shadow-[0_-12px_24px_-20px_rgb(44_40_37_/0.45)] backdrop-blur transition-shadow duration-300 ease-out lg:bottom-4 lg:-mx-3 lg:px-3 motion-reduce:transition-none">
           <button
             type="submit"
-            className="flex-1 rounded-lg bg-boutique-sage-deep px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition duration-200 ease-out hover:-translate-y-0.5 hover:bg-boutique-accent hover:shadow-boutique-sm active:translate-y-0 lg:py-3 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+            className="flex-1 rounded-lg bg-boutique-sage-deep px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition duration-200 ease-out hover:-translate-y-1 hover:bg-boutique-accent hover:shadow-[0_12px_24px_-10px_rgb(44_40_37_/0.18)] active:translate-y-0 active:shadow-sm lg:py-3 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
           >
             Приложи
           </button>
           <Link
             href="/producti#product-grid"
-            className="rounded-lg border border-boutique-line bg-boutique-paper px-4 py-2.5 text-sm font-semibold text-boutique-ink transition duration-200 ease-out hover:-translate-y-0.5 hover:border-boutique-sage-deep hover:text-boutique-sage-deep hover:shadow-boutique-sm active:translate-y-0 lg:py-3 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+            className="rounded-lg border border-boutique-line bg-boutique-paper px-4 py-2.5 text-sm font-semibold text-boutique-ink transition duration-200 ease-out hover:-translate-y-1 hover:border-boutique-sage-deep hover:text-boutique-sage-deep hover:shadow-[0_12px_24px_-10px_rgb(44_40_37_/0.14)] active:translate-y-0 active:shadow-sm lg:py-3 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
           >
             Изчисти
           </Link>
@@ -330,7 +330,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
             </label>
             <button
               type="submit"
-              className="shrink-0 rounded-xl bg-boutique-sage-deep px-3 py-2.5 text-sm font-semibold text-white transition duration-200 ease-out hover:-translate-y-0.5 hover:bg-boutique-ink hover:shadow-boutique-sm active:translate-y-0 sm:px-6 sm:py-3 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+              className="shrink-0 rounded-xl bg-boutique-sage-deep px-3 py-2.5 text-sm font-semibold text-white transition duration-200 ease-out hover:-translate-y-1 hover:bg-boutique-ink hover:shadow-[0_12px_24px_-10px_rgb(44_40_37_/0.18)] active:translate-y-0 active:shadow-sm sm:px-6 sm:py-3 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
             >
               Търси
             </button>

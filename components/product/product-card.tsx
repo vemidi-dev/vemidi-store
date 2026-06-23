@@ -20,13 +20,13 @@ export function ProductCard({ product, variant = "default" }: ProductCardProps) 
   const ctaLabel = getProductCardCtaLabel(product);
   const ctaClassName = compact
     ? "mt-2 inline-flex min-h-9 items-center text-xs font-semibold text-boutique-sage-deep underline-offset-4 transition-colors duration-200 ease-out hover:text-boutique-ink hover:underline sm:mt-3 sm:text-sm"
-    : "mt-4 block w-full rounded-full bg-boutique-ink py-3.5 text-center text-sm font-semibold tracking-wide text-boutique-paper shadow-sm transition duration-300 ease-out hover:-translate-y-0.5 hover:bg-boutique-accent hover:shadow-md active:translate-y-0 motion-reduce:transition-none motion-reduce:hover:translate-y-0";
+    : "mt-4 block w-full rounded-full bg-boutique-ink py-3.5 text-center text-sm font-semibold tracking-wide text-boutique-paper shadow-sm transition duration-300 ease-out hover:-translate-y-1 hover:bg-boutique-accent hover:shadow-[0_14px_28px_-10px_rgb(44_40_37_/0.22)] active:translate-y-0 active:shadow-sm disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-sm motion-reduce:transition-none motion-reduce:hover:translate-y-0";
 
   return (
     <article
-      className={`group flex flex-col overflow-hidden border border-boutique-line/70 bg-boutique-paper transition duration-500 ease-out hover:-translate-y-1 hover:border-boutique-sage/40 hover:shadow-boutique focus-within:border-boutique-sage/50 focus-within:shadow-boutique motion-reduce:transition-none motion-reduce:hover:translate-y-0 ${
+      className={`group flex flex-col overflow-hidden border border-boutique-line/70 bg-boutique-paper transition duration-500 ease-out hover:-translate-y-1.5 hover:border-boutique-sage/45 hover:shadow-[0_24px_48px_-16px_rgb(44_40_37_/0.16)] focus-within:border-boutique-sage/50 focus-within:shadow-[0_24px_48px_-16px_rgb(44_40_37_/0.16)] motion-reduce:transition-none motion-reduce:hover:translate-y-0 ${
         compact
-          ? "rounded-xl shadow-boutique-sm"
+          ? "rounded-xl shadow-boutique-sm hover:shadow-[0_18px_36px_-14px_rgb(44_40_37_/0.14)]"
           : "rounded-3xl shadow-[0_18px_40px_-18px_rgb(44_40_37_/0.12)]"
       }`}
     >

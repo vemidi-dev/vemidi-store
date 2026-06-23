@@ -9,7 +9,7 @@ const triggerClass =
   "inline-flex items-center gap-1 rounded-sm text-sm font-medium text-boutique-muted transition-colors duration-200 ease-out hover:text-boutique-rose-deep focus:outline-none focus-visible:ring-2 focus-visible:ring-boutique-sage focus-visible:ring-offset-2";
 
 const dropdownLinkClass =
-  "block rounded-md px-3 py-2 text-sm text-boutique-ink transition duration-200 ease-out hover:translate-x-0.5 hover:bg-boutique-paper hover:text-boutique-rose-deep focus:outline-none focus-visible:ring-2 focus-visible:ring-boutique-sage motion-reduce:transition-none motion-reduce:hover:translate-x-0";
+  "block rounded-md px-3 py-2 text-sm text-boutique-ink transition duration-200 ease-out hover:translate-x-1 hover:bg-boutique-paper hover:text-boutique-rose-deep focus:outline-none focus-visible:ring-2 focus-visible:ring-boutique-sage motion-reduce:transition-none motion-reduce:hover:translate-x-0";
 
 type NavDropdownProps = {
   label: string;
@@ -133,8 +133,8 @@ export function NavDropdown({
           open
             ? "visible translate-y-0 scale-100 opacity-100"
             : suppressHover
-              ? "invisible translate-y-1 scale-[0.98] opacity-0 pointer-events-none"
-              : "invisible translate-y-1 scale-[0.98] opacity-0 pointer-events-none group-hover:visible group-hover:translate-y-0 group-hover:scale-100 group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:scale-100 group-focus-within:opacity-100 group-focus-within:pointer-events-auto"
+              ? "invisible translate-y-2 scale-[0.97] opacity-0 pointer-events-none"
+              : "invisible translate-y-2 scale-[0.97] opacity-0 pointer-events-none group-hover:visible group-hover:translate-y-0 group-hover:scale-100 group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:scale-100 group-focus-within:opacity-100 group-focus-within:pointer-events-auto"
         }`}
         onMouseEnter={clearCloseTimer}
         onMouseLeave={scheduleClose}
