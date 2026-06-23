@@ -30,6 +30,7 @@ type AdminListControlsProps = {
   sortOptions?: SortOption[];
   defaultSort?: string;
   pageSize?: number;
+  sticky?: boolean;
 };
 
 function getItemSortValue(item: HTMLElement, attribute: string): string | number {
@@ -95,6 +96,7 @@ export function AdminListControls({
   sortOptions = [],
   defaultSort = "",
   pageSize = 25,
+  sticky = false,
 }: AdminListControlsProps) {
   const [query, setQuery] = useState("");
   const [filterValues, setFilterValues] = useState<Record<string, string>>(() =>
@@ -154,7 +156,11 @@ export function AdminListControls({
   };
 
   return (
-    <div className="mt-5 rounded-xl border border-boutique-line bg-boutique-bg/70 p-3">
+    <div
+      className={`mt-5 rounded-xl border border-boutique-line bg-boutique-paper/95 p-3 shadow-boutique-sm backdrop-blur-sm ${
+        sticky ? "sticky top-3 z-20" : "bg-boutique-bg/70"
+      }`}
+    >
       <div className="grid gap-3 lg:grid-cols-[minmax(0,1.4fr)_repeat(3,minmax(0,1fr))_auto]">
         <label className="text-xs font-semibold uppercase tracking-wider text-boutique-muted">
           Търсене

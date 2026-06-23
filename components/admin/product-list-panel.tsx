@@ -37,13 +37,89 @@ import {
   adminFieldClass,
   adminHelperClass,
   adminPanelClass,
-  adminTableHeadClass,
 } from "@/components/admin/styles";
 import type { AdminData } from "@/lib/admin/data";
 import { buildDependencyOptionsFromGroups } from "@/lib/admin/option-dependency-options";
 import { adminFormFields } from "@/lib/admin/form-fields";
 import type { CategoryRow } from "@/lib/admin/types";
 import { formatAdminFulfillmentListStatus } from "@/lib/product-fulfillment";
+
+const productCardClass =
+  "group/product rounded-xl border border-boutique-line bg-white shadow-boutique-sm transition hover:border-boutique-sage/25 hover:shadow-md has-[details[open]]:border-boutique-sage/35 has-[details[open]]:shadow-md";
+
+const productHeaderClass =
+  "flex flex-col gap-3 rounded-t-xl border-b border-boutique-line/60 bg-boutique-bg/55 px-3 py-3 lg:flex-row lg:items-center";
+
+const productSectionClass =
+  "border-t border-boutique-line/60 bg-white open:bg-boutique-bg/25";
+
+const productSectionSummaryClass =
+  "flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-semibold text-boutique-ink outline-none transition hover:bg-boutique-bg/50 open:bg-boutique-bg/40 open:text-boutique-sage-deep focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-boutique-accent/25 [&::-webkit-details-marker]:hidden";
+
+const actionPrimaryClass =
+  "rounded-lg bg-boutique-ink px-3 py-1.5 text-xs font-semibold text-boutique-paper transition hover:bg-boutique-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-boutique-accent/30";
+
+const actionSecondaryClass =
+  "rounded-lg px-2.5 py-1.5 text-xs font-medium text-boutique-muted transition hover:bg-white hover:text-boutique-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-boutique-accent/20";
+
+const actionDangerClass =
+  "rounded-lg px-2.5 py-1.5 text-xs font-medium text-red-600/90 transition hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-200";
+
+const categoryChipClass =
+  "inline-flex max-w-[10rem] truncate rounded-full border border-boutique-line/80 bg-white px-2 py-0.5 text-[10px] font-medium text-boutique-muted";
+
+function ProductThumbnail({
+  thumbnailUrl,
+  productName,
+}: {
+  thumbnailUrl: string | null | undefined;
+  productName: string;
+}) {
+  return (
+    <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-boutique-line bg-white shadow-sm">
+      {thumbnailUrl ? (
+        <div
+          className="h-full w-full bg-cover bg-center"
+          style={{ backgroundImage: `url(${thumbnailUrl})` }}
+          role="img"
+          aria-label={productName}
+        />
+      ) : (
+        <div className="grid h-full w-full place-items-center text-[9px] text-boutique-muted">
+          —
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ProductStatusBadge({
+  soldOut,
+  fulfillmentStatus,
+}: {
+  soldOut: boolean;
+  fulfillmentStatus: string;
+}) {
+  if (soldOut) {
+    return (
+      <span
+        className="inline-flex rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-red-800"
+        title={fulfillmentStatus}
+      >
+        Изчерпан
+      </span>
+    );
+  }
+
+  return (
+    <span
+      className="inline-flex rounded-full bg-boutique-sage/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-boutique-sage-deep"
+      title={fulfillmentStatus}
+    >
+      {fulfillmentStatus}
+    </span>
+  );
+}
 
 export function ProductListPanel({
   data,
@@ -143,24 +219,10 @@ export function ProductListPanel({
             ]}
             defaultSort="order-desc"
             pageSize={30}
+            sticky
           />
 
-          <div
-            id="admin-product-list"
-            className="mt-4 overflow-hidden rounded-xl border border-boutique-line"
-          >
-            <div
-              className={`${adminTableHeadClass} hidden px-3 py-2 md:grid md:grid-cols-[2.5rem_minmax(0,2fr)_5rem_6rem_minmax(0,1.2fr)_auto] md:items-center md:gap-2`}
-              aria-hidden
-            >
-              <span />
-              <span>Име</span>
-              <span>Цена</span>
-              <span>Наличност</span>
-              <span>Категории</span>
-              <span className="text-right">Действия</span>
-            </div>
-
+          <div id="admin-product-list" className="mt-4 space-y-3">
           {products.map((product, productIndex) => {
             const assignedIds = categoryIdsByProductId.get(product.id) ?? [];
             const assignedCategories = assignedIds
@@ -278,10 +340,6 @@ export function ProductListPanel({
               productImages.find((image) => image.is_primary)?.image_url ??
               productImages[0]?.image_url ??
               product.image_url;
-            const categoryLabel =
-              assignedCategories.length === 0
-                ? "Без категория"
-                : assignedCategories.map((category) => category.name).join(", ");
 
             const fulfillmentStatus = formatAdminFulfillmentListStatus({
               soldOut: product.is_sold_out,
@@ -289,8 +347,15 @@ export function ProductListPanel({
               stockQuantity: product.stock_quantity ?? null,
             });
 
+            const productTypeCategories = assignedCategories.filter(
+              (category) => category.category_type === "product",
+            );
+            const occasionTypeCategories = assignedCategories.filter(
+              (category) => category.category_type === "occasion",
+            );
+
             return (
-              <div
+              <article
                 key={product.id}
                 data-admin-product
                 data-search={`${product.name} ${product.price} ${assignedCategories
@@ -308,44 +373,82 @@ export function ProductListPanel({
                 data-sort-name={product.name}
                 data-sort-price={product.price}
                 data-sort-index={productIndex}
-                className="border-b border-boutique-line/70 bg-white last:border-b-0"
+                className={productCardClass}
               >
-                <div className="hidden px-3 py-2 md:grid md:grid-cols-[2.5rem_minmax(0,2fr)_5rem_6rem_minmax(0,1.2fr)_auto] md:items-center md:gap-2">
-                  <div className="h-10 w-10 overflow-hidden rounded-md border border-boutique-line bg-boutique-bg">
-                    {thumbnailUrl ? (
-                      <div
-                        className="h-full w-full bg-cover bg-center"
-                        style={{ backgroundImage: `url(${thumbnailUrl})` }}
-                        role="img"
-                        aria-label={product.name}
-                      />
-                    ) : (
-                      <div className="grid h-full w-full place-items-center text-[9px] text-boutique-muted">
-                        —
+                <header className={productHeaderClass}>
+                  <div className="flex min-w-0 flex-1 items-start gap-3">
+                    <ProductThumbnail
+                      thumbnailUrl={thumbnailUrl}
+                      productName={product.name}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <h3 className="truncate font-medium text-boutique-ink">{product.name}</h3>
+                      <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                        <ProductStatusBadge
+                          soldOut={product.is_sold_out}
+                          fulfillmentStatus={fulfillmentStatus}
+                        />
+                        {featuredProductById.has(product.id) ? (
+                          <span className="inline-flex rounded-full bg-boutique-warm px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-boutique-ink">
+                            На началната
+                          </span>
+                        ) : null}
+                        {product.is_customizable ? (
+                          <span className="inline-flex rounded-full bg-boutique-bg px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-boutique-muted">
+                            Персонализация
+                          </span>
+                        ) : null}
                       </div>
-                    )}
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        {productTypeCategories.length === 0 && occasionTypeCategories.length === 0 ? (
+                          <span className={categoryChipClass}>Без категория</span>
+                        ) : (
+                          <>
+                            {productTypeCategories.map((category) => (
+                              <span
+                                key={`${product.id}-product-cat-${category.id}`}
+                                className={categoryChipClass}
+                                title={category.name}
+                              >
+                                {category.name}
+                              </span>
+                            ))}
+                            {occasionTypeCategories.map((category) => (
+                              <span
+                                key={`${product.id}-occasion-cat-${category.id}`}
+                                className={`${categoryChipClass} border-boutique-sage/25 bg-boutique-sage/10 text-boutique-sage-deep`}
+                                title={category.name}
+                              >
+                                {category.name}
+                              </span>
+                            ))}
+                          </>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  <p className="truncate font-medium text-boutique-ink">{product.name}</p>
-                  <p className="text-sm text-boutique-ink">
-                    {Number(product.price).toFixed(2)} €
-                  </p>
-                  <p className="text-xs text-boutique-muted" title={fulfillmentStatus}>
-                    {fulfillmentStatus}
-                  </p>
-                  <p className="line-clamp-2 text-xs text-boutique-muted" title={categoryLabel}>
-                    {categoryLabel}
-                  </p>
-                  <div className="flex flex-wrap justify-end gap-1">
+
+                  <div className="flex shrink-0 flex-col items-start gap-2 sm:items-end lg:min-w-[5.5rem]">
+                    <p className="text-sm font-semibold text-boutique-ink">
+                      {Number(product.price).toFixed(2)} €
+                    </p>
+                  </div>
+
+                  <div
+                    className="flex w-full flex-wrap items-center gap-1 border-t border-boutique-line/50 pt-2 lg:w-auto lg:border-t-0 lg:pt-0"
+                    role="group"
+                    aria-label={`Действия за ${product.name}`}
+                  >
                     <AdminOpenDetailsButton
                       detailsId={`product-edit-${product.id}`}
-                      className="rounded-full border border-boutique-line px-2.5 py-1 text-[11px] font-semibold text-boutique-ink hover:border-boutique-sage-deep/40"
+                      className={actionPrimaryClass}
                     >
                       Редакция
                     </AdminOpenDetailsButton>
                     <ProductDuplicateButton
                       productId={product.id}
                       productName={product.name}
-                      className="rounded-full border border-boutique-line px-2.5 py-1 text-[11px] font-semibold text-boutique-ink hover:border-boutique-sage-deep/40 disabled:opacity-60"
+                      className={`${actionSecondaryClass} disabled:opacity-60`}
                     />
                     <form action={toggleProductSoldOut} className="inline">
                       <input type="hidden" name={adminFormFields.common.tab} value="products" />
@@ -355,10 +458,7 @@ export function ProductListPanel({
                         name="sold_out_target"
                         value={product.is_sold_out ? "false" : "true"}
                       />
-                      <button
-                        type="submit"
-                        className="rounded-full border border-boutique-line px-2.5 py-1 text-[11px] font-semibold text-boutique-ink hover:border-boutique-sage-deep/40"
-                      >
+                      <button type="submit" className={actionSecondaryClass}>
                         {product.is_sold_out ? "Активирай" : "Изчерпан"}
                       </button>
                     </form>
@@ -369,75 +469,24 @@ export function ProductListPanel({
                     >
                       <input type="hidden" name={adminFormFields.common.tab} value="products" />
                       <input type="hidden" name={adminFormFields.common.id} value={product.id} />
-                      <button
-                        type="submit"
-                        className="rounded-full border border-red-200 px-2.5 py-1 text-[11px] font-semibold text-red-700 hover:bg-red-50"
-                      >
+                      <button type="submit" className={actionDangerClass}>
                         Изтрий
                       </button>
                     </AdminConfirmForm>
                   </div>
-                </div>
-
-                <div className="flex items-center gap-2 px-2 py-2 md:hidden">
-                  <div className="h-11 w-11 shrink-0 overflow-hidden rounded-md border border-boutique-line bg-boutique-bg">
-                    {thumbnailUrl ? (
-                      <div
-                        className="h-full w-full bg-cover bg-center"
-                        style={{ backgroundImage: `url(${thumbnailUrl})` }}
-                        role="img"
-                        aria-label={product.name}
-                      />
-                    ) : (
-                      <div className="grid h-full w-full place-items-center text-[9px] text-boutique-muted">
-                        —
-                      </div>
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium text-boutique-ink">{product.name}</p>
-                    <p className="text-xs text-boutique-muted">
-                      {Number(product.price).toFixed(2)} € · {fulfillmentStatus}
-                    </p>
-                    <p className="line-clamp-1 text-[11px] text-boutique-muted">{categoryLabel}</p>
-                  </div>
-                  <div className="flex shrink-0 flex-col items-end gap-1">
-                    <AdminOpenDetailsButton
-                      detailsId={`product-edit-${product.id}`}
-                      className="rounded-full border border-boutique-sage-deep/30 px-2 py-1 text-[10px] font-semibold text-boutique-sage-deep"
-                    >
-                      Редакция
-                    </AdminOpenDetailsButton>
-                    <ProductDuplicateButton
-                      productId={product.id}
-                      productName={product.name}
-                      className="rounded-full border border-boutique-line px-2 py-1 text-[10px] font-semibold text-boutique-ink disabled:opacity-60"
-                    />
-                    <form action={toggleProductSoldOut}>
-                      <input type="hidden" name={adminFormFields.common.tab} value="products" />
-                      <input type="hidden" name={adminFormFields.common.id} value={product.id} />
-                      <input
-                        type="hidden"
-                        name="sold_out_target"
-                        value={product.is_sold_out ? "false" : "true"}
-                      />
-                      <button
-                        type="submit"
-                        className="rounded-full border border-boutique-line px-2 py-1 text-[10px] font-semibold"
-                      >
-                        {product.is_sold_out ? "Актив." : "Изчерп."}
-                      </button>
-                    </form>
-                  </div>
-                </div>
+                </header>
 
                 <details
                   id={`product-edit-${product.id}`}
-                  className="border-t border-boutique-line/60 bg-boutique-bg/40 px-3 py-2"
+                  className={productSectionClass}
                 >
-                  <summary className="cursor-pointer text-xs font-semibold text-boutique-sage-deep">
-                    Редактирай продукт
+                  <summary className={productSectionSummaryClass}>
+                    <span>Редактирай продукт</span>
+                    <span className="text-xs font-normal text-boutique-muted" aria-hidden>
+                      Форма
+                    </span>
                   </summary>
+                  <div className="border-t border-boutique-line/50 px-3 py-4 sm:px-4">
                   <form
                     id={`admin-edit-product-form-${product.id}`}
                     action={updateProduct}
@@ -858,13 +907,18 @@ export function ProductListPanel({
                       </div>
                     ) : null}
                   </section>
+                  </div>
                 </details>
 
-                <details className="mt-3 rounded-lg border border-boutique-line/70 bg-boutique-paper p-3">
-                  <summary className="cursor-pointer text-sm font-semibold text-boutique-ink">
-                    Витрина и свързани продукти
+                <details className={productSectionClass}>
+                  <summary className={productSectionSummaryClass}>
+                    <span>Витрина и свързани продукти</span>
+                    <span className="text-xs font-normal text-boutique-muted" aria-hidden>
+                      Витрина
+                    </span>
                   </summary>
-                  <form action={updateProductMerchandising} className="mt-4">
+                  <div className="border-t border-boutique-line/50 px-3 py-4 sm:px-4">
+                  <form action={updateProductMerchandising}>
                     <input
                       type="hidden"
                       name={adminFormFields.common.id}
@@ -889,8 +943,9 @@ export function ProductListPanel({
                       Запази настройките
                     </button>
                   </form>
+                  </div>
                 </details>
-              </div>
+              </article>
             );
           })}
           </div>
