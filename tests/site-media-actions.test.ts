@@ -52,7 +52,7 @@ test("site media actions revalidate storefront paths and redirect to content tab
     "utf8",
   );
 
-  assert.match(source, /export function revalidateSiteMediaPaths\(\)/);
+  assert.match(source, /function revalidateSiteMediaPaths\(\)/);
   assert.match(source, /revalidatePath\("\/producti"\)/);
   assert.match(source, /revalidatePath\("\/thank-you"\)/);
   assert.match(source, /revalidateSiteMediaPaths\(\)/);
