@@ -27,6 +27,10 @@ export type ProductMutationInput = {
   personalizationFields: ParsedPersonalizationField[];
   wishTemplateIds: string[];
   optionGroups: ParsedOptionGroup[];
+  metaTitle: string | null;
+  metaDescription: string | null;
+  ogTitle: string | null;
+  ogDescription: string | null;
 };
 
 function toColorFieldsPayload(fields: ParsedColorField[]) {
@@ -103,6 +107,10 @@ function toRpcInput(input: ProductMutationInput) {
     })),
     p_wish_template_ids: input.wishTemplateIds,
     p_option_groups: toOptionGroupsPayload(input.optionGroups),
+    p_meta_title: input.metaTitle,
+    p_meta_description: input.metaDescription,
+    p_og_title: input.ogTitle,
+    p_og_description: input.ogDescription,
   };
 }
 
@@ -110,7 +118,7 @@ export async function createProductAtomic(
   supabase: SupabaseClient,
   input: ProductMutationInput,
 ) {
-  return supabase.rpc("admin_create_product_v8", toRpcInput(input));
+  return supabase.rpc("admin_create_product_v9", toRpcInput(input));
 }
 
 export async function updateProductAtomic(
@@ -118,7 +126,7 @@ export async function updateProductAtomic(
   productId: string,
   input: ProductMutationInput,
 ) {
-  return supabase.rpc("admin_update_product_v8", {
+  return supabase.rpc("admin_update_product_v9", {
     p_product_id: productId,
     ...toRpcInput(input),
   });

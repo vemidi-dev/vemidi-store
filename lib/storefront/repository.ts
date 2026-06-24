@@ -149,7 +149,7 @@ async function fetchStorefrontCatalog(): Promise<StorefrontCatalog> {
       supabase
         .from("products")
         .select(
-          "id,slug,product_code,name,subtitle,description,price,image_url,is_customizable,is_sold_out,fulfillment_type,stock_quantity,card_badge,primary_category_id,created_at,updated_at",
+          "id,slug,product_code,name,subtitle,description,price,image_url,is_customizable,is_sold_out,fulfillment_type,stock_quantity,card_badge,primary_category_id,meta_title,meta_description,og_title,og_description,created_at,updated_at",
         )
         .order("created_at", { ascending: false }),
       supabase
@@ -472,7 +472,7 @@ async function loadStorefrontProductDetails(
   const { data, error } = await supabase
     .from("products")
     .select(
-      "id,slug,product_code,name,subtitle,description,additional_info,fulfillment_note,price,image_url,is_customizable,is_sold_out,fulfillment_type,stock_quantity,card_badge",
+      "id,slug,product_code,name,subtitle,description,additional_info,fulfillment_note,price,image_url,is_customizable,is_sold_out,fulfillment_type,stock_quantity,card_badge,meta_title,meta_description,og_title,og_description",
     )
     .eq("id", productId)
     .maybeSingle();

@@ -23,6 +23,10 @@ export const adminFormFields = {
     categoryIds: "category_ids",
     primaryCategoryId: "primary_category_id",
     wishTemplateIds: "wish_template_ids",
+    metaTitle: "meta_title",
+    metaDescription: "meta_description",
+    ogTitle: "og_title",
+    ogDescription: "og_description",
   },
   category: {
     name: "name",

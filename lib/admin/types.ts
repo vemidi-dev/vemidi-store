@@ -145,6 +145,10 @@ export type ProductRow = {
   stock_quantity?: number | null;
   card_badge?: string | null;
   primary_category_id?: string | null;
+  meta_title?: string | null;
+  meta_description?: string | null;
+  og_title?: string | null;
+  og_description?: string | null;
 };
 
 export type ProductImageRow = {

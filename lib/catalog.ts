@@ -9,6 +9,13 @@ export type ProductImage = {
   alt: string;
 };
 
+export type ProductSeoFields = {
+  meta_title?: string | null;
+  meta_description?: string | null;
+  og_title?: string | null;
+  og_description?: string | null;
+};
+
 export type Product = {
   /** Internal UUID primary key — used for cart, checkout, and orders. */
   id: string;
@@ -51,4 +58,4 @@ export type Product = {
   optionGroups?: ProductOptionGroup[];
   personalizationFields?: ProductPersonalizationField[];
   wishTemplates?: WishTemplate[];
-};
+} & ProductSeoFields;

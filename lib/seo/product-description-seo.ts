@@ -71,6 +71,11 @@ export function buildProductMetaDescription(
   product: Product,
   context?: ProductSeoContext,
 ): string | undefined {
+  const fromAdmin = normalizeSeoPlainText(product.meta_description);
+  if (fromAdmin) {
+    return truncateSeoDescription(fromAdmin) || fromAdmin;
+  }
+
   const fromSource = truncateSeoDescription(
     product.description,
     SEO_META_DESCRIPTION_MAX_LENGTH,

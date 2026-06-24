@@ -67,6 +67,10 @@ export type ProductRow = {
   stock_quantity?: number | null;
   card_badge?: string | null;
   primary_category_id?: string | null;
+  meta_title?: string | null;
+  meta_description?: string | null;
+  og_title?: string | null;
+  og_description?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
 };
@@ -113,6 +117,10 @@ export function toProduct(
     compareAtPrice: pricing.compareAtPrice,
     promotion: pricing.promotion,
     cardBadge: normalizeProductCardBadge(row.card_badge),
+    meta_title: row.meta_title ?? null,
+    meta_description: row.meta_description ?? null,
+    og_title: row.og_title ?? null,
+    og_description: row.og_description ?? null,
     customizable: row.is_customizable,
     soldOut: Boolean(row.is_sold_out),
     fulfillmentType: row.fulfillment_type ?? "made_to_order",

@@ -27,6 +27,7 @@ import { ProductColorFieldsEditor } from "@/components/admin/product-color-field
 import { ProductOptionGroupsEditor } from "@/components/admin/product-option-groups-editor";
 import { ProductPersonalizationFieldsEditor } from "@/components/admin/product-personalization-fields-editor";
 import { ProductMerchandisingFields } from "@/components/admin/product-merchandising-fields";
+import { ProductContentSeoFields } from "@/components/admin/product-content-seo-fields";
 import { ProductSeoFields } from "@/components/admin/product-seo-fields";
 import {
   getCategoryDisplayLabel,
@@ -561,6 +562,7 @@ export function ProductListPanel({
                         helperClassName={adminHelperClass}
                         fieldClassName={adminFieldClass}
                       />
+                      <ProductContentSeoFields product={product} />
                     </div>
 
                     <fieldset className="rounded-lg border border-boutique-line/70 bg-boutique-bg p-3 md:col-span-2">

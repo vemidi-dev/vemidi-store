@@ -8,6 +8,7 @@ import { ProductOptionGroupsEditor } from "@/components/admin/product-option-gro
 import { ProductPersonalizationFieldsEditor } from "@/components/admin/product-personalization-fields-editor";
 import { ProductFulfillmentFields } from "@/components/admin/product-fulfillment-fields";
 import { ProductCardBadgeField } from "@/components/admin/product-card-badge-field";
+import { ProductContentSeoFields } from "@/components/admin/product-content-seo-fields";
 import { ProductSeoFields } from "@/components/admin/product-seo-fields";
 import { ProductWishSelector } from "@/components/admin/product-wish-selector";
 import {
@@ -151,6 +152,8 @@ export function ProductCreatePanel({
           initialSlug={draft?.slug ?? ""}
           mode="create"
         />
+
+        <ProductContentSeoFields />
 
         {imageReselectWarning ? (
           <div
