@@ -4,12 +4,14 @@ import { InformationPage, InformationSection } from "@/components/legal/informat
 import { siteConfig } from "@/config/site";
 import { splitLines } from "@/lib/content/format-content";
 import { getSiteContent } from "@/lib/content/site-content";
+import {
+  buildInfoPageMetadataWithHomeHero,
+  PRIVACY_PAGE_METADATA,
+} from "@/lib/seo/info-page-metadata";
 
-export const metadata: Metadata = {
-  title: "Политика за поверителност",
-  description: "Как VeMiDi crafts събира, използва и съхранява лични данни.",
-  alternates: { canonical: "/privacy" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return buildInfoPageMetadataWithHomeHero(PRIVACY_PAGE_METADATA);
+}
 
 export default async function PrivacyPage() {
   const content = await getSiteContent();

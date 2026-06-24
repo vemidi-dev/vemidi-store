@@ -4,12 +4,14 @@ import Link from "next/link";
 import { InformationPage, InformationSection } from "@/components/legal/information-page";
 import { siteConfig } from "@/config/site";
 import { getSiteContent } from "@/lib/content/site-content";
+import {
+  buildInfoPageMetadataWithHomeHero,
+  TERMS_PAGE_METADATA,
+} from "@/lib/seo/info-page-metadata";
 
-export const metadata: Metadata = {
-  title: "Общи условия",
-  description: "Общи условия за поръчки от онлайн магазина VeMiDi crafts.",
-  alternates: { canonical: "/terms" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return buildInfoPageMetadataWithHomeHero(TERMS_PAGE_METADATA);
+}
 
 export default async function TermsPage() {
   const content = await getSiteContent();

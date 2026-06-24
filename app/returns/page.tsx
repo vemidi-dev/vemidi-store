@@ -4,12 +4,14 @@ import Link from "next/link";
 import { InformationPage, InformationSection } from "@/components/legal/information-page";
 import { splitLines } from "@/lib/content/format-content";
 import { getSiteContent } from "@/lib/content/site-content";
+import {
+  buildInfoPageMetadataWithHomeHero,
+  RETURNS_PAGE_METADATA,
+} from "@/lib/seo/info-page-metadata";
 
-export const metadata: Metadata = {
-  title: "Връщане и рекламации",
-  description: "Условия за отказ, връщане и рекламации на продукти от VeMiDi crafts.",
-  alternates: { canonical: "/returns" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return buildInfoPageMetadataWithHomeHero(RETURNS_PAGE_METADATA);
+}
 
 export default async function ReturnsPage() {
   const content = await getSiteContent();

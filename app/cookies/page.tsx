@@ -2,12 +2,14 @@ import type { Metadata } from "next";
 
 import { InformationPage, InformationSection } from "@/components/legal/information-page";
 import { getSiteContent } from "@/lib/content/site-content";
+import {
+  buildInfoPageMetadataWithHomeHero,
+  COOKIES_PAGE_METADATA,
+} from "@/lib/seo/info-page-metadata";
 
-export const metadata: Metadata = {
-  title: "Политика за бисквитки",
-  description: "Информация за техническите механизми и бисквитките в магазина VeMiDi crafts.",
-  alternates: { canonical: "/cookies" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return buildInfoPageMetadataWithHomeHero(COOKIES_PAGE_METADATA);
+}
 
 export default async function CookiesPage() {
   const content = await getSiteContent();

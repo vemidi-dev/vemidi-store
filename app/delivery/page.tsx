@@ -3,12 +3,14 @@ import type { Metadata } from "next";
 import { InformationPage, InformationSection } from "@/components/legal/information-page";
 import { splitLines, splitParagraphs } from "@/lib/content/format-content";
 import { getSiteContent } from "@/lib/content/site-content";
+import {
+  buildInfoPageMetadataWithHomeHero,
+  DELIVERY_PAGE_METADATA,
+} from "@/lib/seo/info-page-metadata";
 
-export const metadata: Metadata = {
-  title: "Доставка и плащане",
-  description: "Куриери, срокове за изработка, доставка и плащане на поръчки от VeMiDi crafts.",
-  alternates: { canonical: "/delivery" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return buildInfoPageMetadataWithHomeHero(DELIVERY_PAGE_METADATA);
+}
 
 export default async function DeliveryPage() {
   const content = await getSiteContent();

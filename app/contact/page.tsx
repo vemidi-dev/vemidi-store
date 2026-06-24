@@ -5,13 +5,14 @@ import { PageContainer } from "@/components/layout/page-container";
 import { SocialLinks } from "@/components/layout/social-links";
 import { siteConfig } from "@/config/site";
 import { getSiteContent } from "@/lib/content/site-content";
+import {
+  buildInfoPageMetadataWithHomeHero,
+  KONTAKTI_PAGE_METADATA,
+} from "@/lib/seo/info-page-metadata";
 
-export const metadata: Metadata = {
-  title: "Контакти",
-  description:
-    "Контакти, социални профили и данни за търговеца VeMiDi crafts.",
-  alternates: { canonical: "/kontakti" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return buildInfoPageMetadataWithHomeHero(KONTAKTI_PAGE_METADATA);
+}
 
 function ContactIcon({
   children,
