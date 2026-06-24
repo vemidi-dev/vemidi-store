@@ -7,8 +7,42 @@ import {
   type ProductPromotionRow,
 } from "@/lib/product-pricing";
 import { resolveCategoryCardImage } from "@/lib/category-image-resolution";
+import type { CategoryRow } from "@/lib/admin/types";
 import type { ShopCategory } from "@/lib/shop-categories";
 import type { StorefrontCategory } from "@/lib/storefront/types";
+
+export type { CategoryRow };
+
+export const CATEGORY_STOREFRONT_SELECT =
+  "id,name,slug,category_type,parent_id,image_url,image_alt,cover_image_url,cover_image_alt,show_on_home,home_sort_order,card_description,is_visible,hero_description,listing_heading,intro_text,seo_body,meta_title,meta_description,og_title,og_description,robots_index,created_at" as const;
+
+export function mapStorefrontCategory(row: CategoryRow & { created_at?: string | null }): StorefrontCategory {
+  return {
+    id: row.id,
+    name: row.name,
+    slug: row.slug,
+    category_type: row.category_type,
+    parent_id: row.parent_id,
+    image_url: row.image_url,
+    image_alt: row.image_alt,
+    cover_image_url: row.cover_image_url,
+    cover_image_alt: row.cover_image_alt,
+    show_on_home: row.show_on_home,
+    is_visible: row.is_visible ?? true,
+    home_sort_order: row.home_sort_order,
+    card_description: row.card_description,
+    hero_description: row.hero_description,
+    listing_heading: row.listing_heading,
+    intro_text: row.intro_text,
+    seo_body: row.seo_body,
+    meta_title: row.meta_title,
+    meta_description: row.meta_description,
+    og_title: row.og_title,
+    og_description: row.og_description,
+    robots_index: row.robots_index,
+    createdAt: row.created_at ?? null,
+  };
+}
 
 export const DEFAULT_PRODUCT_IMAGE =
   "";

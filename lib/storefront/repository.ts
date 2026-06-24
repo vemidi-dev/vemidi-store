@@ -11,10 +11,13 @@ import type {
 import type { ProductPromotionRow } from "@/lib/product-pricing";
 import { mapProductOptionGroups } from "@/lib/storefront/option-groups";
 import {
+  CATEGORY_STOREFRONT_SELECT,
+  mapStorefrontCategory,
   toProduct,
   type ProductImageRow,
   type ProductRow,
 } from "@/lib/storefront/mappers";
+import type { CategoryRow } from "@/lib/admin/types";
 import type {
   StorefrontCatalog,
   StorefrontCategory,
@@ -33,42 +36,6 @@ type ProductCategoryRow = {
   product_id: string;
   category_id: string;
 };
-
-type CategoryRow = {
-  id: string;
-  name: string;
-  slug: string;
-  category_type: "product" | "occasion";
-  parent_id: string | null;
-  image_url: string | null;
-  image_alt: string | null;
-  cover_image_url: string | null;
-  cover_image_alt: string | null;
-  show_on_home: boolean;
-  is_visible?: boolean | null;
-  home_sort_order: number;
-  card_description: string | null;
-  created_at: string | null;
-};
-
-function mapStorefrontCategory(row: CategoryRow): StorefrontCategory {
-  return {
-    id: row.id,
-    name: row.name,
-    slug: row.slug,
-    category_type: row.category_type,
-    parent_id: row.parent_id,
-    image_url: row.image_url ?? null,
-    image_alt: row.image_alt ?? null,
-    cover_image_url: row.cover_image_url ?? null,
-    cover_image_alt: row.cover_image_alt ?? null,
-    show_on_home: row.show_on_home,
-    is_visible: row.is_visible ?? true,
-    home_sort_order: row.home_sort_order,
-    card_description: row.card_description,
-    createdAt: row.created_at ?? null,
-  };
-}
 
 type HomeFeaturedProductRow = {
   product_id: string;
@@ -187,7 +154,7 @@ async function fetchStorefrontCatalog(): Promise<StorefrontCatalog> {
         .order("created_at", { ascending: false }),
       supabase
         .from("categories")
-        .select("id,name,slug,category_type,parent_id,image_url,image_alt,cover_image_url,cover_image_alt,show_on_home,home_sort_order,card_description,is_visible,created_at")
+        .select(CATEGORY_STOREFRONT_SELECT)
         .order("name", { ascending: true }),
       supabase.from("product_categories").select("product_id,category_id"),
       supabase
@@ -322,7 +289,7 @@ async function fetchStorefrontProductSeoContext(
   const { data: directCategories } = await supabase
     .from("categories")
     .select(
-      "id,name,slug,category_type,parent_id,image_url,image_alt,cover_image_url,cover_image_alt,show_on_home,home_sort_order,card_description,is_visible,created_at",
+      CATEGORY_STOREFRONT_SELECT,
     )
     .in("id", categoryIds);
 
@@ -342,7 +309,7 @@ async function fetchStorefrontProductSeoContext(
     const { data: parentCategories } = await supabase
       .from("categories")
       .select(
-        "id,name,slug,category_type,parent_id,image_url,image_alt,cover_image_url,cover_image_alt,show_on_home,home_sort_order,card_description,is_visible,created_at",
+        CATEGORY_STOREFRONT_SELECT,
       )
       .in("id", parentIds);
     parents = ((parentCategories ?? []) as CategoryRow[]).map(
@@ -385,7 +352,7 @@ export async function getStorefrontCategories(
 
   let query = supabase
     .from("categories")
-    .select("id,name,slug,category_type,parent_id,image_url,image_alt,cover_image_url,cover_image_alt,show_on_home,home_sort_order,card_description,is_visible,created_at")
+    .select(CATEGORY_STOREFRONT_SELECT)
     .eq("is_visible", true)
     .order("name", { ascending: true });
 

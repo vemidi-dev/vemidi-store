@@ -170,6 +170,15 @@ export type CategoryRow = {
   is_visible?: boolean;
   home_sort_order: number;
   card_description: string | null;
+  hero_description: string | null;
+  listing_heading: string | null;
+  intro_text: string | null;
+  seo_body: string | null;
+  meta_title: string | null;
+  meta_description: string | null;
+  og_title: string | null;
+  og_description: string | null;
+  robots_index: boolean | null;
 };
 
 export type ProductCategoryRow = {
