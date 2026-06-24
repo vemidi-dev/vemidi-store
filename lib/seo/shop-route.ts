@@ -108,7 +108,11 @@ export function isOnlyOccasionSelector(
   }
 
   const onlyKey = keys[0];
-  if (onlyKey === LEGACY_CATALOG_OCCASION_FILTER_PARAM && parsed.occasion) {
+  if (
+    (onlyKey === LEGACY_CATALOG_OCCASION_FILTER_PARAM ||
+      onlyKey === CATALOG_OCCASION_FILTER_PARAM) &&
+    parsed.occasion
+  ) {
     return true;
   }
 
@@ -145,17 +149,23 @@ export function isOnlyProductCategorySelector(
   const onlyKey = keys[0];
   if (
     onlyKey !== LEGACY_CATALOG_PRODUCT_CATEGORY_FILTER_PARAM &&
+    onlyKey !== CATALOG_PRODUCT_CATEGORY_FILTER_PARAM &&
     onlyKey !== "category"
   ) {
     return false;
   }
 
-  if (onlyKey === LEGACY_CATALOG_PRODUCT_CATEGORY_FILTER_PARAM && !parsed.product) {
+  if (
+    (onlyKey === LEGACY_CATALOG_PRODUCT_CATEGORY_FILTER_PARAM ||
+      onlyKey === CATALOG_PRODUCT_CATEGORY_FILTER_PARAM) &&
+    !parsed.product
+  ) {
     return false;
   }
 
   if (
-    onlyKey === LEGACY_CATALOG_PRODUCT_CATEGORY_FILTER_PARAM &&
+    (onlyKey === LEGACY_CATALOG_PRODUCT_CATEGORY_FILTER_PARAM ||
+      onlyKey === CATALOG_PRODUCT_CATEGORY_FILTER_PARAM) &&
     !isCatalogProductCategoryFilterSlug(parsed.product)
   ) {
     return false;

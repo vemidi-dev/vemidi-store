@@ -6,6 +6,7 @@ import {
   isShopFaceted,
   parseShopSearchParams,
   resolveProductsPageRedirect,
+  resolveShopCategoryRedirect,
   resolveShopOccasionRedirect,
   resolveShopProductCategoryRedirect,
 } from "@/lib/seo/shop-route";
@@ -238,19 +239,120 @@ test("products page bare redirect goes to /producti", () => {
   assert.equal(resolveProductsPageRedirect({}, categories), "/producti");
 });
 
-test("canonical povod filter on shop stays faceted without redirect", () => {
-  const params = { povod: "svatba" };
-  const parsed = parseShopSearchParams(params);
-  assert.equal(resolveShopOccasionRedirect(params, parsed, categories), null);
-  assert.equal(isShopFaceted(params, parsed, categories), true);
-});
+const extendedCategories: StorefrontCategory[] = [
+  ...categories,
+  {
+    id: "cat-3",
+    name: "Пликове за пари",
+    slug: "plikove-za-pari",
+    category_type: "product",
+    parent_id: null,
+    show_on_home: true,
+    home_sort_order: 3,
+    card_description: null,
+    createdAt: null,
+  },
+  {
+    id: "cat-4",
+    name: "Кръщене",
+    slug: "krashtene",
+    category_type: "occasion",
+    parent_id: null,
+    show_on_home: true,
+    home_sort_order: 4,
+    card_description: null,
+    createdAt: null,
+  },
+  {
+    id: "cat-hidden",
+    name: "Скрита категория",
+    slug: "skrita-kategoriya",
+    category_type: "product",
+    parent_id: null,
+    show_on_home: false,
+    is_visible: false,
+    home_sort_order: 99,
+    card_description: null,
+    createdAt: null,
+  },
+];
 
-test("canonical vid filter on shop stays faceted without redirect", () => {
-  const params = { vid: "kutii" };
+test("sole canonical vid redirects to /categorii/{slug}", () => {
+  const params = { vid: "plikove-za-pari" };
   const parsed = parseShopSearchParams(params);
   assert.equal(
-    resolveShopProductCategoryRedirect(params, parsed, categories),
+    resolveShopProductCategoryRedirect(params, parsed, extendedCategories),
+    "/categorii/plikove-za-pari",
+  );
+  assert.equal(isShopFaceted(params, parsed, extendedCategories), false);
+});
+
+test("sole canonical povod redirects to /povodi/{slug}", () => {
+  const params = { povod: "krashtene" };
+  const parsed = parseShopSearchParams(params);
+  assert.equal(
+    resolveShopOccasionRedirect(params, parsed, extendedCategories),
+    "/povodi/krashtene",
+  );
+  assert.equal(isShopFaceted(params, parsed, extendedCategories), false);
+});
+
+test("canonical vid with legacy product alias normalizes to category path", () => {
+  const params = { vid: "plik-za-pari" };
+  const parsed = parseShopSearchParams(params);
+  assert.equal(
+    resolveShopProductCategoryRedirect(params, parsed, extendedCategories),
+    "/categorii/plikove-za-pari",
+  );
+});
+
+test("hidden product category with sole vid does not redirect", () => {
+  const params = { vid: "skrita-kategoriya" };
+  const parsed = parseShopSearchParams(params);
+  assert.equal(
+    resolveShopProductCategoryRedirect(params, parsed, extendedCategories),
     null,
   );
-  assert.equal(isShopFaceted(params, parsed, categories), true);
+  assert.equal(isShopFaceted(params, parsed, extendedCategories), true);
+});
+
+test("nonexistent vid slug does not redirect", () => {
+  const params = { vid: "missing-slug" };
+  const parsed = parseShopSearchParams(params);
+  assert.equal(
+    resolveShopProductCategoryRedirect(params, parsed, extendedCategories),
+    null,
+  );
+  assert.equal(isShopFaceted(params, parsed, extendedCategories), true);
+});
+
+test("vid with extra filter stays faceted without redirect", () => {
+  const params = { vid: "plikove-za-pari", sort: "price-asc" };
+  const parsed = parseShopSearchParams(params);
+  assert.equal(
+    resolveShopProductCategoryRedirect(params, parsed, extendedCategories),
+    null,
+  );
+  assert.equal(isShopFaceted(params, parsed, extendedCategories), true);
+});
+
+test("povod with extra filter stays faceted without redirect", () => {
+  const params = { povod: "krashtene", price: "under-20" };
+  const parsed = parseShopSearchParams(params);
+  assert.equal(resolveShopOccasionRedirect(params, parsed, extendedCategories), null);
+  assert.equal(isShopFaceted(params, parsed, extendedCategories), true);
+});
+
+test("combined vid and povod filters stay faceted without redirect", () => {
+  const params = { vid: "plikove-za-pari", povod: "krashtene" };
+  const parsed = parseShopSearchParams(params);
+  assert.equal(resolveShopCategoryRedirect(params, parsed, extendedCategories), null);
+  assert.equal(isShopFaceted(params, parsed, extendedCategories), true);
+});
+
+test("faceted vid metadata stays noindex with canonical /producti", () => {
+  const params = { vid: "plikove-za-pari", sort: "featured" };
+  const metadata = buildShopMetadata(params, extendedCategories);
+  assert.equal(metadata.alternates?.canonical, "/producti");
+  assert.deepEqual(metadata.robots, { index: false, follow: true });
 });
