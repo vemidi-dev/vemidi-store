@@ -26,6 +26,7 @@ import {
   parseProductFulfillmentFromFormData,
   parseSelectLimit,
 } from "@/lib/admin/form-data";
+import { parseCategoryContentFromFormData } from "@/lib/admin/category-content";
 import { adminFormFields } from "@/lib/admin/form-fields";
 import { normalizeProductCardBadge } from "@/lib/product-card";
 import {
@@ -1249,9 +1250,15 @@ export async function createCategory(formData: FormData) {
     getOptionalString(formData, adminFormFields.category.coverImageAlt)
       ?.trim()
       .slice(0, 160) ?? null;
+  const { payload: categoryContent, error: categoryContentError } =
+    parseCategoryContentFromFormData(formData);
 
   if (!name || !slug || !["product", "occasion"].includes(categoryType)) {
     redirectWith("error", "Попълнете име и slug за категорията.", activeTab);
+  }
+
+  if (categoryContentError) {
+    redirectWith("error", categoryContentError, activeTab);
   }
 
   if (parentId && categoryType !== "product") {
@@ -1334,6 +1341,7 @@ export async function createCategory(formData: FormData) {
       is_visible: isVisible,
       home_sort_order: homeSortOrder,
       card_description: cardDescription,
+      ...categoryContent,
     });
   if (error) {
     if (uploadedCategoryImage) {
@@ -1371,9 +1379,15 @@ export async function updateCategory(formData: FormData) {
     getOptionalString(formData, adminFormFields.category.coverImageAlt)
       ?.trim()
       .slice(0, 160) ?? null;
+  const { payload: categoryContent, error: categoryContentError } =
+    parseCategoryContentFromFormData(formData);
 
   if (!id || !name || !slug || !["product", "occasion"].includes(categoryType)) {
     redirectWith("error", "Невалидни данни за категория.", activeTab);
+  }
+
+  if (categoryContentError) {
+    redirectWith("error", categoryContentError, activeTab);
   }
 
   if (parentId === id) {
@@ -1474,6 +1488,7 @@ export async function updateCategory(formData: FormData) {
       is_visible: isVisible,
       home_sort_order: homeSortOrder,
       card_description: cardDescription,
+      ...categoryContent,
     })
     .eq("id", id);
   if (error) {

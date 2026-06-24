@@ -9,11 +9,13 @@ import {
 } from "@/app/admin/actions";
 import { AdminConfirmForm } from "@/components/admin/admin-confirm-form";
 import { AdminOpenDetailsButton } from "@/components/admin/admin-open-details-button";
+import { CategoryContentSeoFields } from "@/components/admin/category-content-seo-fields";
 import {
   adminFieldClass,
   adminTableHeadClass,
 } from "@/components/admin/styles";
 import { adminFormFields } from "@/lib/admin/form-fields";
+import { hasCategoryContentGap } from "@/lib/admin/category-content";
 import type { CategoryRow } from "@/lib/admin/types";
 
 type CategoryManagementViewProps = {
@@ -150,6 +152,11 @@ export function CategoryManagementView({
                       Скрита
                     </span>
                   ) : null}
+                  {hasCategoryContentGap(category) ? (
+                    <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-800">
+                      Липсва съдържание
+                    </span>
+                  ) : null}
                 </p>
                 <p className="truncate text-xs text-boutique-muted">{category.slug}</p>
                 <p className="text-xs text-boutique-muted">
@@ -203,6 +210,11 @@ export function CategoryManagementView({
                     {category.is_visible === false ? (
                       <span className="ml-2 rounded-full bg-boutique-muted/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-boutique-muted">
                         Скрита
+                      </span>
+                    ) : null}
+                    {hasCategoryContentGap(category) ? (
+                      <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-800">
+                        Липсва съдържание
                       </span>
                     ) : null}
                   </p>
@@ -402,6 +414,9 @@ export function CategoryManagementView({
                     />
                     Показвай на началната страница
                   </label>
+                  <div className="md:col-span-3">
+                    <CategoryContentSeoFields category={category} />
+                  </div>
                   <div className="self-end">
                     <button
                       type="submit"

@@ -90,7 +90,7 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
     supabase.from("products").select("*").order("id", { ascending: false }),
     supabase
       .from("categories")
-      .select("id,name,slug,category_type,parent_id,image_url,image_alt,cover_image_url,cover_image_alt,show_on_home,home_sort_order,card_description,is_visible")
+      .select("id,name,slug,category_type,parent_id,image_url,image_alt,cover_image_url,cover_image_alt,show_on_home,home_sort_order,card_description,is_visible,hero_description,listing_heading,intro_text,seo_body,meta_title,meta_description,og_title,og_description,robots_index")
       .order("category_type", { ascending: true })
       .order("home_sort_order", { ascending: true })
       .order("name", { ascending: true }),

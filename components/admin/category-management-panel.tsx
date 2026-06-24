@@ -1,4 +1,5 @@
 import { createCategory } from "@/app/admin/actions";
+import { CategoryContentSeoFields } from "@/components/admin/category-content-seo-fields";
 import { CategoryManagementView } from "@/components/admin/category-management-view";
 import {
   adminAccordionClass,
@@ -170,6 +171,9 @@ export function CategoryManagementPanel({
               />
               Показвай на началната страница
             </label>
+            <div className="md:col-span-2 xl:col-span-4">
+              <CategoryContentSeoFields />
+            </div>
             <div className="self-end">
               <button
                 type="submit"
