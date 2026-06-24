@@ -6,7 +6,10 @@ import {
   buildCategoryBreadcrumbItems,
   buildOccasionBreadcrumbItems,
 } from "@/lib/seo/breadcrumbs";
-import { buildCategoryMetaDescription } from "@/lib/seo/category-description-seo";
+import {
+  buildCategoryMetaDescription,
+  buildOccasionMetaDescription,
+} from "@/lib/seo/category-description-seo";
 import {
   buildCollectionPageSchema,
   shouldRenderCollectionSchema,
@@ -66,7 +69,7 @@ function buildCategoryCollectionSchema() {
 function buildOccasionCollectionSchema() {
   return buildCollectionPageSchema({
     name: occasion.name,
-    description: occasion.card_description ?? "",
+    description: buildOccasionMetaDescription(occasion),
     canonicalPath: "/povodi/svatba",
     products,
     siteUrl,

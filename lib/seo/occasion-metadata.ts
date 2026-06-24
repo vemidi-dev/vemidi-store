@@ -3,6 +3,13 @@ import type { Metadata } from "next";
 import { resolveCategoryCoverImage } from "@/lib/category-image-resolution";
 import { getOccasionPath } from "@/lib/category-url";
 import { findVisibleOccasionCategoryBySlug } from "@/lib/category-visibility";
+import { buildOccasionMetaDescription } from "@/lib/seo/category-description-seo";
+import {
+  resolveCategoryMetaTitle,
+  resolveCategoryOgDescription,
+  resolveCategoryOgTitle,
+  resolveCategoryPageRobots,
+} from "@/lib/seo/category-page-content";
 import { isOccasionIndexable } from "@/lib/seo/occasion-indexability";
 import type { StorefrontCategory } from "@/lib/storefront/types";
 
@@ -51,29 +58,32 @@ export function buildOccasionPageMetadata({
   faceted = false,
 }: BuildOccasionMetadataInput): Metadata {
   const heroImage = resolveCategoryCoverImage(occasion);
-  const description =
-    occasion.card_description?.trim() ||
-    `Открийте персонализирани подаръци за „${occasion.name}“ от VeMiDi crafts.`;
+  const title = resolveCategoryMetaTitle(occasion);
+  const description = buildOccasionMetaDescription(occasion);
+  const ogTitle = resolveCategoryOgTitle(occasion, title);
+  const ogDescription = resolveCategoryOgDescription(occasion, description);
   const canonicalPath = getOccasionPath(occasion.slug);
   const indexable = isOccasionIndexable(categories, productCategorySlugs, occasion);
 
   return {
-    title: occasion.name,
+    title,
     description,
     alternates: { canonical: canonicalPath },
-    robots: !faceted && indexable
-      ? { index: true, follow: true }
-      : { index: false, follow: true },
+    robots: resolveCategoryPageRobots({
+      faceted,
+      indexable,
+      robotsIndex: occasion.robots_index,
+    }),
     openGraph: {
-      title: occasion.name,
-      description,
+      title: ogTitle,
+      description: ogDescription,
       url: canonicalPath,
       images: heroImage.src ? [heroImage.src] : undefined,
     },
     twitter: {
       card: "summary_large_image",
-      title: occasion.name,
-      description,
+      title: ogTitle,
+      description: ogDescription,
       images: heroImage.src ? [heroImage.src] : undefined,
     },
   };

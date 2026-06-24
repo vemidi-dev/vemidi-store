@@ -3,6 +3,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import CategoryShowcaseCard from "@/components/category/category-showcase-card";
+import {
+  CategoryIntroSection,
+  CategorySeoBodySection,
+} from "@/components/category/category-page-text-blocks";
 import { ContextFilter } from "@/components/catalog/context-filter";
 import { JsonLd } from "@/components/seo/json-ld";
 import { PageContainer } from "@/components/layout/page-container";
@@ -31,6 +35,12 @@ import {
   buildCategoryPageMetadata,
 } from "@/lib/seo/category-metadata";
 import { buildCategoryMetaDescription } from "@/lib/seo/category-description-seo";
+import {
+  resolveCategoryHeroDescription,
+  resolveCategoryIntroText,
+  resolveCategoryListingHeading,
+  resolveCategorySeoBody,
+} from "@/lib/seo/category-page-content";
 import {
   getProductCategorySlugs,
   isProductCategoryIndexable,
@@ -112,9 +122,13 @@ export default async function CategoryPage({
     activeOccasion,
     occasionOptions,
   );
-  const description =
-    category.card_description?.trim() ||
-    `Открийте ръчно изработени предложения в категория „${category.name}“.`;
+  const description = resolveCategoryHeroDescription(
+    category,
+    `Открийте ръчно изработени предложения в категория „${category.name}".`,
+  );
+  const listingHeading = resolveCategoryListingHeading(category);
+  const introText = resolveCategoryIntroText(category);
+  const seoBody = resolveCategorySeoBody(category);
   const heroImage = resolveCategoryCoverImage(category, parent);
   const siteUrl = getSiteUrl();
   const faceted = hasContextFilterParams(query);
@@ -184,6 +198,8 @@ export default async function CategoryPage({
         imageAlt={heroImage.alt}
       />
 
+      {introText ? <CategoryIntroSection text={introText} /> : null}
+
       {children.length > 0 ? (
         <section className="border-b border-boutique-line bg-boutique-paper py-8 md:py-12">
           <PageContainer>
@@ -211,7 +227,7 @@ export default async function CategoryPage({
                 {parent ? parent.name : "Категория"}
               </p>
               <h2 className="mt-2 font-heading text-3xl text-boutique-ink">
-                {category.name}
+                {listingHeading}
               </h2>
             </div>
             <p className="text-sm text-boutique-muted">
@@ -244,6 +260,8 @@ export default async function CategoryPage({
           </ContextFilter>
         </PageContainer>
       </section>
+
+      {seoBody ? <CategorySeoBodySection text={seoBody} /> : null}
     </div>
   );
 }

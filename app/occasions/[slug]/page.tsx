@@ -2,6 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import {
+  CategoryIntroSection,
+  CategorySeoBodySection,
+} from "@/components/category/category-page-text-blocks";
 import { JsonLd } from "@/components/seo/json-ld";
 import { ContextFilter } from "@/components/catalog/context-filter";
 import { PageContainer } from "@/components/layout/page-container";
@@ -19,7 +23,14 @@ import {
   buildOccasionBreadcrumbItems,
 } from "@/lib/seo/breadcrumbs";
 import { OCCASION_INDEX_PATH, getOccasionPath } from "@/lib/category-url";
+import { buildOccasionMetaDescription } from "@/lib/seo/category-description-seo";
 import { getProductCategorySlugs } from "@/lib/seo/category-indexability";
+import {
+  resolveCategoryHeroDescription,
+  resolveCategoryIntroText,
+  resolveCategoryListingHeading,
+  resolveCategorySeoBody,
+} from "@/lib/seo/category-page-content";
 import {
   buildCollectionPageSchema,
   shouldRenderCollectionSchema,
@@ -89,16 +100,17 @@ export default async function OccasionPage({
     categories,
     productOptions,
   );
-  const description =
-    occasion.card_description?.trim() ||
-    `Открийте персонализирани подаръци за „${occasion.name}“.`;
+  const description = resolveCategoryHeroDescription(
+    occasion,
+    `Открийте персонализирани подаръци за „${occasion.name}".`,
+  );
+  const listingHeading = resolveCategoryListingHeading(occasion);
+  const introText = resolveCategoryIntroText(occasion);
+  const seoBody = resolveCategorySeoBody(occasion);
   const heroImage = resolveCategoryCoverImage(occasion);
   const siteUrl = getSiteUrl();
   const faceted = hasContextFilterParams(query);
   const productCategorySlugs = getProductCategorySlugs(products);
-  const occasionDescription =
-    occasion.card_description?.trim() ||
-    `Открийте персонализирани подаръци за „${occasion.name}" от VeMiDi crafts.`;
   const breadcrumbSchema = buildBreadcrumbListSchema(
     buildOccasionBreadcrumbItems(occasion),
     siteUrl,
@@ -118,7 +130,7 @@ export default async function OccasionPage({
       ? [
           buildCollectionPageSchema({
             name: occasion.name,
-            description: occasionDescription,
+            description: buildOccasionMetaDescription(occasion),
             canonicalPath: getOccasionPath(occasion.slug),
             products: collectionProducts,
             siteUrl,
@@ -151,6 +163,8 @@ export default async function OccasionPage({
         imageAlt={heroImage.alt}
       />
 
+      {introText ? <CategoryIntroSection text={introText} /> : null}
+
       <section className="bg-white py-10 md:py-14">
         <PageContainer>
           <div className="flex flex-wrap items-end justify-between gap-3 border-b border-boutique-line pb-5">
@@ -159,7 +173,7 @@ export default async function OccasionPage({
                 По повод
               </p>
               <h2 className="mt-2 font-heading text-3xl text-boutique-ink">
-                {occasion.name}
+                {listingHeading}
               </h2>
             </div>
             <p className="text-sm text-boutique-muted">
@@ -192,6 +206,8 @@ export default async function OccasionPage({
           </ContextFilter>
         </PageContainer>
       </section>
+
+      {seoBody ? <CategorySeoBodySection text={seoBody} /> : null}
     </div>
   );
 }

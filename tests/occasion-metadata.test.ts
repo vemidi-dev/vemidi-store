@@ -39,6 +39,29 @@ test("occasion metadata is indexable when products exist", () => {
   assert.equal(metadata.twitter?.title, "Сватба");
 });
 
+test("occasion metadata uses admin-managed SEO fields", () => {
+  const managedOccasion: StorefrontCategory = {
+    ...occasion,
+    meta_title: "Сватба SEO",
+    meta_description: "Admin описание за повод.",
+    og_title: "OG сватба",
+    og_description: "OG повод описание",
+    robots_index: false,
+  };
+
+  const metadata = buildOccasionPageMetadata({
+    occasion: managedOccasion,
+    categories: [managedOccasion],
+    productCategorySlugs: [["svatba"]],
+  });
+
+  assert.equal(metadata.title, "Сватба SEO");
+  assert.equal(metadata.description, "Admin описание за повод.");
+  assert.equal(metadata.openGraph?.title, "OG сватба");
+  assert.equal(metadata.openGraph?.description, "OG повод описание");
+  assert.deepEqual(metadata.robots, { index: false, follow: true });
+});
+
 test("empty occasion metadata is noindex", () => {
   const metadata = buildOccasionPageMetadata({
     occasion,

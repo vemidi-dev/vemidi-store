@@ -111,6 +111,23 @@ test("empty category metadata is noindex but keeps canonical", () => {
   assert.equal(metadata.twitter?.title, empty.name);
 });
 
+test("category metadata uses admin meta_title when provided", () => {
+  const category = {
+    ...categories[1],
+    meta_title: "Обеци SEO",
+    meta_description: "Ръчно изработени обеци.",
+  };
+  const metadata = buildCategoryPageMetadata({
+    category,
+    categories,
+    productCategorySlugs: [["obetsi"]],
+    parent: categories[0],
+  });
+
+  assert.equal(metadata.title, "Обеци SEO");
+  assert.equal(metadata.description, "Ръчно изработени обеци.");
+});
+
 test("filtered category metadata is noindex with the clean canonical", () => {
   const category = categories[1];
   const metadata = buildCategoryPageMetadata({
