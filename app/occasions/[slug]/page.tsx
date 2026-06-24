@@ -21,9 +21,15 @@ import {
 import { OCCASION_INDEX_PATH, getOccasionPath } from "@/lib/category-url";
 import { getProductCategorySlugs } from "@/lib/seo/category-indexability";
 import {
+  buildCollectionPageSchema,
+  shouldRenderCollectionSchema,
+  toCollectionSchemaProducts,
+} from "@/lib/seo/collection-schema";
+import {
   buildOccasionPageMetadata,
   findOccasionCategory,
 } from "@/lib/seo/occasion-metadata";
+import { isOccasionIndexable } from "@/lib/seo/occasion-indexability";
 import { getStorefrontCatalog } from "@/lib/storefront/repository";
 import { getSiteUrl } from "@/lib/site-url";
 
@@ -87,14 +93,43 @@ export default async function OccasionPage({
     occasion.card_description?.trim() ||
     `Открийте персонализирани подаръци за „${occasion.name}“.`;
   const heroImage = resolveCategoryCoverImage(occasion);
+  const siteUrl = getSiteUrl();
+  const faceted = hasContextFilterParams(query);
+  const productCategorySlugs = getProductCategorySlugs(products);
+  const occasionDescription =
+    occasion.card_description?.trim() ||
+    `Открийте персонализирани подаръци за „${occasion.name}" от VeMiDi crafts.`;
   const breadcrumbSchema = buildBreadcrumbListSchema(
     buildOccasionBreadcrumbItems(occasion),
-    getSiteUrl(),
+    siteUrl,
   );
+  const collectionProducts = toCollectionSchemaProducts(occasionProducts);
+  const structuredData = [
+    breadcrumbSchema,
+    ...(shouldRenderCollectionSchema({
+      indexable: isOccasionIndexable(
+        categories,
+        productCategorySlugs,
+        occasion,
+      ),
+      faceted,
+      products: collectionProducts,
+    })
+      ? [
+          buildCollectionPageSchema({
+            name: occasion.name,
+            description: occasionDescription,
+            canonicalPath: getOccasionPath(occasion.slug),
+            products: collectionProducts,
+            siteUrl,
+          }),
+        ]
+      : []),
+  ];
 
   return (
     <div>
-      <JsonLd data={breadcrumbSchema} />
+      <JsonLd data={structuredData} />
       <VisualPageHero
         eyebrow={
           <>

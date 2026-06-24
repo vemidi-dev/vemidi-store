@@ -30,9 +30,16 @@ import {
 import {
   buildCategoryPageMetadata,
 } from "@/lib/seo/category-metadata";
+import { buildCategoryMetaDescription } from "@/lib/seo/category-description-seo";
 import {
   getProductCategorySlugs,
+  isProductCategoryIndexable,
 } from "@/lib/seo/category-indexability";
+import {
+  buildCollectionPageSchema,
+  shouldRenderCollectionSchema,
+  toCollectionSchemaProducts,
+} from "@/lib/seo/collection-schema";
 import { getSiteUrl } from "@/lib/site-url";
 
 type CategoryPageProps = {
@@ -109,14 +116,40 @@ export default async function CategoryPage({
     category.card_description?.trim() ||
     `Открийте ръчно изработени предложения в категория „${category.name}“.`;
   const heroImage = resolveCategoryCoverImage(category, parent);
+  const siteUrl = getSiteUrl();
+  const faceted = hasContextFilterParams(query);
+  const productCategorySlugs = getProductCategorySlugs(products);
   const breadcrumbSchema = buildBreadcrumbListSchema(
     buildCategoryBreadcrumbItems(categories, category),
-    getSiteUrl(),
+    siteUrl,
   );
+  const collectionProducts = toCollectionSchemaProducts(categoryProducts);
+  const structuredData = [
+    breadcrumbSchema,
+    ...(shouldRenderCollectionSchema({
+      indexable: isProductCategoryIndexable(
+        categories,
+        productCategorySlugs,
+        category,
+      ),
+      faceted,
+      products: collectionProducts,
+    })
+      ? [
+          buildCollectionPageSchema({
+            name: category.name,
+            description: buildCategoryMetaDescription(category),
+            canonicalPath: getCategoryPath(category.slug),
+            products: collectionProducts,
+            siteUrl,
+          }),
+        ]
+      : []),
+  ];
 
   return (
     <div>
-      <JsonLd data={breadcrumbSchema} />
+      <JsonLd data={structuredData} />
       <VisualPageHero
         eyebrow={
           <>
