@@ -22,18 +22,18 @@ const categories: StorefrontCategory[] = [
 ];
 
 test("indexable hub metadata includes page-level Open Graph", () => {
-  const metadata = buildIndexableMetadata("/producti", {
+  const metadata = buildIndexableMetadata("/produkti", {
     title: "Продукти",
     description: "Shop description",
   });
 
-  assert.equal(metadata.openGraph?.url, "/producti");
+  assert.equal(metadata.openGraph?.url, "/produkti");
   assert.equal(metadata.openGraph?.title, "Продукти");
 });
 
 test("bare shop metadata exposes hub Open Graph url", () => {
   const metadata = buildShopMetadata({}, categories);
-  assert.equal(metadata.openGraph?.url, "/producti");
+  assert.equal(metadata.openGraph?.url, "/produkti");
   assert.equal(metadata.openGraph?.title, "Продукти");
   assert.equal(metadata.twitter?.title, "Продукти");
 });

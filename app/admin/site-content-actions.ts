@@ -70,7 +70,7 @@ export async function updateSiteContent(formData: FormData) {
   revalidatePath("/cart");
   revalidatePath("/checkout");
   revalidatePath("/kontakti");
-  revalidatePath("/producti");
+  revalidatePath("/produkti");
   revalidatePath("/categorii");
   revalidatePath("/categorii");
   revalidatePath("/povodi");

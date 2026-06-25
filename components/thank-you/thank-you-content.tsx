@@ -89,7 +89,7 @@ export function ThankYouContent({
           )}
           <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
             <Link
-              href="/producti"
+              href="/produkti"
               className="rounded-full bg-boutique-ink px-8 py-3 text-sm font-semibold text-boutique-paper transition hover:bg-boutique-accent"
             >
               Разгледай още продукти

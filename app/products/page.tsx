@@ -35,7 +35,7 @@ function hasLegacyProductsQuery(
 export default async function ProductsPage({ searchParams }: ProductsPageProps) {
   const params = await searchParams;
 
-  // Bare /products: GET/HEAD -> middleware 308 to /producti. Other methods must not redirect.
+  // Bare /products: GET/HEAD -> middleware 308 to /produkti. Other methods must not redirect.
   if (!hasLegacyProductsQuery(params)) {
     notFound();
   }

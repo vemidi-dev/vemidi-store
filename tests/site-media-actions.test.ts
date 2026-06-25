@@ -53,7 +53,7 @@ test("site media actions revalidate storefront paths and redirect to content tab
   );
 
   assert.match(source, /function revalidateSiteMediaPaths\(\)/);
-  assert.match(source, /revalidatePath\("\/producti"\)/);
+  assert.match(source, /revalidatePath\("\/produkti"\)/);
   assert.match(source, /revalidatePath\("\/thank-you"\)/);
   assert.match(source, /revalidateSiteMediaPaths\(\)/);
   assert.match(source, /const ADMIN_CONTENT_PATH = "\/admin\?tab=content"/);

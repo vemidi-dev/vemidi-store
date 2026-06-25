@@ -127,7 +127,7 @@ test("product breadcrumb without category falls back to shop path", () => {
 
   assert.deepEqual(
     items.map((item) => item.path),
-    ["/", "/producti", "/produkti/personalizirana-kutiya"],
+    ["/", "/produkti", "/produkti/personalizirana-kutiya"],
   );
 });
 

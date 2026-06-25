@@ -234,7 +234,7 @@ export default async function CategoriesPage() {
                 {content["categories.products_cta_text"]}
               </p>
               <Link
-                href="/producti"
+                href="/produkti"
                 className="mt-4 inline-flex rounded-lg bg-boutique-sage-deep px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-boutique-ink"
               >
                 {content["categories.products_cta_button"]} →

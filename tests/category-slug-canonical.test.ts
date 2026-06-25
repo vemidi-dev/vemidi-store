@@ -117,7 +117,7 @@ test("faceted shop URL normalizes legacy product slug without dropping params", 
       params({ product: "plik-za-pari", sort: "featured" }),
     ),
     {
-      pathname: "/producti",
+      pathname: "/produkti",
       search: "vid=plikove-za-pari&sort=featured",
     },
   );

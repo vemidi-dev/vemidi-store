@@ -102,7 +102,7 @@ export default async function AboutPage() {
             {content["about.closing_tagline"]}
           </p>
           <Link
-            href="/producti"
+            href="/produkti"
             className="mt-8 inline-flex rounded-full bg-boutique-ink px-8 py-3 text-sm font-semibold text-boutique-paper transition hover:bg-boutique-accent"
           >
             {content["about.cta_button"]}

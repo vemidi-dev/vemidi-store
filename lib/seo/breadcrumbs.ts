@@ -5,7 +5,7 @@ import {
   getOccasionPath,
 } from "@/lib/category-url";
 import { getChildCategories } from "@/lib/category-hierarchy";
-import { getProductPath } from "@/lib/product-url";
+import { getProductPath, PRODUCT_INDEX_PATH } from "@/lib/product-url";
 import type { StorefrontCategory } from "@/lib/storefront/types";
 
 export type BreadcrumbItem = {
@@ -119,7 +119,7 @@ export function buildProductBreadcrumbItems(
   if (!category) {
     return dedupeBreadcrumbItems([
       buildHomeBreadcrumb(),
-      { name: "Продукти", path: "/producti" },
+      { name: "Продукти", path: PRODUCT_INDEX_PATH },
       { name: product.title, path: getProductPath(product.slug) },
     ]);
   }

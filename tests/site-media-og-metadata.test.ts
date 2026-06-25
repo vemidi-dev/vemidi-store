@@ -71,14 +71,14 @@ test("home.hero uploaded URL takes priority over static fallback", () => {
   assert.deepEqual(twitterImages(metadata), [uploadedUrl]);
 });
 
-test("shop.hero is included in bare /producti metadata only", () => {
+test("shop.hero is included in bare /produkti metadata only", () => {
   const hero = resolveSiteMedia("shop.hero");
   const metadata = buildShopMetadata({}, categories, {
     src: hero.src,
     alt: hero.alt,
   });
 
-  assert.equal(metadata.alternates?.canonical, "/producti");
+  assert.equal(metadata.alternates?.canonical, "/produkti");
   assert.deepEqual(metadata.robots, { index: true, follow: true });
   assert.equal(
     firstOpenGraphImage(metadata)?.url,
@@ -87,14 +87,14 @@ test("shop.hero is included in bare /producti metadata only", () => {
   assert.deepEqual(twitterImages(metadata), [siteMediaDefaults["shop.hero"].src]);
 });
 
-test("faceted /producti stays noindex with canonical /producti and no social images", () => {
+test("faceted /produkti stays noindex with canonical /produkti and no social images", () => {
   const hero = resolveSiteMedia("shop.hero");
   const metadata = buildShopMetadata({ q: "подарък" }, categories, {
     src: hero.src,
     alt: hero.alt,
   });
 
-  assert.equal(metadata.alternates?.canonical, "/producti");
+  assert.equal(metadata.alternates?.canonical, "/produkti");
   assert.deepEqual(metadata.robots, { index: false, follow: true });
   assert.equal(metadata.openGraph?.images, undefined);
   assert.equal(metadata.twitter?.images, undefined);

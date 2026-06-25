@@ -26,7 +26,7 @@ export function CartPanel({ content }: { content: CartPageContent }) {
               {content["cart.empty_text"]}
             </p>
             <Link
-              href="/producti"
+              href="/produkti"
               className="mt-8 inline-flex rounded-full bg-boutique-ink px-8 py-3.5 text-sm font-semibold tracking-wide text-boutique-paper transition hover:bg-boutique-accent"
             >
               {content["cart.empty_button"]}
@@ -52,7 +52,7 @@ export function CartPanel({ content }: { content: CartPageContent }) {
                 </p>
               </div>
               <Link
-                href="/producti"
+                href="/produkti"
                 className="text-xs font-semibold text-boutique-sage-deep underline-offset-4 hover:underline"
               >
                 {content["cart.continue_shopping"]}

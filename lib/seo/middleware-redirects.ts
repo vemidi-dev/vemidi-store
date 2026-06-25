@@ -18,7 +18,7 @@ import {
   getCategoryPath,
   getOccasionPath,
 } from "@/lib/category-url";
-import { getProductPath } from "@/lib/product-url";
+import { getProductPath, PRODUCT_INDEX_PATH } from "@/lib/product-url";
 
 /** Permanent redirect status used for legacy SEO URL cleanup. */
 export const SEO_REDIRECT_STATUS = 308;
@@ -251,7 +251,7 @@ export function resolveSeoRedirectTarget(
       }
 
       if (searchParams.size === 0) {
-        return { pathname: "/producti" };
+        return { pathname: PRODUCT_INDEX_PATH };
       }
       return null;
     }
@@ -270,10 +270,10 @@ export function resolveSeoRedirectTarget(
     if (!single) {
       const normalizedSearch = normalizeCatalogSearchParams(searchParams);
       if (normalizedSearch) {
-        return redirectWithSearch("/producti", normalizedSearch);
+        return redirectWithSearch(PRODUCT_INDEX_PATH, normalizedSearch);
       }
 
-      return redirectWithSearch("/producti", searchParams);
+      return redirectWithSearch(PRODUCT_INDEX_PATH, searchParams);
     }
 
     const catalogFilterRedirect = resolveCatalogFilterPathRedirect(single);
@@ -281,10 +281,10 @@ export function resolveSeoRedirectTarget(
       return catalogFilterRedirect;
     }
 
-    return redirectWithSearch("/producti", searchParams);
+    return redirectWithSearch(PRODUCT_INDEX_PATH, searchParams);
   }
 
-  if (pathname === "/producti") {
+  if (pathname === PRODUCT_INDEX_PATH) {
     const normalizedSearch = normalizeCatalogSearchParams(searchParams);
     if (normalizedSearch) {
       return redirectWithSearch(pathname, normalizedSearch);

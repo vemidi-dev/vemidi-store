@@ -6,6 +6,7 @@ import { ProductCard } from "@/components/product/product-card";
 import { PageContainer } from "@/components/layout/page-container";
 import { VisualPageHero } from "@/components/layout/visual-page-hero";
 import { isProductOnPromotion } from "@/lib/product-pricing";
+import { PRODUCT_INDEX_PATH } from "@/lib/product-url";
 import { getSiteContent } from "@/lib/content/site-content";
 import {
   getSiteMediaMap,
@@ -294,7 +295,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
             Приложи
           </button>
           <Link
-            href="/producti#product-grid"
+            href={`${PRODUCT_INDEX_PATH}#product-grid`}
             className="rounded-lg border border-boutique-line bg-boutique-paper px-4 py-2.5 text-sm font-semibold text-boutique-ink transition duration-200 ease-out hover:-translate-y-1 hover:border-boutique-sage-deep hover:text-boutique-sage-deep hover:shadow-[0_12px_24px_-10px_rgb(44_40_37_/0.14)] active:translate-y-0 active:shadow-sm lg:py-3 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
           >
             Изчисти
@@ -366,7 +367,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
               <form className="relative space-y-5 rounded-xl border border-boutique-line bg-boutique-paper p-5 shadow-boutique-sm transition-shadow duration-300 ease-out hover:shadow-boutique motion-reduce:transition-none">
                 <div className="flex items-center justify-between">
                   <h2 className="font-heading text-xl text-boutique-ink">Филтри</h2>
-                  <Link href="/producti#product-grid" className="text-xs text-boutique-sage-deep hover:underline">
+                  <Link href={`${PRODUCT_INDEX_PATH}#product-grid`} className="text-xs text-boutique-sage-deep hover:underline">
                     Изчисти
                   </Link>
                 </div>

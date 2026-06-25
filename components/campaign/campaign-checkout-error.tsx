@@ -15,7 +15,7 @@ export function CampaignCheckoutError({
       </p>
       <div className="mt-8 flex flex-wrap justify-center gap-3">
         <Link
-          href="/producti"
+          href="/produkti"
           className="rounded-full bg-boutique-ink px-6 py-3 text-sm font-semibold text-boutique-paper transition hover:bg-boutique-accent"
         >
           Към магазина

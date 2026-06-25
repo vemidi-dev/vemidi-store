@@ -38,9 +38,9 @@ const categories: StorefrontCategory[] = [
   },
 ];
 
-test("bare shop is indexable with canonical /producti", () => {
+test("bare shop is indexable with canonical /produkti", () => {
   const metadata = buildShopMetadata({}, categories);
-  assert.equal(metadata.alternates?.canonical, "/producti");
+  assert.equal(metadata.alternates?.canonical, "/produkti");
   assert.deepEqual(metadata.robots, { index: true, follow: true });
 });
 
@@ -64,9 +64,9 @@ test("faceted shop metadata omits social images", () => {
   assert.equal(metadata.openGraph?.images, undefined);
 });
 
-test("shop search query is noindex with canonical /producti", () => {
+test("shop search query is noindex with canonical /produkti", () => {
   const metadata = buildShopMetadata({ q: "подарък" }, categories);
-  assert.equal(metadata.alternates?.canonical, "/producti");
+  assert.equal(metadata.alternates?.canonical, "/produkti");
   assert.deepEqual(metadata.robots, { index: false, follow: true });
 });
 
@@ -79,7 +79,7 @@ test("empty shop query params are noindex", () => {
       true,
       JSON.stringify(params),
     );
-    assert.equal(metadata.alternates?.canonical, "/producti");
+    assert.equal(metadata.alternates?.canonical, "/produkti");
     assert.deepEqual(metadata.robots, { index: false, follow: true });
   }
 });
@@ -235,8 +235,8 @@ test("products page redirects occasion filters to /povodi/{slug}", () => {
   );
 });
 
-test("products page bare redirect goes to /producti", () => {
-  assert.equal(resolveProductsPageRedirect({}, categories), "/producti");
+test("products page bare redirect goes to /produkti", () => {
+  assert.equal(resolveProductsPageRedirect({}, categories), "/produkti");
 });
 
 const extendedCategories: StorefrontCategory[] = [
@@ -350,9 +350,9 @@ test("combined vid and povod filters stay faceted without redirect", () => {
   assert.equal(isShopFaceted(params, parsed, extendedCategories), true);
 });
 
-test("faceted vid metadata stays noindex with canonical /producti", () => {
+test("faceted vid metadata stays noindex with canonical /produkti", () => {
   const params = { vid: "plikove-za-pari", sort: "featured" };
   const metadata = buildShopMetadata(params, extendedCategories);
-  assert.equal(metadata.alternates?.canonical, "/producti");
+  assert.equal(metadata.alternates?.canonical, "/produkti");
   assert.deepEqual(metadata.robots, { index: false, follow: true });
 });

@@ -20,6 +20,7 @@ import {
   buildIndexableMetadata,
 } from "@/lib/seo/faceted-metadata";
 import type { SeoSocialImage } from "@/lib/seo/social-images";
+import { PRODUCT_INDEX_PATH } from "@/lib/product-url";
 import type { StorefrontCategory } from "@/lib/storefront/types";
 
 const SHOP_METADATA_BASE = {
@@ -283,7 +284,7 @@ export function resolveProductsPageRedirect(
     return occasionRedirect;
   }
 
-  return `/producti${buildShopQueryString(parsed)}`;
+  return `${PRODUCT_INDEX_PATH}${buildShopQueryString(parsed)}`;
 }
 
 export function buildShopMetadata(
@@ -300,8 +301,8 @@ export function buildShopMetadata(
   }
 
   if (isShopFaceted(params, parsed, categories)) {
-    return buildFacetedNoindexMetadata("/producti", SHOP_METADATA_BASE);
+    return buildFacetedNoindexMetadata(PRODUCT_INDEX_PATH, SHOP_METADATA_BASE);
   }
 
-  return buildIndexableMetadata("/producti", SHOP_METADATA_BASE, socialImage);
+  return buildIndexableMetadata(PRODUCT_INDEX_PATH, SHOP_METADATA_BASE, socialImage);
 }

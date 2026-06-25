@@ -85,7 +85,7 @@ function isValidSiteMediaKey(key: string): key is SiteMediaKey {
 function revalidateSiteMediaPaths() {
   revalidatePath("/");
   revalidatePath("/za-nas");
-  revalidatePath("/producti");
+  revalidatePath("/produkti");
   revalidatePath("/categorii");
   revalidatePath("/povodi");
   revalidatePath("/blog");

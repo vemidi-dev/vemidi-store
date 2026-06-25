@@ -299,7 +299,7 @@ export default async function ProductDetailPage({
                 </h2>
               </div>
               <Link
-                href="/producti"
+                href="/produkti"
                 className="hidden text-sm font-semibold text-boutique-sage-deep underline-offset-4 hover:underline sm:inline-flex"
               >
                 Виж всички

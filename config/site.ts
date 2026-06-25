@@ -4,7 +4,7 @@ export const siteConfig = {
     "Ръчно изработени и персонализирани подаръци за специални поводи, дома и хората, които обичате.",
   navigation: [
     { href: "/", label: "Начало" },
-    { href: "/producti", label: "Продукти" },
+    { href: "/produkti", label: "Продукти" },
     { href: "/categorii", label: "Категории" },
     { href: "/povodi", label: "По повод" },
     { href: "/sabitiya", label: "Събития" },
@@ -13,7 +13,7 @@ export const siteConfig = {
     { href: "/kontakti", label: "Контакти" },
   ],
   footerLinks: [
-    { href: "/producti", label: "Всички продукти" },
+    { href: "/produkti", label: "Всички продукти" },
     { href: "/categorii", label: "Категории" },
     { href: "/povodi", label: "По повод" },
   ],

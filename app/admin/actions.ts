@@ -102,7 +102,7 @@ async function revalidateProductPaths(
 ) {
   revalidatePath(ADMIN_PATH);
   revalidatePath("/");
-  revalidatePath("/producti");
+  revalidatePath("/produkti");
   revalidatePath("/products");
   revalidatePath("/produkti");
   revalidatePath("/categorii");
@@ -186,7 +186,7 @@ function revalidateCategoryPaths() {
   revalidatePath("/categorii");
   revalidatePath("/povodi");
   revalidatePath("/povodi");
-  revalidatePath("/producti");
+  revalidatePath("/produkti");
   revalidatePath("/categorii/[slug]", "page");
   revalidatePath("/categorii/[slug]", "page");
 }

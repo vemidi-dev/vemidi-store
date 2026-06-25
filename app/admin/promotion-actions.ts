@@ -11,7 +11,7 @@ import { createClient } from "@/lib/supabase/server";
 
 function done(kind: "success" | "error", message: string): never {
   revalidatePath("/admin");
-  revalidatePath("/producti");
+  revalidatePath("/produkti");
   revalidatePath("/products/[slug]", "page");
   revalidatePath("/produkti/[slug]", "page");
   redirect(`/admin?tab=promotions&${kind}=${encodeURIComponent(message)}`);

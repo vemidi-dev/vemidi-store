@@ -108,7 +108,7 @@ export default async function HomePage() {
                 </p>
               </div>
               <Link
-                href="/producti"
+                href="/produkti"
                 className="inline-flex w-fit items-center gap-3 rounded-xl bg-boutique-rose-deep px-6 py-3.5 text-sm font-semibold text-white shadow-boutique-sm transition hover:-translate-y-0.5 hover:bg-boutique-ink hover:shadow-boutique"
               >
                 {content["home.featured_button"]} <span aria-hidden>→</span>

@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { SiteContent } from "@/lib/content/site-content";
 import type { ResolvedSiteMedia } from "@/lib/content/site-media-types";
 import { CATEGORY_INDEX_PATH, OCCASION_INDEX_PATH } from "@/lib/category-url";
+import { PRODUCT_INDEX_PATH } from "@/lib/product-url";
 
 export function HomeHero({
   content,
@@ -24,7 +25,7 @@ export function HomeHero({
       title: content["home.quick_categories"],
     },
     {
-      href: "/producti?personalization=only#product-grid",
+      href: `${PRODUCT_INDEX_PATH}?personalization=only#product-grid`,
       icon: "✎",
       title: content["home.quick_personalized"],
     },
