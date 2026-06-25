@@ -35,6 +35,7 @@ import {
   sortCategoriesForDisplay,
 } from "@/lib/category-hierarchy";
 import { ProductWishSelector } from "@/components/admin/product-wish-selector";
+import { ProductFaqFields } from "@/components/admin/product-faq-fields";
 import {
   adminFieldClass,
   adminHelperClass,
@@ -144,6 +145,10 @@ export function ProductListPanel({
     wishTemplates,
     wishTemplateOccasions,
     wishTemplateIdsByProductId,
+    faqProductGroups,
+    faqItems,
+    faqGroupIdsByProductId,
+    faqItemIdsByProductId,
     featuredProductById,
     relatedProductIdsByProductId,
     optionGroupsByProductId,
@@ -674,6 +679,18 @@ export function ProductListPanel({
                         />
                       </div>
                     </details>
+                    <fieldset className="space-y-3 rounded-lg border border-boutique-line/70 bg-boutique-bg p-3 md:col-span-2">
+                      <legend className="px-1 text-sm font-medium text-boutique-ink">
+                        Въпроси и отговори
+                      </legend>
+                      <ProductFaqFields
+                        productGroups={faqProductGroups}
+                        items={faqItems}
+                        selectedGroupIds={faqGroupIdsByProductId.get(product.id) ?? []}
+                        selectedItemIds={faqItemIdsByProductId.get(product.id) ?? []}
+                        helperClassName={adminHelperClass}
+                      />
+                    </fieldset>
                     <label className="text-sm font-medium text-boutique-ink md:col-span-2">
                       Бележка за доставка/изработка
                       <textarea

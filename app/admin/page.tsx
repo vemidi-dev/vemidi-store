@@ -20,6 +20,7 @@ import { SiteContentManagementPanel } from "@/components/admin/site-content-mana
 import { SiteMediaManagementPanel } from "@/components/admin/site-media-management-panel";
 import { PromotionManagementPanel } from "@/components/admin/promotion-management-panel";
 import { WishManagementPanel } from "@/components/admin/wish-management-panel";
+import { FaqManagementPanel } from "@/components/admin/faq-management-panel";
 import { PageContainer } from "@/components/layout/page-container";
 import { loadAdminData } from "@/lib/admin/data";
 import { buildProductCountByCategoryId } from "@/lib/admin/category-stats";
@@ -119,6 +120,58 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   }
   if (!isAdmin) {
     redirectToAdminLogin("Този профил няма админ права.");
+  }
+
+  if (activeTab === "faq") {
+    const [groupsResult, itemsResult, groupItemsResult] = await Promise.all([
+      supabase
+        .from("faq_groups")
+        .select("id,name,slug,scope,is_active,sort_order,created_at,updated_at")
+        .order("scope", { ascending: true })
+        .order("sort_order", { ascending: true }),
+      supabase
+        .from("faq_items")
+        .select("id,question,answer,is_active,sort_order,created_at,updated_at")
+        .order("sort_order", { ascending: true }),
+      supabase
+        .from("faq_group_items")
+        .select("group_id,faq_item_id,sort_order,created_at")
+        .order("sort_order", { ascending: true }),
+    ]);
+
+    return (
+      <section className="pb-24 pt-10">
+        <PageContainer>
+          <div className="mx-auto max-w-6xl space-y-8">
+            <AdminHeader activeTab={activeTab} />
+            {success || error ? (
+              <div
+                className={`rounded-xl border px-4 py-3 text-sm ${
+                  error
+                    ? "border-red-200 bg-red-50 text-red-700"
+                    : "border-emerald-200 bg-emerald-50 text-emerald-700"
+                }`}
+              >
+                {error || success}
+              </div>
+            ) : null}
+            {groupsResult.error || itemsResult.error || groupItemsResult.error ? (
+              <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                FAQ данните не могат да бъдат заредени. Изпълнете faq_management.sql.
+              </div>
+            ) : (
+              <FaqManagementPanel
+                groups={(groupsResult.data ?? []) as import("@/lib/faq/types").FaqGroupRow[]}
+                items={(itemsResult.data ?? []) as import("@/lib/faq/types").FaqItemRow[]}
+                groupItems={
+                  (groupItemsResult.data ?? []) as import("@/lib/faq/types").FaqGroupItemRow[]
+                }
+              />
+            )}
+          </div>
+        </PageContainer>
+      </section>
+    );
   }
 
   if (activeTab === "wishes") {
@@ -551,6 +604,8 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                 colorOptions={data.colorOptions}
                 wishes={data.wishTemplates}
                 wishOccasionLinks={data.wishTemplateOccasions}
+                faqProductGroups={data.faqProductGroups}
+                faqItems={data.faqItems}
                 draft={draft}
                 imageReselectWarning={imageReselectWarning}
               />

@@ -20,6 +20,12 @@ import type {
 } from "@/lib/admin/types";
 import { isProductLandingPagesMigrationMissing } from "@/lib/product-landing/admin-rpc";
 import type { ProductLandingPageRow } from "@/lib/product-landing/types";
+import type {
+  FaqGroupRow,
+  FaqItemRow,
+  ProductFaqGroupRow,
+  ProductFaqItemRow,
+} from "@/lib/faq/types";
 
 type QueryError = { message: string } | null;
 
@@ -41,6 +47,10 @@ export type AdminData = {
   wishTemplates: WishTemplateRow[];
   wishTemplateOccasions: WishTemplateOccasionRow[];
   wishTemplateIdsByProductId: Map<string, string[]>;
+  faqProductGroups: FaqGroupRow[];
+  faqItems: FaqItemRow[];
+  faqGroupIdsByProductId: Map<string, string[]>;
+  faqItemIdsByProductId: Map<string, string[]>;
   featuredProductById: Map<string, HomeFeaturedProductRow>;
   relatedProductIdsByProductId: Map<string, string[]>;
   landingPages: ProductLandingPageRow[];
@@ -59,6 +69,10 @@ export type AdminData = {
     wishTemplates: QueryError;
     wishTemplateOccasions: QueryError;
     productWishTemplates: QueryError;
+    faqGroups: QueryError;
+    faqItems: QueryError;
+    productFaqGroups: QueryError;
+    productFaqItems: QueryError;
     homeFeaturedProducts: QueryError;
     relatedProducts: QueryError;
     optionGroups: QueryError;
@@ -86,6 +100,10 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
     optionGroupsResult,
     optionValuesResult,
     landingPagesResult,
+    faqGroupsResult,
+    faqItemsResult,
+    productFaqGroupsResult,
+    productFaqItemsResult,
   ] = await Promise.all([
     supabase.from("products").select("*").order("id", { ascending: false }),
     supabase
@@ -156,6 +174,23 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
       .order("is_primary", { ascending: false })
       .order("sort_order", { ascending: true })
       .order("created_at", { ascending: true }),
+    supabase
+      .from("faq_groups")
+      .select("id,name,slug,scope,is_active,sort_order,created_at,updated_at")
+      .eq("scope", "product")
+      .order("sort_order", { ascending: true }),
+    supabase
+      .from("faq_items")
+      .select("id,question,answer,is_active,sort_order,created_at,updated_at")
+      .order("sort_order", { ascending: true }),
+    supabase
+      .from("product_faq_groups")
+      .select("product_id,group_id,sort_order,created_at")
+      .order("sort_order", { ascending: true }),
+    supabase
+      .from("product_faq_items")
+      .select("product_id,faq_item_id,sort_order,created_at")
+      .order("sort_order", { ascending: true }),
   ]);
 
   const products = (productsResult.data ?? []) as ProductRow[];
@@ -185,6 +220,10 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
   const landingPages = landingPagesMigrationMissing
     ? []
     : ((landingPagesResult.data ?? []) as ProductLandingPageRow[]);
+  const faqProductGroups = (faqGroupsResult.data ?? []) as FaqGroupRow[];
+  const faqItems = (faqItemsResult.data ?? []) as FaqItemRow[];
+  const productFaqGroups = (productFaqGroupsResult.data ?? []) as ProductFaqGroupRow[];
+  const productFaqItems = (productFaqItemsResult.data ?? []) as ProductFaqItemRow[];
 
   const categoryById = new Map(categories.map((category) => [category.id, category]));
   const categoryIdsByProductId = new Map<string, string[]>();
@@ -198,6 +237,8 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
     ProductPersonalizationFieldRow[]
   >();
   const wishTemplateIdsByProductId = new Map<string, string[]>();
+  const faqGroupIdsByProductId = new Map<string, string[]>();
+  const faqItemIdsByProductId = new Map<string, string[]>();
   const featuredProductById = new Map(
     homeFeaturedProducts.map((row) => [row.product_id, row]),
   );
@@ -253,6 +294,18 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
     wishTemplateIdsByProductId.set(link.product_id, ids);
   });
 
+  productFaqGroups.forEach((link) => {
+    const ids = faqGroupIdsByProductId.get(link.product_id) ?? [];
+    ids.push(link.group_id);
+    faqGroupIdsByProductId.set(link.product_id, ids);
+  });
+
+  productFaqItems.forEach((link) => {
+    const ids = faqItemIdsByProductId.get(link.product_id) ?? [];
+    ids.push(link.faq_item_id);
+    faqItemIdsByProductId.set(link.product_id, ids);
+  });
+
   relatedProducts.forEach((link) => {
     const ids = relatedProductIdsByProductId.get(link.product_id) ?? [];
     ids.push(link.related_product_id);
@@ -295,6 +348,10 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
     wishTemplates,
     wishTemplateOccasions,
     wishTemplateIdsByProductId,
+    faqProductGroups,
+    faqItems,
+    faqGroupIdsByProductId,
+    faqItemIdsByProductId,
     featuredProductById,
     relatedProductIdsByProductId,
     landingPages,
@@ -313,6 +370,10 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
       wishTemplates: wishTemplatesResult.error,
       wishTemplateOccasions: wishTemplateOccasionsResult.error,
       productWishTemplates: productWishTemplatesResult.error,
+      faqGroups: faqGroupsResult.error,
+      faqItems: faqItemsResult.error,
+      productFaqGroups: productFaqGroupsResult.error,
+      productFaqItems: productFaqItemsResult.error,
       homeFeaturedProducts: homeFeaturedProductsResult.error,
       relatedProducts: relatedProductsResult.error,
       optionGroups: optionGroupsResult.error,

@@ -12,6 +12,7 @@ import { ProductContentSeoFields } from "@/components/admin/product-content-seo-
 import { ProductPageContentFields } from "@/components/admin/product-page-content-fields";
 import { ProductSeoFields } from "@/components/admin/product-seo-fields";
 import { ProductWishSelector } from "@/components/admin/product-wish-selector";
+import { ProductFaqFields } from "@/components/admin/product-faq-fields";
 import {
   adminFieldClass,
   adminHelperClass,
@@ -31,6 +32,7 @@ import type {
   WishTemplateOccasionRow,
   WishTemplateRow,
 } from "@/lib/admin/types";
+import type { FaqGroupRow, FaqItemRow } from "@/lib/faq/types";
 
 type ProductCreatePanelProps = {
   categories: CategoryRow[];
@@ -38,6 +40,8 @@ type ProductCreatePanelProps = {
   colorOptions: ColorOptionRow[];
   wishes: WishTemplateRow[];
   wishOccasionLinks: WishTemplateOccasionRow[];
+  faqProductGroups: FaqGroupRow[];
+  faqItems: FaqItemRow[];
   draft: ProductCreateDraft | null;
   imageReselectWarning?: boolean;
 };
@@ -48,6 +52,8 @@ export function ProductCreatePanel({
   colorOptions,
   wishes,
   wishOccasionLinks,
+  faqProductGroups,
+  faqItems,
   draft,
   imageReselectWarning = false,
 }: ProductCreatePanelProps) {
@@ -240,6 +246,17 @@ export function ProductCreatePanel({
             />
           </div>
         </details>
+
+        <fieldset className="space-y-4 border-t border-boutique-line/70 pt-6">
+          <legend className="text-xs font-semibold uppercase tracking-[0.16em] text-boutique-muted">
+            Въпроси и отговори
+          </legend>
+          <ProductFaqFields
+            productGroups={faqProductGroups}
+            items={faqItems}
+            helperClassName={adminHelperClass}
+          />
+        </fieldset>
 
         <fieldset className="space-y-4 border-t border-boutique-line/70 pt-6">
           <legend className="text-xs font-semibold uppercase tracking-[0.16em] text-boutique-muted">

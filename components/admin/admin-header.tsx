@@ -10,6 +10,7 @@ const managementTabs: Array<{ tab: AdminTab; label: string }> = [
   { tab: "blog", label: "Блог" },
   { tab: "events", label: "Събития" },
   { tab: "wishes", label: "Пожелания" },
+  { tab: "faq", label: "Въпроси и отговори" },
   { tab: "subscribers", label: "Абонаменти" },
   { tab: "content", label: "Текстове" },
 ];

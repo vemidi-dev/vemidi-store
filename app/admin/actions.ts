@@ -26,6 +26,11 @@ import {
   parseProductFulfillmentFromFormData,
   parseSelectLimit,
 } from "@/lib/admin/form-data";
+import {
+  getProductFaqGroupIds,
+  getProductFaqItemIds,
+} from "@/lib/admin/faq-form";
+import { syncProductFaqAssociations, copyProductFaqAssociations } from "@/lib/faq/product-associations";
 import { parseCategoryContentFromFormData } from "@/lib/admin/category-content";
 import { parseProductContentFromFormData } from "@/lib/admin/product-content";
 import { parseProductPageContentFromFormData } from "@/lib/admin/product-page-content";
@@ -511,6 +516,8 @@ export async function createProduct(formData: FormData) {
   const categoryIds = getCategoryIds(formData);
   const primaryCategoryId = getPrimaryCategoryId(formData);
   const wishTemplateIds = getWishTemplateIds(formData);
+  const faqGroupIds = getProductFaqGroupIds(formData);
+  const faqItemIds = getProductFaqItemIds(formData);
   const { fields: colorFields, error: colorFieldsError } = await parseProductColorFields(
     supabase,
     formData,
@@ -610,6 +617,15 @@ export async function createProduct(formData: FormData) {
   }
 
   const newProductId = String(productId);
+  const faqSyncError = await syncProductFaqAssociations(supabase, newProductId, {
+    groupIds: faqGroupIds,
+    itemIds: faqItemIds,
+  });
+  if (faqSyncError) {
+    await revalidateProductPaths(supabase, newProductId);
+    redirectWithProductEdit("error", faqSyncError, newProductId);
+  }
+
   let uploadedImages: UploadedProductImage[] = [];
   if (imageFiles.length > 0) {
     try {
@@ -675,6 +691,8 @@ export async function updateProduct(formData: FormData) {
   const categoryIds = getCategoryIds(formData);
   const primaryCategoryId = getPrimaryCategoryId(formData);
   const wishTemplateIds = getWishTemplateIds(formData);
+  const faqGroupIds = getProductFaqGroupIds(formData);
+  const faqItemIds = getProductFaqItemIds(formData);
   const isCustomizable = isChecked(formData, adminFormFields.product.isCustomizable);
   const isSoldOut = isChecked(formData, adminFormFields.product.isSoldOut);
   const {
@@ -787,6 +805,14 @@ export async function updateProduct(formData: FormData) {
       getProductMutationErrorMessage(mutationError),
       id,
     );
+  }
+
+  const faqSyncError = await syncProductFaqAssociations(supabase, id, {
+    groupIds: faqGroupIds,
+    itemIds: faqItemIds,
+  });
+  if (faqSyncError) {
+    redirectWithProductEdit("error", faqSyncError, id);
   }
 
   let uploadedImages: UploadedProductImage[] = [];
@@ -1073,6 +1099,15 @@ export async function duplicateProduct(formData: FormData) {
   }
 
   const newId = String(newProductId);
+  const faqCopyError = await copyProductFaqAssociations(supabase, sourceId, newId);
+  if (faqCopyError) {
+    redirectWithProductEdit(
+      "error",
+      `Продуктът е дублиран, но FAQ асоциациите не бяха копирани: ${faqCopyError}`,
+      newId,
+    );
+  }
+
   const { data: newProduct } = await supabase
     .from("products")
     .select("name")

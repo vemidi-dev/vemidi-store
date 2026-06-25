@@ -11,7 +11,8 @@ export type AdminTab =
   | "events"
   | "wishes"
   | "subscribers"
-  | "content";
+  | "content"
+  | "faq";
 
 export type SubscriptionTopic = "blog" | "products" | "events";
 
