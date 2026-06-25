@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 
 import { ProductDetailAddToCart } from "@/components/product/product-detail-add-to-cart";
-import { ProductDetailInfoZone } from "@/components/product/product-detail-content-sections";
+import { ProductDetailGalleryAside } from "@/components/product/product-detail-content-sections";
 import { ProductDetailGallery } from "@/components/product/product-detail-gallery";
 import { ProductDetailOccasionTags } from "@/components/product/product-detail-occasion-tags";
 import { ProductLandingPageCta } from "@/components/product/product-landing-page-cta";
@@ -207,11 +207,11 @@ export default async function ProductDetailPage({
           <VisibleBreadcrumbs items={breadcrumbItems} />
 
           <div className="mt-8 flex flex-col gap-8 lg:mt-10 lg:grid lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:items-start lg:gap-x-16 xl:gap-x-20">
-            <div className="min-w-0 lg:col-start-1 lg:row-start-1">
+            <div className="order-1 min-w-0 lg:col-start-1 lg:row-start-1">
               <ProductDetailGallery images={product.images} />
             </div>
 
-            <div className="flex min-w-0 flex-col lg:col-start-2 lg:row-start-1">
+            <div className="order-2 flex min-w-0 flex-col lg:col-start-2 lg:row-start-1 lg:row-span-2">
               <div className="space-y-6">
                 {product.cardBadge ? (
                   <p className="text-[0.7rem] font-semibold uppercase tracking-[0.28em] text-boutique-accent">
@@ -269,17 +269,18 @@ export default async function ProductDetailPage({
 
               <ProductLandingPageCta landingPage={primaryLandingPage} />
             </div>
+
+            <ProductDetailGalleryAside
+              className="order-3 lg:col-start-1 lg:row-start-2"
+              description={product.description}
+              personalizationInfo={product.personalizationInfo}
+              dimensionsMaterials={product.dimensionsMaterials}
+              orderingInfo={product.orderingInfo}
+              additionalInfo={product.additionalInfo}
+            />
           </div>
         </PageContainer>
       </section>
-
-      <ProductDetailInfoZone
-        description={product.description}
-        personalizationInfo={product.personalizationInfo}
-        dimensionsMaterials={product.dimensionsMaterials}
-        orderingInfo={product.orderingInfo}
-        additionalInfo={product.additionalInfo}
-      />
 
       {relatedProducts.length ? (
         <section className="border-b border-boutique-line bg-boutique-bg py-10 md:py-16">

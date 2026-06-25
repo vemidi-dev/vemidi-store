@@ -1,6 +1,5 @@
 import Link from "next/link";
 
-import { PageContainer } from "@/components/layout/page-container";
 import {
   getProductPageContentSections,
   hasProductPageContent,
@@ -11,7 +10,7 @@ import { withPlainTextClass } from "@/lib/plain-text";
 type ProductDetailContentSectionsProps = ProductPageContentInput;
 
 const bodyClassName =
-  "mt-3 text-base leading-8 text-boutique-muted md:text-lg md:leading-[1.8]";
+  "mt-2.5 text-base leading-7 text-boutique-muted md:leading-[1.75]";
 
 export function ProductDetailContentSections(props: ProductDetailContentSectionsProps) {
   const sections = getProductPageContentSections(props);
@@ -20,21 +19,17 @@ export function ProductDetailContentSections(props: ProductDetailContentSections
     return null;
   }
 
-  const useTwoColumns = sections.length >= 3;
-
   return (
-    <div
-      className={
-        useTwoColumns
-          ? "mx-auto grid w-full max-w-5xl gap-8 md:gap-10 lg:grid-cols-2 lg:gap-x-12 lg:gap-y-10"
-          : "mx-auto flex w-full max-w-3xl flex-col gap-8 md:gap-10"
-      }
-    >
-      {sections.map((section) => (
-        <section key={section.id} aria-labelledby={`product-${section.id}-heading`}>
+    <div className="flex w-full flex-col gap-6">
+      {sections.map((section, index) => (
+        <section
+          key={section.id}
+          aria-labelledby={`product-${section.id}-heading`}
+          className={index > 0 ? "border-t border-boutique-line/70 pt-6" : undefined}
+        >
           <h2
             id={`product-${section.id}-heading`}
-            className="font-heading text-2xl text-boutique-ink md:text-[1.75rem]"
+            className="font-heading text-xl leading-snug text-boutique-ink md:text-[1.35rem]"
           >
             {section.heading}
           </h2>
@@ -45,71 +40,71 @@ export function ProductDetailContentSections(props: ProductDetailContentSections
   );
 }
 
-export function ProductDetailFulfillmentInfo({
-  className = "mx-auto mt-10 w-full max-w-5xl lg:mt-12",
-}: {
-  className?: string;
-}) {
+export function ProductDetailFulfillmentInfo() {
   return (
-    <div className={className}>
-      <div className="divide-y divide-boutique-line rounded-2xl border border-boutique-line bg-boutique-bg/70 text-sm shadow-sm md:grid md:grid-cols-3 md:divide-x md:divide-y-0">
-        <div className="px-5 py-4">
-          <p className="font-semibold text-boutique-ink">Изработка</p>
-          <p className="leading-6 text-boutique-muted">
-            1–5 работни дни в зависимост от натоварването. Ако ви е нужен друг срок,
-            <Link
-              href="/kontakti"
-              className="ml-1 font-semibold text-boutique-sage-deep underline-offset-4 hover:underline"
-            >
-              свържете се с нас
-            </Link>
-            .
-          </p>
-        </div>
-        <div className="px-5 py-4">
-          <p className="font-semibold text-boutique-ink">Доставка</p>
-          <p className="leading-6 text-boutique-muted">
-            Еконт или Спиди · наложен платеж.
-            <Link
-              href="/delivery"
-              className="ml-1 font-semibold text-boutique-sage-deep underline-offset-4 hover:underline"
-            >
-              Виж условията
-            </Link>
-          </p>
-        </div>
-        <div className="px-5 py-4">
-          <p className="font-semibold text-boutique-ink">Връщане</p>
-          <p className="leading-6 text-boutique-muted">
-            14 дни за неперсонализирани продукти.
-            <Link
-              href="/returns"
-              className="ml-1 font-semibold text-boutique-sage-deep underline-offset-4 hover:underline"
-            >
-              Условия за връщане
-            </Link>
-          </p>
-        </div>
+    <div className="grid grid-cols-1 gap-5 text-sm sm:grid-cols-3 sm:gap-4">
+      <div className="sm:border-r sm:border-boutique-line/70 sm:pr-4">
+        <p className="font-semibold text-boutique-ink">Изработка</p>
+        <p className="mt-1.5 leading-6 text-boutique-muted">
+          1–5 работни дни в зависимост от натоварването. Ако ви е нужен друг срок,
+          <Link
+            href="/kontakti"
+            className="ml-1 font-semibold text-boutique-sage-deep underline-offset-4 hover:underline"
+          >
+            свържете се с нас
+          </Link>
+          .
+        </p>
+      </div>
+      <div className="border-t border-boutique-line/70 pt-5 sm:border-t-0 sm:pt-0 sm:pr-4">
+        <p className="font-semibold text-boutique-ink">Доставка</p>
+        <p className="mt-1.5 leading-6 text-boutique-muted">
+          Еконт или Спиди · наложен платеж.
+          <Link
+            href="/delivery"
+            className="ml-1 font-semibold text-boutique-sage-deep underline-offset-4 hover:underline"
+          >
+            Виж условията
+          </Link>
+        </p>
+      </div>
+      <div className="border-t border-boutique-line/70 pt-5 sm:border-t-0 sm:pt-0">
+        <p className="font-semibold text-boutique-ink">Връщане</p>
+        <p className="mt-1.5 leading-6 text-boutique-muted">
+          14 дни за неперсонализирани продукти.
+          <Link
+            href="/returns"
+            className="ml-1 font-semibold text-boutique-sage-deep underline-offset-4 hover:underline"
+          >
+            Условия за връщане
+          </Link>
+        </p>
       </div>
     </div>
   );
 }
 
-export function ProductDetailInfoZone(props: ProductDetailContentSectionsProps) {
+export function ProductDetailGalleryAside({
+  className,
+  ...props
+}: ProductDetailContentSectionsProps & { className?: string }) {
   const hasContent = hasProductPageContent(props);
 
   return (
-    <section className="border-t border-boutique-line bg-boutique-bg">
-      <PageContainer className="py-8 md:py-10">
-        {hasContent ? <ProductDetailContentSections {...props} /> : null}
-        <ProductDetailFulfillmentInfo
-          className={
-            hasContent
-              ? "mx-auto mt-10 w-full max-w-5xl lg:mt-12"
-              : "mx-auto w-full max-w-5xl"
-          }
-        />
-      </PageContainer>
-    </section>
+    <aside
+      aria-label="Подробна информация за продукта"
+      className={`mt-6 w-full min-w-0 lg:mt-5${className ? ` ${className}` : ""}`}
+    >
+      {hasContent ? <ProductDetailContentSections {...props} /> : null}
+      <div
+        className={
+          hasContent
+            ? "mt-6 border-t border-boutique-line/70 pt-6"
+            : undefined
+        }
+      >
+        <ProductDetailFulfillmentInfo />
+      </div>
+    </aside>
   );
 }
