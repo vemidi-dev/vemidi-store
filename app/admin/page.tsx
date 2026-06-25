@@ -27,6 +27,7 @@ import { buildProductCountByCategoryId } from "@/lib/admin/category-stats";
 import {
   firstValue,
   normalizeAdminTab,
+  normalizeFaqScopeFilter,
   parseProductCreateDraft,
 } from "@/lib/admin/params";
 import { buildPromotionProductOptions } from "@/lib/promotion-admin";
@@ -123,6 +124,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   }
 
   if (activeTab === "faq") {
+    const initialFaqScope = normalizeFaqScopeFilter(firstValue(params.faq_scope));
     const [groupsResult, itemsResult, groupItemsResult] = await Promise.all([
       supabase
         .from("faq_groups")
@@ -161,6 +163,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               </div>
             ) : (
               <FaqManagementPanel
+                initialScope={initialFaqScope}
                 groups={(groupsResult.data ?? []) as import("@/lib/faq/types").FaqGroupRow[]}
                 items={(itemsResult.data ?? []) as import("@/lib/faq/types").FaqItemRow[]}
                 groupItems={

@@ -32,6 +32,10 @@ export function normalizeAdminTab(value: string): AdminTab {
   return "products";
 }
 
+export function normalizeFaqScopeFilter(value: string): "global" | "product" {
+  return value === "product" ? "product" : "global";
+}
+
 export function makeAdminTabHref(tab: AdminTab) {
   return tab === "products" ? "/admin" : `/admin?tab=${tab}`;
 }

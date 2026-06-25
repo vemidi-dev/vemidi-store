@@ -14,6 +14,8 @@ import {
   updateFaqItem,
 } from "@/app/admin/faq-actions";
 import { AdminConfirmForm } from "@/components/admin/admin-confirm-form";
+import { AdminFormPendingGuard } from "@/components/admin/admin-form-pending-guard";
+import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
 import { AdminSectionAccordion } from "@/components/admin/admin-section-accordion";
 import {
   adminFieldClass,
@@ -32,6 +34,7 @@ import type {
 type FaqScopeFilter = "global" | "product";
 
 type FaqManagementPanelProps = {
+  initialScope?: FaqScopeFilter;
   groups: FaqGroupRow[];
   items: FaqItemRow[];
   groupItems: FaqGroupItemRow[];
@@ -54,11 +57,12 @@ function activeBadge(isActive: boolean) {
 }
 
 export function FaqManagementPanel({
+  initialScope = "global",
   groups,
   items,
   groupItems,
 }: FaqManagementPanelProps) {
-  const [scopeFilter, setScopeFilter] = useState<FaqScopeFilter>("global");
+  const [scopeFilter, setScopeFilter] = useState<FaqScopeFilter>(initialScope);
   const [itemQuery, setItemQuery] = useState("");
 
   const itemById = useMemo(() => new Map(items.map((item) => [item.id, item])), [items]);
@@ -188,10 +192,14 @@ export function FaqManagementPanel({
               Активна група
             </label>
             <div className="md:col-span-2 flex justify-end border-t border-boutique-line/60 pt-3">
-              <button className="rounded-full bg-boutique-ink px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white transition hover:bg-boutique-accent">
+              <AdminSubmitButton
+                pendingLabel="Добавяне…"
+                className="rounded-full bg-boutique-ink px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white transition hover:bg-boutique-accent disabled:cursor-not-allowed disabled:opacity-60"
+              >
                 Добави група
-              </button>
+              </AdminSubmitButton>
             </div>
+            <AdminFormPendingGuard message="Запис на FAQ група…" />
           </form>
         </AdminSectionAccordion>
       </article>
@@ -424,10 +432,14 @@ export function FaqManagementPanel({
               Активен въпрос
             </label>
             <div className="flex justify-end border-t border-boutique-line/60 pt-3">
-              <button className="rounded-full bg-boutique-ink px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white">
+              <AdminSubmitButton
+                pendingLabel="Добавяне…"
+                className="rounded-full bg-boutique-ink px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white disabled:cursor-not-allowed disabled:opacity-60"
+              >
                 Добави въпрос
-              </button>
+              </AdminSubmitButton>
             </div>
+            <AdminFormPendingGuard message="Запис на FAQ въпрос…" />
           </form>
         </AdminSectionAccordion>
 

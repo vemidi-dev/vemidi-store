@@ -5,21 +5,35 @@ import { redirect } from "next/navigation";
 
 import {
   getFaqGroupItemIds,
-  isFaqSlugConflictError,
   parseFaqGroupForm,
   parseFaqItemForm,
 } from "@/lib/admin/faq-form";
+import {
+  getFaqGroupMutationErrorMessage,
+  getFaqItemMutationErrorMessage,
+} from "@/lib/admin/faq-errors";
 import { getString } from "@/lib/admin/form-data";
+import {
+  fetchFaqItemByNormalizedQuestion,
+  linkFaqItemToGroup,
+} from "@/lib/faq/admin-items";
 import { replaceFaqGroupItems } from "@/lib/faq/association-rpc";
 import { adminFormFields } from "@/lib/admin/form-fields";
+import type { FaqGroupScope } from "@/lib/faq/types";
 import { checkIsAdmin } from "@/lib/supabase/admin-auth";
 import { createClient } from "@/lib/supabase/server";
 
-function done(kind: "success" | "error", message: string): never {
+function done(
+  kind: "success" | "error",
+  message: string,
+  scope?: FaqGroupScope,
+): never {
   revalidatePath("/admin");
   revalidatePath("/products/[slug]", "page");
   revalidatePath("/produkti/[slug]", "page");
-  redirect(`/admin?tab=faq&${kind}=${encodeURIComponent(message)}`);
+  const scopeParam =
+    scope === "product" ? "&faq_scope=product" : scope === "global" ? "&faq_scope=global" : "";
+  redirect(`/admin?tab=faq${scopeParam}&${kind}=${encodeURIComponent(message)}`);
 }
 
 async function getAuthorizedClient() {
@@ -94,15 +108,10 @@ export async function createFaqGroup(formData: FormData) {
   });
 
   if (error) {
-    done(
-      "error",
-      isFaqSlugConflictError(error.message)
-        ? "Slug-ът вече се използва от друга FAQ група."
-        : "Групата не беше създадена.",
-    );
+    done("error", getFaqGroupMutationErrorMessage(error, "create"), parsed.scope);
   }
 
-  done("success", "FAQ групата е добавена.");
+  done("success", "FAQ групата е добавена.", parsed.scope);
 }
 
 export async function updateFaqGroup(formData: FormData) {
@@ -127,13 +136,12 @@ export async function updateFaqGroup(formData: FormData) {
   if (error) {
     done(
       "error",
-      isFaqSlugConflictError(error.message)
-        ? "Slug-ът вече се използва от друга FAQ група."
-        : "Групата не беше обновена.",
+      getFaqGroupMutationErrorMessage(error, "update"),
+      parsed.scope,
     );
   }
 
-  done("success", "FAQ групата е обновена.");
+  done("success", "FAQ групата е обновена.", parsed.scope);
 }
 
 export async function createFaqItem(formData: FormData) {
@@ -141,6 +149,24 @@ export async function createFaqItem(formData: FormData) {
   const parsed = parseFaqItemForm(formData);
   if (parsed.error) {
     done("error", parsed.error);
+  }
+
+  const groupId = getId(formData, adminFormFields.faq.groupId);
+  const existing = await fetchFaqItemByNormalizedQuestion(supabase, parsed.question);
+
+  if (existing) {
+    if (groupId) {
+      const linkResult = await linkFaqItemToGroup(supabase, groupId, existing.id);
+      if (linkResult === "already_linked") {
+        done("error", "Въпросът вече е добавен.");
+      }
+      if (linkResult === "error") {
+        done("error", "Съществуващият въпрос не беше добавен към групата.");
+      }
+      done("success", "Съществуващият въпрос е добавен към групата.");
+    }
+
+    done("error", "Въпрос с този текст вече съществува в библиотеката.");
   }
 
   const sortOrder =
@@ -158,17 +184,16 @@ export async function createFaqItem(formData: FormData) {
     .single();
 
   if (error || !data) {
-    done("error", "Въпросът не беше добавен.");
+    done("error", getFaqItemMutationErrorMessage(error));
   }
 
-  const groupId = getId(formData, adminFormFields.faq.groupId);
   if (groupId) {
-    const { error: linkError } = await supabase.from("faq_group_items").insert({
-      group_id: groupId,
-      faq_item_id: data.id,
-      sort_order: sortOrder,
-    });
-    if (linkError) {
+    const linkResult = await linkFaqItemToGroup(supabase, groupId, data.id, sortOrder);
+    if (linkResult === "already_linked") {
+      await supabase.from("faq_items").delete().eq("id", data.id);
+      done("error", "Въпросът вече е добавен.");
+    }
+    if (linkResult === "error") {
       await supabase.from("faq_items").delete().eq("id", data.id);
       done("error", "Въпросът беше създаден, но не беше добавен към групата.");
     }
@@ -259,34 +284,15 @@ export async function addFaqItemToGroup(formData: FormData) {
     done("error", "Изберете група и въпрос.");
   }
 
-  const { data: existing } = await supabase
-    .from("faq_group_items")
-    .select("group_id")
-    .eq("group_id", groupId)
-    .eq("faq_item_id", itemId)
-    .maybeSingle();
-  if (existing) {
-    done("error", "Въпросът вече е в групата.");
+  const linkResult = await linkFaqItemToGroup(supabase, groupId, itemId);
+  if (linkResult === "already_linked") {
+    done("error", "Въпросът вече е добавен.");
+  }
+  if (linkResult === "error") {
+    done("error", "Въпросът не беше добавен към групата.");
   }
 
-  const { data: lastLink } = await supabase
-    .from("faq_group_items")
-    .select("sort_order")
-    .eq("group_id", groupId)
-    .order("sort_order", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  const { error } = await supabase.from("faq_group_items").insert({
-    group_id: groupId,
-    faq_item_id: itemId,
-    sort_order: (Number(lastLink?.sort_order) || 0) + 10,
-  });
-
-  done(
-    error ? "error" : "success",
-    error ? "Въпросът не беше добавен към групата." : "Въпросът е добавен към групата.",
-  );
+  done("success", "Въпросът е добавен към групата.");
 }
 
 export async function removeFaqItemFromGroup(formData: FormData) {
