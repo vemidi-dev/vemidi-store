@@ -137,6 +137,9 @@ export type ProductRow = {
   description: string | null;
   additional_info: string | null;
   fulfillment_note: string | null;
+  personalization_info: string | null;
+  dimensions_materials: string | null;
+  ordering_info: string | null;
   price: number;
   image_url: string | null;
   is_customizable: boolean;
@@ -261,6 +264,9 @@ export type ProductCreateDraft = {
   subtitle: string;
   description: string;
   additionalInfo: string;
+  personalizationInfo: string;
+  dimensionsMaterials: string;
+  orderingInfo: string;
   fulfillmentNote: string;
   price: string;
   isCustomizable: boolean;

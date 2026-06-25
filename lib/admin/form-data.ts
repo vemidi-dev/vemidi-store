@@ -14,6 +14,9 @@ type CreateProductDraftPayload = {
   subtitle: string;
   description: string;
   additional_info: string;
+  personalization_info: string;
+  dimensions_materials: string;
+  ordering_info: string;
   fulfillment_note: string;
   price: string;
   is_customizable: boolean;
@@ -227,6 +230,9 @@ export function makeCreateProductDraft(formData: FormData) {
     subtitle: getString(formData, adminFormFields.product.subtitle),
     description: getString(formData, adminFormFields.product.description),
     additional_info: getString(formData, adminFormFields.product.additionalInfo),
+    personalization_info: getString(formData, adminFormFields.product.personalizationInfo),
+    dimensions_materials: getString(formData, adminFormFields.product.dimensionsMaterials),
+    ordering_info: getString(formData, adminFormFields.product.orderingInfo),
     fulfillment_note: getString(formData, adminFormFields.product.fulfillmentNote),
     price: getString(formData, adminFormFields.product.price),
     is_customizable: isChecked(formData, adminFormFields.product.isCustomizable),

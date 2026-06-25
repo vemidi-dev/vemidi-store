@@ -1,52 +1,46 @@
 import Link from "next/link";
 
 import { PageContainer } from "@/components/layout/page-container";
+import {
+  getProductPageContentSections,
+  hasProductPageContent,
+  type ProductPageContentInput,
+} from "@/lib/product-page-content-sections";
 import { withPlainTextClass } from "@/lib/plain-text";
 
-type ProductDetailContentSectionsProps = {
-  description?: string | null;
-  additionalInfo?: string | null;
-};
+type ProductDetailContentSectionsProps = ProductPageContentInput;
 
 const bodyClassName =
-  "mt-4 text-base leading-8 text-boutique-muted md:text-lg md:leading-[1.8]";
+  "mt-3 text-base leading-8 text-boutique-muted md:text-lg md:leading-[1.8]";
 
-export function ProductDetailContentSections({
-  description,
-  additionalInfo,
-}: ProductDetailContentSectionsProps) {
-  const trimmedDescription = description?.trim() ?? "";
-  const trimmedAdditionalInfo = additionalInfo?.trim() ?? "";
+export function ProductDetailContentSections(props: ProductDetailContentSectionsProps) {
+  const sections = getProductPageContentSections(props);
 
-  if (!trimmedDescription && !trimmedAdditionalInfo) {
+  if (!sections.length) {
     return null;
   }
 
-  return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-10 md:gap-12">
-      {trimmedDescription ? (
-        <section aria-labelledby="product-about-heading">
-          <h2
-            id="product-about-heading"
-            className="font-heading text-2xl text-boutique-ink md:text-3xl"
-          >
-            За продукта
-          </h2>
-          <div className={withPlainTextClass(bodyClassName)}>{trimmedDescription}</div>
-        </section>
-      ) : null}
+  const useTwoColumns = sections.length >= 3;
 
-      {trimmedAdditionalInfo ? (
-        <section aria-labelledby="product-additional-info-heading">
+  return (
+    <div
+      className={
+        useTwoColumns
+          ? "mx-auto grid w-full max-w-5xl gap-8 md:gap-10 lg:grid-cols-2 lg:gap-x-12 lg:gap-y-10"
+          : "mx-auto flex w-full max-w-3xl flex-col gap-8 md:gap-10"
+      }
+    >
+      {sections.map((section) => (
+        <section key={section.id} aria-labelledby={`product-${section.id}-heading`}>
           <h2
-            id="product-additional-info-heading"
-            className="font-heading text-2xl text-boutique-ink md:text-3xl"
+            id={`product-${section.id}-heading`}
+            className="font-heading text-2xl text-boutique-ink md:text-[1.75rem]"
           >
-            Допълнителна информация
+            {section.heading}
           </h2>
-          <div className={withPlainTextClass(bodyClassName)}>{trimmedAdditionalInfo}</div>
+          <div className={withPlainTextClass(bodyClassName)}>{section.content}</div>
         </section>
-      ) : null}
+      ))}
     </div>
   );
 }
@@ -101,22 +95,13 @@ export function ProductDetailFulfillmentInfo({
   );
 }
 
-export function ProductDetailInfoZone({
-  description,
-  additionalInfo,
-}: ProductDetailContentSectionsProps) {
-  const hasContent =
-    Boolean(description?.trim()) || Boolean(additionalInfo?.trim());
+export function ProductDetailInfoZone(props: ProductDetailContentSectionsProps) {
+  const hasContent = hasProductPageContent(props);
 
   return (
     <section className="border-t border-boutique-line bg-boutique-bg">
       <PageContainer className="py-8 md:py-10">
-        {hasContent ? (
-          <ProductDetailContentSections
-            description={description}
-            additionalInfo={additionalInfo}
-          />
-        ) : null}
+        {hasContent ? <ProductDetailContentSections {...props} /> : null}
         <ProductDetailFulfillmentInfo
           className={
             hasContent

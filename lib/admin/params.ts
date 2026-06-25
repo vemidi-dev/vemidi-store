@@ -55,6 +55,9 @@ export function parseProductCreateDraft(raw: string): ProductCreateDraft | null 
       subtitle?: unknown;
       description?: unknown;
       additional_info?: unknown;
+      personalization_info?: unknown;
+      dimensions_materials?: unknown;
+      ordering_info?: unknown;
       fulfillment_note?: unknown;
       price?: unknown;
       is_customizable?: unknown;
@@ -267,6 +270,11 @@ export function parseProductCreateDraft(raw: string): ProductCreateDraft | null 
       subtitle: typeof parsed.subtitle === "string" ? parsed.subtitle : "",
       description: typeof parsed.description === "string" ? parsed.description : "",
       additionalInfo: typeof parsed.additional_info === "string" ? parsed.additional_info : "",
+      personalizationInfo:
+        typeof parsed.personalization_info === "string" ? parsed.personalization_info : "",
+      dimensionsMaterials:
+        typeof parsed.dimensions_materials === "string" ? parsed.dimensions_materials : "",
+      orderingInfo: typeof parsed.ordering_info === "string" ? parsed.ordering_info : "",
       fulfillmentNote:
         typeof parsed.fulfillment_note === "string" ? parsed.fulfillment_note : "",
       price: typeof parsed.price === "string" ? parsed.price : "",

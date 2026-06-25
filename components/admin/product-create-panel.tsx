@@ -9,6 +9,7 @@ import { ProductPersonalizationFieldsEditor } from "@/components/admin/product-p
 import { ProductFulfillmentFields } from "@/components/admin/product-fulfillment-fields";
 import { ProductCardBadgeField } from "@/components/admin/product-card-badge-field";
 import { ProductContentSeoFields } from "@/components/admin/product-content-seo-fields";
+import { ProductPageContentFields } from "@/components/admin/product-page-content-fields";
 import { ProductSeoFields } from "@/components/admin/product-seo-fields";
 import { ProductWishSelector } from "@/components/admin/product-wish-selector";
 import {
@@ -87,20 +88,6 @@ export function ProductCreatePanel({
                 Кратко и ясно име, което ще се вижда в магазина.
               </p>
             </label>
-
-            <label className="text-sm font-medium text-boutique-ink md:col-span-2">
-              Подзаглавие
-              <input
-                name={adminFormFields.product.subtitle}
-                defaultValue={draft?.subtitle ?? ""}
-                className={adminFieldClass}
-                placeholder="Кратко пояснение под името на продукта"
-              />
-              <p className={adminHelperClass}>
-                Незадължително. Показва се като H2 под името в продуктовата страница.
-              </p>
-            </label>
-
             <label className="text-sm font-medium text-boutique-ink">
               Основна цена / цена на най-евтиния вариант (евро)
               <input
@@ -117,35 +104,25 @@ export function ProductCreatePanel({
                 Ако продуктът има варианти, въведете цената на най-евтиния вариант.
               </p>
             </label>
-
-            <label className="text-sm font-medium text-boutique-ink md:col-span-2">
-              Описание
-              <textarea
-                name={adminFormFields.product.description}
-                rows={4}
-                defaultValue={draft?.description ?? ""}
-                className={`${adminFieldClass} resize-y`}
-                placeholder="Опишете материала, повода и идеята на продукта..."
-              />
-              <p className={adminHelperClass}>
-                Този текст се показва в продуктовата страница. Натискайте Enter за нов ред.
-              </p>
-            </label>
-
-            <label className="text-sm font-medium text-boutique-ink md:col-span-2">
-              Допълнителна информация
-              <textarea
-                name={adminFormFields.product.additionalInfo}
-                rows={3}
-                defaultValue={draft?.additionalInfo ?? ""}
-                className={`${adminFieldClass} resize-y`}
-                placeholder="Допълнителни детайли за материала, размери, поддръжка..."
-              />
-              <p className={adminHelperClass}>
-                Показва се под основното описание в продуктовата страница. Натискайте Enter за нов ред.
-              </p>
-            </label>
           </div>
+        </fieldset>
+
+        <fieldset className="space-y-4 border-t border-boutique-line/70 pt-6">
+          <legend className="text-xs font-semibold uppercase tracking-[0.16em] text-boutique-muted">
+            Съдържание на продуктовата страница
+          </legend>
+          <ProductPageContentFields
+            defaults={{
+              subtitle: draft?.subtitle ?? "",
+              description: draft?.description ?? "",
+              additionalInfo: draft?.additionalInfo ?? "",
+              personalization_info: draft?.personalizationInfo ?? "",
+              dimensions_materials: draft?.dimensionsMaterials ?? "",
+              ordering_info: draft?.orderingInfo ?? "",
+            }}
+            fieldClassName={adminFieldClass}
+            helperClassName={adminHelperClass}
+          />
         </fieldset>
 
         <ProductSeoFields

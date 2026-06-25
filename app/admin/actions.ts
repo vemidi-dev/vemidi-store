@@ -28,6 +28,7 @@ import {
 } from "@/lib/admin/form-data";
 import { parseCategoryContentFromFormData } from "@/lib/admin/category-content";
 import { parseProductContentFromFormData } from "@/lib/admin/product-content";
+import { parseProductPageContentFromFormData } from "@/lib/admin/product-page-content";
 import { adminFormFields } from "@/lib/admin/form-fields";
 import { normalizeProductCardBadge } from "@/lib/product-card";
 import {
@@ -487,6 +488,10 @@ export async function createProduct(formData: FormData) {
   const subtitle = getOptionalString(formData, adminFormFields.product.subtitle);
   const description = getString(formData, adminFormFields.product.description);
   const additionalInfo = getOptionalString(formData, adminFormFields.product.additionalInfo);
+  const {
+    payload: pageContent,
+    error: pageContentError,
+  } = parseProductPageContentFromFormData(formData);
   const fulfillmentNote = getOptionalString(formData, adminFormFields.product.fulfillmentNote);
   const isCustomizable = isChecked(formData, adminFormFields.product.isCustomizable);
   const isSoldOut = isChecked(formData, adminFormFields.product.isSoldOut);
@@ -551,6 +556,9 @@ export async function createProduct(formData: FormData) {
   if (productContentError) {
     redirectWith("error", productContentError, activeTab, draft);
   }
+  if (pageContentError) {
+    redirectWith("error", pageContentError, activeTab, draft);
+  }
   if (fulfillmentError) {
     redirectWith("error", fulfillmentError, activeTab, draft);
   }
@@ -569,6 +577,9 @@ export async function createProduct(formData: FormData) {
     subtitle,
     description,
     additionalInfo,
+    personalizationInfo: pageContent.personalizationInfo,
+    dimensionsMaterials: pageContent.dimensionsMaterials,
+    orderingInfo: pageContent.orderingInfo,
     fulfillmentNote,
     price,
     imageUrl: null,
@@ -655,6 +666,10 @@ export async function updateProduct(formData: FormData) {
   const subtitle = getOptionalString(formData, adminFormFields.product.subtitle);
   const description = getString(formData, adminFormFields.product.description);
   const additionalInfo = getOptionalString(formData, adminFormFields.product.additionalInfo);
+  const {
+    payload: pageContent,
+    error: pageContentError,
+  } = parseProductPageContentFromFormData(formData);
   const fulfillmentNote = getOptionalString(formData, adminFormFields.product.fulfillmentNote);
   const existingImageUrl = getString(formData, adminFormFields.product.existingImageUrl) || null;
   const categoryIds = getCategoryIds(formData);
@@ -721,6 +736,9 @@ export async function updateProduct(formData: FormData) {
   if (productContentError) {
     redirectWithProductEdit("error", productContentError, id);
   }
+  if (pageContentError) {
+    redirectWithProductEdit("error", pageContentError, id);
+  }
   if (fulfillmentError) {
     redirectWithProductEdit("error", fulfillmentError, id);
   }
@@ -739,6 +757,9 @@ export async function updateProduct(formData: FormData) {
       subtitle,
       description,
       additionalInfo,
+      personalizationInfo: pageContent.personalizationInfo,
+      dimensionsMaterials: pageContent.dimensionsMaterials,
+      orderingInfo: pageContent.orderingInfo,
       fulfillmentNote,
       price,
       imageUrl: existingImageUrl,

@@ -59,6 +59,9 @@ export type ProductRow = {
   description: string | null;
   additional_info?: string | null;
   fulfillment_note?: string | null;
+  personalization_info?: string | null;
+  dimensions_materials?: string | null;
+  ordering_info?: string | null;
   price: number;
   image_url: string | null;
   is_customizable: boolean;
@@ -112,6 +115,9 @@ export function toProduct(
     subtitle: row.subtitle ?? null,
     description: row.description ?? "",
     additionalInfo: row.additional_info,
+    personalizationInfo: row.personalization_info ?? null,
+    dimensionsMaterials: row.dimensions_materials ?? null,
+    orderingInfo: row.ordering_info ?? null,
     fulfillmentNote: row.fulfillment_note,
     price: pricing.price,
     compareAtPrice: pricing.compareAtPrice,

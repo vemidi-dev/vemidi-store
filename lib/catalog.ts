@@ -27,6 +27,9 @@ export type Product = {
   subtitle?: string | null;
   description: string;
   additionalInfo?: string | null;
+  personalizationInfo?: string | null;
+  dimensionsMaterials?: string | null;
+  orderingInfo?: string | null;
   fulfillmentNote?: string | null;
   /** Current effective price in EUR. */
   price: number;

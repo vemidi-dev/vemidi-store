@@ -13,6 +13,9 @@ export type ProductMutationInput = {
   subtitle: string | null;
   description: string;
   additionalInfo: string | null;
+  personalizationInfo: string | null;
+  dimensionsMaterials: string | null;
+  orderingInfo: string | null;
   fulfillmentNote: string | null;
   price: number;
   imageUrl: string | null;
@@ -84,6 +87,9 @@ function toRpcInput(input: ProductMutationInput) {
     p_description: input.description,
     p_additional_info: input.additionalInfo ?? "",
     p_fulfillment_note: input.fulfillmentNote ?? "",
+    p_personalization_info: input.personalizationInfo,
+    p_dimensions_materials: input.dimensionsMaterials,
+    p_ordering_info: input.orderingInfo,
     p_price: input.price,
     p_image_url: input.imageUrl ?? "",
     p_is_customizable: input.isCustomizable,
@@ -114,11 +120,15 @@ function toRpcInput(input: ProductMutationInput) {
   };
 }
 
+export function buildProductMutationRpcPayload(input: ProductMutationInput) {
+  return toRpcInput(input);
+}
+
 export async function createProductAtomic(
   supabase: SupabaseClient,
   input: ProductMutationInput,
 ) {
-  return supabase.rpc("admin_create_product_v9", toRpcInput(input));
+  return supabase.rpc("admin_create_product_v10", toRpcInput(input));
 }
 
 export async function updateProductAtomic(
@@ -126,7 +136,7 @@ export async function updateProductAtomic(
   productId: string,
   input: ProductMutationInput,
 ) {
-  return supabase.rpc("admin_update_product_v9", {
+  return supabase.rpc("admin_update_product_v10", {
     p_product_id: productId,
     ...toRpcInput(input),
   });

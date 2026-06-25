@@ -275,6 +275,9 @@ export default async function ProductDetailPage({
 
       <ProductDetailInfoZone
         description={product.description}
+        personalizationInfo={product.personalizationInfo}
+        dimensionsMaterials={product.dimensionsMaterials}
+        orderingInfo={product.orderingInfo}
         additionalInfo={product.additionalInfo}
       />
 

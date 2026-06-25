@@ -28,6 +28,7 @@ import { ProductOptionGroupsEditor } from "@/components/admin/product-option-gro
 import { ProductPersonalizationFieldsEditor } from "@/components/admin/product-personalization-fields-editor";
 import { ProductMerchandisingFields } from "@/components/admin/product-merchandising-fields";
 import { ProductContentSeoFields } from "@/components/admin/product-content-seo-fields";
+import { ProductPageContentFields } from "@/components/admin/product-page-content-fields";
 import { ProductSeoFields } from "@/components/admin/product-seo-fields";
 import {
   getCategoryDisplayLabel,
@@ -525,34 +526,25 @@ export function ProductListPanel({
                         className={adminFieldClass}
                       />
                     </label>
-                    <label className="text-sm font-medium text-boutique-ink md:col-span-2">
-                      Подзаглавие
-                      <input
-                        name={adminFormFields.product.subtitle}
-                        defaultValue={product.subtitle ?? ""}
-                        className={adminFieldClass}
-                      />
-                    </label>
-                    <label className="text-sm font-medium text-boutique-ink md:col-span-2">
-                      Описание
-                      <textarea
-                        name={adminFormFields.product.description}
-                        rows={3}
-                        defaultValue={product.description ?? ""}
-                        className={`${adminFieldClass} resize-y`}
-                      />
-                      <p className={adminHelperClass}>Натискайте Enter за нов ред в продуктовата страница.</p>
-                    </label>
-                    <label className="text-sm font-medium text-boutique-ink md:col-span-2">
-                      Допълнителна информация
-                      <textarea
-                        name={adminFormFields.product.additionalInfo}
-                        rows={3}
-                        defaultValue={product.additional_info ?? ""}
-                        className={`${adminFieldClass} resize-y`}
-                      />
-                      <p className={adminHelperClass}>Натискайте Enter за нов ред под основното описание.</p>
-                    </label>
+                    <div className="md:col-span-2">
+                      <fieldset className="space-y-4 rounded-lg border border-boutique-line/70 bg-boutique-bg/40 p-4">
+                        <legend className="px-1 text-xs font-semibold uppercase tracking-[0.16em] text-boutique-muted">
+                          Съдържание на продуктовата страница
+                        </legend>
+                        <ProductPageContentFields
+                          defaults={{
+                            subtitle: product.subtitle ?? "",
+                            description: product.description ?? "",
+                            additionalInfo: product.additional_info ?? "",
+                            personalization_info: product.personalization_info ?? "",
+                            dimensions_materials: product.dimensions_materials ?? "",
+                            ordering_info: product.ordering_info ?? "",
+                          }}
+                          fieldClassName={adminFieldClass}
+                          helperClassName={adminHelperClass}
+                        />
+                      </fieldset>
+                    </div>
 
                     <div className="md:col-span-2">
                       <ProductSeoFields
