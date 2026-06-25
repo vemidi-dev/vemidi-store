@@ -3,7 +3,9 @@ import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 
 import { ProductDetailAddToCart } from "@/components/product/product-detail-add-to-cart";
+import { ProductDetailInfoZone } from "@/components/product/product-detail-content-sections";
 import { ProductDetailGallery } from "@/components/product/product-detail-gallery";
+import { ProductDetailOccasionTags } from "@/components/product/product-detail-occasion-tags";
 import { ProductLandingPageCta } from "@/components/product/product-landing-page-cta";
 import { PageContainer } from "@/components/layout/page-container";
 import { ProductPrice } from "@/components/product/product-price";
@@ -12,6 +14,7 @@ import { JsonLd } from "@/components/seo/json-ld";
 import { VisibleBreadcrumbs } from "@/components/seo/visible-breadcrumbs";
 import { isProductOnPromotion } from "@/lib/product-pricing";
 import { getCategoryPath } from "@/lib/category-url";
+import { filterStorefrontVisibleCategories } from "@/lib/category-visibility";
 import {
   getStorefrontCatalog,
   getStorefrontProductPage,
@@ -35,7 +38,6 @@ import { buildBreadcrumbListSchema } from "@/lib/seo/breadcrumbs";
 import { buildProductSchemaDescription } from "@/lib/seo/product-description-seo";
 import { resolveProductPageSeo } from "@/lib/seo/product-page-seo";
 import { buildProductPageMetadata } from "@/lib/seo/product-metadata";
-import { withPlainTextClass } from "@/lib/plain-text";
 
 type ProductPageProps = {
   params: Promise<{ slug: string }>;
@@ -138,6 +140,7 @@ export default async function ProductDetailPage({
     primaryCategory,
     breadcrumbItems,
     seoContext: productSeoContext,
+    categorySlugs: productCategorySlugsFromCatalog,
   } = resolveProductPageSeo(catalog, product);
   const productCategorySlugs = getProductCategorySlugs(catalog.products);
   const showCategoryLink =
@@ -147,6 +150,14 @@ export default async function ProductDetailPage({
       productCategorySlugs,
       primaryCategory,
     );
+  const productOccasionSlugs = new Set(productCategorySlugsFromCatalog);
+  const productOccasions = filterStorefrontVisibleCategories(catalog.categories)
+    .filter(
+      (category) =>
+        category.category_type === "occasion" &&
+        productOccasionSlugs.has(category.slug),
+    )
+    .sort((left, right) => left.name.localeCompare(right.name, "bg"));
   const schemaDescription = buildProductSchemaDescription(
     product,
     productSeoContext,
@@ -209,15 +220,19 @@ export default async function ProductDetailPage({
                   </p>
                 ) : null}
 
-                <h1 className="font-heading text-4xl leading-[1.12] tracking-tight text-boutique-ink sm:text-5xl lg:text-[2.75rem]">
-                  {product.title}
-                </h1>
+                <div>
+                  <h1 className="font-heading text-4xl leading-[1.12] tracking-tight text-boutique-ink sm:text-5xl lg:text-[2.75rem]">
+                    {product.title}
+                  </h1>
 
-                {product.subtitle ? (
-                  <h2 className="max-w-xl font-heading text-2xl leading-snug text-boutique-muted sm:text-3xl">
-                    {product.subtitle}
-                  </h2>
-                ) : null}
+                  {product.subtitle ? (
+                    <p className="mt-4 max-w-xl text-base leading-relaxed text-boutique-muted md:text-lg md:leading-8">
+                      {product.subtitle}
+                    </p>
+                  ) : null}
+                </div>
+
+                <ProductDetailOccasionTags occasions={productOccasions} />
 
                 <div className="flex flex-wrap items-center gap-3">
                   <ProductPrice product={product} size="lg" />
@@ -235,25 +250,6 @@ export default async function ProductDetailPage({
                   ) : null}
                 </div>
               </div>
-
-              {product.description ? (
-                <p
-                  className={withPlainTextClass(
-                    "mt-7 max-w-xl text-base leading-[1.75] text-boutique-muted md:text-lg md:leading-[1.8]",
-                  )}
-                >
-                  {product.description}
-                </p>
-              ) : null}
-              {product.additionalInfo ? (
-                <p
-                  className={withPlainTextClass(
-                    "mt-4 max-w-xl text-base leading-[1.75] text-boutique-muted md:text-lg md:leading-[1.8]",
-                  )}
-                >
-                  {product.additionalInfo}
-                </p>
-              ) : null}
 
               {showCategoryLink ? (
                 <Link
@@ -280,50 +276,13 @@ export default async function ProductDetailPage({
               />
             </div>
           </div>
-
-          <div className="mx-auto mt-10 w-full max-w-5xl lg:mt-14">
-            <div className="mt-6 divide-y divide-boutique-line rounded-2xl border border-boutique-line bg-boutique-bg/70 text-sm shadow-sm md:grid md:grid-cols-3 md:divide-x md:divide-y-0">
-              <div className="px-5 py-4">
-                <p className="font-semibold text-boutique-ink">Изработка</p>
-                <p className="leading-6 text-boutique-muted">
-                  1–5 работни дни в зависимост от натоварването. Ако ви е нужен друг срок,
-                  <Link
-                    href="/kontakti"
-                    className="ml-1 font-semibold text-boutique-sage-deep underline-offset-4 hover:underline"
-                  >
-                    свържете се с нас
-                  </Link>
-                  .
-                </p>
-              </div>
-              <div className="px-5 py-4">
-                <p className="font-semibold text-boutique-ink">Доставка</p>
-                <p className="leading-6 text-boutique-muted">
-                  Еконт или Спиди · наложен платеж.
-                  <Link
-                    href="/delivery"
-                    className="ml-1 font-semibold text-boutique-sage-deep underline-offset-4 hover:underline"
-                  >
-                    Виж условията
-                  </Link>
-                </p>
-              </div>
-              <div className="px-5 py-4">
-                <p className="font-semibold text-boutique-ink">Връщане</p>
-                <p className="leading-6 text-boutique-muted">
-                  14 дни за неперсонализирани продукти.
-                  <Link
-                    href="/returns"
-                    className="ml-1 font-semibold text-boutique-sage-deep underline-offset-4 hover:underline"
-                  >
-                    Условия за връщане
-                  </Link>
-                </p>
-              </div>
-            </div>
-          </div>
         </PageContainer>
       </section>
+
+      <ProductDetailInfoZone
+        description={product.description}
+        additionalInfo={product.additionalInfo}
+      />
 
       {relatedProducts.length ? (
         <section className="border-b border-boutique-line bg-boutique-bg py-10 md:py-16">
