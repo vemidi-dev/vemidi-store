@@ -18,6 +18,7 @@ import {
   linkFaqItemToGroup,
 } from "@/lib/faq/admin-items";
 import { replaceFaqGroupItems } from "@/lib/faq/association-rpc";
+import { revalidateGlobalFaqPaths } from "@/lib/faq/revalidate";
 import { adminFormFields } from "@/lib/admin/form-fields";
 import type { FaqGroupScope } from "@/lib/faq/types";
 import { checkIsAdmin } from "@/lib/supabase/admin-auth";
@@ -29,8 +30,7 @@ function done(
   scope?: FaqGroupScope,
 ): never {
   revalidatePath("/admin");
-  revalidatePath("/products/[slug]", "page");
-  revalidatePath("/produkti/[slug]", "page");
+  revalidateGlobalFaqPaths();
   const scopeParam =
     scope === "product" ? "&faq_scope=product" : scope === "global" ? "&faq_scope=global" : "";
   redirect(`/admin?tab=faq${scopeParam}&${kind}=${encodeURIComponent(message)}`);

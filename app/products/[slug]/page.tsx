@@ -21,6 +21,7 @@ import {
   getStorefrontProductSeoContext,
 } from "@/lib/storefront/repository";
 import { getPrimaryActiveProductLandingPage } from "@/lib/product-landing/repository";
+import { getProductFaqItems } from "@/lib/faq/repository";
 import { createClient } from "@/lib/supabase/server";
 import { getSiteUrl } from "@/lib/site-url";
 import { buildCampaignAttribution } from "@/lib/campaign-attribution";
@@ -94,9 +95,10 @@ export default async function ProductDetailPage({
 
   const product = resolution.product;
   const supabase = await createClient();
-  const primaryLandingPage = supabase
-    ? await getPrimaryActiveProductLandingPage(supabase, product.id)
-    : null;
+  const [primaryLandingPage, productFaqItems] = await Promise.all([
+    supabase ? getPrimaryActiveProductLandingPage(supabase, product.id) : null,
+    getProductFaqItems(product.id, supabase),
+  ]);
   const attribution = buildCampaignAttribution({
     campaign: Array.isArray(query.campaign) ? query.campaign[0] : query.campaign,
     source: Array.isArray(query.source) ? query.source[0] : query.source,
@@ -277,6 +279,8 @@ export default async function ProductDetailPage({
               dimensionsMaterials={product.dimensionsMaterials}
               orderingInfo={product.orderingInfo}
               additionalInfo={product.additionalInfo}
+              faqIdPrefix={`product-faq-${product.id}`}
+              faqItems={productFaqItems}
             />
           </div>
         </PageContainer>

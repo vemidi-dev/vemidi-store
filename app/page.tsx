@@ -8,6 +8,7 @@ import { HomeAtelier, HomeBenefits, HomeProcess } from "@/components/home/home-s
 import { PageContainer } from "@/components/layout/page-container";
 import { getPublishedBlogPosts, getPublishedEvents } from "@/lib/content/repository";
 import { getSiteContent } from "@/lib/content/site-content";
+import { getGlobalFaqItems } from "@/lib/faq/repository";
 import {
   getSiteMediaMap,
   resolveSiteMediaFromMap,
@@ -26,12 +27,13 @@ export async function generateMetadata() {
 }
 
 export default async function HomePage() {
-  const [{ categories, products, featuredProductIds }, blogPosts, events, content, siteMediaMap] = await Promise.all([
+  const [{ categories, products, featuredProductIds }, blogPosts, events, content, siteMediaMap, globalFaqItems] = await Promise.all([
     getStorefrontCatalog(),
     getPublishedBlogPosts(),
     getPublishedEvents(),
     getSiteContent(),
     getSiteMediaMap(),
+    getGlobalFaqItems(),
   ]);
   const heroImage = resolveSiteMediaFromMap(siteMediaMap, "home.hero");
   const atelierImage = resolveSiteMediaFromMap(siteMediaMap, "home.atelier");
@@ -189,9 +191,10 @@ export default async function HomePage() {
       <HomeProcess content={content} />
       <HomeAtelier content={content} atelierImage={atelierImage} />
       <HomeContentGrid
+        faqItems={globalFaqItems}
+        pastEvents={pastEvents}
         posts={latestPosts}
         upcomingEvents={upcomingEvents}
-        pastEvents={pastEvents}
       />
     </div>
   );

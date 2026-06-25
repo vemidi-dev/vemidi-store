@@ -1,13 +1,21 @@
 import Link from "next/link";
 
+import { FaqSection } from "@/components/faq/faq-section";
 import {
   getProductPageContentSections,
   hasProductPageContent,
   type ProductPageContentInput,
 } from "@/lib/product-page-content-sections";
 import { withPlainTextClass } from "@/lib/plain-text";
+import type { FaqItem } from "@/lib/faq/types";
 
 type ProductDetailContentSectionsProps = ProductPageContentInput;
+
+type ProductDetailGalleryAsideProps = ProductDetailContentSectionsProps & {
+  className?: string;
+  faqItems?: FaqItem[];
+  faqIdPrefix?: string;
+};
 
 const bodyClassName =
   "mt-2.5 text-base leading-7 text-boutique-muted md:leading-[1.75]";
@@ -86,9 +94,12 @@ export function ProductDetailFulfillmentInfo() {
 
 export function ProductDetailGalleryAside({
   className,
+  faqItems = [],
+  faqIdPrefix,
   ...props
-}: ProductDetailContentSectionsProps & { className?: string }) {
+}: ProductDetailGalleryAsideProps) {
   const hasContent = hasProductPageContent(props);
+  const hasFaq = faqItems.length > 0;
 
   return (
     <aside
@@ -105,6 +116,13 @@ export function ProductDetailGalleryAside({
       >
         <ProductDetailFulfillmentInfo />
       </div>
+      {hasFaq ? (
+        <FaqSection
+          idPrefix={faqIdPrefix}
+          items={faqItems}
+          variant="product"
+        />
+      ) : null}
     </aside>
   );
 }

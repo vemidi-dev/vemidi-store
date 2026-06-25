@@ -1,9 +1,11 @@
 import Link from "next/link";
 
+import { FaqSection } from "@/components/faq/faq-section";
 import { ContentImage } from "@/components/content/content-image";
 import { NewsletterForm } from "@/components/content/newsletter-form";
 import { PageContainer } from "@/components/layout/page-container";
 import type { BlogPostRow, EventRow } from "@/lib/admin/types";
+import type { FaqItem } from "@/lib/faq/types";
 import { formatEur } from "@/lib/format-eur";
 
 function formatDate(value: string | null, includeTime = false) {
@@ -97,10 +99,12 @@ export function HomeContentGrid({
   posts,
   upcomingEvents,
   pastEvents,
+  faqItems = [],
 }: {
   posts: BlogPostRow[];
   upcomingEvents: EventRow[];
   pastEvents: EventRow[];
+  faqItems?: FaqItem[];
 }) {
   return (
     <>
@@ -191,6 +195,7 @@ export function HomeContentGrid({
           </div>
         </PageContainer>
       </section>
+      <FaqSection idPrefix="home-faq" items={faqItems} variant="home" />
       <NewsletterForm variant="horizontal" defaultTopic="products" />
     </>
   );
