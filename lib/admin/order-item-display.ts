@@ -31,7 +31,7 @@ export function buildStoreOrderItemDetailLines(
     }
   } else if (item.personalization?.trim()) {
     lines.push({
-      text: `╨Я╨╡╤А╤Б╨╛╨╜╨░╨╗╨╕╨╖╨░╤Ж╨╕╤П: ${item.personalization.trim()}`,
+      text: `Персонализация: ${item.personalization.trim()}`,
     });
   }
 
@@ -50,9 +50,9 @@ export function buildStoreOrderItemDetailLines(
 
     if (usesQuantities) {
       lines.push({
-        text: `${colors[0]?.fieldLabel || "╨ж╨▓╤П╤В"}: ${formatSelectedColorsQuantitySummary(
+        text: `${colors[0]?.fieldLabel || "Цвят"}: ${formatSelectedColorsQuantitySummary(
           colors.map((color) => ({
-            optionName: color.optionName || "тАФ",
+            optionName: color.optionName || "—",
             quantity: color.quantity,
           })),
         )}`,
@@ -62,8 +62,8 @@ export function buildStoreOrderItemDetailLines(
 
     for (const color of colors) {
       lines.push({
-        text: `${color.fieldLabel || "╨ж╨▓╤П╤В"}: ${formatSelectedColorQuantityLabel({
-          optionName: color.optionName || "тАФ",
+        text: `${color.fieldLabel || "Цвят"}: ${formatSelectedColorQuantityLabel({
+          optionName: color.optionName || "—",
           quantity: color.quantity,
         })}`,
       });
