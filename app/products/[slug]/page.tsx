@@ -203,16 +203,15 @@ export default async function ProductDetailPage({
     <div className="min-h-screen bg-boutique-bg">
       <JsonLd data={[structuredData, breadcrumbSchema]} />
       <section className="border-b border-boutique-line/90 bg-boutique-paper">
-        <PageContainer className="py-14 md:py-20 lg:py-24">
+        <PageContainer className="py-10 md:py-14 lg:py-16">
           <VisibleBreadcrumbs items={breadcrumbItems} />
 
-          <div className="mt-14 flex flex-col gap-10 lg:mt-20 lg:grid lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:items-start lg:gap-x-20 xl:gap-x-24">
-            <ProductDetailGallery
-              className="lg:hidden"
-              images={product.images}
-            />
+          <div className="mt-8 flex flex-col gap-8 lg:mt-10 lg:grid lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:items-start lg:gap-x-16 xl:gap-x-20">
+            <div className="min-w-0 lg:col-start-1 lg:row-start-1">
+              <ProductDetailGallery images={product.images} />
+            </div>
 
-            <div className="flex flex-col pb-6 lg:col-start-2 lg:row-start-1 lg:py-4">
+            <div className="flex min-w-0 flex-col lg:col-start-2 lg:row-start-1">
               <div className="space-y-6">
                 {product.cardBadge ? (
                   <p className="text-[0.7rem] font-semibold uppercase tracking-[0.28em] text-boutique-accent">
@@ -261,19 +260,14 @@ export default async function ProductDetailPage({
                 </Link>
               ) : null}
 
-              <ProductLandingPageCta landingPage={primaryLandingPage} />
-            </div>
-
-            <div className="flex flex-col gap-6 lg:col-start-1 lg:row-start-1 lg:gap-8 lg:self-start">
-              <ProductDetailGallery
-                className="hidden lg:block"
-                images={product.images}
-              />
               <ProductDetailAddToCart
                 attribution={attribution}
                 initialOptionSelections={initialOptionSelections}
+                layout="embedded"
                 product={product}
               />
+
+              <ProductLandingPageCta landingPage={primaryLandingPage} />
             </div>
           </div>
         </PageContainer>

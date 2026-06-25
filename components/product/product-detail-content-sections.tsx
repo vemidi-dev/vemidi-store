@@ -51,9 +51,13 @@ export function ProductDetailContentSections({
   );
 }
 
-export function ProductDetailFulfillmentInfo() {
+export function ProductDetailFulfillmentInfo({
+  className = "mx-auto mt-10 w-full max-w-5xl lg:mt-12",
+}: {
+  className?: string;
+}) {
   return (
-    <div className="mx-auto mt-10 w-full max-w-5xl lg:mt-12">
+    <div className={className}>
       <div className="divide-y divide-boutique-line rounded-2xl border border-boutique-line bg-boutique-bg/70 text-sm shadow-sm md:grid md:grid-cols-3 md:divide-x md:divide-y-0">
         <div className="px-5 py-4">
           <p className="font-semibold text-boutique-ink">Изработка</p>
@@ -106,14 +110,20 @@ export function ProductDetailInfoZone({
 
   return (
     <section className="border-t border-boutique-line bg-boutique-bg">
-      <PageContainer className="py-10 md:py-14">
+      <PageContainer className="py-8 md:py-10">
         {hasContent ? (
           <ProductDetailContentSections
             description={description}
             additionalInfo={additionalInfo}
           />
         ) : null}
-        <ProductDetailFulfillmentInfo />
+        <ProductDetailFulfillmentInfo
+          className={
+            hasContent
+              ? "mx-auto mt-10 w-full max-w-5xl lg:mt-12"
+              : "mx-auto w-full max-w-5xl"
+          }
+        />
       </PageContainer>
     </section>
   );

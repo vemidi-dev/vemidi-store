@@ -40,13 +40,16 @@ type ProductDetailAddToCartProps = {
   product: Product;
   attribution?: CampaignAttribution;
   initialOptionSelections?: ProductOptionSelection[];
+  layout?: "card" | "embedded";
 };
 
 export function ProductDetailAddToCart({
   product,
   attribution,
   initialOptionSelections = [],
+  layout = "card",
 }: ProductDetailAddToCartProps) {
+  const embedded = layout === "embedded";
   const { addProduct, lines, ready: cartReady } = useCart();
   const configuratorRef = useRef<HTMLDivElement | null>(null);
   const fallbackFields = useMemo<ProductPersonalizationField[]>(
@@ -402,7 +405,13 @@ export function ProductDetailAddToCart({
           : "Този продукт не може да бъде поръчан в момента.";
 
     return (
-      <div className="rounded-xl border border-boutique-line bg-boutique-bg px-5 py-5">
+      <div
+        className={
+          embedded
+            ? "mt-6 rounded-xl border border-boutique-line/80 bg-boutique-bg/50 px-4 py-4"
+            : "rounded-xl border border-boutique-line bg-boutique-bg px-5 py-5"
+        }
+      >
         <p className="text-sm font-semibold uppercase tracking-[0.16em] text-boutique-muted">
           {product.availabilityLabel}
         </p>
@@ -416,7 +425,11 @@ export function ProductDetailAddToCart({
     <div
       id="product-configurator"
       ref={configuratorRef}
-      className="scroll-mt-28 rounded-2xl border border-boutique-line bg-boutique-paper p-4 transition-shadow duration-300 ease-out hover:shadow-boutique-sm motion-reduce:transition-none sm:p-5"
+      className={
+        embedded
+          ? "scroll-mt-28 mt-6 w-full"
+          : "scroll-mt-28 rounded-2xl border border-boutique-line bg-boutique-paper p-4 transition-shadow duration-300 ease-out hover:shadow-boutique-sm motion-reduce:transition-none sm:p-5"
+      }
     >
       {fields.length ? (
         <div className="grid gap-4">
@@ -601,7 +614,7 @@ export function ProductDetailAddToCart({
       ) : null}
 
       {colorFields.length ? (
-        <div className={`mt-7 grid gap-6 ${colorFields.length > 1 ? "lg:grid-cols-2" : ""}`}>
+        <div className={`mt-7 grid gap-6 ${!embedded && colorFields.length > 1 ? "lg:grid-cols-2" : ""}`}>
           {colorFields.map((field) =>
             isQuantityColorField(field) ? (
               <ProductColorQuantitySelector
@@ -623,7 +636,7 @@ export function ProductDetailAddToCart({
                 </legend>
                 <div
                   id={`color-options-${field.id}`}
-                  className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6"
+                  className={`mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4 ${embedded ? "lg:grid-cols-4" : "lg:grid-cols-6"}`}
                 >
                   {field.options
                     .filter((option, index) =>
