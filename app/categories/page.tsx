@@ -17,6 +17,7 @@ import {
 import {
   getCategoryFamilySlugs,
   getCategoryProductCount,
+  sortCategoriesForDisplay,
 } from "@/lib/category-hierarchy";
 import { CATEGORY_INDEX_PATH, OCCASION_INDEX_PATH, getCategoryListingHref } from "@/lib/category-url";
 import { filterStorefrontVisibleCategories } from "@/lib/category-visibility";
@@ -146,6 +147,11 @@ export default async function CategoriesPage() {
   ]);
   const heroImage = resolveSiteMediaFromMap(siteMediaMap, "categories.hero");
   const visibleCategories = filterStorefrontVisibleCategories(categories);
+  const orderedProductCategories = sortCategoriesForDisplay(
+    visibleCategories.filter(
+      (category) => category.category_type === "product",
+    ),
+  );
   const withCounts = visibleCategories.map(
     (category): CategoryWithCount => ({
       ...toShowcaseCategory(category),
@@ -155,10 +161,13 @@ export default async function CategoriesPage() {
       ),
     }),
   );
-  const productCategories = withCounts.filter(
-    (category) =>
-      category.categoryType === "product" && category.parentId === null,
+  const categoryWithCountById = new Map(
+    withCounts.map((category) => [category.id, category]),
   );
+  const productCategories = orderedProductCategories
+    .filter((category) => category.parent_id === null)
+    .map((category) => categoryWithCountById.get(category.id))
+    .filter((category): category is CategoryWithCount => Boolean(category));
   const occasionCategories = withCounts.filter(
     (category) => category.categoryType === "occasion",
   );
