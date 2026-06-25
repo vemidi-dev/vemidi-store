@@ -42,8 +42,8 @@ export function ProductDetailContentSections(props: ProductDetailContentSections
 
 export function ProductDetailFulfillmentInfo() {
   return (
-    <div className="grid grid-cols-1 gap-5 text-sm sm:grid-cols-3 sm:gap-4">
-      <div className="sm:border-r sm:border-boutique-line/70 sm:pr-4">
+    <div className="flex flex-col gap-5 text-sm">
+      <div>
         <p className="font-semibold text-boutique-ink">Изработка</p>
         <p className="mt-1.5 leading-6 text-boutique-muted">
           1–5 работни дни в зависимост от натоварването. Ако ви е нужен друг срок,
@@ -56,7 +56,7 @@ export function ProductDetailFulfillmentInfo() {
           .
         </p>
       </div>
-      <div className="border-t border-boutique-line/70 pt-5 sm:border-t-0 sm:pt-0 sm:pr-4">
+      <div className="border-t border-boutique-line/70 pt-5">
         <p className="font-semibold text-boutique-ink">Доставка</p>
         <p className="mt-1.5 leading-6 text-boutique-muted">
           Еконт или Спиди · наложен платеж.
@@ -68,7 +68,7 @@ export function ProductDetailFulfillmentInfo() {
           </Link>
         </p>
       </div>
-      <div className="border-t border-boutique-line/70 pt-5 sm:border-t-0 sm:pt-0">
+      <div className="border-t border-boutique-line/70 pt-5">
         <p className="font-semibold text-boutique-ink">Връщане</p>
         <p className="mt-1.5 leading-6 text-boutique-muted">
           14 дни за неперсонализирани продукти.
