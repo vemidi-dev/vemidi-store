@@ -75,17 +75,6 @@ export function ProductOptionsSelector({
     return map;
   }, [value]);
 
-  const primaryChoiceGroupId = useMemo(
-    () =>
-      groups.find(
-        (group) =>
-          group.isActive &&
-          isChoiceOptionGroup(group) &&
-          !getBooleanOptionValues(group),
-      )?.id ?? null,
-    [groups],
-  );
-
   const updateSelection = (groupId: string, next: ProductOptionSelection) => {
     const others = value.filter((selection) => selection.groupId !== groupId);
     const hasContent = next.valueIds.length > 0 || Boolean(next.textValue?.trim());
@@ -174,11 +163,10 @@ export function ProductOptionsSelector({
                   .filter((option) => option.isActive)
                   .map((option) => {
                     const selected = selection.valueIds.includes(option.id);
-                    const showsFinalPrice = group.id === primaryChoiceGroupId;
                     const priceLabel = formatOptionChoicePrice(
                       variantDisplayBasePrice,
                       option.priceDelta,
-                      group.inputType === "single" && showsFinalPrice,
+                      false,
                     );
                     return (
                       <label

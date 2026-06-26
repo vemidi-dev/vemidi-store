@@ -6,7 +6,6 @@ import { adminFormFields } from "@/lib/admin/form-fields";
 import type { ParsedOptionGroup, ParsedOptionValue } from "@/lib/admin/types";
 import {
   calculateOptionFinalPrice,
-  calculatePriceDeltaFromFinalPrice,
   formatPriceDelta,
 } from "@/lib/product-option-pricing";
 
@@ -177,13 +176,6 @@ export function ProductOptionGroupsEditor({
     [groups],
   );
 
-  const primaryChoiceGroupUid =
-    groups.find(
-      (group) =>
-        isChoiceType(group.inputType) &&
-        group.key !== "personalization",
-    )?.uid ?? null;
-
   const updateGroup = (uid: string, patch: Partial<LocalGroup>) => {
     setGroups((current) =>
       current.map((group) => {
@@ -225,7 +217,6 @@ export function ProductOptionGroupsEditor({
       {groups.map((group, index) => {
         const isOpen = openUid === group.uid;
         const valueCount = isChoiceType(group.inputType) ? group.values.length : 0;
-        const usesFinalPriceInput = group.uid === primaryChoiceGroupUid;
         return (
           <details
             key={group.uid}
@@ -527,8 +518,8 @@ export function ProductOptionGroupsEditor({
                   <div>
                     <p className="text-sm font-semibold text-boutique-ink">Варианти за избор</p>
                     <p className="mt-1 text-xs text-boutique-muted">
-                      Основната цена на продукта трябва да е цената на най-евтиния вариант.
-                      За всеки вариант въведете крайната цена, която клиентът ще плати.
+                      Основната цена на продукта остава базовата цена.
+                      За всеки вариант въведете само сумата за доплащане към нея.
                     </p>
                   </div>
                   {group.values.map((value, valueIndex) => (
@@ -571,19 +562,11 @@ export function ProductOptionGroupsEditor({
                           {group.key === "personalization" && value.key === "yes"
                             ? "Доплащане (€)"
                             : group.key === "personalization" && value.key === "no"
-                              ? "Цена"
-                              : usesFinalPriceInput
-                                ? "Крайна цена (€)"
-                                : "Доплащане (€)"}
+                              ? "Доплащане (€)"
+                              : "Доплащане (€)"}
                           <input
                             type="number"
-                            min={
-                              (group.key === "personalization" &&
-                                value.key === "yes") ||
-                              !usesFinalPriceInput
-                                ? 0
-                                : basePrice
-                            }
+                            min={0}
                             step="0.01"
                             className={fieldClassName}
                             disabled={
@@ -596,52 +579,25 @@ export function ProductOptionGroupsEditor({
                                 ? value.priceDeltaInput
                                 : group.key === "personalization" &&
                                     value.key === "no"
-                                  ? basePrice
-                                  : usesFinalPriceInput
-                                    ? value.finalPriceInput
-                                    : value.priceDeltaInput
+                                  ? "0"
+                                  : value.priceDeltaInput
                             }
                             onChange={(event) => {
                               const rawInput = event.target.value;
                               const parsedPrice = Number(rawInput);
-                              const isPersonalizationSurcharge =
-                                group.key === "personalization" &&
-                                value.key === "yes";
-                              const isSurchargeInput =
-                                isPersonalizationSurcharge ||
-                                !usesFinalPriceInput;
                               const nextValues = group.values.map((item) =>
                                 item.uid === value.uid
                                   ? {
                                       ...item,
-                                      ...(isSurchargeInput
-                                        ? { priceDeltaInput: rawInput }
-                                        : { finalPriceInput: rawInput }),
+                                      priceDeltaInput: rawInput,
                                       ...(rawInput.trim() &&
                                       Number.isFinite(parsedPrice)
                                         ? {
-                                            priceDelta:
-                                              isSurchargeInput
-                                                ? Math.max(0, parsedPrice)
-                                                : calculatePriceDeltaFromFinalPrice(
-                                                    basePrice,
-                                                    parsedPrice,
-                                                  ),
-                                            ...(isSurchargeInput
-                                              ? {
-                                                  finalPriceInput:
-                                                    calculateOptionFinalPrice(
-                                                      basePrice,
-                                                      parsedPrice,
-                                                    ).toString(),
-                                                }
-                                              : {
-                                                  priceDeltaInput:
-                                                    calculatePriceDeltaFromFinalPrice(
-                                                      basePrice,
-                                                      parsedPrice,
-                                                    ).toString(),
-                                                }),
+                                            priceDelta: Math.max(0, parsedPrice),
+                                            finalPriceInput: calculateOptionFinalPrice(
+                                              basePrice,
+                                              parsedPrice,
+                                            ).toString(),
                                           }
                                         : {}),
                                     }
@@ -650,32 +606,15 @@ export function ProductOptionGroupsEditor({
                               updateGroup(group.uid, { values: nextValues });
                             }}
                             onBlur={() => {
-                              const isPersonalizationSurcharge =
-                                group.key === "personalization" &&
-                                value.key === "yes";
-                              const isSurchargeInput =
-                                isPersonalizationSurcharge ||
-                                !usesFinalPriceInput;
-                              const currentInput = isSurchargeInput
-                                ? value.priceDeltaInput
-                                : value.finalPriceInput;
-                              if (currentInput.trim()) {
+                              if (value.priceDeltaInput.trim()) {
                                 return;
                               }
                               const nextValues = group.values.map((item) =>
                                 item.uid === value.uid
-                                  ? isSurchargeInput
-                                    ? {
-                                        ...item,
-                                        priceDeltaInput: item.priceDelta.toString(),
-                                      }
-                                    : {
-                                        ...item,
-                                        finalPriceInput: calculateOptionFinalPrice(
-                                          basePrice,
-                                          item.priceDelta,
-                                        ).toString(),
-                                      }
+                                  ? {
+                                      ...item,
+                                      priceDeltaInput: item.priceDelta.toString(),
+                                    }
                                   : item,
                               );
                               updateGroup(group.uid, { values: nextValues });
@@ -688,9 +627,7 @@ export function ProductOptionGroupsEditor({
                               : group.key === "personalization" &&
                                   value.key === "no"
                                 ? "Без доплащане"
-                                : usesFinalPriceInput
-                                  ? `Минимум ${basePrice.toFixed(2).replace(".", ",")} €`
-                                  : "0 означава без доплащане"}
+                                : "0 означава без доплащане"}
                           </span>
                         </label>
                         <button
