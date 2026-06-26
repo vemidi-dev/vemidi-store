@@ -128,11 +128,11 @@ test("disabling optional field clears value and removes surcharge", () => {
 test("optional field with zero priceDelta uses label without surcharge", () => {
   assert.equal(
     formatPersonalizationToggleLabel(optionalFreeField),
-    "Добави Бележка",
+    "Добавете Бележка",
   );
   assert.match(
     formatPersonalizationToggleLabel(optionalPaidField),
-    /Добави Име \(\+2,50 €\)/,
+    /Добавете Име \(\+2,50 €\)/,
   );
 });
 

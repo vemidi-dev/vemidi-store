@@ -31,8 +31,8 @@ export function usesPersonalizationToggle(field: ProductPersonalizationField) {
 export function formatPersonalizationToggleLabel(field: ProductPersonalizationField) {
   const deltaLabel = formatPriceDelta(field.priceDelta ?? 0);
   return deltaLabel
-    ? `Добави ${field.label} (${deltaLabel})`
-    : `Добави ${field.label}`;
+    ? `Добавете ${field.label} (${deltaLabel})`
+    : `Добавете ${field.label}`;
 }
 
 export function shouldShowPersonalizationInput(
