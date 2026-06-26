@@ -264,7 +264,7 @@ export function ProductListPanel({
                     type: field.field_type,
                     placeholder: field.placeholder ?? "",
                     maxLength: field.max_length,
-                    priceDelta: field.price_delta,
+                    priceDelta: Number(field.price_delta) || 0,
                     required: field.is_required,
                     allowsWishTemplates: field.allows_wish_templates,
                   }))

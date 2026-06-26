@@ -264,7 +264,7 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
       productId,
       [...fields].sort((a, b) => {
         const sortDifference = a.sort_order - b.sort_order;
-        return sortDifference || a.label.localeCompare(b.label, "bg");
+        return sortDifference || (a.label ?? "").localeCompare(b.label ?? "", "bg");
       }),
     );
   });

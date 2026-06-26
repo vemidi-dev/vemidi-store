@@ -41,7 +41,7 @@ export function ProductPersonalizationFieldsEditor({
     initialFields.map((field) => ({
       ...field,
       uid: crypto.randomUUID(),
-      priceDeltaInput: field.priceDelta.toString(),
+      priceDeltaInput: (field.priceDelta ?? 0).toString(),
     })),
   );
 

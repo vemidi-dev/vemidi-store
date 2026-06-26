@@ -27,7 +27,7 @@ export function ProductFaqFields({
         .sort(
           (left, right) =>
             left.sort_order - right.sort_order ||
-            left.name.localeCompare(right.name, "bg"),
+            (left.name ?? "").localeCompare(right.name ?? "", "bg"),
         ),
     [productGroups],
   );
@@ -45,7 +45,7 @@ export function ProductFaqFields({
       .sort(
         (left, right) =>
           left.sort_order - right.sort_order ||
-          left.question.localeCompare(right.question, "bg"),
+          (left.question ?? "").localeCompare(right.question ?? "", "bg"),
       );
   }, [items, selectedItemIds]);
 
