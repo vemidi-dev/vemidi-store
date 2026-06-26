@@ -50,8 +50,8 @@ export function getProductCardCtaLabel(
     | "colorFields"
     | "personalizationFields"
   >,
-): "Избери опции" | "Виж продукта" {
-  return productHasSelectableOptions(product) ? "Избери опции" : "Виж продукта";
+): "Изберете опции" | "Вижте продукта" {
+  return productHasSelectableOptions(product) ? "Изберете опции" : "Вижте продукта";
 }
 
 export function resolveProductCardStatusLabel(

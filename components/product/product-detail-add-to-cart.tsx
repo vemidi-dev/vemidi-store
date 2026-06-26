@@ -743,7 +743,7 @@ export function ProductDetailAddToCart({
             : "bg-boutique-sage-deep hover:bg-boutique-ink"
         }`}
       >
-        {added ? "✓ Добавено в количката" : "Добави в количката"}
+        {added ? "✓ Добавено в количката" : "Добавете в количката"}
       </button>
 
       {wishFieldId ? (
@@ -760,7 +760,7 @@ export function ProductDetailAddToCart({
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h2 className="font-heading text-3xl text-boutique-ink">
-                  Избери готово пожелание
+                  Изберете готово пожелание
                 </h2>
                 <p className="mt-2 text-sm text-boutique-muted">
                   След избора можете свободно да редактирате текста.
@@ -787,7 +787,7 @@ export function ProductDetailAddToCart({
                     }}
                     className="mt-3 rounded-lg bg-boutique-sage-deep px-4 py-2 text-xs font-semibold text-white transition duration-200 ease-out hover:bg-boutique-ink motion-reduce:transition-none"
                   >
-                    Избери текста
+                    Изберете текста
                   </button>
                 </article>
               ))}
@@ -820,7 +820,7 @@ export function ProductDetailAddToCart({
                 : "bg-boutique-sage-deep hover:bg-boutique-ink"
             }`}
           >
-            {added ? "✓ Добавено" : "Добави"}
+            {added ? "✓ Добавено" : "Добавете"}
           </button>
         </div>
       </div>

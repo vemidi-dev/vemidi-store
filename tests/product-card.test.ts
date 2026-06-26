@@ -50,10 +50,10 @@ test("productHasSelectableOptions detects colors, personalization and legacy cus
 });
 
 test("getProductCardCtaLabel switches between options and product view", () => {
-  assert.equal(getProductCardCtaLabel(baseProduct), "Виж продукта");
+  assert.equal(getProductCardCtaLabel(baseProduct), "Вижте продукта");
   assert.equal(
     getProductCardCtaLabel({ ...baseProduct, hasColorOptions: true }),
-    "Избери опции",
+    "Изберете опции",
   );
 });
 

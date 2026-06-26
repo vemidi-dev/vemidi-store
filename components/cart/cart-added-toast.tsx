@@ -85,7 +85,7 @@ export function CartAddedToast({
             onClick={onDismiss}
             className="rounded-xl border border-boutique-line px-3 py-3 text-xs font-semibold text-boutique-ink transition hover:bg-white"
           >
-            Продължи
+            Продължете
           </button>
           <Link
             href="/cart"
