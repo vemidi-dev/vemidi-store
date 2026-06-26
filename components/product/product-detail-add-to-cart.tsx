@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 import { ProductColorQuantitySelector } from "@/components/product/product-color-quantity-selector";
 import { useCart } from "@/components/cart/cart-provider";
@@ -35,6 +36,12 @@ import {
   shouldShowPersonalizationInput,
   usesPersonalizationToggle,
 } from "@/lib/product-personalization";
+import {
+  buildWishTemplateOccasionFilters,
+  filterStorefrontWishTemplates,
+  shouldShowWishOccasionFilters,
+  type WishTemplateOccasionFilter,
+} from "@/lib/product-wish-templates";
 
 type ProductDetailAddToCartProps = {
   product: Product;
@@ -91,6 +98,43 @@ export function ProductDetailAddToCart({
   const [added, setAdded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [wishFieldId, setWishFieldId] = useState<string | null>(null);
+  const [wishOccasionFilter, setWishOccasionFilter] =
+    useState<WishTemplateOccasionFilter>("all");
+  const wishTemplates = product.wishTemplates ?? [];
+  const wishOccasionFilters = useMemo(
+    () => buildWishTemplateOccasionFilters(wishTemplates),
+    [wishTemplates],
+  );
+  const showWishOccasionFilters = shouldShowWishOccasionFilters(wishOccasionFilters);
+  const filteredWishTemplates = useMemo(
+    () => filterStorefrontWishTemplates(wishTemplates, wishOccasionFilter),
+    [wishOccasionFilter, wishTemplates],
+  );
+
+  useEffect(() => {
+    if (wishFieldId) {
+      setWishOccasionFilter("all");
+    }
+  }, [wishFieldId]);
+
+  const [portalReady, setPortalReady] = useState(false);
+
+  useEffect(() => {
+    setPortalReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (!wishFieldId) {
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [wishFieldId]);
   const [optionSelections, setOptionSelections] =
     useState<ProductOptionSelection[]>(initialOptionSelections);
   const [estimatedUnitPrice, setEstimatedUnitPrice] = useState(product.price);
@@ -746,55 +790,6 @@ export function ProductDetailAddToCart({
         {added ? "✓ Добавено в количката" : "Добавете в количката"}
       </button>
 
-      {wishFieldId ? (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label="Избор на готово пожелание"
-          className="fixed inset-0 z-50 grid place-items-center bg-boutique-ink/45 p-4"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) setWishFieldId(null);
-          }}
-        >
-          <div className="max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl sm:p-8">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h2 className="font-heading text-3xl text-boutique-ink">
-                  Изберете готово пожелание
-                </h2>
-                <p className="mt-2 text-sm text-boutique-muted">
-                  След избора можете свободно да редактирате текста.
-                </p>
-              </div>
-              <button type="button" onClick={() => setWishFieldId(null)} className="text-2xl">×</button>
-            </div>
-            <div className="mt-6 grid gap-3">
-              {(product.wishTemplates ?? []).map((wish) => (
-                <article key={wish.id} className="rounded-xl border border-boutique-line bg-boutique-paper p-4">
-                  <p className="whitespace-pre-line text-sm leading-6 text-boutique-muted">
-                    {wish.body}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const field = fields.find((item) => item.id === wishFieldId);
-                      setValues((current) => ({
-                        ...current,
-                        [wishFieldId]: wish.body.slice(0, field?.maxLength ?? 1000),
-                      }));
-                      setError(null);
-                      setWishFieldId(null);
-                    }}
-                    className="mt-3 rounded-lg bg-boutique-sage-deep px-4 py-2 text-xs font-semibold text-white transition duration-200 ease-out hover:bg-boutique-ink motion-reduce:transition-none"
-                  >
-                    Изберете текста
-                  </button>
-                </article>
-              ))}
-            </div>
-          </div>
-        </div>
-      ) : null}
     </div>
     {showMobileBar ? (
       <div
@@ -825,6 +820,113 @@ export function ProductDetailAddToCart({
         </div>
       </div>
     ) : null}
+    {wishFieldId && portalReady
+      ? createPortal(
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Избор на готово пожелание"
+            className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-boutique-ink/45 p-4 pt-[6vh] sm:p-6 sm:pt-[6vh]"
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget) {
+                setWishFieldId(null);
+              }
+            }}
+          >
+            <div className="flex w-full max-w-2xl max-h-[min(88dvh,44rem)] flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">
+              <div className="shrink-0 px-6 pb-4 pt-6 sm:px-8 sm:pt-8">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h2 className="font-heading text-3xl text-boutique-ink">
+                      Изберете готово пожелание
+                    </h2>
+                    <p className="mt-2 text-sm text-boutique-muted">
+                      След избора можете свободно да редактирате текста.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    aria-label="Затвори"
+                    onClick={() => setWishFieldId(null)}
+                    className="shrink-0 text-2xl leading-none text-boutique-muted transition hover:text-boutique-ink"
+                  >
+                    ×
+                  </button>
+                </div>
+                {showWishOccasionFilters ? (
+                  <div
+                    className="mt-5 flex flex-wrap gap-2"
+                    role="group"
+                    aria-label="Филтър по повод"
+                  >
+                    <button
+                      type="button"
+                      aria-pressed={wishOccasionFilter === "all"}
+                      onClick={() => setWishOccasionFilter("all")}
+                      className={`inline-flex rounded-full border px-3 py-1 text-sm font-medium transition motion-reduce:transition-none ${
+                        wishOccasionFilter === "all"
+                          ? "border-boutique-sage-deep bg-boutique-sage-deep/10 text-boutique-sage-deep"
+                          : "border-boutique-line bg-white text-boutique-ink hover:border-boutique-sage-deep/40 hover:text-boutique-sage-deep"
+                      }`}
+                    >
+                      Всички
+                    </button>
+                    {wishOccasionFilters.map((occasion) => {
+                      const isSelected = wishOccasionFilter === occasion.id;
+
+                      return (
+                        <button
+                          key={occasion.id}
+                          type="button"
+                          aria-pressed={isSelected}
+                          onClick={() => setWishOccasionFilter(occasion.id)}
+                          className={`inline-flex rounded-full border px-3 py-1 text-sm font-medium transition motion-reduce:transition-none ${
+                            isSelected
+                              ? "border-boutique-sage-deep bg-boutique-sage-deep/10 text-boutique-sage-deep"
+                              : "border-boutique-line bg-white text-boutique-ink hover:border-boutique-sage-deep/40 hover:text-boutique-sage-deep"
+                          }`}
+                        >
+                          {occasion.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : null}
+              </div>
+              <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-6 sm:px-8 sm:pb-8">
+                <div className="grid gap-3">
+                  {filteredWishTemplates.map((wish) => (
+                    <article
+                      key={wish.id}
+                      className="rounded-xl border border-boutique-line bg-boutique-paper p-4"
+                    >
+                      <p className="whitespace-pre-line text-sm leading-6 text-boutique-muted">
+                        {wish.body}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const field = fields.find((item) => item.id === wishFieldId);
+                          setValues((current) => ({
+                            ...current,
+                            [wishFieldId]: wish.body.slice(0, field?.maxLength ?? 1000),
+                          }));
+                          setError(null);
+                          setWishFieldId(null);
+                        }}
+                        className="mt-3 rounded-lg bg-boutique-sage-deep px-4 py-2 text-xs font-semibold text-white transition duration-200 ease-out hover:bg-boutique-ink motion-reduce:transition-none"
+                      >
+                        Изберете текста
+                      </button>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )
+      : null}
     </>
   );
 }

@@ -487,6 +487,8 @@ async function loadStorefrontProductDetails(
     personalizationResult,
     wishesResult,
     linksResult,
+    wishOccasionsResult,
+    occasionCategoriesResult,
     promotionsByProductId,
     optionGroupsResult,
     optionValuesResult,
@@ -512,6 +514,13 @@ async function loadStorefrontProductDetails(
         .select("wish_template_id,sort_order")
         .eq("product_id", productId)
         .order("sort_order"),
+      supabase
+        .from("wish_template_occasions")
+        .select("wish_template_id,category_id"),
+      supabase
+        .from("categories")
+        .select("id,name")
+        .eq("category_type", "occasion"),
       loadActivePromotions(supabase),
       supabase
         .from("product_option_groups")
@@ -562,12 +571,48 @@ async function loadStorefrontProductDetails(
   const wishById = new Map(
     (wishesResult.data ?? []).map((wish) => [String(wish.id), wish]),
   );
+  const linkedWishIds = new Set(
+    (linksResult.data ?? []).map((link) => String(link.wish_template_id)),
+  );
+  const occasionNameById = new Map(
+    (occasionCategoriesResult.data ?? []).map((category) => [
+      String(category.id),
+      String(category.name),
+    ]),
+  );
+  const occasionsByWishId = new Map<string, WishTemplate["occasions"]>();
+
+  for (const link of wishOccasionsResult.data ?? []) {
+    const wishId = String(link.wish_template_id);
+    if (!linkedWishIds.has(wishId)) {
+      continue;
+    }
+
+    const categoryId = String(link.category_id);
+    const name = occasionNameById.get(categoryId);
+    if (!name) {
+      continue;
+    }
+
+    const occasions = occasionsByWishId.get(wishId) ?? [];
+    if (!occasions.some((occasion) => occasion.id === categoryId)) {
+      occasions.push({ id: categoryId, name });
+    }
+    occasionsByWishId.set(wishId, occasions);
+  }
+
   product.wishTemplates = (linksResult.data ?? []).flatMap(
     (link): WishTemplate[] => {
       const wish = wishById.get(String(link.wish_template_id));
-      return wish
-        ? [{ id: String(wish.id), body: String(wish.body) }]
-        : [];
+      if (!wish) {
+        return [];
+      }
+
+      const occasions = [...(occasionsByWishId.get(String(wish.id)) ?? [])].sort(
+        (left, right) => left.name.localeCompare(right.name, "bg"),
+      );
+
+      return [{ id: String(wish.id), body: String(wish.body), occasions }];
     },
   );
   return product;

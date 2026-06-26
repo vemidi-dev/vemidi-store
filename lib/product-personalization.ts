@@ -19,9 +19,15 @@ export type ProductPersonalizationValue = {
   value: string;
 };
 
+export type WishTemplateOccasion = {
+  id: string;
+  name: string;
+};
+
 export type WishTemplate = {
   id: string;
   body: string;
+  occasions: WishTemplateOccasion[];
 };
 
 export function usesPersonalizationToggle(field: ProductPersonalizationField) {
