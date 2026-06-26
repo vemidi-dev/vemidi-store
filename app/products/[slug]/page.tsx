@@ -302,7 +302,7 @@ export default async function ProductDetailPage({
                 href="/produkti"
                 className="hidden text-sm font-semibold text-boutique-sage-deep underline-offset-4 hover:underline sm:inline-flex"
               >
-                Виж всички
+                Вижте всички
               </Link>
             </div>
             <div className="mt-7 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">

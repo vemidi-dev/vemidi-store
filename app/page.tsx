@@ -137,14 +137,14 @@ export default async function HomePage() {
             ))}
             <Link
               href={OCCASION_INDEX_PATH}
-              aria-label="Виж всички поводи"
+              aria-label="Вижте всички поводи"
               className="group col-span-2 flex min-h-20 items-center justify-center gap-3 rounded-xl border border-boutique-sage/30 bg-boutique-warm/55 px-4 text-center transition hover:-translate-y-1 hover:border-boutique-sage-deep/45 hover:bg-boutique-warm sm:col-span-1 sm:min-h-36 sm:flex-col sm:gap-0"
             >
               <span className="grid h-9 w-9 place-items-center rounded-full bg-boutique-sage-deep text-lg text-boutique-on-sage shadow-boutique-sm transition group-hover:bg-boutique-accent sm:h-14 sm:w-14 sm:text-2xl">
                 <span aria-hidden>→</span>
               </span>
               <span className="text-xs font-semibold leading-snug text-boutique-ink sm:mt-4">
-                Виж всички поводи
+                Вижте всички поводи
               </span>
             </Link>
           </div>
@@ -182,7 +182,7 @@ export default async function HomePage() {
               href={CATEGORY_INDEX_PATH}
               className="inline-flex rounded-xl bg-boutique-rose-deep px-7 py-3.5 text-sm font-semibold text-white shadow-boutique-sm transition hover:-translate-y-0.5 hover:bg-boutique-ink"
             >
-              Виж всички продукти
+              Вижте всички продукти
             </Link>
           </div>
         </PageContainer>

@@ -83,7 +83,7 @@ export function EventRegistrationForm({
         ) : null}
         <div className="sm:col-span-2">
           <button disabled={pending} className="rounded-full bg-boutique-ink px-7 py-3 text-sm font-semibold text-boutique-paper disabled:cursor-wait disabled:opacity-60">
-            {pending ? "Изпращане..." : "Изпрати записването"}
+            {pending ? "Изпращане..." : "Изпратете записването"}
           </button>
         </div>
       </form>

@@ -173,7 +173,7 @@ export function ProductCardMedia({
                     stopCarouselEvent(event);
                     setActiveImage(index);
                   }}
-                  aria-label={`Покажи снимка ${index + 1}`}
+                  aria-label={`Покажете снимка ${index + 1}`}
                   aria-current={index === safeImageIndex ? "true" : undefined}
                   className="group/dot grid h-11 w-11 shrink-0 place-items-center rounded-full transition duration-200 ease-out focus-visible:outline-offset-[-3px] motion-reduce:transition-none"
                 >

@@ -36,7 +36,7 @@ export function HomeFeaturedProducts({ products }: HomeFeaturedProductsProps) {
             }
             className="inline-flex min-h-12 items-center justify-center rounded-xl border border-boutique-sage/40 bg-white px-6 py-3 text-sm font-semibold text-boutique-sage-deep shadow-boutique-sm transition hover:-translate-y-0.5 hover:border-boutique-sage-deep hover:bg-boutique-paper hover:text-boutique-ink"
           >
-            Покажи още {Math.min(remainingCount, LOAD_MORE_COUNT)}
+            Покажете още {Math.min(remainingCount, LOAD_MORE_COUNT)}
           </button>
         </div>
       ) : null}

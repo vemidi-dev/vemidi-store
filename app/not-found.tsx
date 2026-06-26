@@ -30,7 +30,7 @@ export default function NotFound() {
               href="/produkti"
               className="rounded-full border border-boutique-line px-7 py-3 text-sm font-semibold text-boutique-ink transition hover:border-boutique-accent"
             >
-              Разгледай продуктите
+              Разгледайте продуктите
             </Link>
           </div>
         </div>

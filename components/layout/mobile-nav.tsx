@@ -137,10 +137,10 @@ export function MobileNav({
         className="grid h-11 w-11 place-items-center rounded-lg border border-boutique-line/80 bg-white text-boutique-ink transition-colors duration-200 hover:border-boutique-rose-deep/35 hover:bg-boutique-paper"
         aria-expanded={open}
         aria-controls={panelId}
-        aria-label={open ? "Затвори менюто" : "Отвори менюто"}
+        aria-label={open ? "Затворете менюто" : "Отворете менюто"}
         onClick={() => setOpen((current) => !current)}
       >
-        <span className="sr-only">{open ? "Затвори менюто" : "Отвори менюто"}</span>
+        <span className="sr-only">{open ? "Затворете менюто" : "Отворете менюто"}</span>
         {open ? (
           <svg
             aria-hidden="true"
@@ -172,7 +172,7 @@ export function MobileNav({
               <button
                 type="button"
                 className="absolute inset-0 bg-boutique-ink/35 backdrop-blur-[1px]"
-                aria-label="Затвори менюто"
+                aria-label="Затворете менюто"
                 onClick={closeMenu}
               />
 
@@ -186,7 +186,7 @@ export function MobileNav({
                   <button
                     type="button"
                     className="grid h-11 w-11 place-items-center rounded-lg text-boutique-muted transition-colors duration-200 hover:bg-boutique-paper hover:text-boutique-ink"
-                    aria-label="Затвори менюто"
+                    aria-label="Затворете менюто"
                     onClick={closeMenu}
                   >
                     <svg

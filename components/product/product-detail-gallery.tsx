@@ -70,7 +70,7 @@ function GalleryThumbnailButton({
           ? "border-boutique-ink shadow-[0_12px_24px_-12px_rgb(44_40_37_/0.18)]"
           : "border-transparent opacity-75 ring-1 ring-boutique-line/80 hover:-translate-y-1 hover:border-boutique-sage/35 hover:opacity-100 hover:shadow-[0_10px_20px_-12px_rgb(44_40_37_/0.14)] motion-reduce:hover:translate-y-0"
       } ${className ?? ""}`}
-      aria-label={`Покажи снимка ${index + 1}`}
+      aria-label={`Покажете снимка ${index + 1}`}
       aria-current={isActive ? "true" : undefined}
     >
       {image.src ? (

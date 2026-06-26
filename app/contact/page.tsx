@@ -160,7 +160,7 @@ export default async function ContactPage() {
               href={`mailto:${email}?subject=${encodeURIComponent("Запитване за персонална поръчка")}`}
               className="inline-flex w-fit rounded-full bg-white px-6 py-3 text-sm font-semibold text-boutique-sage-deep transition hover:bg-boutique-warm"
             >
-              Изпрати запитване
+              Изпратете запитване
             </a>
           </div>
         </PageContainer>

@@ -92,7 +92,7 @@ export function ThankYouContent({
               href="/produkti"
               className="rounded-full bg-boutique-ink px-8 py-3 text-sm font-semibold text-boutique-paper transition hover:bg-boutique-accent"
             >
-              Разгледай още продукти
+              Разгледайте още продукти
             </Link>
             <Link
               href="/"

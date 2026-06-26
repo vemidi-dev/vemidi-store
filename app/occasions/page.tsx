@@ -65,7 +65,7 @@ function OccasionCard({ occasion }: { occasion: OccasionWithCount }) {
             {getProductLabel(occasion.productCount)}
           </p>
         ) : (
-          <p className="mt-1 text-xs text-boutique-muted">Разгледай идеи</p>
+          <p className="mt-1 text-xs text-boutique-muted">Разгледайте идеи</p>
         )}
       </div>
     </Link>

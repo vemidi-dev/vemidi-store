@@ -26,20 +26,20 @@ export const siteContentDefaults = {
   "home.featured_title": "Избрани подаръци",
   "home.featured_description":
     "Ръчно изработени идеи за специални хора и важни моменти.",
-  "home.featured_button": "Виж всички продукти",
+  "home.featured_button": "Вижте всички продукти",
   "home.occasions_title": "Пазарувай по повод",
   "home.categories_title": "Пазарувай по вид продукт",
   "home.process_eyebrow": "Лесно и лично",
   "home.process_title": "Как да поръчам",
-  "home.process_step_1_title": "Избери продукт",
+  "home.process_step_1_title": "Изберете продукт",
   "home.process_step_1_text":
     "Открий подходящ подарък по вид или повод.",
   "home.process_step_2_title": "Персонализирай",
   "home.process_step_2_text":
-    "Добави име, дата, послание и предпочитани цветове.",
-  "home.process_step_3_title": "Потвърди поръчката",
+    "Добавете име, дата, послание и предпочитани цветове.",
+  "home.process_step_3_title": "Потвърдете поръчката",
   "home.process_step_3_text":
-    "Въведи доставка, а ние ще потвърдим детайлите.",
+    "Въведете доставка, а ние ще потвърдим детайлите.",
   "home.process_note":
     "След поръчката ще се свържем с вас за потвърждение на детайлите и срока за изработка.",
   "home.atelier_eyebrow": "Създадено с любов",
@@ -47,16 +47,16 @@ export const siteContentDefaults = {
   "home.atelier_title_accent": "голямо значение",
   "home.atelier_text":
     "Всеки подарък от VeMiDi crafts е създаден, за да предаде емоция, благодарност и обич. Вярваме, че най-хубавите подаръци са тези, които идват от сърцето.",
-  "home.atelier_button": "Научи повече за нас",
+  "home.atelier_button": "Научете повече за нас",
   "shop.hero_title": "Продукти",
   "shop.hero_description":
     "Разгледайте нашите ръчно изработени подаръци, декорации и творчески комплекти за специални моменти и любими хора.",
-  "shop.search_placeholder": "Търси продукт или идея...",
+  "shop.search_placeholder": "Търсете продукт или идея...",
   "categories.hero_title": "Категории",
   "categories.hero_description":
     "Разгледайте нашите продукти, групирани по видове, за да намерите лесно ръчно изработения подарък, който търсите.",
   "categories.occasions_eyebrow": "Още идеи",
-  "categories.occasions_title": "Разгледай и по повод",
+  "categories.occasions_title": "Разгледайте и по повод",
   "categories.products_cta_title": "Разгледайте всички продукти",
   "categories.products_cta_text":
     "Открийте още ръчно изработени подаръци, създадени с внимание и любов.",
@@ -109,20 +109,20 @@ export const siteContentDefaults = {
   "about.closing_text":
     "Благодарим ви, че избирате ръчно изработени подаръци с душа.",
   "about.closing_tagline": "VeMiDi Crafts — Подари ми спомен",
-  "about.cta_button": "Разгледай продуктите",
+  "about.cta_button": "Разгледайте продуктите",
   "cart.hero_eyebrow": "Количка",
   "cart.hero_title": "Преглед на поръчката",
   "cart.hero_description":
-    "Провери продуктите, количествата и персонализацията преди данните за доставка.",
+    "Проверете продуктите, количествата и персонализацията преди данните за доставка.",
   "cart.empty_title": "Количката е празна",
   "cart.empty_text": "Разгледайте магазина и добавете нещо специално.",
   "cart.empty_button": "Към продуктите",
   "cart.items_title": "Избрани продукти",
-  "cart.continue_shopping": "Продължи пазаруването",
+  "cart.continue_shopping": "Продължете пазаруването",
   "cart.summary_title": "Обобщение",
   "cart.shipping_note":
     "Доставката и начинът на получаване се избират в следващата стъпка.",
-  "cart.checkout_button": "Продължи към поръчка",
+  "cart.checkout_button": "Продължете към поръчка",
   "cart.payment_note": "Плащане с наложен платеж",
   "checkout.hero_eyebrow": "Поръчка",
   "checkout.hero_title": "Данни за доставка",
@@ -146,7 +146,7 @@ export const siteContentDefaults = {
   "checkout.summary_title": "Вашата поръчка",
   "checkout.delivery_price_note":
     "Цената за доставка се заплаща отделно според тарифата на избрания куриер.",
-  "checkout.submit_button": "Изпрати поръчката",
+  "checkout.submit_button": "Изпратете поръчката",
   "checkout.back_to_cart": "Назад към количката",
   "delivery.hero_eyebrow": "Полезна информация",
   "delivery.hero_title": "Доставка и плащане",

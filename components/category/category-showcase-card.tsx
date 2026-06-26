@@ -115,7 +115,7 @@ export default function CategoryShowcaseCard({
           <p
             className={`font-medium leading-relaxed text-boutique-paper/80 opacity-0 transition-opacity duration-300 group-hover:opacity-100 ${hint}`}
           >
-            Разгледай подбрани идеи в магазина
+            Разгледайте подбрани идеи в магазина
           </p>
         </div>
       </div>

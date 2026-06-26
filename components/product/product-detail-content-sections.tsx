@@ -72,7 +72,7 @@ export function ProductDetailFulfillmentInfo() {
             href="/delivery"
             className="ml-1 font-semibold text-boutique-sage-deep underline-offset-4 hover:underline"
           >
-            Виж условията
+            Вижте условията
           </Link>
         </p>
       </div>

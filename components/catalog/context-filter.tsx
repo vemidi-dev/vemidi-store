@@ -78,13 +78,13 @@ export function ContextFilter({
             type="submit"
             className="flex-1 rounded-lg bg-boutique-sage-deep px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-boutique-accent lg:py-3"
           >
-            Приложи
+            Прилагане
           </button>
           <Link
             href={action}
             className="rounded-lg border border-boutique-line px-4 py-2.5 text-sm font-semibold text-boutique-ink lg:py-3"
           >
-            Изчисти
+            Изчистване
           </Link>
         </div>
       </>
@@ -114,7 +114,7 @@ export function ContextFilter({
                 href={action}
                 className="text-xs text-boutique-sage-deep hover:underline"
               >
-                Изчисти
+                Изчистване
               </Link>
             </div>
             <FilterFields />

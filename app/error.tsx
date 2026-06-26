@@ -35,7 +35,7 @@ export default function GlobalError({
               onClick={reset}
               className="rounded-full bg-boutique-ink px-7 py-3 text-sm font-semibold text-boutique-paper transition hover:bg-boutique-accent"
             >
-              Опитай отново
+              Опитайте отново
             </button>
             <Link
               href="/produkti"

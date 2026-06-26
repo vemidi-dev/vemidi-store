@@ -292,13 +292,13 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
             type="submit"
             className="flex-1 rounded-lg bg-boutique-sage-deep px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition duration-200 ease-out hover:-translate-y-1 hover:bg-boutique-accent hover:shadow-[0_12px_24px_-10px_rgb(44_40_37_/0.18)] active:translate-y-0 active:shadow-sm lg:py-3 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
           >
-            Приложи
+            Прилагане
           </button>
           <Link
             href={`${PRODUCT_INDEX_PATH}#product-grid`}
             className="rounded-lg border border-boutique-line bg-boutique-paper px-4 py-2.5 text-sm font-semibold text-boutique-ink transition duration-200 ease-out hover:-translate-y-1 hover:border-boutique-sage-deep hover:text-boutique-sage-deep hover:shadow-[0_12px_24px_-10px_rgb(44_40_37_/0.14)] active:translate-y-0 active:shadow-sm lg:py-3 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
           >
-            Изчисти
+            Изчистване
           </Link>
         </div>
       </>
@@ -349,7 +349,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
               type="submit"
               className="shrink-0 rounded-xl bg-boutique-sage-deep px-3 py-2.5 text-sm font-semibold text-white transition duration-200 ease-out hover:-translate-y-1 hover:bg-boutique-ink hover:shadow-[0_12px_24px_-10px_rgb(44_40_37_/0.18)] active:translate-y-0 active:shadow-sm sm:px-6 sm:py-3 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
             >
-              Търси
+              Търсене
             </button>
           </form>
 
@@ -368,7 +368,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
                 <div className="flex items-center justify-between">
                   <h2 className="font-heading text-xl text-boutique-ink">Филтри</h2>
                   <Link href={`${PRODUCT_INDEX_PATH}#product-grid`} className="text-xs text-boutique-sage-deep hover:underline">
-                    Изчисти
+                    Изчистване
                   </Link>
                 </div>
                 <FilterFields />

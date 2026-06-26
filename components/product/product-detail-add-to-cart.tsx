@@ -713,8 +713,8 @@ export function ProductDetailAddToCart({
                     className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-boutique-line bg-white px-4 py-3 text-sm font-semibold text-boutique-ink transition duration-200 ease-out hover:-translate-y-1 hover:border-boutique-sage-deep hover:text-boutique-sage-deep hover:shadow-[0_12px_24px_-10px_rgb(44_40_37_/0.16)] active:translate-y-0 active:shadow-sm motion-reduce:transition-none motion-reduce:hover:translate-y-0"
                   >
                     {expandedColorFields.has(field.id)
-                      ? "Покажи по-малко"
-                      : `Виж всички цветове (${field.options.length})`}
+                      ? "Покажете по-малко"
+                      : `Вижте всички цветове (${field.options.length})`}
                     <span
                       aria-hidden="true"
                       className={`transition motion-reduce:transition-none ${

@@ -45,25 +45,25 @@ const SOCIAL_NETWORKS = [
   {
     key: "instagram" as const,
     label: "Instagram",
-    ariaLabel: "Отвори Instagram профила",
+    ariaLabel: "Отворете Instagram профила",
     Icon: IconInstagram,
   },
   {
     key: "facebook" as const,
     label: "Facebook",
-    ariaLabel: "Отвори Facebook страницата",
+    ariaLabel: "Отворете Facebook страницата",
     Icon: IconFacebook,
   },
   {
     key: "tiktok" as const,
     label: "TikTok",
-    ariaLabel: "Отвори TikTok профила",
+    ariaLabel: "Отворете TikTok профила",
     Icon: IconTikTok,
   },
   {
     key: "pinterest" as const,
     label: "Pinterest",
-    ariaLabel: "Отвори Pinterest профила",
+    ariaLabel: "Отворете Pinterest профила",
     Icon: IconPinterest,
   },
 ];

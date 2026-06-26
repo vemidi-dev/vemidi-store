@@ -40,7 +40,7 @@ export function HeaderActions() {
           <input
             name="q"
             type="search"
-            placeholder="Търси..."
+            placeholder="Търсете..."
             className="h-10 w-32 rounded-lg border border-boutique-line bg-boutique-paper pl-10 pr-3 text-sm text-boutique-ink outline-none transition focus:w-44 focus:border-boutique-sage xl:w-36"
           />
         </label>

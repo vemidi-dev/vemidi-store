@@ -98,7 +98,7 @@ function FeaturedArticleCard({
         </p>
         <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold">
           <Link href={getArticleHref(post)} className="text-boutique-rose-deep">
-            Прочети статията →
+            Прочетете статията →
           </Link>
           {ctaHref && post.cta_link_label ? (
             <Link href={ctaHref} className="text-boutique-sage-deep">
@@ -192,7 +192,7 @@ export default async function BlogPage({ searchParams }: Props) {
                 href="#all-articles"
                 className="text-sm font-semibold text-boutique-rose-deep underline-offset-4 hover:underline"
               >
-                Виж всички статии →
+                Вижте всички статии →
               </Link>
             </div>
             <div className="mt-8 grid gap-6 lg:grid-cols-3">
@@ -212,7 +212,7 @@ export default async function BlogPage({ searchParams }: Props) {
         <PageContainer>
           <div className="grid gap-10 lg:grid-cols-[1fr_18rem]">
             <div>
-              <h2 className="font-heading text-4xl text-boutique-ink">Разгледай по тема</h2>
+              <h2 className="font-heading text-4xl text-boutique-ink">Разгледайте по тема</h2>
               <div className="mt-5 flex flex-wrap gap-2">
                 <Link
                   href="/blog#all-articles"
@@ -256,7 +256,7 @@ export default async function BlogPage({ searchParams }: Props) {
                   <option value="popular">Популярни</option>
                 </select>
                 <button className="rounded-lg bg-boutique-ink px-6 py-3 text-sm font-semibold text-white">
-                  Покажи
+                  Показване
                 </button>
               </form>
 
@@ -298,7 +298,7 @@ export default async function BlogPage({ searchParams }: Props) {
                             href={getArticleHref(post)}
                             className="text-boutique-rose-deep"
                           >
-                            Прочети статията →
+                            Прочетете статията →
                           </Link>
                           {getCtaHref(post) && post.cta_link_label ? (
                             <Link

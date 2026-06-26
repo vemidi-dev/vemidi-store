@@ -1,7 +1,7 @@
 import type { ProductLandingPage } from "@/lib/product-landing/types";
 import { buildProductLandingUrl, getLandingBaseUrl } from "@/lib/product-landing/url";
 
-export const PRODUCT_LANDING_CTA_LABEL = "Разгледай подробно комплекта";
+export const PRODUCT_LANDING_CTA_LABEL = "Разгледайте подробно комплекта";
 export const PRODUCT_LANDING_CTA_SOURCE_PARAM = "store";
 
 export type ProductLandingCta = {

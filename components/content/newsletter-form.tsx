@@ -51,7 +51,7 @@ export function NewsletterForm({
             disabled={pending}
             className="rounded-lg bg-boutique-sage-deep px-7 py-3 text-sm font-semibold text-white transition hover:bg-boutique-ink disabled:opacity-60"
           >
-            {pending ? "Записване..." : "Абонирай се"}
+            {pending ? "Записване..." : "Абонирайте се"}
           </button>
         ) : null}
       </div>
@@ -114,7 +114,7 @@ export function NewsletterForm({
               : "bg-boutique-sage-deep text-white hover:bg-boutique-ink"
           }`}
         >
-          {pending ? "Записване..." : "Абонирай се"}
+          {pending ? "Записване..." : "Абонирайте се"}
         </button>
       ) : null}
 

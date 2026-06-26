@@ -117,7 +117,7 @@ export function HomeContentGrid({
                 href="/blog"
                 className="text-xs font-semibold text-boutique-sage-deep underline-offset-4 hover:underline"
               >
-                Виж всички статии
+                Вижте всички статии
               </Link>
             </div>
 
@@ -160,7 +160,7 @@ export function HomeContentGrid({
                 href="/sabitiya"
                 className="text-xs font-semibold text-boutique-sage-deep underline-offset-4 hover:underline"
               >
-                Виж всички събития
+                Вижте всички събития
               </Link>
             </div>
 

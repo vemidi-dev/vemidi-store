@@ -145,11 +145,11 @@ export function CartPanel({ content }: { content: CartPageContent }) {
                         </p>
                         <button
                           type="button"
-                          aria-label={`Премахни ${line.title} от количката`}
+                          aria-label={`Премахване на ${line.title} от количката`}
                           onClick={() => removeLine(line.lineId)}
                           className="mt-1 text-[11px] font-semibold text-boutique-accent underline-offset-4 transition hover:text-boutique-ink hover:underline"
                         >
-                          Премахни
+                          Премахване
                         </button>
                       </div>
                     </div>

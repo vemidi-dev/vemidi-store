@@ -52,7 +52,7 @@ export function CartAddedToast({
           <button
             type="button"
             onClick={onDismiss}
-            aria-label="Затвори известието"
+            aria-label="Затворете известието"
             className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-xl leading-none text-boutique-muted transition hover:bg-boutique-bg hover:text-boutique-ink"
           >
             ×

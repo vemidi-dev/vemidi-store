@@ -58,7 +58,7 @@ export function EventGalleryGrid({
           >
             {isPending
               ? "Зареждане..."
-              : `Зареди още (${images.length} от ${totalCount})`}
+              : `Заредете още (${images.length} от ${totalCount})`}
           </button>
         </div>
       ) : null}

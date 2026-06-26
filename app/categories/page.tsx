@@ -92,7 +92,7 @@ function ProductCategoryCard({ category }: { category: CategoryWithCount }) {
           {category.cardDescription?.trim() || DEFAULT_CATEGORY_CARD_DESCRIPTION}
         </p>
         <span className="mt-1.5 inline-flex min-h-8 items-center gap-1 text-xs font-semibold text-boutique-sage-deep sm:mt-4 sm:min-h-0 sm:gap-2 sm:text-sm">
-          Разгледай
+          Разгледайте
           <span aria-hidden className="transition group-hover:translate-x-1">
             →
           </span>
@@ -132,7 +132,7 @@ function OccasionCategoryLink({ category }: { category: CategoryWithCount }) {
             {getProductLabel(category.productCount)}
           </p>
         ) : (
-          <p className="mt-0.5 text-[0.6875rem] text-boutique-muted sm:mt-1 sm:text-xs">Разгледай идеи</p>
+          <p className="mt-0.5 text-[0.6875rem] text-boutique-muted sm:mt-1 sm:text-xs">Разгледайте идеи</p>
         )}
       </div>
     </Link>

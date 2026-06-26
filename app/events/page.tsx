@@ -84,7 +84,7 @@ function UpcomingEvents({ events }: { events: EventRow[] }) {
                   href={`/sabitiya/${event.slug}`}
                   className="mt-6 inline-flex rounded-lg bg-boutique-rose-deep px-6 py-3 text-sm font-semibold text-white transition hover:bg-boutique-ink"
                 >
-                  Виж подробности
+                  Вижте подробности
                 </Link>
               </div>
             </article>
@@ -138,7 +138,7 @@ function PastEvents({ events }: { events: EventRow[] }) {
                     {event.excerpt}
                   </p>
                   <span className="mt-4 inline-flex text-sm font-semibold text-boutique-sage-deep">
-                    Виж събитието →
+                    Вижте събитието →
                   </span>
                 </div>
               </Link>
