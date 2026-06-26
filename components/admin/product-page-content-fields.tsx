@@ -19,15 +19,16 @@ export function ProductPageContentFields({
   return (
     <div className="grid gap-5 md:grid-cols-2">
       <label className="text-sm font-medium text-boutique-ink md:col-span-2">
-        Кратко резюме (подзаглавие)
+        Кратко резюме
         <input
           name={adminFormFields.product.subtitle}
           defaultValue={defaults?.subtitle ?? ""}
           className={fieldClassName}
-          placeholder="Кратко пояснение под заглавието"
+          placeholder="Кратък продаващ текст под цената на продуктовата страница"
         />
         <p className={helperClassName}>
-          Показва се в горната част на продуктовата страница, под заглавието.
+          Показва се в дясната колона под цената и преди опциите за персонализация.
+          Оставете празно, ако не е нужно.
         </p>
       </label>
 

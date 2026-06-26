@@ -225,12 +225,6 @@ export default async function ProductDetailPage({
                   <h1 className="font-heading text-4xl leading-[1.12] tracking-tight text-boutique-ink sm:text-5xl lg:text-[2.75rem]">
                     {product.title}
                   </h1>
-
-                  {product.subtitle ? (
-                    <p className="mt-4 max-w-xl text-base leading-relaxed text-boutique-muted md:text-lg md:leading-8">
-                      {product.subtitle}
-                    </p>
-                  ) : null}
                 </div>
 
                 <ProductDetailOccasionTags occasions={productOccasions} />
@@ -250,6 +244,12 @@ export default async function ProductDetailPage({
                     </span>
                   ) : null}
                 </div>
+
+                {product.subtitle ? (
+                  <p className="max-w-xl text-base leading-relaxed text-boutique-muted md:text-lg">
+                    {product.subtitle}
+                  </p>
+                ) : null}
               </div>
 
               {showCategoryLink ? (

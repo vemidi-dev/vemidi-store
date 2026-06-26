@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import { adminFormFields } from "@/lib/admin/form-fields";
@@ -119,4 +120,36 @@ test("buildProductMutationRpcPayload includes new page content RPC params", () =
   assert.equal(payload.p_personalization_info, "Персонализация");
   assert.equal(payload.p_dimensions_materials, "Размери");
   assert.equal(payload.p_ordering_info, "Поръчка");
+});
+
+test("product page renders subtitle below price and before add-to-cart options", () => {
+  const source = readFileSync(
+    new URL("../app/products/[slug]/page.tsx", import.meta.url),
+    "utf8",
+  );
+
+  const priceIndex = source.indexOf("<ProductPrice product={product}");
+  const subtitleIndex = source.indexOf("{product.subtitle ?");
+  const addToCartIndex = source.indexOf("<ProductDetailAddToCart");
+
+  assert.ok(priceIndex > -1);
+  assert.ok(subtitleIndex > priceIndex);
+  assert.ok(addToCartIndex > subtitleIndex);
+
+  const titleBlock = source.slice(
+    source.indexOf("<h1"),
+    source.indexOf("</h1>") + "</h1>".length,
+  );
+  assert.doesNotMatch(titleBlock, /\{product\.subtitle \?/);
+});
+
+test("admin product content field labels short summary for storefront placement", () => {
+  const source = readFileSync(
+    new URL("../components/admin/product-page-content-fields.tsx", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(source, /Кратко резюме/);
+  assert.doesNotMatch(source, /подзаглавие/i);
+  assert.match(source, /под цената и преди опциите/);
 });
