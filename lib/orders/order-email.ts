@@ -5,19 +5,14 @@ import {
   parseStoreOrderItems,
   type OrderRow,
 } from "@/lib/admin/orders";
-import { formatOrderOptionLine } from "@/lib/order-option-display";
+import { buildStoreOrderItemDetailLines } from "@/lib/admin/order-item-display";
 import { siteConfig } from "@/config/site";
 
 export type StoreOrderEmailItem = {
   name: string;
   unitPrice: number | null;
   quantity: number;
-  personalization: string | null;
-  selectedColors: Array<{
-    fieldLabel?: string;
-    optionName?: string;
-  }>;
-  optionLines: string[];
+  detailLines: string[];
 };
 
 function escapeHtml(value: string) {
@@ -45,10 +40,18 @@ export function getStoreOrderEmailItems(order: OrderRow): StoreOrderEmailItem[] 
     name: item.name,
     unitPrice: item.unitPrice,
     quantity: item.quantity,
-    personalization: item.personalization,
-    selectedColors: item.selectedColors,
-    optionLines: item.optionSelections.map((group) => formatOrderOptionLine(group)),
+    detailLines: buildStoreOrderItemDetailLines(item).map((line) => line.text),
   }));
+}
+
+function renderItemDetailLinesHtml(detailLines: string[]) {
+  if (!detailLines.length) {
+    return "";
+  }
+
+  return `<p style="margin:8px 0 0;color:#5e5a54;">${detailLines
+    .map((line) => escapeHtml(line))
+    .join("<br />")}</p>`;
 }
 
 function renderItemsHtml(order: OrderRow) {
@@ -59,26 +62,13 @@ function renderItemsHtml(order: OrderRow) {
 
   return items
     .map((item) => {
-      const colors = item.selectedColors
-        .map((color) => `${color.fieldLabel || "Цвят"}: ${color.optionName || "—"}`)
-        .join("<br />");
-      const personalization = item.personalization
-        ? `<p style="margin:8px 0 0;color:#5e5a54;">Персонализация: ${escapeHtml(item.personalization)}</p>`
-        : "";
-      const colorBlock = colors
-        ? `<p style="margin:8px 0 0;color:#5e5a54;">${colors}</p>`
-        : "";
-      const optionBlock = item.optionLines.length
-        ? `<p style="margin:8px 0 0;color:#5e5a54;">${item.optionLines.map((line) => escapeHtml(line)).join("<br />")}</p>`
-        : "";
+      const detailBlock = renderItemDetailLinesHtml(item.detailLines);
 
       return `
         <div style="border:1px solid #e4ddd4;border-radius:12px;padding:16px;margin:0 0 12px;">
           <p style="margin:0;font-weight:600;color:#2a2824;">${escapeHtml(item.name)}</p>
           <p style="margin:8px 0 0;color:#2a2824;">${item.quantity} × ${escapeHtml(formatOrderPrice(item.unitPrice, order.currency))}</p>
-          ${personalization}
-          ${colorBlock}
-          ${optionBlock}
+          ${detailBlock}
         </div>
       `;
     })
