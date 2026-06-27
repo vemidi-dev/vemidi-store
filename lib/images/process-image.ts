@@ -34,6 +34,45 @@ function throwImageFileError(message: string, sourceFileName?: string): never {
   throw new Error(formatImageFileError(message, sourceFileName));
 }
 
+function formatInputMegapixels(pixels: number) {
+  return `${Math.round(pixels / 1_000_000)}`;
+}
+
+function isInputPixelLimitError(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+  const lower = message.toLowerCase();
+  return lower.includes("exceeds pixel limit") || lower.includes("input image exceeds pixel");
+}
+
+function throwSharpProcessingError(
+  error: unknown,
+  sourceFileName: string | undefined,
+  maxPixels: number,
+): never {
+  if (isInputPixelLimitError(error)) {
+    throwImageFileError(
+      `Снимката има твърде голяма резолюция за обработка (лимит: ${formatInputMegapixels(maxPixels)} мегапиксела). Използвайте по-малък оригинал или експортирайте отново с по-ниска резолюция.`,
+      sourceFileName,
+    );
+  }
+
+  throwImageFileError("Файлът е повреден или неподдържан.", sourceFileName);
+}
+
+function assertInputPixelCount(
+  width: number,
+  height: number,
+  maxPixels: number,
+  sourceFileName?: string,
+) {
+  if (width > 0 && height > 0 && width * height > maxPixels) {
+    throwImageFileError(
+      `Снимката има твърде голяма резолюция за обработка (лимит: ${formatInputMegapixels(maxPixels)} мегапиксела). Използвайте по-малък оригинал или експортирайте отново с по-ниска резолюция.`,
+      sourceFileName,
+    );
+  }
+}
+
 function getShortEdge(width: number, height: number) {
   return Math.min(width, height);
 }
@@ -88,15 +127,15 @@ export async function processImageBuffer(
       animated: false,
       limitInputPixels: maxPixels,
     });
-  } catch {
-    throwImageFileError("Файлът е повреден или неподдържан.", sourceFileName);
+  } catch (error) {
+    throwSharpProcessingError(error, sourceFileName, maxPixels);
   }
 
   let metadata: sharp.Metadata;
   try {
     metadata = await instance.metadata();
-  } catch {
-    throwImageFileError("Файлът е повреден или неподдържан.", sourceFileName);
+  } catch (error) {
+    throwSharpProcessingError(error, sourceFileName, maxPixels);
   }
 
   const format = metadata.format?.toLowerCase();
@@ -117,8 +156,8 @@ export async function processImageBuffer(
   let orientedMetadata: sharp.Metadata;
   try {
     orientedMetadata = await oriented.metadata();
-  } catch {
-    throwImageFileError("Файлът е повреден или неподдържан.", sourceFileName);
+  } catch (error) {
+    throwSharpProcessingError(error, sourceFileName, maxPixels);
   }
 
   const sourceWidth = orientedMetadata.width ?? 0;
@@ -126,6 +165,8 @@ export async function processImageBuffer(
   if (sourceWidth <= 0 || sourceHeight <= 0) {
     throwImageFileError("Файлът е повреден или неподдържан.", sourceFileName);
   }
+
+  assertInputPixelCount(sourceWidth, sourceHeight, maxPixels, sourceFileName);
 
   const warnings: string[] = [];
   if (getShortEdge(sourceWidth, sourceHeight) < profile.minShortEdge) {

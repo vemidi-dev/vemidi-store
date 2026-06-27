@@ -1,5 +1,5 @@
 import { IMAGE_CACHE_CONTROL, IMAGE_PROCESSING_CONCURRENCY } from "@/lib/images/constants";
-import { getImageProfile } from "@/lib/images/profiles";
+import { getImageProfile, getMaxInputPixels } from "@/lib/images/profiles";
 
 const productProfile = getImageProfile("product");
 
@@ -12,7 +12,7 @@ export const PRODUCT_IMAGE_MAX_LONG_EDGE = productProfile.maxDimension;
 export const PRODUCT_IMAGE_MIN_SHORT_EDGE = productProfile.minShortEdge;
 export const PRODUCT_IMAGE_WEBP_QUALITY = productProfile.quality;
 export const PRODUCT_IMAGE_PROCESSING_CONCURRENCY = IMAGE_PROCESSING_CONCURRENCY;
-export const PRODUCT_IMAGE_MAX_PIXELS = productProfile.maxDimension * productProfile.maxDimension * 2;
+export const PRODUCT_IMAGE_MAX_PIXELS = getMaxInputPixels("product");
 export const PRODUCT_IMAGE_CACHE_CONTROL = IMAGE_CACHE_CONTROL;
 
 export const PRODUCT_IMAGE_ACCEPTED_MIME_TYPES = [

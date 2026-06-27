@@ -11,10 +11,18 @@ export type ImageProfileConfig = {
   quality: number;
   maxFileSize: number;
   minShortEdge: number;
+  maxInputPixels: number;
   maxImages?: number;
   maxFilesPerUpload: number;
   storageDirectory: string;
 };
+
+/** ~24 MP — covers typical 12–20 MP phone photos before resize to maxDimension. */
+export const PRODUCT_MAX_INPUT_PIXELS = 24_000_000;
+
+function defaultMaxInputPixels(maxDimension: number) {
+  return maxDimension * maxDimension * 2;
+}
 
 export const IMAGE_PROFILES: Record<ImageProfileId, ImageProfileConfig> = {
   product: {
@@ -23,6 +31,7 @@ export const IMAGE_PROFILES: Record<ImageProfileId, ImageProfileConfig> = {
     quality: 84,
     maxFileSize: 10 * 1024 * 1024,
     minShortEdge: 480,
+    maxInputPixels: PRODUCT_MAX_INPUT_PIXELS,
     maxImages: 12,
     maxFilesPerUpload: 12,
     storageDirectory: "products",
@@ -33,6 +42,7 @@ export const IMAGE_PROFILES: Record<ImageProfileId, ImageProfileConfig> = {
     quality: 77,
     maxFileSize: 10 * 1024 * 1024,
     minShortEdge: 500,
+    maxInputPixels: defaultMaxInputPixels(1400),
     maxImages: 30,
     maxFilesPerUpload: 12,
     storageDirectory: "events",
@@ -43,6 +53,7 @@ export const IMAGE_PROFILES: Record<ImageProfileId, ImageProfileConfig> = {
     quality: 80,
     maxFileSize: 10 * 1024 * 1024,
     minShortEdge: 600,
+    maxInputPixels: defaultMaxInputPixels(1400),
     maxFilesPerUpload: 1,
     storageDirectory: "categories",
   },
@@ -52,6 +63,7 @@ export const IMAGE_PROFILES: Record<ImageProfileId, ImageProfileConfig> = {
     quality: 81,
     maxFileSize: 12 * 1024 * 1024,
     minShortEdge: 600,
+    maxInputPixels: defaultMaxInputPixels(1600),
     maxFilesPerUpload: 1,
     storageDirectory: "blog",
   },
@@ -61,6 +73,7 @@ export const IMAGE_PROFILES: Record<ImageProfileId, ImageProfileConfig> = {
     quality: 84,
     maxFileSize: 15 * 1024 * 1024,
     minShortEdge: 800,
+    maxInputPixels: defaultMaxInputPixels(2000),
     maxFilesPerUpload: 1,
     storageDirectory: "site-content",
   },
@@ -71,6 +84,5 @@ export function getImageProfile(profileId: ImageProfileId) {
 }
 
 export function getMaxInputPixels(profileId: ImageProfileId) {
-  const profile = getImageProfile(profileId);
-  return profile.maxDimension * profile.maxDimension * 2;
+  return getImageProfile(profileId).maxInputPixels;
 }

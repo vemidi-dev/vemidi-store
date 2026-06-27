@@ -4,7 +4,7 @@ import test from "node:test";
 import sharp from "sharp";
 
 import { EVENT_GALLERY_SCOPE_ID } from "@/lib/images/constants";
-import { getImageProfile, IMAGE_PROFILES } from "@/lib/images/profiles";
+import { getImageProfile, getMaxInputPixels, IMAGE_PROFILES, PRODUCT_MAX_INPUT_PIXELS } from "@/lib/images/profiles";
 import { processImageBuffer, validateImageInputSize } from "@/lib/images/process-image";
 import { buildImageStoragePath } from "@/lib/images/storage-path";
 import {
@@ -41,6 +41,30 @@ test("product profile rejects files above 10 MB", () => {
   assert.throws(
     () => validateImageInputSize(profile.maxFileSize + 1, "product"),
     /надвишава/,
+  );
+});
+
+test("product profile allows high-resolution phone photos up to 24 MP input", () => {
+  assert.equal(IMAGE_PROFILES.product.maxInputPixels, PRODUCT_MAX_INPUT_PIXELS);
+  assert.equal(getMaxInputPixels("product"), 24_000_000);
+  assert.equal(IMAGE_PROFILES.product.maxDimension, 1800);
+});
+
+test("product profile processes 4032x3659 JPEG without pixel limit failure", async () => {
+  const input = await createImage(4032, 3659);
+  const result = await processImageBuffer(input, input.length, "product", {}, "ramka-s-muh.jpg");
+
+  assert.equal(result.profileId, "product");
+  assert.equal(Math.max(result.width, result.height), 1800);
+  assert.ok(result.optimizedSize > 0);
+});
+
+test("product profile rejects absurd input resolution above 24 MP", async () => {
+  const input = await createImage(6000, 6000);
+
+  await assert.rejects(
+    () => processImageBuffer(input, input.length, "product", {}, "huge.jpg"),
+    /твърде голяма резолюция/,
   );
 });
 
