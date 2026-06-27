@@ -122,6 +122,107 @@ function isChoiceType(inputType: ParsedOptionGroup["inputType"]) {
   return inputType === "single" || inputType === "multiple";
 }
 
+function serializeGroupValuesJson(group: LocalGroup) {
+  return JSON.stringify(
+    group.values.map((value) => {
+      const { uid, finalPriceInput, priceDeltaInput, ...rest } = value;
+      void uid;
+      void finalPriceInput;
+      void priceDeltaInput;
+      return group.key === "personalization" && rest.key === "no"
+        ? { ...rest, priceDelta: 0 }
+        : rest;
+    }),
+  );
+}
+
+function OptionGroupCollapsedFields({
+  group,
+  index,
+}: {
+  group: LocalGroup;
+  index: number;
+}) {
+  const valuesJson = useMemo(() => serializeGroupValuesJson(group), [group]);
+
+  return (
+    <div className="hidden" aria-hidden>
+      <input type="hidden" name={adminFormFields.optionGroup.ids} value={group.id ?? ""} />
+      <input type="hidden" name={adminFormFields.optionGroup.sortOrders} value={group.sortOrder} />
+      <input
+        type="hidden"
+        name={adminFormFields.optionGroup.active}
+        value={group.isActive ? "on" : "off"}
+      />
+      <input
+        type="hidden"
+        name={adminFormFields.optionGroup.required}
+        value={group.isRequired ? "on" : "off"}
+      />
+      <input type="hidden" name={adminFormFields.optionGroup.valuesJson} value={valuesJson} />
+      <input type="hidden" name={adminFormFields.optionGroup.names} value={group.name} />
+      <input type="hidden" name={adminFormFields.optionGroup.inputTypes} value={group.inputType} />
+      <input type="hidden" name={adminFormFields.optionGroup.keys} value={group.key} />
+      <input
+        type="hidden"
+        name={adminFormFields.optionGroup.dependsOnOptionIds}
+        value={group.dependsOnOptionId ?? ""}
+      />
+      {isChoiceType(group.inputType) ? (
+        <>
+          {group.inputType === "single" ? (
+            <>
+              <input
+                type="hidden"
+                name={adminFormFields.optionGroup.minSelects}
+                value={group.isRequired ? "1" : "0"}
+              />
+              <input type="hidden" name={adminFormFields.optionGroup.maxSelects} value="1" />
+            </>
+          ) : (
+            <>
+              <input
+                type="hidden"
+                name={adminFormFields.optionGroup.minSelects}
+                value={String(group.minSelect)}
+              />
+              <input
+                type="hidden"
+                name={adminFormFields.optionGroup.maxSelects}
+                value={String(group.maxSelect)}
+              />
+            </>
+          )}
+          <input type="hidden" name={adminFormFields.optionGroup.placeholders} value="" />
+          <input type="hidden" name={adminFormFields.optionGroup.maxLengths} value="" />
+          <input type="hidden" name={adminFormFields.optionGroup.textPriceDeltas} value="0" />
+        </>
+      ) : (
+        <>
+          <input type="hidden" name={adminFormFields.optionGroup.minSelects} value="0" />
+          <input type="hidden" name={adminFormFields.optionGroup.maxSelects} value="0" />
+          <input
+            type="hidden"
+            name={adminFormFields.optionGroup.placeholders}
+            value={group.placeholder ?? ""}
+          />
+          <input
+            type="hidden"
+            name={adminFormFields.optionGroup.maxLengths}
+            value={String(group.maxLength ?? 200)}
+          />
+          <input
+            type="hidden"
+            name={adminFormFields.optionGroup.textPriceDeltas}
+            value={String(group.textPriceDelta)}
+          />
+        </>
+      )}
+      <span className="sr-only">{group.name.trim() || `Група ${index + 1}`}</span>
+    </div>
+  );
+}
+
 export function ProductOptionGroupsEditor({
   initialGroups = [],
   allDependencyOptions,
@@ -249,6 +350,7 @@ export function ProductOptionGroupsEditor({
               </span>
             </summary>
 
+            {isOpen ? (
             <div className="space-y-4 border-t border-boutique-line px-4 py-4">
               <input type="hidden" name={adminFormFields.optionGroup.ids} value={group.id ?? ""} />
               <input type="hidden" name={adminFormFields.optionGroup.sortOrders} value={group.sortOrder} />
@@ -265,23 +367,7 @@ export function ProductOptionGroupsEditor({
               <input
                 type="hidden"
                 name={adminFormFields.optionGroup.valuesJson}
-                value={JSON.stringify(
-                  group.values.map((value) => {
-                    const {
-                      uid,
-                      finalPriceInput,
-                      priceDeltaInput,
-                      ...rest
-                    } = value;
-                    void uid;
-                    void finalPriceInput;
-                    void priceDeltaInput;
-                    return group.key === "personalization" &&
-                      rest.key === "no"
-                      ? { ...rest, priceDelta: 0 }
-                      : rest;
-                  }),
-                )}
+                value={serializeGroupValuesJson(group)}
               />
 
               <div className="grid gap-4 md:grid-cols-2">
@@ -751,6 +837,9 @@ export function ProductOptionGroupsEditor({
                 </div>
               ) : null}
             </div>
+            ) : (
+              <OptionGroupCollapsedFields group={group} index={index} />
+            )}
           </details>
         );
       })}

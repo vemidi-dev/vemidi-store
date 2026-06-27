@@ -2,6 +2,7 @@ import { createProduct } from "@/app/admin/actions";
 import { AdminUnsavedChangesGuard } from "@/components/admin/admin-unsaved-changes-guard";
 import { AdminFormPendingGuard } from "@/components/admin/admin-form-pending-guard";
 import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
+import { AdminLazyDetailsMount } from "@/components/admin/admin-lazy-details-mount";
 import { ProductImageFileInput } from "@/components/admin/product-image-file-input";
 import { ProductColorFieldsEditor } from "@/components/admin/product-color-fields-editor";
 import { ProductOptionGroupsEditor } from "@/components/admin/product-option-groups-editor";
@@ -232,20 +233,24 @@ export function ProductCreatePanel({
           </div>
         </fieldset>
 
-        <details className="border-t border-boutique-line/70 pt-6">
-          <summary className="cursor-pointer text-xs font-semibold uppercase tracking-[0.16em] text-boutique-muted">
-            Подходящи готови пожелания
-          </summary>
-          <div className="mt-4">
-            <ProductWishSelector
-              wishes={wishes}
-              occasions={occasionCategories}
-              wishOccasionLinks={wishOccasionLinks}
-              selectedIds={draft?.wishTemplateIds}
-              helperClassName={adminHelperClass}
-            />
-          </div>
-        </details>
+        <AdminLazyDetailsMount
+          className="border-t border-boutique-line/70 pt-6"
+          id="admin-create-product-wishes"
+          summary={
+            <span className="cursor-pointer text-xs font-semibold uppercase tracking-[0.16em] text-boutique-muted">
+              Подходящи готови пожелания
+            </span>
+          }
+          contentClassName="mt-4"
+        >
+          <ProductWishSelector
+            wishes={wishes}
+            occasions={occasionCategories}
+            wishOccasionLinks={wishOccasionLinks}
+            selectedIds={draft?.wishTemplateIds}
+            helperClassName={adminHelperClass}
+          />
+        </AdminLazyDetailsMount>
 
         <fieldset className="space-y-4 border-t border-boutique-line/70 pt-6">
           <legend className="text-xs font-semibold uppercase tracking-[0.16em] text-boutique-muted">
@@ -308,20 +313,24 @@ export function ProductCreatePanel({
           />
         </fieldset>
 
-        <details className="border-t border-boutique-line/70 pt-6">
-          <summary className="cursor-pointer text-xs font-semibold uppercase tracking-[0.16em] text-boutique-muted">
-            Опции и ценообразуване
-          </summary>
-          <div className="mt-4">
-            <ProductOptionGroupsEditor
-              initialGroups={draft?.optionGroups}
-              allDependencyOptions={[]}
-              basePrice={Number(draft?.price) || 0}
-              helperClassName={adminHelperClass}
-              fieldClassName={adminFieldClass}
-            />
-          </div>
-        </details>
+        <AdminLazyDetailsMount
+          className="border-t border-boutique-line/70 pt-6"
+          id="admin-create-product-options"
+          summary={
+            <span className="cursor-pointer text-xs font-semibold uppercase tracking-[0.16em] text-boutique-muted">
+              Опции и ценообразуване
+            </span>
+          }
+          contentClassName="mt-4"
+        >
+          <ProductOptionGroupsEditor
+            initialGroups={draft?.optionGroups}
+            allDependencyOptions={[]}
+            basePrice={Number(draft?.price) || 0}
+            helperClassName={adminHelperClass}
+            fieldClassName={adminFieldClass}
+          />
+        </AdminLazyDetailsMount>
 
         <fieldset className="space-y-4 border-t border-boutique-line/70 pt-6">
           <legend className="text-xs font-semibold uppercase tracking-[0.16em] text-boutique-muted">

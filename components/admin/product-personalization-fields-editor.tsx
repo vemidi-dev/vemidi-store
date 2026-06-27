@@ -97,16 +97,8 @@ export function ProductPersonalizationFieldsEditor({
               Какво въвежда клиентът?
               <input
                 name={adminFormFields.personalizationField.labels}
-                value={field.label}
+                defaultValue={field.label}
                 required
-                onChange={(event) => {
-                  const label = event.currentTarget.value;
-                  setFields((current) =>
-                    current.map((item) =>
-                      item.uid === field.uid ? { ...item, label } : item,
-                    ),
-                  );
-                }}
                 placeholder="Напр. Име на детето"
                 className={fieldClassName}
               />
@@ -152,15 +144,7 @@ export function ProductPersonalizationFieldsEditor({
               Подсказка в полето
               <input
                 name={adminFormFields.personalizationField.placeholders}
-                value={field.placeholder}
-                onChange={(event) => {
-                  const placeholder = event.currentTarget.value;
-                  setFields((current) =>
-                    current.map((item) =>
-                      item.uid === field.uid ? { ...item, placeholder } : item,
-                    ),
-                  );
-                }}
+                defaultValue={field.placeholder}
                 placeholder="Напр. Мария"
                 className={fieldClassName}
               />
@@ -169,22 +153,13 @@ export function ProductPersonalizationFieldsEditor({
             <label className="text-sm font-medium text-boutique-ink">
               Максимален брой символи
               <input
+                key={`${field.uid}-${field.type}-max-length`}
                 name={adminFormFields.personalizationField.maxLengths}
                 type="number"
                 min="1"
                 max="1000"
-                value={field.maxLength}
+                defaultValue={field.maxLength}
                 disabled={field.type === "date"}
-                onChange={(event) => {
-                  const maxLength = Number(event.currentTarget.value) || 1;
-                  setFields((current) =>
-                    current.map((item) =>
-                      item.uid === field.uid
-                        ? { ...item, maxLength }
-                        : item,
-                    ),
-                  );
-                }}
                 className={fieldClassName}
               />
               {field.type === "date" ? (
@@ -203,40 +178,7 @@ export function ProductPersonalizationFieldsEditor({
                 type="number"
                 min="0"
                 step="0.01"
-                value={field.priceDeltaInput}
-                onChange={(event) => {
-                  const priceDeltaInput = event.currentTarget.value;
-                  const parsed = Number(priceDeltaInput);
-                  setFields((current) =>
-                    current.map((item) =>
-                      item.uid === field.uid
-                        ? {
-                            ...item,
-                            priceDeltaInput,
-                            ...(priceDeltaInput.trim() && Number.isFinite(parsed)
-                              ? { priceDelta: Math.max(0, parsed) }
-                              : {}),
-                          }
-                        : item,
-                    ),
-                  );
-                }}
-                onBlur={() => {
-                  if (field.priceDeltaInput.trim()) {
-                    return;
-                  }
-                  setFields((current) =>
-                    current.map((item) =>
-                      item.uid === field.uid
-                        ? {
-                            ...item,
-                            priceDelta: 0,
-                            priceDeltaInput: "0",
-                          }
-                        : item,
-                    ),
-                  );
-                }}
+                defaultValue={field.priceDeltaInput}
                 className={fieldClassName}
               />
               <span className={`mt-1 block ${helperClassName}`}>

@@ -138,13 +138,8 @@ export function ProductColorFieldsEditor({
             <label className="text-sm font-medium text-boutique-ink">
               Какво избира клиентът?
               <input
-                value={field.label}
-                onChange={(event) => {
-                  const value = event.currentTarget.value;
-                  setFields((prev) =>
-                    prev.map((item) => (item.uid === field.uid ? { ...item, label: value } : item)),
-                  );
-                }}
+                name={adminFormFields.colorField.labels}
+                defaultValue={field.label}
                 placeholder="Напр. Цвят на панделката"
                 className={fieldClassName}
               />
@@ -202,20 +197,8 @@ export function ProductColorFieldsEditor({
                   type="number"
                   min="1"
                   max="99"
-                  value={field.requiredTotalQuantity}
-                  onChange={(event) => {
-                    const requiredTotalQuantity = Math.max(
-                      1,
-                      Math.min(99, Number(event.currentTarget.value) || 1),
-                    );
-                    setFields((prev) =>
-                      prev.map((item) =>
-                        item.uid === field.uid
-                          ? { ...item, requiredTotalQuantity }
-                          : item,
-                      ),
-                    );
-                  }}
+                  name={adminFormFields.colorField.requiredTotalQuantities}
+                  defaultValue={field.requiredTotalQuantity}
                   className={fieldClassName}
                 />
                 <span className={helperClassName}>
@@ -360,7 +343,6 @@ export function ProductColorFieldsEditor({
               </div>
             )}
 
-            <input type="hidden" name={adminFormFields.colorField.labels} value={field.label} />
             <input type="hidden" name={adminFormFields.colorField.groupIds} value={field.groupId} />
             <input
               type="hidden"
@@ -378,15 +360,13 @@ export function ProductColorFieldsEditor({
               name={adminFormFields.colorField.selectionModes}
               value={field.selectionMode}
             />
-            <input
-              type="hidden"
-              name={adminFormFields.colorField.requiredTotalQuantities}
-              value={
-                field.selectionMode === "quantity"
-                  ? String(field.requiredTotalQuantity)
-                  : ""
-              }
-            />
+            {field.selectionMode === "choice" ? (
+              <input
+                type="hidden"
+                name={adminFormFields.colorField.requiredTotalQuantities}
+                value=""
+              />
+            ) : null}
           </fieldset>
         );
       })}

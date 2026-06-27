@@ -15,6 +15,7 @@ import { AdminUnsavedChangesGuard } from "@/components/admin/admin-unsaved-chang
 import { ProductLandingPagesPanel } from "@/components/admin/product-landing-pages-panel";
 import { ProductDuplicateButton } from "@/components/admin/product-duplicate-button";
 import { AdminListControls } from "@/components/admin/admin-list-controls";
+import { AdminLazyDetailsMount } from "@/components/admin/admin-lazy-details-mount";
 import { AdminOpenDetailsButton } from "@/components/admin/admin-open-details-button";
 import { AdminFormPendingGuard } from "@/components/admin/admin-form-pending-guard";
 import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
@@ -483,17 +484,20 @@ export function ProductListPanel({
                   </div>
                 </header>
 
-                <details
+                <AdminLazyDetailsMount
                   id={`product-edit-${product.id}`}
                   className={productSectionClass}
+                  summaryClassName={productSectionSummaryClass}
+                  contentClassName="border-t border-boutique-line/50 px-3 py-4 sm:px-4"
+                  summary={
+                    <>
+                      <span>Редактирай продукт</span>
+                      <span className="text-xs font-normal text-boutique-muted" aria-hidden>
+                        Форма
+                      </span>
+                    </>
+                  }
                 >
-                  <summary className={productSectionSummaryClass}>
-                    <span>Редактирай продукт</span>
-                    <span className="text-xs font-normal text-boutique-muted" aria-hidden>
-                      Форма
-                    </span>
-                  </summary>
-                  <div className="border-t border-boutique-line/50 px-3 py-4 sm:px-4">
                   <form
                     id={`admin-edit-product-form-${product.id}`}
                     action={updateProduct}
@@ -625,20 +629,24 @@ export function ProductListPanel({
                       </p>
                     </fieldset>
 
-                    <details className="rounded-lg border border-boutique-line/70 bg-boutique-bg p-3 md:col-span-2">
-                      <summary className="cursor-pointer px-1 text-sm font-medium text-boutique-ink">
-                        Опции и ценообразуване
-                      </summary>
-                      <div className="mt-3">
-                        <ProductOptionGroupsEditor
-                          initialGroups={initialOptionGroups}
-                          allDependencyOptions={productDependencyOptions}
-                          basePrice={Number(product.price) || 0}
-                          helperClassName={adminHelperClass}
-                          fieldClassName={adminFieldClass}
-                        />
-                      </div>
-                    </details>
+                    <AdminLazyDetailsMount
+                      id={`product-edit-${product.id}-options`}
+                      className="rounded-lg border border-boutique-line/70 bg-boutique-bg p-3 md:col-span-2"
+                      summary={
+                        <span className="cursor-pointer px-1 text-sm font-medium text-boutique-ink">
+                          Опции и ценообразуване
+                        </span>
+                      }
+                      contentClassName="mt-3"
+                    >
+                      <ProductOptionGroupsEditor
+                        initialGroups={initialOptionGroups}
+                        allDependencyOptions={productDependencyOptions}
+                        basePrice={Number(product.price) || 0}
+                        helperClassName={adminHelperClass}
+                        fieldClassName={adminFieldClass}
+                      />
+                    </AdminLazyDetailsMount>
 
                     <fieldset className="space-y-3 rounded-lg border border-boutique-line/70 bg-boutique-bg p-3 md:col-span-2">
                       <legend className="px-1 text-sm font-medium text-boutique-ink">
@@ -663,22 +671,26 @@ export function ProductListPanel({
                         fieldClassName={adminFieldClass}
                       />
                     </fieldset>
-                    <details className="rounded-lg border border-boutique-line/70 bg-boutique-bg p-3 md:col-span-2">
-                      <summary className="cursor-pointer px-1 text-sm font-medium text-boutique-ink">
-                        Подходящи готови пожелания
-                      </summary>
-                      <div className="mt-3">
-                        <ProductWishSelector
-                          wishes={wishTemplates}
-                          occasions={occasionCategories}
-                          wishOccasionLinks={wishTemplateOccasions}
-                          selectedIds={
-                            wishTemplateIdsByProductId.get(product.id) ?? []
-                          }
-                          helperClassName={adminHelperClass}
-                        />
-                      </div>
-                    </details>
+                    <AdminLazyDetailsMount
+                      id={`product-edit-${product.id}-wishes`}
+                      className="rounded-lg border border-boutique-line/70 bg-boutique-bg p-3 md:col-span-2"
+                      summary={
+                        <span className="cursor-pointer px-1 text-sm font-medium text-boutique-ink">
+                          Подходящи готови пожелания
+                        </span>
+                      }
+                      contentClassName="mt-3"
+                    >
+                      <ProductWishSelector
+                        wishes={wishTemplates}
+                        occasions={occasionCategories}
+                        wishOccasionLinks={wishTemplateOccasions}
+                        selectedIds={
+                          wishTemplateIdsByProductId.get(product.id) ?? []
+                        }
+                        helperClassName={adminHelperClass}
+                      />
+                    </AdminLazyDetailsMount>
                     <fieldset className="space-y-3 rounded-lg border border-boutique-line/70 bg-boutique-bg p-3 md:col-span-2">
                       <legend className="px-1 text-sm font-medium text-boutique-ink">
                         Въпроси и отговори
@@ -918,8 +930,7 @@ export function ProductListPanel({
                       </div>
                     ) : null}
                   </section>
-                  </div>
-                </details>
+                </AdminLazyDetailsMount>
 
                 <details className={productSectionClass}>
                   <summary className={productSectionSummaryClass}>
