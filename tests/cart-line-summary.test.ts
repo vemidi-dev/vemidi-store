@@ -7,6 +7,7 @@ import {
   parseCartLineDisplaySnapshot,
 } from "@/lib/cart/build-cart-line-display";
 import {
+  buildSelectedColorSummaryRows,
   cartLineSummaryIncludesCampaign,
   resolveCartLineSummaryRows,
 } from "@/lib/cart/cart-line-summary";
@@ -268,4 +269,142 @@ test("parseStoredCart preserves display snapshot from localStorage", () => {
 test("parseCartLineDisplaySnapshot rejects malformed snapshot payloads", () => {
   assert.equal(parseCartLineDisplaySnapshot(null), undefined);
   assert.equal(parseCartLineDisplaySnapshot({ optionRows: [{ label: "", value: "x" }] }), undefined);
+});
+
+const ribbonColorFieldId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+const ribbonRedOptionId = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
+
+const selectedRibbonColor = {
+  fieldId: ribbonColorFieldId,
+  fieldLabel: "Цвят на панделката и подложката",
+  groupId: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+  groupKey: "ribbon",
+  groupLabel: "Панделка",
+  optionId: ribbonRedOptionId,
+  optionName: "Червен",
+  optionHex: "#c00000",
+};
+
+test("resolveCartLineSummaryRows includes selected colors when display snapshot exists", () => {
+  const line: CartLine = {
+    lineId: "color-with-snapshot",
+    productId,
+    slug: product.slug,
+    title: product.title,
+    price: 19.5,
+    quantity: 1,
+    displaySnapshot: {
+      optionRows: [
+        { label: "Размер на комплекта", value: "Среден комплект" },
+        { label: "Оцветяване", value: "Боички" },
+      ],
+    },
+    selectedColors: [selectedRibbonColor],
+    personalizationFields: [
+      { fieldId: "name-field", fieldKey: "name", label: "Име", value: "Иван" },
+    ],
+  };
+
+  const rows = resolveCartLineSummaryRows(line);
+
+  assert.deepEqual(rows, [
+    { label: "Размер на комплекта", value: "Среден комплект" },
+    { label: "Оцветяване", value: "Боички" },
+    {
+      label: "Цвят на панделката и подложката",
+      value: "Червен",
+    },
+    { label: "Име", value: "Иван" },
+  ]);
+});
+
+test("resolveCartLineSummaryRows shows quantity color mode summary", () => {
+  const line: CartLine = {
+    lineId: "color-quantity",
+    productId,
+    slug: product.slug,
+    title: product.title,
+    price: 19.5,
+    quantity: 1,
+    displaySnapshot: {
+      optionRows: [{ label: "Размер", value: "Голям" }],
+    },
+    selectedColors: [
+      { ...selectedRibbonColor, optionName: "Червен", quantity: 2 },
+      {
+        ...selectedRibbonColor,
+        optionId: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+        optionName: "Бял",
+        quantity: 1,
+      },
+    ],
+  };
+
+  const rows = resolveCartLineSummaryRows(line);
+
+  assert.equal(
+    rows.find((row) => row.label === "Цвят на панделката и подложката")?.value,
+    "Червен × 2, Бял × 1",
+  );
+});
+
+test("legacy cart line without display snapshot still shows selected colors", () => {
+  const line: CartLine = {
+    lineId: "legacy-colors",
+    productId,
+    slug: product.slug,
+    title: product.title,
+    price: 19.5,
+    quantity: 1,
+    selectedColors: [selectedRibbonColor],
+    optionSelections: [
+      { groupId: groupColoringId, valueIds: [valuePaintsId] },
+    ],
+  };
+
+  const rows = resolveCartLineSummaryRows(line);
+
+  assert.deepEqual(rows, [
+    { label: "Опция", value: "1 избора" },
+    {
+      label: "Цвят на панделката и подложката",
+      value: "Червен",
+    },
+  ]);
+});
+
+test("legacy personalization summary remains when personalizationFields are absent", () => {
+  const line: CartLine = {
+    lineId: "legacy-personalization",
+    productId,
+    slug: product.slug,
+    title: product.title,
+    price: 19.5,
+    quantity: 1,
+    personalization: "С честит рожден ден!",
+    selectedColors: [selectedRibbonColor],
+  };
+
+  const rows = resolveCartLineSummaryRows(line);
+
+  assert.deepEqual(rows, [
+    {
+      label: "Цвят на панделката и подложката",
+      value: "Червен",
+    },
+    { label: "Персонализация", value: "С честит рожден ден!" },
+  ]);
+});
+
+test("buildSelectedColorSummaryRows skips colors already present in snapshot rows", () => {
+  const existingRows = [
+    {
+      label: "Цвят на панделката и подложката",
+      value: "Червен",
+    },
+  ];
+
+  const rows = buildSelectedColorSummaryRows([selectedRibbonColor], existingRows);
+
+  assert.deepEqual(rows, []);
 });
