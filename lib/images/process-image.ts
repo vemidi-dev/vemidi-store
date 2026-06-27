@@ -23,7 +23,16 @@ export type ProcessedImage = {
   originalSize: number;
   optimizedSize: number;
   warnings: string[];
+  sourceFileName?: string;
 };
+
+export function formatImageFileError(message: string, sourceFileName?: string) {
+  return sourceFileName ? `„${sourceFileName}“: ${message}` : message;
+}
+
+function throwImageFileError(message: string, sourceFileName?: string): never {
+  throw new Error(formatImageFileError(message, sourceFileName));
+}
 
 function getShortEdge(width: number, height: number) {
   return Math.min(width, height);
@@ -37,16 +46,23 @@ function formatMegabytes(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
 }
 
-export function validateImageInputSize(size: number, profileId: ImageProfileId) {
+export function validateImageInputSize(
+  size: number,
+  profileId: ImageProfileId,
+  sourceFileName?: string,
+) {
   const profile = getImageProfile(profileId);
 
   if (size <= 0) {
-    throw new Error("Файлът е празен или повреден.");
+    throw new Error(formatImageFileError("Файлът е празен или повреден.", sourceFileName));
   }
 
   if (size > profile.maxFileSize) {
     throw new Error(
-      `Файлът надвишава максималния размер от ${formatMegabytes(profile.maxFileSize)}.`,
+      formatImageFileError(
+        `Файлът надвишава максималния размер от ${formatMegabytes(profile.maxFileSize)}.`,
+        sourceFileName,
+      ),
     );
   }
 }
@@ -56,9 +72,10 @@ export async function processImageBuffer(
   originalSize: number,
   profileId: ImageProfileId,
   deps: ProcessImageDeps = {},
+  sourceFileName?: string,
 ): Promise<ProcessedImage> {
   const profile = getImageProfile(profileId);
-  validateImageInputSize(originalSize, profileId);
+  validateImageInputSize(originalSize, profileId, sourceFileName);
 
   const sharpFactory = deps.sharpFactory ?? loadSharp();
   const imageId = randomUUID();
@@ -72,23 +89,23 @@ export async function processImageBuffer(
       limitInputPixels: maxPixels,
     });
   } catch {
-    throw new Error("Файлът е повреден или неподдържан.");
+    throwImageFileError("Файлът е повреден или неподдържан.", sourceFileName);
   }
 
   let metadata: sharp.Metadata;
   try {
     metadata = await instance.metadata();
   } catch {
-    throw new Error("Файлът е повреден или неподдържан.");
+    throwImageFileError("Файлът е повреден или неподдържан.", sourceFileName);
   }
 
   const format = metadata.format?.toLowerCase();
   if (!format || !["jpeg", "png", "webp"].includes(format)) {
-    throw new Error("Позволени са само JPEG, PNG и WebP изображения.");
+    throwImageFileError("Позволени са само JPEG, PNG и WebP изображения.", sourceFileName);
   }
 
   if ((metadata.pages ?? 1) > 1) {
-    throw new Error("Анимираните изображения не се поддържат.");
+    throwImageFileError("Анимираните изображения не се поддържат.", sourceFileName);
   }
 
   const oriented = sharpFactory(input, {
@@ -101,21 +118,22 @@ export async function processImageBuffer(
   try {
     orientedMetadata = await oriented.metadata();
   } catch {
-    throw new Error("Файлът е повреден или неподдържан.");
+    throwImageFileError("Файлът е повреден или неподдържан.", sourceFileName);
   }
 
   const sourceWidth = orientedMetadata.width ?? 0;
   const sourceHeight = orientedMetadata.height ?? 0;
   if (sourceWidth <= 0 || sourceHeight <= 0) {
-    throw new Error("Файлът е повреден или неподдържан.");
+    throwImageFileError("Файлът е повреден или неподдържан.", sourceFileName);
   }
 
   const warnings: string[] = [];
   if (getShortEdge(sourceWidth, sourceHeight) < profile.minShortEdge) {
-    throw new Error(
+    throwImageFileError(
       profileId === "product"
         ? `Изображението е твърде малко (късата страна е под ${profile.minShortEdge} px). Изберете по-голяма снимка.`
         : `Изображението е твърде малко (късата страна е под ${profile.minShortEdge} px) и може да изглежда размазано.`,
+      sourceFileName,
     );
   }
 
@@ -132,22 +150,23 @@ export async function processImageBuffer(
       })
       .toBuffer({ resolveWithObject: true });
   } catch {
-    throw new Error("Неуспешна обработка на изображението.");
+    throwImageFileError("Неуспешна обработка на изображението.", sourceFileName);
   }
 
   const width = output.info.width;
   const height = output.info.height;
   if (width <= 0 || height <= 0) {
-    throw new Error("Неуспешна обработка на изображението.");
+    throwImageFileError("Неуспешна обработка на изображението.", sourceFileName);
   }
 
   if (getLongEdge(width, height) > profile.maxDimension) {
-    throw new Error("Неуспешна обработка на изображението.");
+    throwImageFileError("Неуспешна обработка на изображението.", sourceFileName);
   }
 
   if (output.data.length > profile.maxFileSize) {
-    throw new Error(
+    throwImageFileError(
       `Оптимизираното изображение надвишава ${formatMegabytes(profile.maxFileSize)}. Използвайте по-малък файл.`,
+      sourceFileName,
     );
   }
 
@@ -160,6 +179,7 @@ export async function processImageBuffer(
     originalSize,
     optimizedSize: output.data.length,
     warnings,
+    sourceFileName,
   };
 }
 
@@ -173,12 +193,14 @@ export async function processImageFile(
   }
 
   if (file.type && !IMAGE_ACCEPTED_MIME_TYPES.includes(file.type as (typeof IMAGE_ACCEPTED_MIME_TYPES)[number])) {
-    throw new Error("Позволени са само JPEG, PNG и WebP изображения.");
+    throw new Error(
+      formatImageFileError("Позволени са само JPEG, PNG и WebP изображения.", file.name),
+    );
   }
 
-  validateImageInputSize(file.size, profileId);
+  validateImageInputSize(file.size, profileId, file.name);
 
   const arrayBuffer = await file.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
-  return processImageBuffer(buffer, file.size, profileId, deps);
+  return processImageBuffer(buffer, file.size, profileId, deps, file.name);
 }

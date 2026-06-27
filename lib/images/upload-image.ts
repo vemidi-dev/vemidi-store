@@ -8,6 +8,7 @@ import {
 import { processImageFile, type ProcessedImage, type ProcessImageDeps } from "@/lib/images/process-image";
 import { getImageProfile, type ImageProfileId } from "@/lib/images/profiles";
 import { buildImageStoragePath } from "@/lib/images/storage-path";
+import { executeStorageUploadWithRetry } from "@/lib/images/storage-upload-retry";
 import { getPublicImageUrl } from "@/lib/admin/storage";
 
 export type UploadedImage = {
@@ -101,13 +102,15 @@ export function createSupabaseImageStorageAdapter(
 ): ImageStorageAdapter {
   return {
     async upload(path, body, options) {
-      const { error } = await supabase.storage.from(IMAGE_BUCKET).upload(path, body, {
-        contentType: options.contentType,
-        cacheControl: options.cacheControl,
-        upsert: false,
-      });
+      return executeStorageUploadWithRetry(async () => {
+        const { error } = await supabase.storage.from(IMAGE_BUCKET).upload(path, body, {
+          contentType: options.contentType,
+          cacheControl: options.cacheControl,
+          upsert: false,
+        });
 
-      return { error: error ? new Error(error.message) : null };
+        return { error: error ? new Error(error.message) : null };
+      });
     },
     async remove(paths) {
       if (paths.length === 0) {
@@ -148,7 +151,8 @@ export async function uploadProcessedImage(
   });
 
   if (error) {
-    throw new Error(`Неуспешно качване на изображението: ${error.message}`);
+    const label = processed.sourceFileName ? `„${processed.sourceFileName}“: ` : "";
+    throw new Error(`${label}Неуспешно качване на изображението: ${error.message}`);
   }
 
   return {
@@ -201,9 +205,18 @@ export async function processImageFiles(
     throw new Error(validationError);
   }
 
-  return mapWithConcurrency(files, IMAGE_PROCESSING_CONCURRENCY, (file) =>
-    processImageFile(file, profileId, deps),
-  );
+  return mapWithConcurrency(files, IMAGE_PROCESSING_CONCURRENCY, async (file) => {
+    try {
+      return await processImageFile(file, profileId, deps);
+    } catch (error) {
+      if (error instanceof Error && error.message.includes(`„${file.name}“`)) {
+        throw error;
+      }
+      const detail =
+        error instanceof Error ? error.message : "Неуспешна обработка на изображението.";
+      throw new Error(`„${file.name}“: ${detail}`);
+    }
+  });
 }
 
 export async function processAndUploadImages(

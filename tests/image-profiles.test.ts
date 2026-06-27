@@ -35,9 +35,9 @@ test("image profiles expose distinct optimization settings", () => {
   assert.equal(IMAGE_PROFILES.hero.maxDimension, 2000);
 });
 
-test("product profile rejects files above 5 MB", () => {
+test("product profile rejects files above 10 MB", () => {
   const profile = getImageProfile("product");
-  assert.equal(profile.maxFileSize, 5 * 1024 * 1024);
+  assert.equal(profile.maxFileSize, 10 * 1024 * 1024);
   assert.throws(
     () => validateImageInputSize(profile.maxFileSize + 1, "product"),
     /надвишава/,

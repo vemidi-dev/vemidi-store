@@ -94,7 +94,7 @@ test("EXIF orientation is applied before resize", async () => {
   assert.equal(result.height, 1600);
 });
 
-test("files above 5 MB are rejected", () => {
+test("files above 10 MB are rejected", () => {
   assert.throws(
     () => validateProductImageInputSize(PRODUCT_IMAGE_MAX_INPUT_BYTES + 1),
     /надвишава максималния размер/,

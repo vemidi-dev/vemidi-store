@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { PRODUCT_IMAGE_CACHE_CONTROL } from "@/lib/admin/product-image-constants";
 import { IMAGE_BUCKET } from "@/lib/images/constants";
+import { executeStorageUploadWithRetry } from "@/lib/images/storage-upload-retry";
 import type { ImageStorageAdapter } from "@/lib/images/upload-image";
 import {
   createSupabaseImageStorageAdapter,
@@ -45,13 +46,16 @@ export async function uploadOptimizedProductImage(
   optimized: OptimizedProductImage,
 ): Promise<UploadedProductImage> {
   const path = buildProductImageStoragePath(productId, optimized.imageId);
-  const { error } = await adapter.upload(path, optimized.buffer, {
-    contentType: "image/webp",
-    cacheControl: PRODUCT_IMAGE_CACHE_CONTROL,
-  });
+  const { error } = await executeStorageUploadWithRetry(() =>
+    adapter.upload(path, optimized.buffer, {
+      contentType: "image/webp",
+      cacheControl: PRODUCT_IMAGE_CACHE_CONTROL,
+    }),
+  );
 
   if (error) {
-    throw new Error(`Неуспешно качване на изображението: ${error.message}`);
+    const label = optimized.sourceFileName ? `„${optimized.sourceFileName}“: ` : "";
+    throw new Error(`${label}Неуспешно качване на изображението: ${error.message}`);
   }
 
   return {

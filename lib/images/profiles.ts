@@ -21,7 +21,7 @@ export const IMAGE_PROFILES: Record<ImageProfileId, ImageProfileConfig> = {
     id: "product",
     maxDimension: 1800,
     quality: 84,
-    maxFileSize: 5 * 1024 * 1024,
+    maxFileSize: 10 * 1024 * 1024,
     minShortEdge: 480,
     maxImages: 12,
     maxFilesPerUpload: 12,

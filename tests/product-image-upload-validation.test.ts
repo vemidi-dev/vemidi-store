@@ -21,8 +21,8 @@ function makeJpegFile(size = 1024, name = "photo.jpg") {
   return new File([bytes], name, { type: "image/jpeg" });
 }
 
-test("product profile enforces 5 MB upload limit", () => {
-  assert.equal(PRODUCT_IMAGE_MAX_INPUT_BYTES, 5 * 1024 * 1024);
+test("product profile enforces 10 MB upload limit", () => {
+  assert.equal(PRODUCT_IMAGE_MAX_INPUT_BYTES, 10 * 1024 * 1024);
 });
 
 test("validateImageUploadMimeType rejects unsupported formats", () => {
@@ -45,10 +45,21 @@ test("validateImageUploadFileContent accepts valid jpeg signature within size li
   assert.equal(await validateImageUploadFileContent(file, "product"), null);
 });
 
-test("validateProductImageUploadBatch rejects files above 5 MB", async () => {
+test("validateProductImageUploadBatch rejects files above 10 MB", async () => {
   const oversized = makeJpegFile(PRODUCT_IMAGE_MAX_INPUT_BYTES + 1);
   const error = await validateProductImageUploadBatch([oversized], 0);
-  assert.match(error ?? "", /5\.00 MB|5,00 MB|надвишава/i);
+  assert.match(error ?? "", /10\.00 MB|10,00 MB|надвишава/i);
+});
+
+test("processImageFile includes source filename in processing errors", async () => {
+  const file = new File([new Uint8Array([1, 2, 3])], "broken-photo.jpg", {
+    type: "image/jpeg",
+  });
+
+  await assert.rejects(
+    () => import("@/lib/images/process-image").then((mod) => mod.processImageFile(file, "product")),
+    /„broken-photo\.jpg“/,
+  );
 });
 
 test("admin product image actions require authorized client", () => {
