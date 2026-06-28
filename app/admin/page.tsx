@@ -379,7 +379,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       await Promise.all([
         supabase
           .from("products")
-          .select("id,name,price,image_url,is_sold_out")
+          .select("id,name,slug,price,image_url,is_sold_out")
           .order("name"),
         supabase.from("categories").select("id,name,category_type"),
         supabase.from("product_categories").select("product_id,category_id"),
@@ -428,7 +428,14 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             ) : (
               <PromotionManagementPanel
                 products={buildPromotionProductOptions(
-                  productsResult.data ?? [],
+                  (productsResult.data ?? []).map((product) => ({
+                    id: String(product.id),
+                    name: String(product.name),
+                    slug: String(product.slug ?? ""),
+                    price: Number(product.price),
+                    image_url: (product.image_url as string | null) ?? null,
+                    is_sold_out: Boolean(product.is_sold_out),
+                  })),
                   (categoriesResult.data ?? []).map((category) => ({
                     id: String(category.id),
                     name: String(category.name),

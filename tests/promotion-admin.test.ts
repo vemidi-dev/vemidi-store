@@ -31,6 +31,7 @@ const products: PromotionProductOption[] = [
   {
     id: "product-1",
     name: "Кутия А",
+    slug: "kutiya-a",
     price: 40,
     imageUrl: null,
     productCategoryIds: ["cat-product"],
@@ -41,6 +42,7 @@ const products: PromotionProductOption[] = [
   {
     id: "product-2",
     name: "Кутия Б",
+    slug: "kutiya-b",
     price: 25,
     imageUrl: null,
     productCategoryIds: ["cat-product"],
@@ -185,4 +187,19 @@ test("filterPromotionProducts keeps selected products out of browse-only filters
     onlyIds: new Set(["product-2"]),
   });
   assert.deepEqual(selectedOnly.map((product) => product.id), ["product-2"]);
+});
+
+test("filterPromotionProducts matches slug and onlySelected mode", () => {
+  const bySlug = filterPromotionProducts(products, {
+    query: "kutiya-b",
+  });
+  assert.deepEqual(bySlug.map((product) => product.id), ["product-2"]);
+
+  const selectedOnly = filterPromotionProducts(products, {
+    onlySelected: true,
+    selectedIds: new Set(["product-1"]),
+    productCategoryId: "cat-product",
+    occasionCategoryId: "cat-occasion",
+  });
+  assert.deepEqual(selectedOnly.map((product) => product.id), ["product-1"]);
 });

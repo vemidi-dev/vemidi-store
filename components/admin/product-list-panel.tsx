@@ -9,6 +9,7 @@ import {
   updateProductMerchandising,
 } from "@/app/admin/actions";
 import { DUPLICATE_MISSING_IMAGES_NOTICE } from "@/lib/admin/duplicate-product";
+import { buildPromotionProductOptions } from "@/lib/promotion-admin";
 import { AdminAutoOpenProductEdit } from "@/components/admin/admin-auto-open-product-edit";
 import { AdminConfirmForm } from "@/components/admin/admin-confirm-form";
 import { AdminUnsavedChangesGuard } from "@/components/admin/admin-unsaved-changes-guard";
@@ -164,6 +165,28 @@ export function ProductListPanel({
   const productCategories = sortCategoriesForDisplay(
     categories.filter((category) => category.category_type === "product"),
   );
+  const relatedProductPickerProducts = buildPromotionProductOptions(
+    products,
+    categories.map((category) => ({
+      id: category.id,
+      name: category.name,
+      category_type: category.category_type,
+    })),
+    products.flatMap((entry) =>
+      (categoryIdsByProductId.get(entry.id) ?? []).map((categoryId) => ({
+        product_id: entry.id,
+        category_id: categoryId,
+      })),
+    ),
+  );
+  const relatedProductPickerCategories = categories.map((category) => ({
+    id: category.id,
+    name:
+      category.category_type === "product"
+        ? getCategoryDisplayLabel(categories, category)
+        : category.name,
+    categoryType: category.category_type,
+  }));
 
   return (
     <article className={adminPanelClass}>
@@ -947,9 +970,9 @@ export function ProductListPanel({
                       value={product.id}
                     />
                     <ProductMerchandisingFields
-                      products={products
-                        .filter((option) => option.id !== product.id)
-                        .map((option) => ({ id: option.id, name: option.name }))}
+                      products={relatedProductPickerProducts}
+                      categories={relatedProductPickerCategories}
+                      excludeProductId={product.id}
                       selectedRelatedIds={
                         relatedProductIdsByProductId.get(product.id) ?? []
                       }

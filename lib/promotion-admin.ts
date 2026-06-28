@@ -19,6 +19,7 @@ export type PromotionPeriodInput = {
 export type PromotionProductOption = {
   id: string;
   name: string;
+  slug: string;
   price: number;
   imageUrl: string | null;
   productCategoryIds: string[];
@@ -232,6 +233,7 @@ export function buildPromotionProductOptions(
   products: Array<{
     id: string;
     name: string;
+    slug: string;
     price: number;
     image_url: string | null;
     is_sold_out: boolean;
@@ -282,6 +284,7 @@ export function buildPromotionProductOptions(
     return {
       id: product.id,
       name: product.name,
+      slug: product.slug,
       price: Number(product.price),
       imageUrl: product.image_url,
       productCategoryIds,
@@ -301,6 +304,8 @@ export function filterPromotionProducts(
     status?: "all" | "active" | "sold-out";
     excludeIds?: Set<string>;
     onlyIds?: Set<string>;
+    onlySelected?: boolean;
+    selectedIds?: Set<string>;
   },
 ): PromotionProductOption[] {
   const normalizedQuery = options.query?.trim().toLocaleLowerCase("bg") ?? "";
@@ -314,11 +319,16 @@ export function filterPromotionProducts(
       return false;
     }
 
-    if (
-      normalizedQuery &&
-      !product.name.toLocaleLowerCase("bg").includes(normalizedQuery)
-    ) {
+    if (options.onlySelected && options.selectedIds && !options.selectedIds.has(product.id)) {
       return false;
+    }
+
+    if (normalizedQuery) {
+      const matchesName = product.name.toLocaleLowerCase("bg").includes(normalizedQuery);
+      const matchesSlug = product.slug.toLocaleLowerCase("bg").includes(normalizedQuery);
+      if (!matchesName && !matchesSlug) {
+        return false;
+      }
     }
 
     if (
