@@ -18,6 +18,11 @@ import {
 import { validateProductOptionSelections } from "@/lib/product-option-validation";
 import type { SelectedProductColor } from "@/lib/product-colors";
 import {
+  areAllChoiceColorsSelected,
+  getChoiceColorBulkTargetIds,
+  supportsChoiceColorBulkSelect,
+} from "@/lib/product-colors";
+import {
   filterSelectedColorsForOrder,
   flattenSelectedColorsFromQuantities,
   isQuantityColorField,
@@ -675,8 +680,29 @@ export function ProductDetailAddToCart({
                 key={field.id}
                 className="rounded-2xl border border-boutique-line bg-white/60 p-4 transition-shadow duration-300 ease-out hover:shadow-boutique-sm motion-reduce:transition-none"
               >
-                <legend className="px-1 text-sm font-semibold text-boutique-ink">
-                  {field.label}
+                <legend className="flex w-full items-center justify-between gap-2 px-1 text-sm font-semibold text-boutique-ink">
+                  <span className="min-w-0">{field.label}</span>
+                  {supportsChoiceColorBulkSelect(field) ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const current = selectedByGroup[field.id] ?? [];
+                        const next = areAllChoiceColorsSelected(field, current)
+                          ? []
+                          : getChoiceColorBulkTargetIds(field);
+                        setSelectedByGroup((state) => ({
+                          ...state,
+                          [field.id]: next,
+                        }));
+                        setError(null);
+                      }}
+                      className="shrink-0 rounded-full border border-boutique-line bg-white px-3 py-1 text-[11px] font-semibold text-boutique-ink transition hover:border-boutique-sage-deep hover:text-boutique-sage-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-boutique-accent/30 sm:text-xs"
+                    >
+                      {areAllChoiceColorsSelected(field, selectedByGroup[field.id] ?? [])
+                        ? "Премахване на всички"
+                        : "Избор на всички"}
+                    </button>
+                  ) : null}
                 </legend>
                 <div
                   id={`color-options-${field.id}`}
