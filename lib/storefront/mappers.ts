@@ -1,6 +1,7 @@
 import type { Product } from "@/lib/catalog";
 import { applyAvailabilityToProduct } from "@/lib/product-fulfillment";
 import type { ProductFulfillmentType } from "@/lib/product-fulfillment";
+import type { ProductPublicationStatus } from "@/lib/product-publication";
 import { normalizeProductCardBadge } from "@/lib/product-card";
 import {
   resolveProductPricing,
@@ -74,6 +75,7 @@ export type ProductRow = {
   meta_description?: string | null;
   og_title?: string | null;
   og_description?: string | null;
+  status?: ProductPublicationStatus;
   created_at?: string | null;
   updated_at?: string | null;
 };

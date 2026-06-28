@@ -3,6 +3,11 @@ import type { Product } from "@/lib/catalog";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import {
+  isProductStorefrontPublished,
+  normalizeProductPublicationStatus,
+} from "@/lib/product-publication";
+
+import {
   toProduct,
   type ProductImageRow,
   type ProductRow,
@@ -24,7 +29,7 @@ export type ProductRouteResolution =
     };
 
 const productListColumns =
-  "id,slug,product_code,name,subtitle,description,additional_info,fulfillment_note,personalization_info,dimensions_materials,ordering_info,price,image_url,is_customizable,is_sold_out,fulfillment_type,stock_quantity,card_badge";
+  "id,slug,product_code,name,subtitle,description,additional_info,fulfillment_note,personalization_info,dimensions_materials,ordering_info,price,image_url,is_customizable,is_sold_out,fulfillment_type,stock_quantity,card_badge,status";
 
 async function loadProductRowById(supabase: SupabaseClient, productId: string) {
   const { data, error } = await supabase
@@ -82,11 +87,22 @@ export async function resolveProductRoute(
     if (!row) {
       return { kind: "not_found" };
     }
+
+    const status = normalizeProductPublicationStatus(row.status, "published");
+    if (!isProductStorefrontPublished(status)) {
+      return { kind: "not_found" };
+    }
+
     return { kind: "redirect", targetSlug: row.slug };
   }
 
   const row = await loadProductRowBySlug(supabase, param);
   if (row) {
+    const status = normalizeProductPublicationStatus(row.status, "published");
+    if (!isProductStorefrontPublished(status)) {
+      return { kind: "not_found" };
+    }
+
     return {
       kind: "page",
       product: toProduct(row, options?.imageRows ?? [], options?.promotion ?? null),
@@ -96,6 +112,15 @@ export async function resolveProductRoute(
 
   const historicalSlug = await loadHistoricalSlugTarget(supabase, param);
   if (historicalSlug && historicalSlug !== param) {
+    const historicalRow = await loadProductRowBySlug(supabase, historicalSlug);
+    const historicalStatus = normalizeProductPublicationStatus(
+      historicalRow?.status,
+      "published",
+    );
+    if (!historicalRow || !isProductStorefrontPublished(historicalStatus)) {
+      return { kind: "not_found" };
+    }
+
     return { kind: "redirect", targetSlug: historicalSlug };
   }
 

@@ -24,6 +24,7 @@ import {
   makeCreateProductDraft,
   normalizeSlug,
   parseProductFulfillmentFromFormData,
+  parseProductPublicationStatus,
   parseSelectLimit,
 } from "@/lib/admin/form-data";
 import {
@@ -630,6 +631,20 @@ export async function createProduct(formData: FormData) {
   }
 
   const newProductId = String(productId);
+  const { error: statusError } = await supabase
+    .from("products")
+    .update({ status: "draft" })
+    .eq("id", newProductId);
+
+  if (statusError) {
+    await revalidateProductPaths(supabase, newProductId);
+    redirectWithProductEdit(
+      "error",
+      "Продуктът е създаден, но статусът не беше зададен като чернова.",
+      newProductId,
+    );
+  }
+
   const faqSyncError = await syncProductFaqAssociations(supabase, newProductId, {
     groupIds: faqGroupIds,
     itemIds: faqItemIds,
@@ -683,7 +698,7 @@ export async function createProduct(formData: FormData) {
     uploadedImages.length > 0
       ? ` Оптимизирани ${uploadedImages.length} снимки.`
       : "";
-  redirectWith("success", `Продуктът е добавен.${optimizationSummary}`, activeTab);
+  redirectWith("success", `Продуктът е добавен като чернова.${optimizationSummary}`, activeTab);
 }
 
 export async function updateProduct(formData: FormData) {
@@ -818,6 +833,16 @@ export async function updateProduct(formData: FormData) {
       getProductMutationErrorMessage(mutationError),
       id,
     );
+  }
+
+  const publicationStatus = parseProductPublicationStatus(formData, "published");
+  const { error: statusError } = await supabase
+    .from("products")
+    .update({ status: publicationStatus })
+    .eq("id", id);
+
+  if (statusError) {
+    redirectWithProductEdit("error", "Статусът на продукта не беше запазен.", id);
   }
 
   const faqSyncError = await syncProductFaqAssociations(supabase, id, {

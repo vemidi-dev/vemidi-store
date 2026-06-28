@@ -32,6 +32,7 @@ export const adminFormFields = {
     metaDescription: "meta_description",
     ogTitle: "og_title",
     ogDescription: "og_description",
+    status: "status",
   },
   category: {
     name: "name",

@@ -1,4 +1,5 @@
 import type { ProductFulfillmentType } from "@/lib/product-fulfillment";
+import type { ProductPublicationStatus } from "@/lib/product-publication";
 
 export type AdminTab =
   | "products"
@@ -153,6 +154,7 @@ export type ProductRow = {
   meta_description?: string | null;
   og_title?: string | null;
   og_description?: string | null;
+  status?: ProductPublicationStatus;
 };
 
 export type ProductImageRow = {

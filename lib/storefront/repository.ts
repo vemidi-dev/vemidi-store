@@ -27,6 +27,11 @@ import {
   filterStorefrontVisibleCategories,
 } from "@/lib/category-visibility";
 import {
+  filterStorefrontPublishedProductIds,
+  isProductStorefrontPublished,
+  normalizeProductPublicationStatus,
+} from "@/lib/product-publication";
+import {
   resolveProductRoute,
   type ProductRouteResolution,
 } from "@/lib/product-route";
@@ -149,8 +154,9 @@ async function fetchStorefrontCatalog(): Promise<StorefrontCatalog> {
       supabase
         .from("products")
         .select(
-          "id,slug,product_code,name,subtitle,description,price,image_url,is_customizable,is_sold_out,fulfillment_type,stock_quantity,card_badge,primary_category_id,meta_title,meta_description,og_title,og_description,created_at,updated_at",
+          "id,slug,product_code,name,subtitle,description,price,image_url,is_customizable,is_sold_out,fulfillment_type,stock_quantity,card_badge,primary_category_id,meta_title,meta_description,og_title,og_description,status,created_at,updated_at",
         )
+        .eq("status", "published")
         .order("created_at", { ascending: false }),
       supabase
         .from("categories")
@@ -243,9 +249,20 @@ async function fetchStorefrontCatalog(): Promise<StorefrontCatalog> {
 
   const featuredProductIds = featuredProductsResult.error
     ? products.slice(0, 6).map((product) => product.id)
-    : ((featuredProductsResult.data ?? []) as HomeFeaturedProductRow[]).map(
-        (row) => row.product_id,
+    : filterStorefrontPublishedProductIds(
+        ((featuredProductsResult.data ?? []) as HomeFeaturedProductRow[]).map(
+          (row) => row.product_id,
+        ),
+        new Set(products.map((product) => product.id)),
       );
+
+  const publishedProductIds = new Set(products.map((product) => product.id));
+  relatedProductIdsByProductId.forEach((relatedIds, productId) => {
+    relatedProductIdsByProductId.set(
+      productId,
+      filterStorefrontPublishedProductIds(relatedIds, publishedProductIds),
+    );
+  });
 
   return {
     categories,
@@ -472,12 +489,18 @@ async function loadStorefrontProductDetails(
   const { data, error } = await supabase
     .from("products")
     .select(
-      "id,slug,product_code,name,subtitle,description,additional_info,fulfillment_note,personalization_info,dimensions_materials,ordering_info,price,image_url,is_customizable,is_sold_out,fulfillment_type,stock_quantity,card_badge,meta_title,meta_description,og_title,og_description",
+      "id,slug,product_code,name,subtitle,description,additional_info,fulfillment_note,personalization_info,dimensions_materials,ordering_info,price,image_url,is_customizable,is_sold_out,fulfillment_type,stock_quantity,card_badge,meta_title,meta_description,og_title,og_description,status",
     )
     .eq("id", productId)
+    .eq("status", "published")
     .maybeSingle();
 
   if (error || !data) {
+    return null;
+  }
+
+  const status = normalizeProductPublicationStatus(data.status, "published");
+  if (!isProductStorefrontPublished(status)) {
     return null;
   }
 

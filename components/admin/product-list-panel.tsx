@@ -13,6 +13,10 @@ import {
   productEditAnchorId,
   productGalleryAnchorId,
 } from "@/lib/admin/product-edit-navigation";
+import {
+  normalizeProductPublicationStatus,
+  PRODUCT_PUBLICATION_STATUS_LABELS,
+} from "@/lib/product-publication";
 import { buildPromotionProductOptions } from "@/lib/promotion-admin";
 import { AdminAutoOpenProductEdit } from "@/components/admin/admin-auto-open-product-edit";
 import { AdminProductEditStickyActions } from "@/components/admin/admin-product-edit-sticky-actions";
@@ -32,6 +36,8 @@ import { ProductCardBadgeField } from "@/components/admin/product-card-badge-fie
 import { ProductColorFieldsEditor } from "@/components/admin/product-color-fields-editor";
 import { ProductOptionGroupsEditor } from "@/components/admin/product-option-groups-editor";
 import { ProductPersonalizationFieldsEditor } from "@/components/admin/product-personalization-fields-editor";
+import { ProductPublicationBadge } from "@/components/admin/product-publication-badge";
+import { ProductPublicationStatusField } from "@/components/admin/product-publication-status-field";
 import { ProductMerchandisingFields } from "@/components/admin/product-merchandising-fields";
 import { ProductContentSeoFields } from "@/components/admin/product-content-seo-fields";
 import { ProductPageContentFields } from "@/components/admin/product-page-content-fields";
@@ -214,7 +220,7 @@ export function ProductListPanel({
             searchPlaceholder="Име, категория или цена..."
             filters={[
               {
-                key: "status",
+                key: "availability",
                 label: "Наличност",
                 dataAttribute: "filterStatus",
                 options: [
@@ -222,6 +228,22 @@ export function ProductListPanel({
                   { value: "sold-out", label: "Изчерпани" },
                   { value: "featured", label: "На началната" },
                   { value: "customizable", label: "С персонализация" },
+                ],
+              },
+              {
+                key: "publication",
+                label: "Статус",
+                dataAttribute: "publicationStatus",
+                options: [
+                  { value: "draft", label: PRODUCT_PUBLICATION_STATUS_LABELS.draft },
+                  {
+                    value: "published",
+                    label: PRODUCT_PUBLICATION_STATUS_LABELS.published,
+                  },
+                  {
+                    value: "archived",
+                    label: PRODUCT_PUBLICATION_STATUS_LABELS.archived,
+                  },
                 ],
               },
               {
@@ -387,6 +409,10 @@ export function ProductListPanel({
             const occasionTypeCategories = assignedCategories.filter(
               (category) => category.category_type === "occasion",
             );
+            const publicationStatus = normalizeProductPublicationStatus(
+              product.status,
+              "published",
+            );
 
             return (
               <article
@@ -403,6 +429,7 @@ export function ProductListPanel({
                 ]
                   .filter(Boolean)
                   .join(" ")}
+                data-publication-status={publicationStatus}
                 data-product-cats={productCategoryFilterIds.join(" ")}
                 data-occasion-cats={occasionCategoryIds.join(" ")}
                 data-sort-name={product.name}
@@ -423,6 +450,7 @@ export function ProductListPanel({
                           soldOut={product.is_sold_out}
                           fulfillmentStatus={fulfillmentStatus}
                         />
+                        <ProductPublicationBadge status={publicationStatus} />
                         {featuredProductById.has(product.id) ? (
                           <span className="inline-flex rounded-full bg-boutique-warm px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-boutique-ink">
                             На началната
@@ -562,6 +590,11 @@ export function ProductListPanel({
                         className={adminFieldClass}
                       />
                     </label>
+                    <ProductPublicationStatusField
+                      defaultValue={publicationStatus}
+                      fieldClassName={adminFieldClass}
+                      helperClassName={adminHelperClass}
+                    />
                     <div className="md:col-span-2">
                       <fieldset className="space-y-4 rounded-lg border border-boutique-line/70 bg-boutique-bg/40 p-4">
                         <legend className="px-1 text-xs font-semibold uppercase tracking-[0.16em] text-boutique-muted">

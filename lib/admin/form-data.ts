@@ -6,6 +6,11 @@ import {
   type ProductFulfillmentType,
 } from "@/lib/product-fulfillment";
 import { adminFormFields } from "@/lib/admin/form-fields";
+import {
+  DEFAULT_PRODUCT_PUBLICATION_STATUS,
+  normalizeProductPublicationStatus,
+  type ProductPublicationStatus,
+} from "@/lib/product-publication";
 import { parseProductOptionGroups } from "@/lib/admin/parse-option-groups";
 
 type CreateProductDraftPayload = {
@@ -61,6 +66,16 @@ export function parseProductFulfillmentFromFormData(formData: FormData): {
   const error = validateFulfillmentInput(fulfillmentType, stockQuantity);
 
   return { fulfillmentType, stockQuantity, error };
+}
+
+export function parseProductPublicationStatus(
+  formData: FormData,
+  fallback: ProductPublicationStatus = DEFAULT_PRODUCT_PUBLICATION_STATUS,
+): ProductPublicationStatus {
+  return normalizeProductPublicationStatus(
+    formData.get(adminFormFields.product.status),
+    fallback,
+  );
 }
 
 export function getString(formData: FormData, key: string) {
