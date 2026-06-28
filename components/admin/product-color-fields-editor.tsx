@@ -2,6 +2,10 @@
 
 import { useMemo, useState } from "react";
 
+import {
+  areAllColorFieldOptionsSelected,
+  getColorFieldOptionIds,
+} from "@/lib/admin/color-field-option-bulk";
 import { adminFormFields } from "@/lib/admin/form-fields";
 
 type ColorGroup = {
@@ -278,9 +282,45 @@ export function ProductColorFieldsEditor({
               <p className={helperClassName}>Няма активни цветове за тази категория.</p>
             ) : (
               <div className="space-y-2">
-                <p className="text-xs font-medium text-boutique-muted">
-                  Кои цветове са налични за продукта? ({selectedCount} избрани)
-                </p>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-xs font-medium text-boutique-muted">
+                    Кои цветове са налични за продукта? ({selectedCount} избрани)
+                  </p>
+                  <button
+                    type="button"
+                    disabled={options.length === 0}
+                    onClick={() => {
+                      const allSelected = areAllColorFieldOptionsSelected(
+                        options,
+                        field.optionIds,
+                      );
+                      const nextOptionIds = allSelected
+                        ? []
+                        : getColorFieldOptionIds(options);
+                      setFields((prev) =>
+                        prev.map((item) => {
+                          if (item.uid !== field.uid) {
+                            return item;
+                          }
+
+                          return {
+                            ...item,
+                            optionIds: nextOptionIds,
+                            maxSelect:
+                              item.maxSelect > 1
+                                ? Math.max(2, Math.min(item.maxSelect, nextOptionIds.length || 2))
+                                : item.maxSelect,
+                          };
+                        }),
+                      );
+                    }}
+                    className="shrink-0 rounded-full border border-boutique-line bg-white px-3 py-1 text-[11px] font-semibold text-boutique-ink transition hover:border-boutique-sage-deep hover:text-boutique-sage-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-boutique-accent/30 disabled:cursor-not-allowed disabled:opacity-40 sm:text-xs"
+                  >
+                    {areAllColorFieldOptionsSelected(options, field.optionIds)
+                      ? "Премахване на всички"
+                      : "Избор на всички"}
+                  </button>
+                </div>
                 <div className="flex flex-wrap gap-3">
                   {options.map((option) => {
                     const checked = field.optionIds.includes(option.id);
