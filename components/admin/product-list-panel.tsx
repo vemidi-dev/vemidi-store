@@ -9,8 +9,13 @@ import {
   updateProductMerchandising,
 } from "@/app/admin/actions";
 import { DUPLICATE_MISSING_IMAGES_NOTICE } from "@/lib/admin/duplicate-product";
+import {
+  productEditAnchorId,
+  productGalleryAnchorId,
+} from "@/lib/admin/product-edit-navigation";
 import { buildPromotionProductOptions } from "@/lib/promotion-admin";
 import { AdminAutoOpenProductEdit } from "@/components/admin/admin-auto-open-product-edit";
+import { AdminProductEditStickyActions } from "@/components/admin/admin-product-edit-sticky-actions";
 import { AdminConfirmForm } from "@/components/admin/admin-confirm-form";
 import { AdminUnsavedChangesGuard } from "@/components/admin/admin-unsaved-changes-guard";
 import { ProductLandingPagesPanel } from "@/components/admin/product-landing-pages-panel";
@@ -19,7 +24,6 @@ import { AdminListControls } from "@/components/admin/admin-list-controls";
 import { AdminLazyDetailsMount } from "@/components/admin/admin-lazy-details-mount";
 import { AdminOpenDetailsButton } from "@/components/admin/admin-open-details-button";
 import { AdminFormPendingGuard } from "@/components/admin/admin-form-pending-guard";
-import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
 import { ProductGalleryAddForm } from "@/components/admin/product-gallery-add-form";
 import { ProductGalleryReplaceForm } from "@/components/admin/product-gallery-replace-form";
 import { ProductImageFileInput } from "@/components/admin/product-image-file-input";
@@ -388,6 +392,7 @@ export function ProductListPanel({
             return (
               <article
                 key={product.id}
+                id={productEditAnchorId(product.id)}
                 data-admin-product
                 data-search={`${product.name} ${product.price} ${assignedCategories
                   .map((category) => category.name)
@@ -511,7 +516,7 @@ export function ProductListPanel({
                   id={`product-edit-${product.id}`}
                   className={productSectionClass}
                   summaryClassName={productSectionSummaryClass}
-                  contentClassName="border-t border-boutique-line/50 px-3 py-4 sm:px-4"
+                  contentClassName="border-t border-boutique-line/50 px-3 py-4 pb-20 sm:px-4"
                   summary={
                     <>
                       <span>Редактирай продукт</span>
@@ -772,18 +777,6 @@ export function ProductListPanel({
                     </label>
 
                     <div className="md:col-span-2">
-                      <div className="flex flex-wrap items-center justify-between gap-3">
-                        <AdminSubmitButton
-                          pendingLabel={
-                            hasNoGalleryImages
-                              ? "Запазване и качване…"
-                              : "Запазване…"
-                          }
-                          className="rounded-full bg-boutique-ink px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-boutique-paper transition hover:bg-boutique-accent disabled:cursor-not-allowed disabled:opacity-70"
-                        >
-                          Запази промените
-                        </AdminSubmitButton>
-                      </div>
                       <AdminFormPendingGuard
                         message={
                           hasNoGalleryImages
@@ -816,7 +809,10 @@ export function ProductListPanel({
                     migrationMissing={landingPagesMigrationMissing}
                   />
 
-                  <section className="mt-5 border-t border-boutique-line/70 pt-5">
+                  <section
+                    id={productGalleryAnchorId(product.id)}
+                    className="mt-5 border-t border-boutique-line/70 pt-5"
+                  >
                     <div>
                       <h4 className="font-semibold text-boutique-ink">Галерия</h4>
                       <p className="mt-1 text-xs text-boutique-muted">
@@ -953,6 +949,15 @@ export function ProductListPanel({
                       </div>
                     ) : null}
                   </section>
+
+                  <AdminProductEditStickyActions
+                    formId={`admin-edit-product-form-${product.id}`}
+                    detailsId={`product-edit-${product.id}`}
+                    productAnchorId={productEditAnchorId(product.id)}
+                    saveLabel={
+                      hasNoGalleryImages ? "Запази промените и качи" : "Запази промените"
+                    }
+                  />
                 </AdminLazyDetailsMount>
 
                 <details className={productSectionClass}>
