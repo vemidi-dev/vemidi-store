@@ -194,7 +194,6 @@ export function ProductListPanel({
 
   return (
     <article className={adminPanelClass}>
-      <AdminAutoOpenProductEdit productId={editProductId} />
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h2 className="font-heading text-2xl text-boutique-ink">Всички продукти</h2>
@@ -1001,6 +1000,7 @@ export function ProductListPanel({
           </div>
         </>
       )}
+      <AdminAutoOpenProductEdit productId={editProductId} />
     </article>
   );
 }

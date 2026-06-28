@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 
-import { resolveProductEditScrollTargetId } from "@/lib/admin/product-edit-navigation";
+import { scheduleProductEditScrollRestore } from "@/lib/admin/product-edit-scroll-restore";
 
 type AdminAutoOpenProductEditProps = {
   productId?: string;
@@ -14,20 +14,7 @@ export function AdminAutoOpenProductEdit({ productId }: AdminAutoOpenProductEdit
       return;
     }
 
-    const details = document.getElementById(`product-edit-${productId}`);
-    if (details instanceof HTMLDetailsElement) {
-      details.open = true;
-    }
-
-    const scrollTargetId = resolveProductEditScrollTargetId(
-      productId,
-      window.location.hash,
-    );
-    const scrollTarget =
-      document.getElementById(scrollTargetId) ??
-      (details instanceof HTMLElement ? details : null);
-
-    scrollTarget?.scrollIntoView({ behavior: "smooth", block: "start" });
+    return scheduleProductEditScrollRestore(productId, window.location.hash);
   }, [productId]);
 
   return null;

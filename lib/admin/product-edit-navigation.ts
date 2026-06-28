@@ -2,6 +2,10 @@ export function productEditAnchorId(productId: string): string {
   return `product-${productId}`;
 }
 
+export function productEditDetailsId(productId: string): string {
+  return `product-edit-${productId}`;
+}
+
 export function productGalleryAnchorId(productId: string): string {
   return `${productEditAnchorId(productId)}-gallery`;
 }

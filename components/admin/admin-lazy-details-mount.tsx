@@ -23,9 +23,19 @@ export function AdminLazyDetailsMount({
 
   useEffect(() => {
     const details = document.getElementById(id);
-    if (details instanceof HTMLDetailsElement && details.open) {
-      setMounted(true);
+    if (!(details instanceof HTMLDetailsElement)) {
+      return;
     }
+
+    const syncMounted = () => {
+      if (details.open) {
+        setMounted(true);
+      }
+    };
+
+    syncMounted();
+    details.addEventListener("toggle", syncMounted);
+    return () => details.removeEventListener("toggle", syncMounted);
   }, [id]);
 
   return (
