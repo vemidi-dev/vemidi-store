@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { CookieConsentFooterTrigger } from "@/components/consent/cookie-consent-footer-trigger";
 import { PageContainer } from "@/components/layout/page-container";
 import { SocialLinks } from "@/components/layout/social-links";
 import { siteConfig } from "@/config/site";
@@ -42,6 +43,7 @@ export function Footer() {
                 {item.label}
               </Link>
             ))}
+            <CookieConsentFooterTrigger />
           </div>
         </div>
 

@@ -3,6 +3,8 @@ import { Inter, Playfair_Display } from "next/font/google";
 import type { ReactNode } from "react";
 
 import { CartProvider } from "@/components/cart/cart-provider";
+import { CookieConsentProvider } from "@/components/consent/cookie-consent-provider";
+import { GoogleConsentModeBootstrap } from "@/components/consent/google-consent-mode-bootstrap";
 import { JsonLd } from "@/components/seo/json-ld";
 import { SiteShell } from "@/components/layout/site-shell";
 import { siteConfig } from "@/config/site";
@@ -73,8 +75,11 @@ export default function RootLayout({ children }: RootLayoutProps) {
         className={`${inter.className} bg-boutique-bg text-boutique-ink antialiased [font-feature-settings:'kern'_1,'liga'_1]`}
       >
         <JsonLd data={buildSiteStructuredData(siteUrl)} />
+        <GoogleConsentModeBootstrap />
         <CartProvider>
-          <SiteShell>{children}</SiteShell>
+          <CookieConsentProvider>
+            <SiteShell>{children}</SiteShell>
+          </CookieConsentProvider>
         </CartProvider>
       </body>
     </html>

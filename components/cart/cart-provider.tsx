@@ -32,6 +32,7 @@ import {
   parseStoredCart,
 } from "@/lib/cart-storage";
 import { CART_STORAGE_KEY, LEGACY_CART_STORAGE_KEY, type CartLine } from "@/lib/cart-types";
+import { trackMetaAddToCart } from "@/lib/consent/meta-pixel-client";
 import type { SelectedProductColor } from "@/lib/product-colors";
 import type { ProductPersonalizationValue } from "@/lib/product-personalization";
 import type { ProductOptionSelection } from "@/lib/product-options";
@@ -189,6 +190,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
       setLines((prev) => mergeCartLineForAdd(prev, prepared));
       showAddedToast(product, prepared.normalizedQuantity);
+      trackMetaAddToCart({
+        slug: product.slug,
+        title: product.title,
+        price: product.price,
+        quantity: prepared.normalizedQuantity,
+      });
     },
     [showAddedToast],
   );

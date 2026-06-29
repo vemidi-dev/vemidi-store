@@ -6,6 +6,8 @@ import {
   parsePurchaseAnalyticsPayload,
   PURCHASE_STORAGE_KEY,
 } from "@/lib/checkout/order-confirmation";
+import { trackGaPurchase } from "@/lib/consent/google-analytics-client";
+import { trackMetaPurchase } from "@/lib/consent/meta-pixel-client";
 
 declare global {
   interface Window {
@@ -15,12 +17,13 @@ declare global {
 
 export function PurchaseEventBridge() {
   useEffect(() => {
-    const purchase = parsePurchaseAnalyticsPayload(
-      window.sessionStorage.getItem(PURCHASE_STORAGE_KEY),
-    );
+    const raw = window.sessionStorage.getItem(PURCHASE_STORAGE_KEY);
     window.sessionStorage.removeItem(PURCHASE_STORAGE_KEY);
 
-    if (!purchase) return;
+    const purchase = parsePurchaseAnalyticsPayload(raw);
+    if (!purchase) {
+      return;
+    }
 
     const detail = {
       value: purchase.value,
@@ -30,6 +33,9 @@ export function PurchaseEventBridge() {
 
     window.dataLayer?.push({ event: "purchase", ecommerce: detail });
     window.dispatchEvent(new CustomEvent("vemidi:purchase", { detail }));
+
+    trackGaPurchase(purchase);
+    trackMetaPurchase(purchase);
   }, []);
 
   return null;

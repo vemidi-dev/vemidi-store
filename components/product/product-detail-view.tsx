@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { ProductDetailAddToCart } from "@/components/product/product-detail-add-to-cart";
+import { MetaPixelViewContentBridge } from "@/components/consent/meta-pixel-view-content-bridge";
 import { ProductDetailGalleryAside } from "@/components/product/product-detail-content-sections";
 import { ProductDetailGallery } from "@/components/product/product-detail-gallery";
 import { ProductDetailOccasionTags } from "@/components/product/product-detail-occasion-tags";
@@ -109,6 +110,13 @@ export function ProductDetailView({
       {previewBanner}
       {includeStructuredData ? (
         <JsonLd data={[structuredData, breadcrumbSchema]} />
+      ) : null}
+      {!previewBanner ? (
+        <MetaPixelViewContentBridge
+          slug={product.slug}
+          title={product.title}
+          price={product.price}
+        />
       ) : null}
       <section className="border-b border-boutique-line/90 bg-boutique-paper">
         <PageContainer className="py-10 md:py-14 lg:py-16">

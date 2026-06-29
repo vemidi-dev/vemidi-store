@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { InformationPage, InformationSection } from "@/components/legal/information-page";
+import { splitLines } from "@/lib/content/format-content";
 import { getSiteContent } from "@/lib/content/site-content";
 import {
   buildInfoPageMetadataWithHomeHero,
@@ -24,11 +25,25 @@ export default async function CookiesPage() {
       <InformationSection title={content["cookies.what_title"]}>
         <p>{content["cookies.what_text"]}</p>
       </InformationSection>
+      <InformationSection title={content["cookies.consent_title"]}>
+        <p>{content["cookies.consent_text"]}</p>
+      </InformationSection>
       <InformationSection title={content["cookies.usage_title"]}>
         <p>{content["cookies.usage_text"]}</p>
+        <ul className="mt-3 list-disc space-y-1 pl-5">
+          {splitLines(content["cookies.necessary_items"]).map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
       </InformationSection>
       <InformationSection title={content["cookies.analytics_title"]}>
         <p>{content["cookies.analytics_text"]}</p>
+      </InformationSection>
+      <InformationSection title={content["cookies.marketing_title"]}>
+        <p>{content["cookies.marketing_text"]}</p>
+      </InformationSection>
+      <InformationSection title={content["cookies.manage_title"]}>
+        <p>{content["cookies.manage_text"]}</p>
       </InformationSection>
       <InformationSection title={content["cookies.contact_title"]}>
         <p>

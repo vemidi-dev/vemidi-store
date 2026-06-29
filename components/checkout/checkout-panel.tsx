@@ -10,6 +10,7 @@ import {
   type CheckoutActionState,
 } from "@/app/checkout/actions";
 import { CheckoutDeliveryFields } from "@/components/checkout/checkout-delivery-fields";
+import { MetaPixelInitiateCheckoutBridge } from "@/components/consent/meta-pixel-initiate-checkout-bridge";
 import { CartLineSummaryDetails } from "@/components/cart/cart-line-summary-details";
 import { useCart } from "@/components/cart/cart-provider";
 import { PageContainer } from "@/components/layout/page-container";
@@ -127,6 +128,7 @@ export function CheckoutPanel({ content }: { content: CheckoutPageContent }) {
 
   return (
     <section className="pb-24 pt-8">
+      <MetaPixelInitiateCheckoutBridge lines={lines} subtotal={subtotal} />
       <PageContainer>
         <form
           action={formAction}

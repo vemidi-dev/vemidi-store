@@ -46,6 +46,9 @@ export default async function PrivacyPage() {
       <InformationSection title={content["privacy.usage_title"]}>
         <p>{content["privacy.usage_text"]}</p>
       </InformationSection>
+      <InformationSection title={content["privacy.consent_title"]}>
+        <p>{content["privacy.consent_text"]}</p>
+      </InformationSection>
       <InformationSection title={content["privacy.storage_title"]}>
         <p>{content["privacy.storage_text"]}</p>
       </InformationSection>
