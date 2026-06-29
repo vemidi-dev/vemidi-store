@@ -26,7 +26,7 @@ export function validateCustomerPhone(value: string): boolean {
 export function validateCustomerEmail(value: string): boolean {
   const trimmed = value.trim();
   if (!trimmed) {
-    return true;
+    return false;
   }
 
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);

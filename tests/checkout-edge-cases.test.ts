@@ -21,7 +21,7 @@ test("customer validation catches invalid name phone and email", () => {
   assert.equal(validateCustomerName("Анна Иванова"), true);
   assert.equal(validateCustomerPhone("123"), false);
   assert.equal(validateCustomerPhone("+359881234567"), true);
-  assert.equal(validateCustomerEmail(""), true);
+  assert.equal(validateCustomerEmail(""), false);
   assert.equal(validateCustomerEmail("invalid"), false);
   assert.equal(validateCustomerEmail("shop@example.com"), true);
 });

@@ -212,6 +212,7 @@ export function CheckoutPanel({ content }: { content: CheckoutPageContent }) {
                     name="customer_email"
                     type="email"
                     value={customerEmail}
+                    required
                     maxLength={160}
                     aria-invalid={Boolean(state.fieldErrors?.customer_email)}
                     aria-describedby={

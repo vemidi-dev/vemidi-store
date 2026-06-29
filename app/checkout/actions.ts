@@ -124,7 +124,7 @@ export async function createStoreOrder(
   }
 
   if (
-    customer.email &&
+    !customer.email ||
     !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customer.email)
   ) {
     return {
