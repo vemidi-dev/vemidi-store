@@ -7,6 +7,7 @@ import { ProductImageFileInput } from "@/components/admin/product-image-file-inp
 import { ProductColorFieldsEditor } from "@/components/admin/product-color-fields-editor";
 import { ProductOptionGroupsEditor } from "@/components/admin/product-option-groups-editor";
 import { ProductPersonalizationFieldsEditor } from "@/components/admin/product-personalization-fields-editor";
+import { ProductPublicationStatusField } from "@/components/admin/product-publication-status-field";
 import { ProductFulfillmentFields } from "@/components/admin/product-fulfillment-fields";
 import { ProductCardBadgeField } from "@/components/admin/product-card-badge-field";
 import { ProductContentSeoFields } from "@/components/admin/product-content-seo-fields";
@@ -70,8 +71,8 @@ export function ProductCreatePanel({
     <article className={adminPanelClass}>
       <h2 className="font-heading text-2xl text-boutique-ink">Добавяне на продукт</h2>
       <p className="mt-2 text-sm text-boutique-muted">
-        Попълнете основните данни за продукта. Новите продукти се записват като чернова и не се
-        виждат в магазина, докато не ги публикувате от списъка с продукти.
+        Попълнете основните данни за продукта. Можете да го запазите като чернова или да го
+        публикувате директно, ако всички задължителни полета и поне една снимка са налични.
       </p>
 
       <form id="admin-create-product-form" action={createProduct} className="mt-7 space-y-7">
@@ -346,10 +347,19 @@ export function ProductCreatePanel({
           />
         </fieldset>
 
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-boutique-line/70 pt-6">
-          <p className="text-xs uppercase tracking-[0.16em] text-boutique-muted">
-            Задължителните полета са отбелязани в секциите.
-          </p>
+        <div className="flex flex-wrap items-end justify-between gap-5 border-t border-boutique-line/70 pt-6">
+          <div className="min-w-[min(100%,16rem)] space-y-3">
+            <ProductPublicationStatusField
+              defaultValue={draft?.publicationStatus ?? "draft"}
+              allowedStatuses={["draft", "published"]}
+              fieldClassName={adminFieldClass}
+              helperClassName={adminHelperClass}
+              helperText="Черновата не се вижда в магазина. Публикуването изисква пълни данни и поне една снимка."
+            />
+            <p className="text-xs uppercase tracking-[0.16em] text-boutique-muted">
+              Задължителните полета са отбелязани в секциите.
+            </p>
+          </div>
           <div className="flex flex-wrap gap-2">
             <a
               href={makeAdminTabHref("products")}

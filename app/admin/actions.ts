@@ -571,6 +571,7 @@ export async function createProduct(formData: FormData) {
   const supabase = await getAuthorizedClient();
   const activeTab = getAdminTab(formData, "products");
   const draft = makeCreateProductDraft(formData);
+  const publicationStatus = parseProductPublicationStatus(formData, "draft");
 
   const name = getString(formData, adminFormFields.product.name);
   const subtitle = getOptionalString(formData, adminFormFields.product.subtitle);
@@ -702,7 +703,7 @@ export async function createProduct(formData: FormData) {
   const newProductId = String(productId);
   const { error: statusError } = await supabase
     .from("products")
-    .update({ status: DUPLICATE_PRODUCT_PUBLICATION_STATUS })
+    .update({ status: "draft" })
     .eq("id", newProductId);
 
   if (statusError) {
@@ -767,6 +768,39 @@ export async function createProduct(formData: FormData) {
     uploadedImages.length > 0
       ? ` Оптимизирани ${uploadedImages.length} снимки.`
       : "";
+
+  if (requiresProductPublishValidation(publicationStatus)) {
+    const galleryCount = await getProductGalleryImageCount(supabase, newProductId);
+    await assertProductPublishReady(supabase, newProductId, {
+      name,
+      slug: slug!,
+      price,
+      categoryIds,
+      primaryCategoryId,
+      imageCount: galleryCount,
+      subtitle,
+    });
+
+    const { error: publishError } = await supabase
+      .from("products")
+      .update({ status: "published" })
+      .eq("id", newProductId);
+
+    if (publishError) {
+      redirectWithProductEdit(
+        "error",
+        "Продуктът е създаден като чернова, но не беше публикуван.",
+        newProductId,
+      );
+    }
+
+    redirectWith(
+      "success",
+      `Продуктът е добавен и публикуван.${optimizationSummary}`,
+      activeTab,
+    );
+  }
+
   redirectWith("success", `Продуктът е добавен като чернова.${optimizationSummary}`, activeTab);
 }
 

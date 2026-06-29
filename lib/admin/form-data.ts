@@ -50,6 +50,7 @@ type CreateProductDraftPayload = {
   }>;
   wish_template_ids: string[];
   option_groups: unknown[];
+  status: ProductPublicationStatus;
 };
 
 export function parseProductFulfillmentFromFormData(formData: FormData): {
@@ -262,6 +263,7 @@ export function makeCreateProductDraft(formData: FormData) {
     personalization_fields: personalizationFields,
     wish_template_ids: getWishTemplateIds(formData),
     option_groups: optionGroupsResult.error ? [] : optionGroupsResult.groups,
+    status: parseProductPublicationStatus(formData, "draft"),
   };
 
   return JSON.stringify(draft);

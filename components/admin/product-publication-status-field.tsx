@@ -9,14 +9,18 @@ type ProductPublicationStatusFieldProps = {
   defaultValue?: ProductPublicationStatus;
   fieldClassName: string;
   helperClassName?: string;
+  helperText?: string;
   disabled?: boolean;
+  allowedStatuses?: readonly ProductPublicationStatus[];
 };
 
 export function ProductPublicationStatusField({
   defaultValue = "draft",
   fieldClassName,
   helperClassName,
+  helperText = "Черновите и архивираните продукти не се виждат в магазина.",
   disabled = false,
+  allowedStatuses = PRODUCT_PUBLICATION_STATUSES,
 }: ProductPublicationStatusFieldProps) {
   return (
     <label className="text-sm font-medium text-boutique-ink">
@@ -27,7 +31,7 @@ export function ProductPublicationStatusField({
         disabled={disabled}
         className={`${fieldClassName} mt-1`}
       >
-        {PRODUCT_PUBLICATION_STATUSES.map((status) => (
+        {allowedStatuses.map((status) => (
           <option key={status} value={status}>
             {PRODUCT_PUBLICATION_STATUS_LABELS[status]}
           </option>
@@ -35,7 +39,7 @@ export function ProductPublicationStatusField({
       </select>
       {helperClassName ? (
         <span className={`${helperClassName} mt-1 block`}>
-          Черновите и архивираните продукти не се виждат в магазина.
+          {helperText}
         </span>
       ) : null}
     </label>

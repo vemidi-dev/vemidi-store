@@ -283,6 +283,7 @@ export type ProductCreateDraft = {
   personalizationFields: ProductDraftPersonalizationField[];
   wishTemplateIds: string[];
   optionGroups?: ProductDraftOptionGroup[];
+  publicationStatus: ProductPublicationStatus;
 };
 
 export type ParsedColorField = {

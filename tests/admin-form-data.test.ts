@@ -64,6 +64,9 @@ test("admin form field names stay aligned with product draft parsing", () => {
     subtitle: "Кратко подзаглавие",
     description: "Описание",
     additional_info: "Допълнителни детайли",
+    personalization_info: "",
+    dimensions_materials: "",
+    ordering_info: "",
     fulfillment_note: "Изработка до 5 дни",
     price: "29.90",
     is_customizable: true,
@@ -80,6 +83,8 @@ test("admin form field names stay aligned with product draft parsing", () => {
         min_select: "1",
         max_select: "1",
         option_ids: "pink,blue",
+        selection_mode: "choice",
+        required_total_quantity: "",
       },
     ],
     personalization_fields: [
@@ -96,6 +101,7 @@ test("admin form field names stay aligned with product draft parsing", () => {
     ],
     wish_template_ids: ["wish-one", "wish-two"],
     option_groups: [],
+    status: "draft",
   });
 });
 
@@ -237,6 +243,22 @@ test("product create draft preserves option groups for recovery", () => {
   assert.equal(draft?.optionGroups?.[0]?.values[0]?.label, "Mini");
 });
 
+test("product create draft preserves selected publication status", () => {
+  const formData = new FormData();
+  formData.set(adminFormFields.product.name, "Published product");
+  formData.set(adminFormFields.product.slug, "published-product");
+  formData.set(adminFormFields.product.description, "Description");
+  formData.set(adminFormFields.product.price, "15.00");
+  formData.append(adminFormFields.product.categoryIds, "category-one");
+  formData.set(adminFormFields.product.status, "published");
+
+  const payload = JSON.parse(makeCreateProductDraft(formData)) as { status?: string };
+  assert.equal(payload.status, "published");
+
+  const draft = parseProductCreateDraft(makeCreateProductDraft(formData));
+  assert.equal(draft?.publicationStatus, "published");
+});
+
 test("legacy product drafts without subtitle remain compatible", () => {
   const draft = parseProductCreateDraft(
     JSON.stringify({
@@ -249,4 +271,5 @@ test("legacy product drafts without subtitle remain compatible", () => {
 
   assert.equal(draft?.subtitle, "");
   assert.equal(draft?.description, "Legacy description");
+  assert.equal(draft?.publicationStatus, "draft");
 });

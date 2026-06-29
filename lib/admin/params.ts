@@ -5,6 +5,7 @@ import type {
   ProductDraftOptionGroup,
   ProductDraftPersonalizationField,
 } from "@/lib/admin/types";
+import { normalizeProductPublicationStatus } from "@/lib/product-publication";
 
 export function firstValue(value: string | string[] | undefined) {
   if (!value) {
@@ -76,6 +77,7 @@ export function parseProductCreateDraft(raw: string): ProductCreateDraft | null 
       personalization_fields?: unknown;
       wish_template_ids?: unknown;
       option_groups?: unknown;
+      status?: unknown;
     };
 
     const categoryIds = Array.isArray(parsed.category_ids)
@@ -304,6 +306,7 @@ export function parseProductCreateDraft(raw: string): ProductCreateDraft | null 
       personalizationFields,
       wishTemplateIds,
       optionGroups,
+      publicationStatus: normalizeProductPublicationStatus(parsed.status, "draft"),
     };
   } catch {
     return null;
