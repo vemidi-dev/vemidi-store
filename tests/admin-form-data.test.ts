@@ -243,6 +243,27 @@ test("product create draft preserves option groups for recovery", () => {
   assert.equal(draft?.optionGroups?.[0]?.values[0]?.label, "Mini");
 });
 
+test("product create draft preserves selected wish templates", () => {
+  const formData = new FormData();
+  formData.set(adminFormFields.product.name, "Wish product");
+  formData.set(adminFormFields.product.slug, "wish-product");
+  formData.set(adminFormFields.product.description, "Description");
+  formData.set(adminFormFields.product.price, "20.00");
+  formData.append(adminFormFields.product.categoryIds, "category-one");
+  formData.append(adminFormFields.product.wishTemplateIds, "wish-a");
+  formData.append(adminFormFields.product.wishTemplateIds, "wish-a");
+  formData.append(adminFormFields.product.wishTemplateIds, "wish-b");
+
+  assert.deepEqual(getWishTemplateIds(formData), ["wish-a", "wish-b"]);
+
+  const draftJson = makeCreateProductDraft(formData);
+  const payload = JSON.parse(draftJson) as { wish_template_ids?: string[] };
+  assert.deepEqual(payload.wish_template_ids, ["wish-a", "wish-b"]);
+
+  const draft = parseProductCreateDraft(draftJson);
+  assert.deepEqual(draft?.wishTemplateIds, ["wish-a", "wish-b"]);
+});
+
 test("product create draft preserves selected publication status", () => {
   const formData = new FormData();
   formData.set(adminFormFields.product.name, "Published product");
