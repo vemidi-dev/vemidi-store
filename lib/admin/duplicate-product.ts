@@ -1,5 +1,12 @@
 import type { PostgrestError } from "@supabase/supabase-js";
 
+import type { ProductPublicationStatus } from "@/lib/product-publication";
+
+export const DUPLICATE_PRODUCT_PUBLICATION_STATUS: ProductPublicationStatus = "draft";
+
+export const DUPLICATE_DRAFT_SUCCESS_BASE =
+  "Продуктът е дублиран като чернова.";
+
 export const DUPLICATE_EXCLUDED_RELATIONS = [
   "home_featured_products",
   "related_products",
@@ -98,14 +105,14 @@ export function buildDuplicateSuccessMessage(
   options?: { copyImagesRequested?: boolean },
 ) {
   if (imageWarning) {
-    return `Копието е създадено. ${imageWarning}`;
+    return `${DUPLICATE_DRAFT_SUCCESS_BASE} ${imageWarning}`;
   }
 
   if (options?.copyImagesRequested === false) {
-    return "Копието е създадено. Добавете снимки към новия продукт.";
+    return `${DUPLICATE_DRAFT_SUCCESS_BASE} Добавете снимки към новия продукт.`;
   }
 
-  return "Копието е създадено";
+  return DUPLICATE_DRAFT_SUCCESS_BASE;
 }
 
 export const DUPLICATE_PRODUCT_CONFIRM_MESSAGE =

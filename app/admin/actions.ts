@@ -45,6 +45,7 @@ import { copyProductGalleryImagesToProduct } from "@/lib/admin/copy-product-gall
 import {
   buildDuplicateSuccessMessage,
   DUPLICATE_IMAGE_WARNING,
+  DUPLICATE_PRODUCT_PUBLICATION_STATUS,
   getDuplicateProductErrorMessage,
   shouldCopyDuplicateImages,
 } from "@/lib/admin/duplicate-product";
@@ -701,7 +702,7 @@ export async function createProduct(formData: FormData) {
   const newProductId = String(productId);
   const { error: statusError } = await supabase
     .from("products")
-    .update({ status: "draft" })
+    .update({ status: DUPLICATE_PRODUCT_PUBLICATION_STATUS })
     .eq("id", newProductId);
 
   if (statusError) {
@@ -1254,6 +1255,19 @@ export async function duplicateProduct(formData: FormData) {
   }
 
   const newId = String(newProductId);
+  const { error: statusError } = await supabase
+    .from("products")
+    .update({ status: DUPLICATE_PRODUCT_PUBLICATION_STATUS })
+    .eq("id", newId);
+
+  if (statusError) {
+    redirectWithProductEdit(
+      "error",
+      "Продуктът е дублиран, но статусът не беше зададен като чернова.",
+      newId,
+    );
+  }
+
   const faqCopyError = await copyProductFaqAssociations(supabase, sourceId, newId);
   if (faqCopyError) {
     redirectWithProductEdit(

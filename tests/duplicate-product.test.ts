@@ -5,8 +5,10 @@ import {
   buildDuplicateProductName,
   buildDuplicateSuccessMessage,
   createIdMap,
+  DUPLICATE_DRAFT_SUCCESS_BASE,
   DUPLICATE_EXCLUDED_RELATIONS,
   DUPLICATE_IMAGE_WARNING,
+  DUPLICATE_PRODUCT_PUBLICATION_STATUS,
   DUPLICATE_RESET_FIELDS,
   getDuplicateProductErrorMessage,
   remapOptionDependencies,
@@ -48,11 +50,16 @@ test("remap option dependencies rejects broken dependency chains", () => {
   );
 });
 
-test("duplicate success message includes image warning when needed", () => {
-  assert.equal(buildDuplicateSuccessMessage(), "Копието е създадено");
+test("duplicate product always targets draft publication status", () => {
+  assert.equal(DUPLICATE_PRODUCT_PUBLICATION_STATUS, "draft");
+});
+
+test("duplicate success message states draft copy", () => {
+  assert.equal(buildDuplicateSuccessMessage(), DUPLICATE_DRAFT_SUCCESS_BASE);
+  assert.match(buildDuplicateSuccessMessage(), /чернова/i);
   assert.match(
     buildDuplicateSuccessMessage(DUPLICATE_IMAGE_WARNING),
-    /Копието е създадено/,
+    /чернова/i,
   );
   assert.match(
     buildDuplicateSuccessMessage(DUPLICATE_IMAGE_WARNING),
@@ -60,7 +67,18 @@ test("duplicate success message includes image warning when needed", () => {
   );
   assert.match(
     buildDuplicateSuccessMessage(null, { copyImagesRequested: false }),
+    /чернова/i,
+  );
+  assert.match(
+    buildDuplicateSuccessMessage(null, { copyImagesRequested: false }),
     /Добавете снимки/i,
+  );
+});
+
+test("duplicate success message includes image warning when needed", () => {
+  assert.match(
+    buildDuplicateSuccessMessage(DUPLICATE_IMAGE_WARNING),
+    /чернова/i,
   );
 });
 
