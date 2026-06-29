@@ -77,7 +77,7 @@ export function ensureMetaPixelScript(pixelId: string) {
   if (typeof window.fbq !== "function") {
     const fbq = function (...args: unknown[]) {
       if (fbq.callMethod) {
-        fbq.callMethod.apply(fbq, args);
+        fbq.callMethod(...args);
         return;
       }
 
