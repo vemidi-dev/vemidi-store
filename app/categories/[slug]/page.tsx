@@ -223,9 +223,19 @@ export default async function CategoryPage({
         <PageContainer>
           <div className="flex flex-wrap items-end justify-between gap-3 border-b border-boutique-line pb-5">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-boutique-sage-deep">
-                {parent ? parent.name : "Категория"}
-              </p>
+              {parent ? (
+                <Link
+                  href={getCategoryPath(parent.slug)}
+                  className="text-xs font-semibold uppercase tracking-[0.18em] text-boutique-sage-deep transition hover:text-boutique-accent hover:underline"
+                  aria-label={`Назад към категория ${parent.name}`}
+                >
+                  ← {parent.name}
+                </Link>
+              ) : (
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-boutique-sage-deep">
+                  Категория
+                </p>
+              )}
               <h2 className="mt-2 font-heading text-3xl text-boutique-ink">
                 {listingHeading}
               </h2>
