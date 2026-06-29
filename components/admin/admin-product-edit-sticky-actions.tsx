@@ -1,10 +1,13 @@
 "use client";
 
+import type { ReactNode } from "react";
+
 type AdminProductEditStickyActionsProps = {
   formId: string;
   detailsId: string;
   productAnchorId: string;
   saveLabel?: string;
+  extraActions?: ReactNode;
 };
 
 const secondaryButtonClass =
@@ -18,6 +21,7 @@ export function AdminProductEditStickyActions({
   detailsId,
   productAnchorId,
   saveLabel = "Запазване",
+  extraActions,
 }: AdminProductEditStickyActionsProps) {
   const scrollToProductTop = () => {
     document.getElementById(productAnchorId)?.scrollIntoView({
@@ -47,6 +51,7 @@ export function AdminProductEditStickyActions({
         <button type="button" onClick={closeEdit} className={secondaryButtonClass}>
           Затваряне редакцията
         </button>
+        {extraActions}
         <button type="submit" form={formId} className={primaryButtonClass}>
           {saveLabel}
         </button>

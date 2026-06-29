@@ -78,6 +78,11 @@ import {
 } from "@/lib/product-slug";
 import { getProductPath } from "@/lib/product-url";
 import { productEditAnchorId, productGalleryAnchorId } from "@/lib/admin/product-edit-navigation";
+import {
+  formatProductPublishValidationMessage,
+  requiresProductPublishValidation,
+  validateProductPublishReady,
+} from "@/lib/admin/product-publish-validation";
 import { checkIsAdmin } from "@/lib/supabase/admin-auth";
 import { createClient } from "@/lib/supabase/server";
 
@@ -126,6 +131,7 @@ async function revalidateProductPaths(
     revalidatePath(getProductPath(String(data.slug)));
   }
   revalidatePath(`/products/${productId}`);
+  revalidatePath(`/admin/products/${productId}/preview`);
 }
 
 function parseSubmittedProductSlug(formData: FormData, productName: string) {
@@ -226,6 +232,68 @@ async function getProductGalleryImageCount(
   }
 
   return product?.image_url ? 1 : 0;
+}
+
+async function loadProductPublishValidationInput(
+  supabase: NonNullable<Awaited<ReturnType<typeof createClient>>>,
+  productId: string,
+) {
+  const [{ data: product }, { data: categoryLinks }] = await Promise.all([
+    supabase
+      .from("products")
+      .select("name,slug,price,subtitle,primary_category_id,image_url")
+      .eq("id", productId)
+      .maybeSingle(),
+    supabase
+      .from("product_categories")
+      .select("category_id")
+      .eq("product_id", productId),
+  ]);
+
+  if (!product) {
+    return null;
+  }
+
+  const imageCount = await getProductGalleryImageCount(supabase, productId);
+
+  return {
+    name: String(product.name ?? ""),
+    slug: String(product.slug ?? ""),
+    price: product.price == null ? null : Number(product.price),
+    categoryIds: (categoryLinks ?? []).map((link) => String(link.category_id)),
+    primaryCategoryId: product.primary_category_id
+      ? String(product.primary_category_id)
+      : null,
+    imageCount,
+    subtitle: product.subtitle ? String(product.subtitle) : null,
+  };
+}
+
+async function assertProductPublishReady(
+  supabase: NonNullable<Awaited<ReturnType<typeof createClient>>>,
+  productId: string,
+  input: Parameters<typeof validateProductPublishReady>[0],
+): Promise<void> {
+  const issues = validateProductPublishReady(input);
+  if (issues.length > 0) {
+    redirectWithProductEdit(
+      "error",
+      formatProductPublishValidationMessage(issues),
+      productId,
+    );
+  }
+
+  if (!(await validatePrimaryProductCategory(
+    supabase,
+    input.categoryIds,
+    input.primaryCategoryId,
+  ))) {
+    redirectWithProductEdit(
+      "error",
+      "Продуктът не може да бъде публикуван: изберете основна продуктова категория.",
+      productId,
+    );
+  }
 }
 
 async function deleteUploadedImagesBestEffort(
@@ -836,6 +904,22 @@ export async function updateProduct(formData: FormData) {
   }
 
   const publicationStatus = parseProductPublicationStatus(formData, "published");
+  const galleryCount = await getProductGalleryImageCount(supabase, id);
+  const effectiveImageCount =
+    imageFiles.length > 0 ? galleryCount + imageFiles.length : galleryCount;
+
+  if (requiresProductPublishValidation(publicationStatus)) {
+    await assertProductPublishReady(supabase, id, {
+      name,
+      slug: slug!,
+      price,
+      categoryIds,
+      primaryCategoryId,
+      imageCount: effectiveImageCount,
+      subtitle,
+    });
+  }
+
   const { error: statusError } = await supabase
     .from("products")
     .update({ status: publicationStatus })
@@ -890,6 +974,36 @@ export async function updateProduct(formData: FormData) {
   const optimizationSummary =
     uploadedImages.length > 0 ? ` Качени ${uploadedImages.length} оптимизирани снимки.` : "";
   redirectWithProductEdit("success", `Продуктът е обновен.${optimizationSummary}`, id, {
+    hash: productEditAnchorId(id),
+  });
+}
+
+export async function publishProduct(formData: FormData) {
+  const supabase = await getAuthorizedClient();
+  const id = getString(formData, adminFormFields.common.id);
+
+  if (!id) {
+    redirectWith("error", "Липсва продукт за публикуване.", "products");
+  }
+
+  const input = await loadProductPublishValidationInput(supabase, id);
+  if (!input) {
+    redirectWithProductEdit("error", "Продуктът не беше намерен.", id);
+  }
+
+  await assertProductPublishReady(supabase, id, input);
+
+  const { error: statusError } = await supabase
+    .from("products")
+    .update({ status: "published" })
+    .eq("id", id);
+
+  if (statusError) {
+    redirectWithProductEdit("error", "Продуктът не беше публикуван.", id);
+  }
+
+  await revalidateProductPaths(supabase, id);
+  redirectWithProductEdit("success", "Продуктът е публикуван.", id, {
     hash: productEditAnchorId(id),
   });
 }

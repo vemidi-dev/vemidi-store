@@ -482,25 +482,32 @@ async function getProductColorFields(
     .filter((field): field is ProductColorField => field !== null);
 }
 
-async function loadStorefrontProductDetails(
+async function loadProductDetails(
   supabase: SupabaseClient,
   productId: string,
+  options?: { requirePublished?: boolean },
 ): Promise<Product | null> {
-  const { data, error } = await supabase
+  const requirePublished = options?.requirePublished !== false;
+
+  let productQuery = supabase
     .from("products")
     .select(
       "id,slug,product_code,name,subtitle,description,additional_info,fulfillment_note,personalization_info,dimensions_materials,ordering_info,price,image_url,is_customizable,is_sold_out,fulfillment_type,stock_quantity,card_badge,meta_title,meta_description,og_title,og_description,status",
     )
-    .eq("id", productId)
-    .eq("status", "published")
-    .maybeSingle();
+    .eq("id", productId);
+
+  if (requirePublished) {
+    productQuery = productQuery.eq("status", "published");
+  }
+
+  const { data, error } = await productQuery.maybeSingle();
 
   if (error || !data) {
     return null;
   }
 
   const status = normalizeProductPublicationStatus(data.status, "published");
-  if (!isProductStorefrontPublished(status)) {
+  if (requirePublished && !isProductStorefrontPublished(status)) {
     return null;
   }
 
@@ -639,6 +646,20 @@ async function loadStorefrontProductDetails(
     },
   );
   return product;
+}
+
+async function loadStorefrontProductDetails(
+  supabase: SupabaseClient,
+  productId: string,
+): Promise<Product | null> {
+  return loadProductDetails(supabase, productId, { requirePublished: true });
+}
+
+export async function loadAdminProductPreviewDetails(
+  supabase: SupabaseClient,
+  productId: string,
+): Promise<Product | null> {
+  return loadProductDetails(supabase, productId, { requirePublished: false });
 }
 
 /** Load a product by internal UUID (campaign checkout, admin, orders). */

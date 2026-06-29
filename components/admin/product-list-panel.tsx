@@ -2,6 +2,7 @@ import {
   deleteProduct,
   deleteProductGalleryImage,
   moveProductImage,
+  publishProduct,
   setPrimaryProductImage,
   toggleProductSoldOut,
   updateProduct,
@@ -13,6 +14,7 @@ import {
   productEditAnchorId,
   productGalleryAnchorId,
 } from "@/lib/admin/product-edit-navigation";
+import { getAdminProductPreviewPath } from "@/lib/admin/product-preview-path";
 import {
   normalizeProductPublicationStatus,
   PRODUCT_PUBLICATION_STATUS_LABELS,
@@ -508,6 +510,26 @@ export function ProductListPanel({
                     >
                       Редакция
                     </AdminOpenDetailsButton>
+                    <a
+                      href={getAdminProductPreviewPath(product.id)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={actionSecondaryClass}
+                    >
+                      Преглед
+                    </a>
+                    {publicationStatus === "draft" ? (
+                      <form action={publishProduct} className="inline">
+                        <input
+                          type="hidden"
+                          name={adminFormFields.common.id}
+                          value={product.id}
+                        />
+                        <button type="submit" className={actionSecondaryClass}>
+                          Публикуване
+                        </button>
+                      </form>
+                    ) : null}
                     <ProductDuplicateButton
                       productId={product.id}
                       productName={product.name}
@@ -988,6 +1010,33 @@ export function ProductListPanel({
                     productAnchorId={productEditAnchorId(product.id)}
                     saveLabel={
                       hasNoGalleryImages ? "Запази промените и качи" : "Запази промените"
+                    }
+                    extraActions={
+                      <>
+                        <a
+                          href={getAdminProductPreviewPath(product.id)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="rounded-full border border-boutique-line bg-white px-4 py-2 text-xs font-semibold text-boutique-ink transition hover:border-boutique-sage-deep hover:text-boutique-sage-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-boutique-accent/30"
+                        >
+                          Преглед
+                        </a>
+                        {publicationStatus === "draft" ? (
+                          <form action={publishProduct} className="inline">
+                            <input
+                              type="hidden"
+                              name={adminFormFields.common.id}
+                              value={product.id}
+                            />
+                            <button
+                              type="submit"
+                              className="rounded-full border border-boutique-sage-deep/40 bg-boutique-sage/10 px-4 py-2 text-xs font-semibold text-boutique-sage-deep transition hover:border-boutique-sage-deep hover:bg-boutique-sage/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-boutique-accent/30"
+                            >
+                              Публикуване
+                            </button>
+                          </form>
+                        ) : null}
+                      </>
                     }
                   />
                 </AdminLazyDetailsMount>
