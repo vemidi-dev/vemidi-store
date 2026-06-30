@@ -50,6 +50,11 @@ import {
   shouldCopyDuplicateImages,
 } from "@/lib/admin/duplicate-product";
 import {
+  buildProductImageStoragePath,
+  isPathWithinProductScope,
+  isValidProductImageId,
+} from "@/lib/admin/product-image-path";
+import {
   createSupabaseProductImageStorageAdapter,
   deleteProductScopedStoragePaths,
   deleteStoragePathsBestEffort,
@@ -62,6 +67,7 @@ import {
 } from "@/lib/admin/product-image-upload";
 import {
   deleteProductImage,
+  getPublicImageUrl,
   getProductImagePath,
   uploadAdminImage,
 } from "@/lib/admin/storage";
@@ -190,12 +196,37 @@ function redirectWithProductEdit(
   redirect(`${ADMIN_PATH}?${params.toString()}${hash}`);
 }
 
+function getProductEditUrl(
+  kind: "success" | "error",
+  message: string,
+  productId: string,
+  options?: { hash?: string },
+) {
+  const params = new URLSearchParams({
+    [kind]: message,
+    tab: "products",
+    editProduct: productId,
+  });
+  const hash = options?.hash ? `#${options.hash}` : "";
+  return `${ADMIN_PATH}?${params.toString()}${hash}`;
+}
+
 function redirectWithProductGalleryEdit(
   kind: "success" | "error",
   message: string,
   productId: string,
 ): never {
   redirectWithProductEdit(kind, message, productId, {
+    hash: productGalleryAnchorId(productId),
+  });
+}
+
+function getProductGalleryEditUrl(
+  kind: "success" | "error",
+  message: string,
+  productId: string,
+) {
+  return getProductEditUrl(kind, message, productId, {
     hash: productGalleryAnchorId(productId),
   });
 }
@@ -1097,6 +1128,107 @@ export async function addProductGalleryImages(formData: FormData) {
     `Добавени ${uploadedImages.length} оптимизирани снимки към галерията.`,
     id,
   );
+}
+
+type AttachUploadedProductGalleryImage = {
+  path: string;
+  altText?: string | null;
+};
+
+function getScopedUploadedImageCleanupPayload(
+  productId: string,
+  images: AttachUploadedProductGalleryImage[],
+): UploadedProductImage[] {
+  return images
+    .map((image) => String(image.path ?? "").trim())
+    .filter((path) => isPathWithinProductScope(path, productId))
+    .map((path) => ({
+      path,
+      url: "",
+      imageId: "",
+      originalSize: 0,
+      optimizedSize: 0,
+    }));
+}
+
+export async function attachUploadedProductGalleryImages(payload: {
+  productId: string;
+  images: AttachUploadedProductGalleryImage[];
+}): Promise<{ ok: boolean; message: string; redirectUrl?: string }> {
+  const supabase = await getAuthorizedClient();
+  const productId = String(payload.productId ?? "").trim();
+  const images = Array.isArray(payload.images) ? payload.images : [];
+
+  if (!productId) {
+    return { ok: false, message: "Липсва продукт за добавяне на снимки." };
+  }
+
+  if (images.length === 0) {
+    return { ok: false, message: "Изберете поне една снимка за качване." };
+  }
+
+  const existingGalleryCount = await getProductGalleryImageCount(supabase, productId);
+  const galleryUploadError = await validateProductImageUploadBatch(
+    images.map(
+      (image) =>
+        new File([new Uint8Array([0xff, 0xd8, 0xff, 0xe0])], image.path, {
+          type: "image/jpeg",
+        }),
+    ),
+    existingGalleryCount,
+  );
+  if (galleryUploadError) {
+    await deleteUploadedImagesBestEffort(
+      supabase,
+      getScopedUploadedImageCleanupPayload(productId, images),
+    );
+    return { ok: false, message: galleryUploadError };
+  }
+
+  const uploadedImages: UploadedProductImage[] = [];
+  for (const image of images) {
+    const path = String(image.path ?? "").trim();
+    const imageId = path.split("/").pop()?.replace(/\.webp$/i, "") ?? "";
+    if (
+      !path.endsWith(".webp") ||
+      !isPathWithinProductScope(path, productId) ||
+      !isValidProductImageId(imageId) ||
+      buildProductImageStoragePath(productId, imageId) !== path
+    ) {
+      await deleteUploadedImagesBestEffort(
+        supabase,
+        getScopedUploadedImageCleanupPayload(productId, images),
+      );
+      return { ok: false, message: "Невалиден път към качена снимка." };
+    }
+
+    uploadedImages.push({
+      path,
+      url: getPublicImageUrl(path),
+      imageId,
+      originalSize: 0,
+      optimizedSize: 0,
+    });
+  }
+
+  const galleryError = await attachProductImages(
+    supabase,
+    productId,
+    uploadedImages,
+    images.map((image) => image.altText?.trim() ?? ""),
+  );
+  if (galleryError) {
+    await deleteUploadedImagesBestEffort(supabase, uploadedImages);
+    return { ok: false, message: "Снимките не бяха добавени към галерията." };
+  }
+
+  await revalidateProductPaths(supabase, productId);
+  const message = `Добавени ${uploadedImages.length} оптимизирани снимки към галерията.`;
+  return {
+    ok: true,
+    message,
+    redirectUrl: getProductGalleryEditUrl("success", message, productId),
+  };
 }
 
 export async function replaceProductGalleryImage(formData: FormData) {

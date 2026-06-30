@@ -74,6 +74,18 @@ test("admin product image actions require authorized client", () => {
   assert.match(source, /async function createProduct[\s\S]*?await getAuthorizedClient\(\)/);
   assert.match(source, /async function updateProduct[\s\S]*?await getAuthorizedClient\(\)/);
   assert.match(source, /async function addProductGalleryImages[\s\S]*?await getAuthorizedClient\(\)/);
+  assert.match(source, /async function attachUploadedProductGalleryImages[\s\S]*?await getAuthorizedClient\(\)/);
   assert.match(source, /await validateProductImageUploadBatch\(/);
   assert.match(source, /await processAndUploadProductImages\(/);
+});
+
+test("product gallery add form uses direct browser storage upload", () => {
+  const source = readFileSync(
+    new URL("../components/admin/product-gallery-add-form.tsx", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(source, /createClient\(\)/);
+  assert.match(source, /supabase\.storage\.from\(IMAGE_BUCKET\)\.upload/);
+  assert.match(source, /attachUploadedProductGalleryImages/);
 });

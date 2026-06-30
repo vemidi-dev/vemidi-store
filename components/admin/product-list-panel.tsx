@@ -880,16 +880,15 @@ export function ProductListPanel({
                         role="status"
                         className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
                       >
-                        {DUPLICATE_MISSING_IMAGES_NOTICE} Изберете снимки във формата по-горе и
-                        натиснете „Запази промените“.
+                        {DUPLICATE_MISSING_IMAGES_NOTICE} Добавете снимки от формата по-долу.
                       </p>
-                    ) : (
-                      <ProductGalleryAddForm
-                        productId={product.id}
-                        productName={product.name}
-                        existingGalleryCount={galleryImageCount}
-                      />
-                    )}
+                    ) : null}
+
+                    <ProductGalleryAddForm
+                      productId={product.id}
+                      productName={product.name}
+                      existingGalleryCount={galleryImageCount}
+                    />
 
                     {productImages.length > 0 ? (
                       <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
