@@ -25,6 +25,12 @@ test("product profile enforces 10 MB upload limit", () => {
   assert.equal(PRODUCT_IMAGE_MAX_INPUT_BYTES, 10 * 1024 * 1024);
 });
 
+test("server actions allow multi-image product uploads", () => {
+  const source = readFileSync(new URL("../next.config.ts", import.meta.url), "utf8");
+
+  assert.match(source, /bodySizeLimit:\s*["']160mb["']/);
+});
+
 test("validateImageUploadMimeType rejects unsupported formats", () => {
   const gif = new File([new Uint8Array([1, 2, 3])], "photo.gif", { type: "image/gif" });
   assert.match(validateImageUploadMimeType(gif) ?? "", /JPEG, PNG или WebP/i);

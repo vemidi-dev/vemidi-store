@@ -196,6 +196,36 @@ test("processAndUploadProductImages rolls back partial uploads on failure", asyn
   assert.equal(files.size, 0);
 });
 
+test("processAndUploadProductImages uploads multiple product images with distinct paths", async () => {
+  const { adapter, files } = createFakeStorageAdapter();
+  const fileABuffer = await sharp({
+    create: { width: 900, height: 900, channels: 3, background: "white" },
+  })
+    .jpeg()
+    .toBuffer();
+  const fileBBuffer = await sharp({
+    create: { width: 900, height: 900, channels: 3, background: "black" },
+  })
+    .jpeg()
+    .toBuffer();
+  const fileA = new File([new Uint8Array(fileABuffer)], "a.jpg", { type: "image/jpeg" });
+  const fileB = new File([new Uint8Array(fileBBuffer)], "b.jpg", { type: "image/jpeg" });
+
+  const uploaded = await processAndUploadProductImages(
+    {} as never,
+    PRODUCT_ID,
+    [fileA, fileB],
+    0,
+    { storageAdapter: adapter },
+  );
+
+  assert.equal(uploaded.length, 2);
+  assert.equal(files.size, 2);
+  assert.notEqual(uploaded[0].path, uploaded[1].path);
+  assert.match(uploaded[0].path, new RegExp(`^products/${PRODUCT_ID}/[0-9a-f-]+\\.webp$`));
+  assert.match(uploaded[1].path, new RegExp(`^products/${PRODUCT_ID}/[0-9a-f-]+\\.webp$`));
+});
+
 test("product storage prefix helper validates UUID scope", () => {
   assert.equal(getProductStoragePrefix(PRODUCT_ID), `products/${PRODUCT_ID}`);
   assert.equal(
