@@ -136,6 +136,7 @@ export type ProductRow = {
   product_code: string;
   name: string;
   subtitle: string | null;
+  heading_subtitle: string | null;
   description: string | null;
   additional_info: string | null;
   fulfillment_note: string | null;
@@ -271,6 +272,7 @@ export type ProductCreateDraft = {
   name: string;
   slug: string;
   subtitle: string;
+  headingSubtitle: string;
   description: string;
   additionalInfo: string;
   personalizationInfo: string;

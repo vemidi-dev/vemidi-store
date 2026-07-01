@@ -17,6 +17,7 @@ type CreateProductDraftPayload = {
   name: string;
   slug: string;
   subtitle: string;
+  heading_subtitle: string;
   description: string;
   additional_info: string;
   personalization_info: string;
@@ -245,6 +246,7 @@ export function makeCreateProductDraft(formData: FormData) {
     name: getString(formData, adminFormFields.product.name),
     slug: getString(formData, adminFormFields.product.slug),
     subtitle: getString(formData, adminFormFields.product.subtitle),
+    heading_subtitle: getString(formData, adminFormFields.product.headingSubtitle),
     description: getString(formData, adminFormFields.product.description),
     additional_info: getString(formData, adminFormFields.product.additionalInfo),
     personalization_info: getString(formData, adminFormFields.product.personalizationInfo),

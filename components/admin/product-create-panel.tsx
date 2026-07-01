@@ -16,6 +16,8 @@ import { ProductSeoFields } from "@/components/admin/product-seo-fields";
 import { ProductWishSelector } from "@/components/admin/product-wish-selector";
 import { ProductFaqFields } from "@/components/admin/product-faq-fields";
 import {
+  adminAccordionClass,
+  adminAccordionSummaryClass,
   adminFieldClass,
   adminHelperClass,
   adminPanelClass,
@@ -66,14 +68,25 @@ export function ProductCreatePanel({
     (category) => category.category_type === "occasion",
   );
   const selectedPrimaryCategoryId = draft?.primaryCategoryId ?? null;
+  const shouldStartOpen = Boolean(draft) || imageReselectWarning;
 
   return (
     <article className={adminPanelClass}>
-      <h2 className="font-heading text-2xl text-boutique-ink">Добавяне на продукт</h2>
-      <p className="mt-2 text-sm text-boutique-muted">
-        Попълнете основните данни за продукта. Можете да го запазите като чернова или да го
-        публикувате директно, ако всички задължителни полета и поне една снимка са налични.
-      </p>
+      <details className={adminAccordionClass} open={shouldStartOpen || undefined}>
+        <summary
+          className={adminAccordionSummaryClass}
+          aria-label="Добавяне на продукт — формуляр"
+        >
+          <span className="font-heading text-lg text-boutique-ink">Добавяне на продукт</span>
+          <span className="text-sm font-normal text-boutique-muted" aria-hidden>
+            Формуляр
+          </span>
+        </summary>
+        <div className="border-t border-boutique-line/80 px-4 pb-4 pt-4 sm:px-5 sm:pb-5">
+          <p className="text-sm text-boutique-muted">
+            Попълнете основните данни за продукта. Можете да го запазите като чернова или да го
+            публикувате директно, ако всички задължителни полета и поне една снимка са налични.
+          </p>
 
       <form id="admin-create-product-form" action={createProduct} className="mt-7 space-y-7">
         <AdminUnsavedChangesGuard formId="admin-create-product-form" />
@@ -122,6 +135,7 @@ export function ProductCreatePanel({
           </legend>
           <ProductPageContentFields
             defaults={{
+              headingSubtitle: draft?.headingSubtitle ?? "",
               subtitle: draft?.subtitle ?? "",
               description: draft?.description ?? "",
               additionalInfo: draft?.additionalInfo ?? "",
@@ -386,6 +400,8 @@ export function ProductCreatePanel({
           <AdminFormPendingGuard />
         </div>
       </form>
+        </div>
+      </details>
     </article>
   );
 }

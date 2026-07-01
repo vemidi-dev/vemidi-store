@@ -59,6 +59,7 @@ export function parseProductCreateDraft(raw: string): ProductCreateDraft | null 
       name?: unknown;
       slug?: unknown;
       subtitle?: unknown;
+      heading_subtitle?: unknown;
       description?: unknown;
       additional_info?: unknown;
       personalization_info?: unknown;
@@ -275,6 +276,8 @@ export function parseProductCreateDraft(raw: string): ProductCreateDraft | null 
       name: typeof parsed.name === "string" ? parsed.name : "",
       slug: typeof parsed.slug === "string" ? parsed.slug : "",
       subtitle: typeof parsed.subtitle === "string" ? parsed.subtitle : "",
+      headingSubtitle:
+        typeof parsed.heading_subtitle === "string" ? parsed.heading_subtitle : "",
       description: typeof parsed.description === "string" ? parsed.description : "",
       additionalInfo: typeof parsed.additional_info === "string" ? parsed.additional_info : "",
       personalizationInfo:

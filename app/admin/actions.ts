@@ -613,6 +613,7 @@ export async function createProduct(formData: FormData) {
 
   const name = getString(formData, adminFormFields.product.name);
   const subtitle = getOptionalString(formData, adminFormFields.product.subtitle);
+  const headingSubtitle = getOptionalString(formData, adminFormFields.product.headingSubtitle);
   const description = getString(formData, adminFormFields.product.description);
   const additionalInfo = getOptionalString(formData, adminFormFields.product.additionalInfo);
   const {
@@ -704,6 +705,7 @@ export async function createProduct(formData: FormData) {
     name,
     slug: slug!,
     subtitle,
+    headingSubtitle,
     description,
     additionalInfo,
     personalizationInfo: pageContent.personalizationInfo,
@@ -849,6 +851,7 @@ export async function updateProduct(formData: FormData) {
   const id = getString(formData, adminFormFields.common.id);
   const name = getString(formData, adminFormFields.product.name);
   const subtitle = getOptionalString(formData, adminFormFields.product.subtitle);
+  const headingSubtitle = getOptionalString(formData, adminFormFields.product.headingSubtitle);
   const description = getString(formData, adminFormFields.product.description);
   const additionalInfo = getOptionalString(formData, adminFormFields.product.additionalInfo);
   const {
@@ -942,6 +945,7 @@ export async function updateProduct(formData: FormData) {
       name,
       slug: slug!,
       subtitle,
+      headingSubtitle,
       description,
       additionalInfo,
       personalizationInfo: pageContent.personalizationInfo,

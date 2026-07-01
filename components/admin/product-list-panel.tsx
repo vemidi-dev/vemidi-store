@@ -624,6 +624,7 @@ export function ProductListPanel({
                         </legend>
                         <ProductPageContentFields
                           defaults={{
+                            headingSubtitle: product.heading_subtitle ?? "",
                             subtitle: product.subtitle ?? "",
                             description: product.description ?? "",
                             additionalInfo: product.additional_info ?? "",

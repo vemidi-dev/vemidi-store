@@ -3,6 +3,7 @@ import type { ProductPageContentFormDefaults } from "@/lib/admin/product-page-co
 
 type ProductPageContentFieldsProps = {
   defaults?: Partial<{
+    headingSubtitle: string;
     subtitle: string;
     description: string;
     additionalInfo: string;
@@ -19,16 +20,31 @@ export function ProductPageContentFields({
   return (
     <div className="grid gap-5 md:grid-cols-2">
       <label className="text-sm font-medium text-boutique-ink md:col-span-2">
-        Кратко резюме
+        Подзаглавие
         <input
-          name={adminFormFields.product.subtitle}
-          defaultValue={defaults?.subtitle ?? ""}
+          name={adminFormFields.product.headingSubtitle}
+          defaultValue={defaults?.headingSubtitle ?? ""}
           className={fieldClassName}
+          placeholder="Кратко H2 подзаглавие под името на продукта"
+        />
+        <p className={helperClassName}>
+          Показва се под заглавието на продуктовата страница като кратко H2 подзаглавие.
+          Оставете празно, ако не е нужно.
+        </p>
+      </label>
+
+      <label className="text-sm font-medium text-boutique-ink md:col-span-2">
+        Кратко резюме
+        <textarea
+          name={adminFormFields.product.subtitle}
+          rows={3}
+          defaultValue={defaults?.subtitle ?? ""}
+          className={`${fieldClassName} resize-y`}
           placeholder="Кратък продаващ текст под цената на продуктовата страница"
         />
         <p className={helperClassName}>
           Показва се в дясната колона под цената и преди опциите за персонализация.
-          Оставете празно, ако не е нужно.
+          Натискайте Enter за нов ред. Оставете празно, ако не е нужно.
         </p>
       </label>
 

@@ -24,6 +24,8 @@ export type Product = {
   /** Human-readable product code, e.g. VM-000123. */
   productCode: string;
   title: string;
+  /** H2 subheading directly under the product title on the detail page. */
+  headingSubtitle?: string | null;
   subtitle?: string | null;
   description: string;
   additionalInfo?: string | null;

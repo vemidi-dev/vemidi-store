@@ -15,7 +15,8 @@ test("admin form field names stay aligned with product draft parsing", () => {
   const formData = new FormData();
   formData.set(adminFormFields.product.name, "Подаръчна кутия");
   formData.set(adminFormFields.product.slug, "podarachna-kutiya");
-  formData.set(adminFormFields.product.subtitle, "Кратко подзаглавие");
+  formData.set(adminFormFields.product.subtitle, "Кратко резюме");
+  formData.set(adminFormFields.product.headingSubtitle, "H2 подзаглавие");
   formData.set(adminFormFields.product.description, "Описание");
   formData.set(adminFormFields.product.additionalInfo, "Допълнителни детайли");
   formData.set(adminFormFields.product.fulfillmentNote, "Изработка до 5 дни");
@@ -61,7 +62,8 @@ test("admin form field names stay aligned with product draft parsing", () => {
   assert.deepEqual(JSON.parse(makeCreateProductDraft(formData)), {
     name: "Подаръчна кутия",
     slug: "podarachna-kutiya",
-    subtitle: "Кратко подзаглавие",
+    subtitle: "Кратко резюме",
+    heading_subtitle: "H2 подзаглавие",
     description: "Описание",
     additional_info: "Допълнителни детайли",
     personalization_info: "",

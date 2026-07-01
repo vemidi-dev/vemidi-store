@@ -27,6 +27,7 @@ const baseProductRow: ProductRow = {
   slug: "test-product",
   product_code: "VM-000001",
   name: "Тестов продукт",
+  heading_subtitle: "H2 подзаглавие",
   subtitle: "Кратко резюме",
   description: "Описание за продукта",
   additional_info: "Допълнителни детайли",
@@ -39,6 +40,18 @@ const baseProductRow: ProductRow = {
   is_customizable: false,
   is_sold_out: false,
 };
+
+test("toProduct maps headingSubtitle from product rows", () => {
+  const product = toProduct(baseProductRow);
+
+  assert.equal(product.headingSubtitle, "H2 подзаглавие");
+});
+
+test("toProduct maps null headingSubtitle without fallback text", () => {
+  const product = toProduct({ ...baseProductRow, heading_subtitle: null });
+
+  assert.equal(product.headingSubtitle, null);
+});
 
 test("toProduct maps subtitle from product rows", () => {
   const product = toProduct(baseProductRow);
@@ -99,11 +112,12 @@ test("getProductPageContentFormDefaults maps null product fields to empty string
   });
 });
 
-test("buildProductMutationRpcPayload includes new page content RPC params", () => {
+test("buildProductMutationRpcPayload includes heading subtitle RPC param", () => {
   const payload = buildProductMutationRpcPayload({
     name: "Тест",
     slug: "test",
-    subtitle: null,
+    subtitle: "Кратко резюме",
+    headingSubtitle: "H2 подзаглавие",
     description: "Описание",
     additionalInfo: null,
     personalizationInfo: "Персонализация",
@@ -129,21 +143,24 @@ test("buildProductMutationRpcPayload includes new page content RPC params", () =
     ogDescription: null,
   });
 
+  assert.equal(payload.p_heading_subtitle, "H2 подзаглавие");
+  assert.equal(payload.p_subtitle, "Кратко резюме");
   assert.equal(payload.p_personalization_info, "Персонализация");
   assert.equal(payload.p_dimensions_materials, "Размери");
   assert.equal(payload.p_ordering_info, "Поръчка");
 });
 
-test("product detail view renders subtitle directly below title", () => {
+test("product detail view renders headingSubtitle between title and occasion tags", () => {
   const source = readFileSync(
     new URL("../components/product/product-detail-view.tsx", import.meta.url),
     "utf8",
   );
 
   const titleEnd = source.indexOf("</h1>");
-  const subtitleIndex = source.indexOf("{product.subtitle ?");
+  const headingSubtitleIndex = source.indexOf("{product.headingSubtitle ?");
+  const occasionIndex = source.indexOf("<ProductDetailOccasionTags");
   const priceIndex = source.indexOf("<ProductPrice product={product}");
-  const addToCartIndex = source.indexOf("<ProductDetailAddToCart");
+  const summaryIndex = source.indexOf("{product.subtitle ?");
 
   const titleWrapperStart = source.indexOf("<h1");
   const titleWrapperEnd = source.indexOf(
@@ -153,19 +170,28 @@ test("product detail view renders subtitle directly below title", () => {
   const titleWrapper = source.slice(titleWrapperStart, titleWrapperEnd);
 
   assert.ok(titleEnd > -1);
-  assert.ok(subtitleIndex > titleEnd);
-  assert.ok(priceIndex > subtitleIndex);
-  assert.ok(addToCartIndex > priceIndex);
-  assert.match(titleWrapper, /\{product\.subtitle \?/);
+  assert.ok(headingSubtitleIndex > titleEnd);
+  assert.ok(occasionIndex > headingSubtitleIndex);
+  assert.ok(priceIndex > occasionIndex);
+  assert.ok(summaryIndex > priceIndex);
+  assert.match(titleWrapper, /\{product\.headingSubtitle \?/);
+  assert.doesNotMatch(titleWrapper, /\{product\.subtitle \?/);
+  assert.match(source.slice(headingSubtitleIndex, headingSubtitleIndex + 200), /<h2\b/);
 });
 
-test("admin product content field labels short summary for storefront placement", () => {
+test("admin product content fields keep heading subtitle and short summary separate", () => {
   const source = readFileSync(
     new URL("../components/admin/product-page-content-fields.tsx", import.meta.url),
     "utf8",
   );
 
-  assert.match(source, /Кратко резюме/);
-  assert.doesNotMatch(source, /подзаглавие/i);
+  const headingFieldIndex = source.indexOf("Подзаглавие");
+  const summaryFieldIndex = source.indexOf("Кратко резюме");
+
+  assert.ok(headingFieldIndex > -1);
+  assert.ok(summaryFieldIndex > headingFieldIndex);
+  assert.match(source, /name=\{adminFormFields\.product\.headingSubtitle\}/);
+  assert.match(source, /name=\{adminFormFields\.product\.subtitle\}/);
+  assert.match(source, /под заглавието на продуктовата страница като кратко H2 подзаглавие/);
   assert.match(source, /под цената и преди опциите/);
 });

@@ -139,10 +139,10 @@ export function ProductDetailView({
                   <h1 className="font-heading text-4xl leading-[1.12] tracking-tight text-boutique-ink sm:text-5xl lg:text-[2.75rem]">
                     {product.title}
                   </h1>
-                  {product.subtitle ? (
-                    <p className="mt-3 max-w-xl text-base leading-relaxed text-boutique-muted md:text-lg">
-                      {product.subtitle}
-                    </p>
+                  {product.headingSubtitle ? (
+                    <h2 className="mt-3 max-w-xl font-heading text-2xl leading-snug tracking-tight text-boutique-ink sm:text-3xl">
+                      {product.headingSubtitle}
+                    </h2>
                   ) : null}
                 </div>
 
@@ -163,6 +163,12 @@ export function ProductDetailView({
                     </span>
                   ) : null}
                 </div>
+
+                {product.subtitle ? (
+                  <p className="max-w-xl text-base leading-relaxed text-boutique-muted md:text-lg">
+                    {product.subtitle}
+                  </p>
+                ) : null}
               </div>
 
               {showCategoryLink && primaryCategory ? (

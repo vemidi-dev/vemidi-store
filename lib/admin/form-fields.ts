@@ -7,6 +7,7 @@ export const adminFormFields = {
     name: "name",
     slug: "slug",
     subtitle: "subtitle",
+    headingSubtitle: "heading_subtitle",
     description: "description",
     additionalInfo: "additional_info",
     fulfillmentNote: "fulfillment_note",

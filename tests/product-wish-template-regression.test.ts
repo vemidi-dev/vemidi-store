@@ -17,6 +17,7 @@ function minimalProductMutationInput(
     name: "Тест",
     slug: "test",
     subtitle: null,
+    headingSubtitle: null,
     description: "Описание",
     additionalInfo: null,
     personalizationInfo: null,
