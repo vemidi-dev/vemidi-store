@@ -10,6 +10,7 @@ import {
 import { AdminConfirmForm } from "@/components/admin/admin-confirm-form";
 import { AdminOpenDetailsButton } from "@/components/admin/admin-open-details-button";
 import { CategoryContentSeoFields } from "@/components/admin/category-content-seo-fields";
+import { CategoryRelatedSelector } from "@/components/admin/category-related-selector";
 import {
   adminFieldClass,
   adminTableHeadClass,
@@ -21,6 +22,7 @@ import type { CategoryRow } from "@/lib/admin/types";
 type CategoryManagementViewProps = {
   categories: CategoryRow[];
   productCountByCategoryId: Map<string, number>;
+  relatedCategoryIdsByCategoryId: Map<string, string[]>;
 };
 
 type CategoryTab = "product" | "occasion";
@@ -33,6 +35,7 @@ const tabLabels: Record<CategoryTab, string> = {
 export function CategoryManagementView({
   categories,
   productCountByCategoryId,
+  relatedCategoryIdsByCategoryId,
 }: CategoryManagementViewProps) {
   const [activeTab, setActiveTab] = useState<CategoryTab>("product");
   const [query, setQuery] = useState("");
@@ -417,6 +420,18 @@ export function CategoryManagementView({
                   <div className="md:col-span-3">
                     <CategoryContentSeoFields category={category} />
                   </div>
+                  {category.category_type === "product" ? (
+                    <div className="md:col-span-3">
+                      <CategoryRelatedSelector
+                        categories={categories}
+                        excludeCategoryId={category.id}
+                        selectedRelatedIds={
+                          relatedCategoryIdsByCategoryId.get(category.id) ?? []
+                        }
+                        categoryType={category.category_type}
+                      />
+                    </div>
+                  ) : null}
                   <div className="self-end">
                     <button
                       type="submit"

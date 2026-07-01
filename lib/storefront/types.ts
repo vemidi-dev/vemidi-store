@@ -41,4 +41,5 @@ export type StorefrontCatalog = {
   products: StorefrontProduct[];
   featuredProductIds: string[];
   relatedProductIdsByProductId: Map<string, string[]>;
+  relatedCategoryIdsByCategoryId: Map<string, string[]>;
 };

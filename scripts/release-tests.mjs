@@ -34,7 +34,18 @@ const releaseTestGroups = [
   },
   {
     label: "Data audit (unit)",
-    files: ["tests/data-audit-report.test.ts"],
+    files: [
+      "tests/data-audit-report.test.ts",
+      "tests/category-related-audit.test.ts",
+    ],
+  },
+  {
+    label: "Related categories",
+    files: [
+      "tests/category-related-categories.test.ts",
+      "tests/category-related-selector.test.ts",
+      "tests/category-related-storefront.test.ts",
+    ],
   },
   {
     label: "SEO & routes",

@@ -99,11 +99,17 @@ export async function fetchAuditDataset(
     }
   }
 
-  const [productFaqGroups, productFaqItems, faqGroups, faqItems] = await Promise.all([
+  const [productFaqGroups, productFaqItems, faqGroups, faqItems, categoryRelatedCategories] =
+    await Promise.all([
     fetchOptionalRows(supabase, "product_faq_groups", "product_id,group_id"),
     fetchOptionalRows(supabase, "product_faq_items", "product_id,faq_item_id"),
     fetchOptionalRows(supabase, "faq_groups", "id"),
     fetchOptionalRows(supabase, "faq_items", "id"),
+    fetchOptionalRows(
+      supabase,
+      "category_related_categories",
+      "category_id,related_category_id,sort_order",
+    ),
   ]);
 
   return {
@@ -116,6 +122,8 @@ export async function fetchAuditDataset(
       productWishTemplatesResult.data as AuditDataset["productWishTemplates"],
     wishTemplates: wishTemplatesResult.data as AuditDataset["wishTemplates"],
     categories: categoriesResult.data as AuditCategoryRow[],
+    categoryRelatedCategories:
+      categoryRelatedCategories as AuditDataset["categoryRelatedCategories"],
     productFaqGroups: productFaqGroups as AuditDataset["productFaqGroups"],
     productFaqItems: productFaqItems as AuditDataset["productFaqItems"],
     faqGroups: faqGroups as AuditDataset["faqGroups"],

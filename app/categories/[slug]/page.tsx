@@ -7,6 +7,7 @@ import {
   CategoryIntroSection,
   CategorySeoBodySection,
 } from "@/components/category/category-page-text-blocks";
+import { CategoryRelatedSection } from "@/components/category/category-related-section";
 import { ContextFilter } from "@/components/catalog/context-filter";
 import { JsonLd } from "@/components/seo/json-ld";
 import { PageContainer } from "@/components/layout/page-container";
@@ -16,6 +17,7 @@ import {
   getCategoryFamilySlugs,
   getChildCategories,
 } from "@/lib/category-hierarchy";
+import { getRelatedCategoriesForCategory } from "@/lib/category-related-storefront";
 import { findVisibleProductCategoryBySlug, filterStorefrontVisibleCategories } from "@/lib/category-visibility";
 import { CATEGORY_INDEX_PATH, getCategoryPath } from "@/lib/category-url";
 import {
@@ -87,7 +89,8 @@ export default async function CategoryPage({
   searchParams,
 }: CategoryPageProps) {
   const [{ slug }, query] = await Promise.all([params, searchParams]);
-  const { categories, products } = await getStorefrontCatalog();
+  const { categories, products, relatedCategoryIdsByCategoryId } =
+    await getStorefrontCatalog();
   const category = findVisibleProductCategoryBySlug(categories, slug);
 
   if (!category) {
@@ -100,6 +103,11 @@ export default async function CategoryPage({
   const children = getChildCategories(
     filterStorefrontVisibleCategories(categories),
     category.id,
+  );
+  const relatedCategories = getRelatedCategoriesForCategory(
+    categories,
+    relatedCategoryIdsByCategoryId,
+    category,
   );
   const acceptedSlugs = new Set(getCategoryFamilySlugs(categories, category));
   const categoryProducts = products.filter((product) =>
@@ -217,6 +225,10 @@ export default async function CategoryPage({
             </div>
           </PageContainer>
         </section>
+      ) : null}
+
+      {relatedCategories.length > 0 ? (
+        <CategoryRelatedSection categories={relatedCategories} />
       ) : null}
 
       <section className="bg-white py-10 md:py-14">

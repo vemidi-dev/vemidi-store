@@ -1,6 +1,7 @@
 import { createCategory } from "@/app/admin/actions";
 import { CategoryContentSeoFields } from "@/components/admin/category-content-seo-fields";
 import { CategoryManagementView } from "@/components/admin/category-management-view";
+import { CategoryRelatedSelector } from "@/components/admin/category-related-selector";
 import {
   adminAccordionClass,
   adminAccordionSummaryClass,
@@ -13,9 +14,11 @@ import type { CategoryRow } from "@/lib/admin/types";
 export function CategoryManagementPanel({
   categories,
   productCountByCategoryId,
+  relatedCategoryIdsByCategoryId,
 }: {
   categories: CategoryRow[];
   productCountByCategoryId: Map<string, number>;
+  relatedCategoryIdsByCategoryId: Map<string, string[]>;
 }) {
   const parentCategories = categories
     .filter(
@@ -174,6 +177,12 @@ export function CategoryManagementPanel({
             <div className="md:col-span-2 xl:col-span-4">
               <CategoryContentSeoFields />
             </div>
+            <div className="md:col-span-2 xl:col-span-4">
+              <CategoryRelatedSelector
+                categories={categories}
+                categoryTypeFieldName={adminFormFields.category.type}
+              />
+            </div>
             <div className="self-end">
               <button
                 type="submit"
@@ -192,6 +201,7 @@ export function CategoryManagementPanel({
         <CategoryManagementView
           categories={categories}
           productCountByCategoryId={productCountByCategoryId}
+          relatedCategoryIdsByCategoryId={relatedCategoryIdsByCategoryId}
         />
       )}
     </article>

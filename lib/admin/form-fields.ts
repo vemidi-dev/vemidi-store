@@ -56,6 +56,7 @@ export const adminFormFields = {
     showOnHome: "show_on_home",
     isVisible: "is_visible",
     direction: "direction",
+    relatedCategoryIds: "related_category_ids",
   },
   productImage: {
     imageId: "image_id",

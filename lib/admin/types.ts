@@ -207,6 +207,12 @@ export type RelatedProductRow = {
   sort_order: number;
 };
 
+export type CategoryRelatedCategoryRow = {
+  category_id: string;
+  related_category_id: string;
+  sort_order: number;
+};
+
 export type ColorGroupRow = {
   id: string;
   key: string;

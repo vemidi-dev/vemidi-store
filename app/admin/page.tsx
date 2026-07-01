@@ -602,6 +602,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           {activeTab === "categories" ? (
             <CategoryManagementPanel
               categories={data.categories}
+              relatedCategoryIdsByCategoryId={data.relatedCategoryIdsByCategoryId}
               productCountByCategoryId={buildProductCountByCategoryId(
                 data.categoryIdsByProductId,
               )}

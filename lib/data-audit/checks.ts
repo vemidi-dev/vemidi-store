@@ -87,6 +87,111 @@ function isPublished(product: AuditProductRow) {
   return product.status === "published";
 }
 
+function categoryAuditLabel(category: AuditCategoryRow | undefined, id: string) {
+  const slug = String(category?.slug ?? "").trim();
+  if (slug) {
+    return `category ${slug}`;
+  }
+
+  return `category ${id}`;
+}
+
+export function runCategoryRelatedCategoriesChecks(
+  dataset: AuditDataset,
+): AuditIssue[] {
+  const issues: AuditIssue[] = [];
+  const links = dataset.categoryRelatedCategories;
+
+  if (links === null) {
+    issues.push({
+      severity: "info",
+      code: "category_related_categories_unavailable",
+      message:
+        "category_related_categories table is unavailable (migration not applied)",
+    });
+    return issues;
+  }
+
+  const categoryById = new Map(
+    dataset.categories.map((category) => [category.id, category]),
+  );
+  const seenLinks = new Set<string>();
+
+  for (const link of links) {
+    const linkKey = `${link.category_id}::${link.related_category_id}`;
+    if (seenLinks.has(linkKey)) {
+      issues.push({
+        severity: "critical",
+        code: "category_related_duplicate_link",
+        message: `duplicate category_related_categories link ${link.category_id} -> ${link.related_category_id}`,
+      });
+    }
+    seenLinks.add(linkKey);
+
+    if (link.category_id === link.related_category_id) {
+      issues.push({
+        severity: "critical",
+        code: "category_related_self_link",
+        message: `category_related_categories self-link for category ${link.category_id}`,
+      });
+    }
+
+    const source = categoryById.get(link.category_id);
+    const target = categoryById.get(link.related_category_id);
+
+    if (!source) {
+      issues.push({
+        severity: "critical",
+        code: "category_related_orphan_source",
+        message: `category_related_categories references missing source category ${link.category_id}`,
+      });
+    }
+
+    if (!target) {
+      issues.push({
+        severity: "critical",
+        code: "category_related_orphan_target",
+        message: `category_related_categories references missing target category ${link.related_category_id}`,
+      });
+      continue;
+    }
+
+    if (source && source.category_type !== target.category_type) {
+      issues.push({
+        severity: "critical",
+        code: "category_related_type_mismatch",
+        message: `category_related_categories link ${categoryAuditLabel(source, link.category_id)} -> ${categoryAuditLabel(target, link.related_category_id)} crosses category types (${source.category_type} -> ${target.category_type})`,
+      });
+    }
+
+    if (target.category_type === "occasion") {
+      issues.push({
+        severity: "critical",
+        code: "category_related_occasion_target",
+        message: `category_related_categories target ${categoryAuditLabel(target, target.id)} is an occasion category`,
+      });
+    }
+
+    if (target.is_visible === false) {
+      issues.push({
+        severity: "warning",
+        code: "category_related_hidden_target",
+        message: `category_related_categories target ${categoryAuditLabel(target, target.id)} is hidden from storefront`,
+      });
+    }
+
+    if (source && target.parent_id === source.id) {
+      issues.push({
+        severity: "warning",
+        code: "category_related_direct_child_target",
+        message: `category_related_categories target ${categoryAuditLabel(target, target.id)} is already a direct child of ${categoryAuditLabel(source, source.id)}`,
+      });
+    }
+  }
+
+  return issues;
+}
+
 export function runDataAuditChecks(dataset: AuditDataset): AuditReport {
   const issues: AuditIssue[] = [];
   const stats: Record<string, number> = {
@@ -329,6 +434,11 @@ export function runDataAuditChecks(dataset: AuditDataset): AuditReport {
         });
       }
     }
+  }
+
+  issues.push(...runCategoryRelatedCategoriesChecks(dataset));
+  if (dataset.categoryRelatedCategories) {
+    stats.category_related_links = dataset.categoryRelatedCategories.length;
   }
 
   return { issues, stats };

@@ -49,6 +49,7 @@ const catalog: StorefrontCatalog = {
   ],
   featuredProductIds: [],
   relatedProductIdsByProductId: new Map(),
+  relatedCategoryIdsByCategoryId: new Map(),
 };
 
 test("resolveProductPageSeo prefers explicit primary category for breadcrumbs and context", () => {

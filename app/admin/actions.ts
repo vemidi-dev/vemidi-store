@@ -33,6 +33,12 @@ import {
 } from "@/lib/admin/faq-form";
 import { syncProductFaqAssociations, copyProductFaqAssociations } from "@/lib/faq/product-associations";
 import { parseCategoryContentFromFormData } from "@/lib/admin/category-content";
+import {
+  parseRelatedCategoryIdsFromFormData,
+  loadCategoryRelatedValidationCategories,
+  syncCategoryRelatedCategories,
+  validateCategoryRelatedTargets,
+} from "@/lib/admin/category-related";
 import { parseProductContentFromFormData } from "@/lib/admin/product-content";
 import { parseProductPageContentFromFormData } from "@/lib/admin/product-page-content";
 import { adminFormFields } from "@/lib/admin/form-fields";
@@ -1703,6 +1709,7 @@ export async function createCategory(formData: FormData) {
       .slice(0, 160) ?? null;
   const { payload: categoryContent, error: categoryContentError } =
     parseCategoryContentFromFormData(formData);
+  const relatedCategoryIds = parseRelatedCategoryIdsFromFormData(formData);
 
   if (!name || !slug || !["product", "occasion"].includes(categoryType)) {
     redirectWith("error", "Попълнете име и slug за категорията.", activeTab);
@@ -1777,7 +1784,7 @@ export async function createCategory(formData: FormData) {
     }
   }
 
-  const { error } = await supabase
+  const { data: newCategory, error } = await supabase
     .from("categories")
     .insert({
       name,
@@ -1793,15 +1800,51 @@ export async function createCategory(formData: FormData) {
       home_sort_order: homeSortOrder,
       card_description: cardDescription,
       ...categoryContent,
-    });
-  if (error) {
+    })
+    .select("id")
+    .single();
+  if (error || !newCategory) {
     if (uploadedCategoryImage) {
       await deleteProductImage(supabase, uploadedCategoryImage.path).catch(() => undefined);
     }
     if (uploadedCoverImage) {
       await deleteProductImage(supabase, uploadedCoverImage.path).catch(() => undefined);
     }
-    redirectWith("error", `Грешка при добавяне на категория: ${error.message}`, activeTab);
+    redirectWith("error", `Грешка при добавяне на категория: ${error?.message ?? "неочаквана грешка"}`, activeTab);
+  }
+
+  const validationCategories = await loadCategoryRelatedValidationCategories(supabase);
+  const relatedValidationError = validateCategoryRelatedTargets(
+    newCategory.id,
+    relatedCategoryIds,
+    validationCategories,
+    categoryType as "product" | "occasion",
+  );
+  if (relatedValidationError) {
+    await supabase.from("categories").delete().eq("id", newCategory.id);
+    if (uploadedCategoryImage) {
+      await deleteProductImage(supabase, uploadedCategoryImage.path).catch(() => undefined);
+    }
+    if (uploadedCoverImage) {
+      await deleteProductImage(supabase, uploadedCoverImage.path).catch(() => undefined);
+    }
+    redirectWith("error", relatedValidationError, activeTab);
+  }
+
+  const relatedSyncError = await syncCategoryRelatedCategories(
+    supabase,
+    newCategory.id,
+    relatedCategoryIds,
+  );
+  if (relatedSyncError) {
+    await supabase.from("categories").delete().eq("id", newCategory.id);
+    if (uploadedCategoryImage) {
+      await deleteProductImage(supabase, uploadedCategoryImage.path).catch(() => undefined);
+    }
+    if (uploadedCoverImage) {
+      await deleteProductImage(supabase, uploadedCoverImage.path).catch(() => undefined);
+    }
+    redirectWith("error", relatedSyncError, activeTab);
   }
 
   revalidateCategoryPaths();
@@ -1832,6 +1875,7 @@ export async function updateCategory(formData: FormData) {
       .slice(0, 160) ?? null;
   const { payload: categoryContent, error: categoryContentError } =
     parseCategoryContentFromFormData(formData);
+  const relatedCategoryIds = parseRelatedCategoryIdsFromFormData(formData);
 
   if (!id || !name || !slug || !["product", "occasion"].includes(categoryType)) {
     redirectWith("error", "Невалидни данни за категория.", activeTab);
@@ -1861,6 +1905,17 @@ export async function updateCategory(formData: FormData) {
     ) {
       redirectWith("error", "Избраната основна категория е невалидна.", activeTab);
     }
+  }
+
+  const validationCategories = await loadCategoryRelatedValidationCategories(supabase);
+  const relatedValidationError = validateCategoryRelatedTargets(
+    id,
+    relatedCategoryIds,
+    validationCategories,
+    categoryType as "product" | "occasion",
+  );
+  if (relatedValidationError) {
+    redirectWith("error", relatedValidationError, activeTab);
   }
 
   const { data: existingCategory, error: existingCategoryError } = await supabase
@@ -1950,6 +2005,15 @@ export async function updateCategory(formData: FormData) {
       await deleteProductImage(supabase, uploadedCoverImage.path).catch(() => undefined);
     }
     redirectWith("error", `Грешка при редакция на категория: ${error.message}`, activeTab);
+  }
+
+  const relatedSyncError = await syncCategoryRelatedCategories(
+    supabase,
+    id,
+    relatedCategoryIds,
+  );
+  if (relatedSyncError) {
+    redirectWith("error", relatedSyncError, activeTab);
   }
 
   if (uploadedCategoryImage && existingCategory.image_url) {

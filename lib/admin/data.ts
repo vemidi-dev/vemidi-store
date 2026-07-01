@@ -14,6 +14,7 @@ import type {
   ProductOptionValueRow,
   ProductPersonalizationFieldRow,
   RelatedProductRow,
+  CategoryRelatedCategoryRow,
   ProductWishTemplateRow,
   WishTemplateOccasionRow,
   WishTemplateRow,
@@ -53,6 +54,7 @@ export type AdminData = {
   faqItemIdsByProductId: Map<string, string[]>;
   featuredProductById: Map<string, HomeFeaturedProductRow>;
   relatedProductIdsByProductId: Map<string, string[]>;
+  relatedCategoryIdsByCategoryId: Map<string, string[]>;
   landingPages: ProductLandingPageRow[];
   landingPagesByProductId: Map<string, ProductLandingPageRow[]>;
   landingPagesMigrationMissing: boolean;
@@ -75,6 +77,7 @@ export type AdminData = {
     productFaqItems: QueryError;
     homeFeaturedProducts: QueryError;
     relatedProducts: QueryError;
+    categoryRelatedCategories: QueryError;
     optionGroups: QueryError;
     optionValues: QueryError;
     landingPages: QueryError;
@@ -97,6 +100,7 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
     productWishTemplatesResult,
     homeFeaturedProductsResult,
     relatedProductsResult,
+    categoryRelatedCategoriesResult,
     optionGroupsResult,
     optionValuesResult,
     landingPagesResult,
@@ -152,6 +156,10 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
     supabase
       .from("related_products")
       .select("product_id,related_product_id,sort_order")
+      .order("sort_order", { ascending: true }),
+    supabase
+      .from("category_related_categories")
+      .select("category_id,related_category_id,sort_order")
       .order("sort_order", { ascending: true }),
     supabase
       .from("product_option_groups")
@@ -212,6 +220,8 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
   const homeFeaturedProducts = (homeFeaturedProductsResult.data ??
     []) as HomeFeaturedProductRow[];
   const relatedProducts = (relatedProductsResult.data ?? []) as RelatedProductRow[];
+  const categoryRelatedCategories = (categoryRelatedCategoriesResult.data ??
+    []) as CategoryRelatedCategoryRow[];
   const optionGroups = (optionGroupsResult.data ?? []) as ProductOptionGroupRow[];
   const optionValues = (optionValuesResult.data ?? []) as ProductOptionValueRow[];
   const landingPagesMigrationMissing = isProductLandingPagesMigrationMissing(
@@ -243,6 +253,7 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
     homeFeaturedProducts.map((row) => [row.product_id, row]),
   );
   const relatedProductIdsByProductId = new Map<string, string[]>();
+  const relatedCategoryIdsByCategoryId = new Map<string, string[]>();
   const optionGroupsByProductId = new Map<string, ProductOptionGroupRow[]>();
   const optionValuesByGroupId = new Map<string, ProductOptionValueRow[]>();
   const landingPagesByProductId = new Map<string, ProductLandingPageRow[]>();
@@ -312,6 +323,12 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
     relatedProductIdsByProductId.set(link.product_id, ids);
   });
 
+  categoryRelatedCategories.forEach((link) => {
+    const ids = relatedCategoryIdsByCategoryId.get(link.category_id) ?? [];
+    ids.push(link.related_category_id);
+    relatedCategoryIdsByCategoryId.set(link.category_id, ids);
+  });
+
   optionGroups.forEach((group) => {
     const groups = optionGroupsByProductId.get(group.product_id) ?? [];
     groups.push(group);
@@ -354,6 +371,7 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
     faqItemIdsByProductId,
     featuredProductById,
     relatedProductIdsByProductId,
+    relatedCategoryIdsByCategoryId,
     landingPages,
     landingPagesByProductId,
     landingPagesMigrationMissing,
@@ -376,6 +394,7 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
       productFaqItems: productFaqItemsResult.error,
       homeFeaturedProducts: homeFeaturedProductsResult.error,
       relatedProducts: relatedProductsResult.error,
+      categoryRelatedCategories: categoryRelatedCategoriesResult.error,
       optionGroups: optionGroupsResult.error,
       optionValues: optionValuesResult.error,
       landingPages: landingPagesMigrationMissing ? null : landingPagesResult.error,

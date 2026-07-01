@@ -18,6 +18,7 @@ import {
   type ProductRow,
 } from "@/lib/storefront/mappers";
 import type { CategoryRow } from "@/lib/admin/types";
+import type { CategoryRelatedRow } from "@/lib/admin/category-related";
 import type {
   StorefrontCatalog,
   StorefrontCategory,
@@ -137,6 +138,7 @@ async function fetchStorefrontCatalog(): Promise<StorefrontCatalog> {
       products: [],
       featuredProductIds: [],
       relatedProductIdsByProductId: new Map(),
+      relatedCategoryIdsByCategoryId: new Map(),
     };
   }
 
@@ -150,6 +152,7 @@ async function fetchStorefrontCatalog(): Promise<StorefrontCatalog> {
     personalizationFieldsResult,
     featuredProductsResult,
     relatedProductsResult,
+    categoryRelatedCategoriesResult,
   ] = await Promise.all([
       supabase
         .from("products")
@@ -181,6 +184,10 @@ async function fetchStorefrontCatalog(): Promise<StorefrontCatalog> {
         .from("related_products")
         .select("product_id,related_product_id,sort_order")
         .order("sort_order", { ascending: true }),
+      supabase
+        .from("category_related_categories")
+        .select("category_id,related_category_id,sort_order")
+        .order("sort_order", { ascending: true }),
     ]);
 
   const categories = ((categoriesResult.data ?? []) as CategoryRow[]).map(
@@ -195,6 +202,7 @@ async function fetchStorefrontCatalog(): Promise<StorefrontCatalog> {
   const productIdsWithColorOptions = new Set<string>();
   const productIdsWithPersonalizationOptions = new Set<string>();
   const relatedProductIdsByProductId = new Map<string, string[]>();
+  const relatedCategoryIdsByCategoryId = new Map<string, string[]>();
 
   relations.forEach((relation) => {
     const categorySlug = categorySlugById.get(relation.category_id);
@@ -247,6 +255,16 @@ async function fetchStorefrontCatalog(): Promise<StorefrontCatalog> {
     relatedProductIdsByProductId.set(link.product_id, ids);
   });
 
+  if (!categoryRelatedCategoriesResult.error) {
+    ((categoryRelatedCategoriesResult.data ?? []) as CategoryRelatedRow[]).forEach(
+      (link) => {
+        const ids = relatedCategoryIdsByCategoryId.get(link.category_id) ?? [];
+        ids.push(link.related_category_id);
+        relatedCategoryIdsByCategoryId.set(link.category_id, ids);
+      },
+    );
+  }
+
   const featuredProductIds = featuredProductsResult.error
     ? products.slice(0, 6).map((product) => product.id)
     : filterStorefrontPublishedProductIds(
@@ -269,6 +287,7 @@ async function fetchStorefrontCatalog(): Promise<StorefrontCatalog> {
     products,
     featuredProductIds,
     relatedProductIdsByProductId,
+    relatedCategoryIdsByCategoryId,
   };
 }
 

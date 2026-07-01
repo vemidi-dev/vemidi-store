@@ -24,6 +24,12 @@ export type AuditCategoryRow = {
   is_visible?: boolean | null;
 };
 
+export type AuditCategoryRelatedRow = {
+  category_id: string;
+  related_category_id: string;
+  sort_order?: number;
+};
+
 export type AuditDataset = {
   products: AuditProductRow[];
   productCategories: Array<{ product_id: string; category_id: string }>;
@@ -38,6 +44,7 @@ export type AuditDataset = {
   }>;
   wishTemplates: Array<{ id: string; is_active: boolean }>;
   categories: AuditCategoryRow[];
+  categoryRelatedCategories: AuditCategoryRelatedRow[] | null;
   productFaqGroups: Array<{ product_id: string; group_id: string }> | null;
   productFaqItems: Array<{ product_id: string; faq_item_id: string }> | null;
   faqGroups: Array<{ id: string }> | null;

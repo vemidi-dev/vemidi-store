@@ -78,6 +78,7 @@ const catalog: StorefrontCatalog = {
   ],
   featuredProductIds: [],
   relatedProductIdsByProductId: new Map(),
+  relatedCategoryIdsByCategoryId: new Map(),
 };
 
 function makeLandingRow(

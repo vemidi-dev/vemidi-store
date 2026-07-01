@@ -19,6 +19,7 @@ function emptyDataset(overrides: Partial<AuditDataset> = {}): AuditDataset {
     productWishTemplates: [],
     wishTemplates: [],
     categories: [],
+    categoryRelatedCategories: [],
     productFaqGroups: null,
     productFaqItems: null,
     faqGroups: null,
