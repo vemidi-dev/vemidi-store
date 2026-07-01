@@ -40,6 +40,18 @@ const baseProductRow: ProductRow = {
   is_sold_out: false,
 };
 
+test("toProduct maps subtitle from product rows", () => {
+  const product = toProduct(baseProductRow);
+
+  assert.equal(product.subtitle, "Кратко резюме");
+});
+
+test("toProduct maps null subtitle without fallback text", () => {
+  const product = toProduct({ ...baseProductRow, subtitle: null });
+
+  assert.equal(product.subtitle, null);
+});
+
 test("toProduct maps new page content fields from product rows", () => {
   const product = toProduct(baseProductRow);
 
@@ -122,25 +134,29 @@ test("buildProductMutationRpcPayload includes new page content RPC params", () =
   assert.equal(payload.p_ordering_info, "Поръчка");
 });
 
-test("product page renders subtitle below price and before add-to-cart options", () => {
+test("product detail view renders subtitle directly below title", () => {
   const source = readFileSync(
-    new URL("../app/products/[slug]/page.tsx", import.meta.url),
+    new URL("../components/product/product-detail-view.tsx", import.meta.url),
     "utf8",
   );
 
-  const priceIndex = source.indexOf("<ProductPrice product={product}");
+  const titleEnd = source.indexOf("</h1>");
   const subtitleIndex = source.indexOf("{product.subtitle ?");
+  const priceIndex = source.indexOf("<ProductPrice product={product}");
   const addToCartIndex = source.indexOf("<ProductDetailAddToCart");
 
-  assert.ok(priceIndex > -1);
-  assert.ok(subtitleIndex > priceIndex);
-  assert.ok(addToCartIndex > subtitleIndex);
-
-  const titleBlock = source.slice(
-    source.indexOf("<h1"),
-    source.indexOf("</h1>") + "</h1>".length,
+  const titleWrapperStart = source.indexOf("<h1");
+  const titleWrapperEnd = source.indexOf(
+    "<ProductDetailOccasionTags",
+    titleWrapperStart,
   );
-  assert.doesNotMatch(titleBlock, /\{product\.subtitle \?/);
+  const titleWrapper = source.slice(titleWrapperStart, titleWrapperEnd);
+
+  assert.ok(titleEnd > -1);
+  assert.ok(subtitleIndex > titleEnd);
+  assert.ok(priceIndex > subtitleIndex);
+  assert.ok(addToCartIndex > priceIndex);
+  assert.match(titleWrapper, /\{product\.subtitle \?/);
 });
 
 test("admin product content field labels short summary for storefront placement", () => {
