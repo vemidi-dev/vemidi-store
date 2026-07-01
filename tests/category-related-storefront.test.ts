@@ -168,21 +168,22 @@ test("related category cards use canonical /categorii paths", () => {
   assert.equal(getCategoryPath(related[0]!.slug), "/categorii/bebeshki-albumi");
 });
 
-test("category page renders related categories section", () => {
+test("category page renders compact discovery block for related categories", () => {
   const pageSource = readFileSync(
     new URL("../app/categories/[slug]/page.tsx", import.meta.url),
     "utf8",
   );
   const sectionSource = readFileSync(
-    new URL("../components/category/category-related-section.tsx", import.meta.url),
+    new URL("../components/category/category-discovery-section.tsx", import.meta.url),
     "utf8",
   );
 
   assert.match(pageSource, /getRelatedCategoriesForCategory/);
-  assert.match(pageSource, /CategoryRelatedSection/);
-  assert.match(sectionSource, /Свързани категории/);
+  assert.match(pageSource, /CategoryDiscoverySection/);
+  assert.doesNotMatch(sectionSource, /Свързани категории/);
   assert.match(sectionSource, /CategoryShowcaseCard/);
-  assert.match(sectionSource, /Още подходящи идеи от каталога/);
+  assert.match(sectionSource, /Още подходящи идеи/);
+  assert.match(sectionSource, /Подкатегории/);
 });
 
 test("storefront catalog fetch includes category related categories", () => {

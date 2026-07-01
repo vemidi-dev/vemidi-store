@@ -2,12 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import CategoryShowcaseCard from "@/components/category/category-showcase-card";
 import {
   CategoryIntroSection,
   CategorySeoBodySection,
 } from "@/components/category/category-page-text-blocks";
-import { CategoryRelatedSection } from "@/components/category/category-related-section";
+import { CategoryDiscoverySection } from "@/components/category/category-discovery-section";
 import { ContextFilter } from "@/components/catalog/context-filter";
 import { JsonLd } from "@/components/seo/json-ld";
 import { PageContainer } from "@/components/layout/page-container";
@@ -27,7 +26,6 @@ import {
 } from "@/lib/catalog-context-filters";
 import { readCatalogOccasionFilterValue } from "@/lib/catalog-filter-query-params";
 import { resolveCategoryCoverImage } from "@/lib/category-image-resolution";
-import { toShowcaseCategory } from "@/lib/storefront/mappers";
 import { getStorefrontCatalog } from "@/lib/storefront/repository";
 import {
   buildBreadcrumbListSchema,
@@ -208,28 +206,10 @@ export default async function CategoryPage({
 
       {introText ? <CategoryIntroSection text={introText} /> : null}
 
-      {children.length > 0 ? (
-        <section className="border-b border-boutique-line bg-boutique-paper py-8 md:py-12">
-          <PageContainer>
-            <h2 className="font-heading text-2xl text-boutique-ink md:text-3xl">
-              Подкатегории
-            </h2>
-            <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4">
-              {children.map((child) => (
-                <CategoryShowcaseCard
-                  key={child.id}
-                  category={toShowcaseCategory(child)}
-                  compact
-                />
-              ))}
-            </div>
-          </PageContainer>
-        </section>
-      ) : null}
-
-      {relatedCategories.length > 0 ? (
-        <CategoryRelatedSection categories={relatedCategories} />
-      ) : null}
+      <CategoryDiscoverySection
+        subcategories={children}
+        relatedCategories={relatedCategories}
+      />
 
       <section className="bg-white py-10 md:py-14">
         <PageContainer>
