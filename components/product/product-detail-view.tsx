@@ -140,7 +140,7 @@ export function ProductDetailView({
                     {product.title}
                   </h1>
                   {product.headingSubtitle ? (
-                    <h2 className="mt-3 max-w-xl font-heading text-2xl leading-snug tracking-tight text-boutique-ink sm:text-3xl">
+                    <h2 className="mt-4 max-w-xl text-xl font-medium leading-relaxed text-boutique-ink/80 sm:text-2xl">
                       {product.headingSubtitle}
                     </h2>
                   ) : null}
