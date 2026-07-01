@@ -195,6 +195,67 @@ Then promote in Vercel dashboard (or approved production deploy workflow). Do no
 
 ---
 
+## 8. GitHub Actions
+
+Workflows live in `.github/workflows/`.
+
+### Release workflow (overview)
+
+1. **Push / PR checks** — `Release Tests` runs automatically on every PR and `push` to `main` (`npm ci` → `npm run test:release` → `npm run typecheck`).
+2. **Vercel preview** — deploy preview from the passing commit (`npx vercel deploy` or Git integration). Do not promote yet.
+3. **Manual: Preview Smoke** — GitHub Actions → **Preview Smoke** → Run workflow with `base_url` = preview URL.
+4. **Manual: Production Data Audit** — GitHub Actions → **Production Data Audit** → Run workflow (read-only Supabase SELECT; requires repo secrets).
+5. **Manual: Vercel promote** — promote to **vemidi-crafts.com** only after steps 1–4 and manual QA (section 6).
+
+### Automatic: Release Tests
+
+- **Workflow:** `Release Tests` (`release-tests.yml`)
+- **Triggers:** every `pull_request`; `push` to `main`
+- **Runs:** `npm ci` → `npm run test:release` (includes typecheck + targeted unit tests) → `npm run typecheck`
+- **Does not run:** `data:audit` (no Supabase secrets on every push)
+
+Check the **Actions** tab on GitHub for PASS/FAIL on each PR or main push.
+
+### Manual: Production Data Audit
+
+- **Workflow:** `Production Data Audit` (`production-data-audit.yml`)
+- **Trigger:** Actions → Production Data Audit → **Run workflow**
+- **Runs:** `npm ci` → `npm run test:release:data` (read-only Supabase SELECT)
+- **Requires GitHub repository secrets** (Settings → Secrets and variables → Actions):
+
+| Secret | Required | Used by |
+|--------|----------|---------|
+| `NEXT_PUBLIC_SUPABASE_URL` | Yes | `data:audit` |
+| `SUPABASE_SECRET_KEY` | Yes* | `data:audit` service client |
+
+\*Alternatively set `SUPABASE_SERVICE_ROLE_KEY` if that is your Supabase service role key name. The audit script accepts either; at least one secret key must be set.
+
+Exit `0` = no critical issues. Warnings are reported but do not fail the workflow unless critical count > 0.
+
+Run this **manually** before production promote when you want CI-backed data integrity confirmation.
+
+### Manual: Preview Smoke
+
+- **Workflow:** `Preview Smoke` (`preview-smoke.yml`)
+- **Trigger:** Actions → Preview Smoke → **Run workflow**
+- **Inputs:**
+  - `base_url` (required) — e.g. `https://vemidi-store-xxxxx.vercel.app`
+  - `smoke_paths` (optional) — e.g. `/categorii/foo,/produkti/bar`
+- **Runs:** `npm ci` → `npm run smoke:preview -- --base-url=<base_url>`
+
+Do not pass `https://vemidi-crafts.com` unless you intentionally smoke production.
+
+### CI + promote gate
+
+Promote to **vemidi-crafts.com** only after:
+
+1. **Release Tests** workflow PASS on the commit being promoted
+2. **Production Data Audit** workflow PASS (manual, when applicable)
+3. **Preview Smoke** workflow PASS against the preview URL
+4. Manual checks (section 6)
+
+---
+
 ## Quick reference
 
 | Command | When |
@@ -203,6 +264,9 @@ Then promote in Vercel dashboard (or approved production deploy workflow). Do no
 | `npm run test:release:unit` | Fast local loop |
 | `npm run test:release:data` | Before promote, with ENV + DB decision |
 | `npm run smoke:preview -- --base-url=...` | After preview deploy |
+| GitHub **Release Tests** | Auto on PR / push to main |
+| GitHub **Production Data Audit** | Manual before promote |
+| GitHub **Preview Smoke** | Manual with preview URL |
 
 ### Recommended order
 

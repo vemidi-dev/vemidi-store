@@ -1,0 +1,29 @@
+name: Release Tests
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  release-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run release test suite
+        run: npm run test:release
+
+      - name: Typecheck
+        run: npm run typecheck
