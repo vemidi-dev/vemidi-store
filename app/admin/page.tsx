@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
+export const dynamic = "force-dynamic";
 
 import { AdminHeader } from "@/components/admin/admin-header";
 import { AdminNotices } from "@/components/admin/admin-notices";

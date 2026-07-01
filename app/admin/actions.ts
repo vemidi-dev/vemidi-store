@@ -110,6 +110,7 @@ function redirectWith(
   draft?: string,
 ): never {
   const params = new URLSearchParams({ [kind]: message, tab });
+  params.set("_refresh", Date.now().toString());
   if (draft && encodeURIComponent(draft).length <= MAX_DRAFT_QUERY_LENGTH) {
     params.set("draft", draft);
   }

@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import { adminFormFields } from "@/lib/admin/form-fields";
@@ -50,4 +51,12 @@ test("hidden category slug does not resolve shop redirect", () => {
   const parsed = parseShopSearchParams(params);
 
   assert.equal(resolveShopCategoryRedirect(params, parsed, categories), null);
+});
+
+test("admin category actions force a fresh admin page after redirects", () => {
+  const actionsSource = readFileSync(new URL("../app/admin/actions.ts", import.meta.url), "utf8");
+  const pageSource = readFileSync(new URL("../app/admin/page.tsx", import.meta.url), "utf8");
+
+  assert.match(actionsSource, /params\.set\("_refresh", Date\.now\(\)\.toString\(\)\)/);
+  assert.match(pageSource, /export const dynamic = "force-dynamic"/);
 });

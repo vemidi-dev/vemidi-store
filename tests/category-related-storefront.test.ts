@@ -182,7 +182,7 @@ test("category page renders compact discovery block for related categories", () 
   assert.match(pageSource, /CategoryDiscoverySection/);
   assert.doesNotMatch(sectionSource, /Свързани категории/);
   assert.match(sectionSource, /CategoryShowcaseCard/);
-  assert.match(sectionSource, /Още подходящи идеи/);
+  assert.match(sectionSource, /Още идеи/);
   assert.match(sectionSource, /Подкатегории/);
 });
 

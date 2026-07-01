@@ -8,6 +8,14 @@ type CategoryDiscoverySectionProps = {
   relatedCategories: StorefrontCategory[];
 };
 
+const sectionHeadingClassName =
+  "font-heading text-xl text-boutique-ink md:text-2xl";
+
+const cardGridClassName =
+  "mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:flex lg:flex-wrap lg:gap-4";
+
+const cardWrapperClassName = "lg:w-[11.5rem] lg:shrink-0";
+
 export function CategoryDiscoverySection({
   subcategories,
   relatedCategories,
@@ -19,43 +27,49 @@ export function CategoryDiscoverySection({
     return null;
   }
 
+  const showSideBySide = hasSubcategories && hasRelated;
+
   return (
     <section className="border-b border-boutique-line bg-boutique-paper py-5 md:py-6">
       <PageContainer>
-        {hasSubcategories ? (
-          <h2 className="font-heading text-xl text-boutique-ink md:text-2xl">
-            Подкатегории
-          </h2>
-        ) : (
-          <p className="text-sm font-medium text-boutique-muted">
-            Още подходящи идеи
-          </p>
-        )}
-
-        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:flex lg:flex-wrap lg:gap-4">
-          {subcategories.map((category) => (
-            <div key={category.id} className="lg:w-[11.5rem] lg:shrink-0">
-              <CategoryShowcaseCard
-                category={toShowcaseCategory(category)}
-                compact
-              />
+        <div
+          className={
+            showSideBySide
+              ? "grid gap-6 md:grid-cols-2 md:items-start md:gap-8"
+              : "grid gap-6"
+          }
+        >
+          {hasSubcategories ? (
+            <div>
+              <h2 className={sectionHeadingClassName}>Подкатегории</h2>
+              <div className={cardGridClassName}>
+                {subcategories.map((category) => (
+                  <div key={category.id} className={cardWrapperClassName}>
+                    <CategoryShowcaseCard
+                      category={toShowcaseCategory(category)}
+                      compact
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
-          ))}
-
-          {hasSubcategories && hasRelated ? (
-            <p className="col-span-full pt-1 text-sm font-medium text-boutique-muted lg:basis-full">
-              Още подходящи идеи
-            </p>
           ) : null}
 
-          {relatedCategories.map((category) => (
-            <div key={category.id} className="lg:w-[11.5rem] lg:shrink-0">
-              <CategoryShowcaseCard
-                category={toShowcaseCategory(category)}
-                compact
-              />
+          {hasRelated ? (
+            <div>
+              <h2 className={sectionHeadingClassName}>Още идеи</h2>
+              <div className={cardGridClassName}>
+                {relatedCategories.map((category) => (
+                  <div key={category.id} className={cardWrapperClassName}>
+                    <CategoryShowcaseCard
+                      category={toShowcaseCategory(category)}
+                      compact
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
-          ))}
+          ) : null}
         </div>
       </PageContainer>
     </section>
