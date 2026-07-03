@@ -11,6 +11,10 @@ import {
   normalizeProductPublicationStatus,
   type ProductPublicationStatus,
 } from "@/lib/product-publication";
+import {
+  normalizeProductVisibility,
+  type ProductVisibility,
+} from "@/lib/product-visibility";
 import { parseProductOptionGroups } from "@/lib/admin/parse-option-groups";
 
 type CreateProductDraftPayload = {
@@ -52,6 +56,7 @@ type CreateProductDraftPayload = {
   wish_template_ids: string[];
   option_groups: unknown[];
   status: ProductPublicationStatus;
+  visibility: ProductVisibility;
 };
 
 export function parseProductFulfillmentFromFormData(formData: FormData): {
@@ -78,6 +83,10 @@ export function parseProductPublicationStatus(
     formData.get(adminFormFields.product.status),
     fallback,
   );
+}
+
+export function parseProductVisibility(formData: FormData): ProductVisibility {
+  return normalizeProductVisibility(formData.get(adminFormFields.product.visibility));
 }
 
 export function getString(formData: FormData, key: string) {
@@ -266,6 +275,7 @@ export function makeCreateProductDraft(formData: FormData) {
     wish_template_ids: getWishTemplateIds(formData),
     option_groups: optionGroupsResult.error ? [] : optionGroupsResult.groups,
     status: parseProductPublicationStatus(formData, "draft"),
+    visibility: parseProductVisibility(formData),
   };
 
   return JSON.stringify(draft);

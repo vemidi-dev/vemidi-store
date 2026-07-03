@@ -163,7 +163,7 @@ test("getGlobalFaqItems tolerates query failures", async () => {
   assert.deepEqual(await getGlobalFaqItems(supabase as never), []);
 });
 
-test("getProductFaqItems combines individual and group FAQ with inactive filtering", async () => {
+test("getProductFaqItems uses individually selected FAQ instead of expanding selected groups", async () => {
   const productId = "prod-1";
   const supabase = createProductFaqSupabaseMock(productId, {
     productItems: [
@@ -223,7 +223,7 @@ test("getProductFaqItems combines individual and group FAQ with inactive filteri
 
   assert.deepEqual(
     items.map((item) => item.id),
-    ["individual", "group-item"],
+    ["individual"],
   );
   assert.equal(items[0]?.answer, "Индивидуален отговор");
 });
@@ -334,3 +334,46 @@ function createProductFaqSupabaseMock(
     },
   };
 }
+
+test("getProductFaqItems returns only individually selected FAQ when no product groups are selected", async () => {
+  const productId = "prod-1";
+  const supabase = createProductFaqSupabaseMock(productId, {
+    productItems: [
+      {
+        sort_order: 0,
+        faq_items: faqItemRow({
+          id: "selected-1",
+          question: "Избран въпрос 1",
+          answer: "Отговор 1",
+        }),
+      },
+      {
+        sort_order: 10,
+        faq_items: faqItemRow({
+          id: "selected-2",
+          question: "Избран въпрос 2",
+          answer: "Отговор 2",
+        }),
+      },
+    ] satisfies ProductFaqItemJoinRow[],
+    productGroups: [],
+    groupItems: [
+      {
+        group_id: "unused-group",
+        sort_order: 0,
+        faq_items: faqItemRow({
+          id: "not-selected",
+          question: "Неизбран въпрос",
+          answer: "Не трябва да се показва",
+        }),
+      },
+    ] satisfies FaqGroupItemJoinRow[],
+  });
+
+  const items = await getProductFaqItems(productId, supabase as never);
+
+  assert.deepEqual(
+    items.map((item) => item.id),
+    ["selected-1", "selected-2"],
+  );
+});

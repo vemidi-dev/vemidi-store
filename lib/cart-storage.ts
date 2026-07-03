@@ -7,7 +7,7 @@ import {
   normalizeCampaignSource,
   normalizeLandingUrl,
 } from "@/lib/campaign-attribution";
-import type { CartLine } from "@/lib/cart-types";
+import type { CartLine, CartLineUpsell } from "@/lib/cart-types";
 import { sanitizeOptionSelectionsInput } from "@/lib/product-option-validation";
 import type { SelectedProductColor } from "@/lib/product-colors";
 import type { ProductPersonalizationValue } from "@/lib/product-personalization";
@@ -79,6 +79,40 @@ function parsePersonalizationField(
     fieldKey: fieldKey.slice(0, 100),
     label: label.slice(0, 200),
     value: fieldValue.slice(0, PERSONALIZATION_MAX_LENGTH),
+  };
+}
+
+function parseCartLineUpsell(value: unknown): CartLineUpsell | undefined {
+  if (!isRecord(value)) {
+    return undefined;
+  }
+
+  const offerId = typeof value.offerId === "string" ? value.offerId.trim() : "";
+  const sourceProductId =
+    typeof value.sourceProductId === "string" ? value.sourceProductId.trim() : "";
+  const sourceProductTitle =
+    typeof value.sourceProductTitle === "string"
+      ? value.sourceProductTitle.trim().slice(0, 180)
+      : "";
+  const originalPrice =
+    typeof value.originalPrice === "number" && Number.isFinite(value.originalPrice)
+      ? Math.max(0, value.originalPrice)
+      : null;
+  const specialPrice =
+    typeof value.specialPrice === "number" && Number.isFinite(value.specialPrice)
+      ? Math.max(0, value.specialPrice)
+      : null;
+
+  if (!offerId || !sourceProductId || !sourceProductTitle || originalPrice === null || specialPrice === null) {
+    return undefined;
+  }
+
+  return {
+    offerId: offerId.slice(0, 100),
+    sourceProductId,
+    sourceProductTitle,
+    originalPrice,
+    specialPrice,
   };
 }
 
@@ -185,6 +219,7 @@ export function parseStoredCart(raw: string | null): CartLine[] {
         ? optionSelections
         : undefined;
       const displaySnapshot = parseCartLineDisplaySnapshot(value.displaySnapshot);
+      const upsell = parseCartLineUpsell(value.upsell);
 
       lines.push({
         lineId: makeCartLineId(
@@ -193,6 +228,12 @@ export function parseStoredCart(raw: string | null): CartLine[] {
           normalizedColors,
           normalizedPersonalizationFields,
           normalizedOptionSelections,
+          upsell
+            ? {
+                upsellOfferId: upsell.offerId,
+                upsellSourceProductId: upsell.sourceProductId,
+              }
+            : undefined,
         ),
         productId,
         slug: slug || productId,
@@ -209,6 +250,7 @@ export function parseStoredCart(raw: string | null): CartLine[] {
         selectedColors: normalizedColors,
         optionSelections: normalizedOptionSelections,
         ...(displaySnapshot ? { displaySnapshot } : {}),
+        ...(upsell ? { upsell } : {}),
       });
     }
 

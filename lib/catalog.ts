@@ -3,6 +3,7 @@ import type { ProductColorField } from "@/lib/product-colors";
 import type { ProductPersonalizationField, WishTemplate } from "@/lib/product-personalization";
 import type { ProductFulfillmentType } from "@/lib/product-fulfillment";
 import type { ProductPromotionSnapshot } from "@/lib/product-pricing";
+import type { ProductVisibility } from "@/lib/product-visibility";
 
 export type ProductImage = {
   src: string;
@@ -40,6 +41,8 @@ export type Product = {
   promotion?: ProductPromotionSnapshot | null;
   /** Admin-selected storefront badge, e.g. Ново or По поръчка. */
   cardBadge?: string | null;
+  /** Storefront visibility: public catalog item or item available only through upsell offers. */
+  visibility?: ProductVisibility;
   images: ProductImage[];
   /** Set on catalog listings when the product has enabled color fields. */
   hasColorOptions?: boolean;

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { mapCheckoutError } from "@/lib/checkout/errors";
+import { checkoutErrorMessages, mapCheckoutError } from "@/lib/checkout/errors";
 import {
   validateCheckoutDelivery,
   validateCustomerEmail,
@@ -88,4 +88,19 @@ test("mapCheckoutError localizes rpc inventory and checkout failures", () => {
   assert.match(mapCheckoutError("invalid_product_price"), /потвърдена/i);
   assert.match(mapCheckoutError("order_request_in_progress"), /обработва/);
   assert.match(mapCheckoutError("unknown_code"), /опитайте отново/);
+});
+
+test("mapCheckoutError localizes upsell checkout failures", () => {
+  assert.equal(
+    mapCheckoutError("invalid_upsell_offer"),
+    checkoutErrorMessages.invalid_upsell_offer,
+  );
+  assert.equal(
+    mapCheckoutError("invalid_upsell_quantity"),
+    checkoutErrorMessages.invalid_upsell_quantity,
+  );
+  assert.equal(
+    mapCheckoutError("upsell_only_product_requires_offer"),
+    checkoutErrorMessages.upsell_only_product_requires_offer,
+  );
 });

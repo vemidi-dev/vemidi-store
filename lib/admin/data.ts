@@ -19,6 +19,8 @@ import type {
   WishTemplateOccasionRow,
   WishTemplateRow,
 } from "@/lib/admin/types";
+import { buildProductUpsellOfferMap } from "@/lib/admin/product-upsell-admin";
+import type { ProductUpsellOfferRow } from "@/lib/storefront/product-upsells";
 import { isProductLandingPagesMigrationMissing } from "@/lib/product-landing/admin-rpc";
 import type { ProductLandingPageRow } from "@/lib/product-landing/types";
 import type {
@@ -54,6 +56,7 @@ export type AdminData = {
   faqItemIdsByProductId: Map<string, string[]>;
   featuredProductById: Map<string, HomeFeaturedProductRow>;
   relatedProductIdsByProductId: Map<string, string[]>;
+  upsellOffersByProductId: Map<string, ProductUpsellOfferRow[]>;
   relatedCategoryIdsByCategoryId: Map<string, string[]>;
   landingPages: ProductLandingPageRow[];
   landingPagesByProductId: Map<string, ProductLandingPageRow[]>;
@@ -77,6 +80,7 @@ export type AdminData = {
     productFaqItems: QueryError;
     homeFeaturedProducts: QueryError;
     relatedProducts: QueryError;
+    productUpsellOffers: QueryError;
     categoryRelatedCategories: QueryError;
     optionGroups: QueryError;
     optionValues: QueryError;
@@ -100,6 +104,7 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
     productWishTemplatesResult,
     homeFeaturedProductsResult,
     relatedProductsResult,
+    productUpsellOffersResult,
     categoryRelatedCategoriesResult,
     optionGroupsResult,
     optionValuesResult,
@@ -157,6 +162,14 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
       .from("related_products")
       .select("product_id,related_product_id,sort_order")
       .order("sort_order", { ascending: true }),
+    supabase
+      .from("product_upsell_offers")
+      .select(
+        "id,source_product_id,upsell_product_id,offer_title,offer_description,special_price,suggested_quantity,max_quantity,sort_order,is_active,created_at,updated_at",
+      )
+      .order("source_product_id", { ascending: true })
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: true }),
     supabase
       .from("category_related_categories")
       .select("category_id,related_category_id,sort_order")
@@ -220,6 +233,9 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
   const homeFeaturedProducts = (homeFeaturedProductsResult.data ??
     []) as HomeFeaturedProductRow[];
   const relatedProducts = (relatedProductsResult.data ?? []) as RelatedProductRow[];
+  const productUpsellOffers = productUpsellOffersResult.error
+    ? []
+    : ((productUpsellOffersResult.data ?? []) as ProductUpsellOfferRow[]);
   const categoryRelatedCategories = (categoryRelatedCategoriesResult.data ??
     []) as CategoryRelatedCategoryRow[];
   const optionGroups = (optionGroupsResult.data ?? []) as ProductOptionGroupRow[];
@@ -253,6 +269,7 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
     homeFeaturedProducts.map((row) => [row.product_id, row]),
   );
   const relatedProductIdsByProductId = new Map<string, string[]>();
+  const upsellOffersByProductId = buildProductUpsellOfferMap(productUpsellOffers);
   const relatedCategoryIdsByCategoryId = new Map<string, string[]>();
   const optionGroupsByProductId = new Map<string, ProductOptionGroupRow[]>();
   const optionValuesByGroupId = new Map<string, ProductOptionValueRow[]>();
@@ -371,6 +388,7 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
     faqItemIdsByProductId,
     featuredProductById,
     relatedProductIdsByProductId,
+    upsellOffersByProductId,
     relatedCategoryIdsByCategoryId,
     landingPages,
     landingPagesByProductId,
@@ -394,6 +412,7 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
       productFaqItems: productFaqItemsResult.error,
       homeFeaturedProducts: homeFeaturedProductsResult.error,
       relatedProducts: relatedProductsResult.error,
+      productUpsellOffers: productUpsellOffersResult.error,
       categoryRelatedCategories: categoryRelatedCategoriesResult.error,
       optionGroups: optionGroupsResult.error,
       optionValues: optionValuesResult.error,

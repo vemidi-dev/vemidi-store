@@ -72,7 +72,7 @@ export function ProductFaqFields({
         <fieldset>
           <legend className="text-xs font-semibold text-boutique-ink">Продуктови FAQ групи</legend>
           <p className={helperClassName}>
-            Избират се само активни групи с обхват „За продукти“. Текстът остава в библиотеката.
+            Групата добавя всички въпроси в нея. Ако изберете индивидуални въпроси по-долу, те ще бъдат точният списък за продукта.
           </p>
           <div className="mt-2 grid gap-2">
             {activeProductGroups.map((group) => (
@@ -103,7 +103,7 @@ export function ProductFaqFields({
             Индивидуални FAQ въпроси
           </legend>
           <p className={helperClassName}>
-            Добавяте асоциация към reusable въпрос — без копиране на question/answer в продукта.
+            Изберете само въпросите, които са подходящи за този продукт. Ако има избрани въпроси тук, storefront ще покаже само тях.
           </p>
           <div className="mt-2 grid gap-2">
             {selectableItems.map((item) => (

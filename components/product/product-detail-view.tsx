@@ -7,6 +7,7 @@ import { ProductDetailGalleryAside } from "@/components/product/product-detail-c
 import { ProductDetailGallery } from "@/components/product/product-detail-gallery";
 import { ProductDetailOccasionTags } from "@/components/product/product-detail-occasion-tags";
 import { ProductLandingPageCta } from "@/components/product/product-landing-page-cta";
+import { ProductUpsellOffers } from "@/components/product/product-upsell-offers";
 import { PageContainer } from "@/components/layout/page-container";
 import { ProductPrice } from "@/components/product/product-price";
 import { ProductCard } from "@/components/product/product-card";
@@ -26,6 +27,7 @@ import { resolveSchemaOrgProductAvailability } from "@/lib/seo/product-schema-av
 import { buildBreadcrumbListSchema, type BreadcrumbItem } from "@/lib/seo/breadcrumbs";
 import { buildProductSchemaDescription } from "@/lib/seo/product-description-seo";
 import type { ProductSeoContext } from "@/lib/seo/product-description-seo";
+import type { ProductUpsellOffer } from "@/lib/storefront/product-upsells";
 
 type ProductDetailViewProps = {
   product: Product;
@@ -36,6 +38,7 @@ type ProductDetailViewProps = {
   relatedProducts: Product[];
   primaryLandingPage: ProductLandingPage | null;
   productFaqItems: FaqItem[];
+  upsellOffers?: ProductUpsellOffer[];
   attribution?: CampaignAttribution;
   initialOptionSelections?: ProductOptionSelection[];
   productSeoContext: ProductSeoContext;
@@ -52,6 +55,7 @@ export function ProductDetailView({
   relatedProducts,
   primaryLandingPage,
   productFaqItems,
+  upsellOffers = [],
   attribution,
   initialOptionSelections = [],
   productSeoContext,
@@ -186,6 +190,11 @@ export function ProductDetailView({
                 initialOptionSelections={initialOptionSelections}
                 layout="embedded"
                 product={product}
+              />
+
+              <ProductUpsellOffers
+                sourceProduct={product}
+                offers={upsellOffers}
               />
 
               <ProductLandingPageCta landingPage={primaryLandingPage} />

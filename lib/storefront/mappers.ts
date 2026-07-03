@@ -2,6 +2,10 @@ import type { Product } from "@/lib/catalog";
 import { applyAvailabilityToProduct } from "@/lib/product-fulfillment";
 import type { ProductFulfillmentType } from "@/lib/product-fulfillment";
 import type { ProductPublicationStatus } from "@/lib/product-publication";
+import {
+  normalizeProductVisibility,
+  type ProductVisibility,
+} from "@/lib/product-visibility";
 import { normalizeProductCardBadge } from "@/lib/product-card";
 import {
   resolveProductPricing,
@@ -77,6 +81,7 @@ export type ProductRow = {
   og_title?: string | null;
   og_description?: string | null;
   status?: ProductPublicationStatus;
+  visibility?: ProductVisibility | null;
   created_at?: string | null;
   updated_at?: string | null;
 };
@@ -127,6 +132,7 @@ export function toProduct(
     compareAtPrice: pricing.compareAtPrice,
     promotion: pricing.promotion,
     cardBadge: normalizeProductCardBadge(row.card_badge),
+    visibility: normalizeProductVisibility(row.visibility),
     meta_title: row.meta_title ?? null,
     meta_description: row.meta_description ?? null,
     og_title: row.og_title ?? null,

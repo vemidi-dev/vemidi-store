@@ -1,5 +1,6 @@
 import type { ProductFulfillmentType } from "@/lib/product-fulfillment";
 import type { ProductPublicationStatus } from "@/lib/product-publication";
+import type { ProductVisibility } from "@/lib/product-visibility";
 
 export type AdminTab =
   | "products"
@@ -156,6 +157,7 @@ export type ProductRow = {
   og_title?: string | null;
   og_description?: string | null;
   status?: ProductPublicationStatus;
+  visibility?: ProductVisibility;
 };
 
 export type ProductImageRow = {
@@ -292,6 +294,7 @@ export type ProductCreateDraft = {
   wishTemplateIds: string[];
   optionGroups?: ProductDraftOptionGroup[];
   publicationStatus: ProductPublicationStatus;
+  visibility: ProductVisibility;
 };
 
 export type ParsedColorField = {

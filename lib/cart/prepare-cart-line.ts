@@ -7,7 +7,7 @@ import { makeCartLineId } from "@/lib/cart-line-id";
 import { buildCartLineDisplaySnapshot } from "@/lib/cart/build-cart-line-display";
 import { normalizePersonalization } from "@/lib/cart-storage";
 import { normalizeCartQuantityWithLimit } from "@/lib/cart/quantity-limits";
-import type { CartLine } from "@/lib/cart-types";
+import type { CartLine, CartLineUpsell } from "@/lib/cart-types";
 import type { Product } from "@/lib/catalog";
 import {
   calculateEstimatedUnitPrice,
@@ -25,6 +25,8 @@ export type PrepareCartLineInput = {
   personalizationFields?: ProductPersonalizationValue[];
   attribution?: CampaignAttribution;
   optionSelections?: ProductOptionSelection[];
+  unitPriceOverride?: number;
+  upsell?: CartLineUpsell;
 };
 
 export type PreparedCartLine = {
@@ -68,17 +70,25 @@ export function prepareCartLineInput(
       )
     : input.product.price;
   const estimatedPrice =
-    optionPrice +
-    calculatePersonalizationDelta(
-      input.product.personalizationFields,
-      storedPersonalizationFields,
-    );
+    input.unitPriceOverride !== undefined
+      ? Math.max(0, input.unitPriceOverride)
+      : optionPrice +
+        calculatePersonalizationDelta(
+          input.product.personalizationFields,
+          storedPersonalizationFields,
+        );
   const lineId = makeCartLineId(
     input.product.id,
     storedPersonalization,
     storedColors,
     storedPersonalizationFields,
     storedOptionSelections,
+    input.upsell
+      ? {
+          upsellOfferId: input.upsell.offerId,
+          upsellSourceProductId: input.upsell.sourceProductId,
+        }
+      : undefined,
   );
   const displaySnapshot = buildCartLineDisplaySnapshot({
     optionGroups: input.product.optionGroups,
@@ -106,6 +116,7 @@ export function prepareCartLineInput(
       selectedColors: storedColors,
       optionSelections: storedOptionSelections,
       displaySnapshot,
+      upsell: input.upsell,
     },
   };
 }

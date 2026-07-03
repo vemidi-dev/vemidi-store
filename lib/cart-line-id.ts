@@ -2,6 +2,11 @@ import type { ProductOptionSelection } from "@/lib/product-options";
 import type { SelectedProductColor } from "@/lib/product-colors";
 import type { ProductPersonalizationValue } from "@/lib/product-personalization";
 
+export type CartLineIdContext = {
+  upsellOfferId?: string;
+  upsellSourceProductId?: string;
+};
+
 function serializeOptionSelections(optionSelections?: ProductOptionSelection[]) {
   if (!optionSelections?.length) {
     return "";
@@ -60,6 +65,7 @@ export function makeCartLineId(
   selectedColors?: SelectedProductColor[],
   personalizationFields?: ProductPersonalizationValue[],
   optionSelections?: ProductOptionSelection[],
+  context?: CartLineIdContext,
 ): string {
   const p =
     serializePersonalizationFields(personalizationFields) ||
@@ -67,5 +73,10 @@ export function makeCartLineId(
     "";
   const colors = serializeColors(selectedColors);
   const options = serializeOptionSelections(optionSelections);
-  return `${productId}::${p}::${colors}::${options}`;
+  const upsell =
+    context?.upsellOfferId && context.upsellSourceProductId
+      ? `upsell:${context.upsellSourceProductId}:${context.upsellOfferId}`
+      : "";
+  const base = `${productId}::${p}::${colors}::${options}`;
+  return upsell ? `${base}::${upsell}` : base;
 }

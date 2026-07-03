@@ -39,10 +39,12 @@ describe("FAQ storefront wiring", () => {
 
   test("product page passes real product id into gallery aside FAQ props", () => {
     const productPage = readSource("../app/products/[slug]/page.tsx");
+    const productDetailView = readSource("../components/product/product-detail-view.tsx");
 
-    assert.match(productPage, /faqItems=\{productFaqItems\}/);
-    assert.match(productPage, /faqIdPrefix=\{`product-faq-\$\{product\.id\}`\}/);
-    assert.match(productPage, /ProductDetailGalleryAside/);
+    assert.match(productPage, /productFaqItems=\{productFaqItems\}/);
+    assert.match(productDetailView, /faqItems=\{productFaqItems\}/);
+    assert.match(productDetailView, /faqIdPrefix=\{`product-faq-\$\{product\.id\}`\}/);
+    assert.match(productDetailView, /ProductDetailGalleryAside/);
   });
 
   test("home FAQ section is placed before newsletter CTA", () => {

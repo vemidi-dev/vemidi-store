@@ -218,6 +218,28 @@ test("legacy cart line without display snapshot uses safe fallback rows", () => 
   assert.equal(cartLineSummaryIncludesCampaign(line), false);
 });
 
+test("upsell cart line shows offer context in customer summary", () => {
+  const line: CartLine = {
+    lineId: "upsell-line",
+    productId,
+    slug: "papionka-s-ime",
+    title: "Папионка с име",
+    price: 6,
+    quantity: 1,
+    upsell: {
+      offerId: "22222222-2222-4222-8222-222222222222",
+      sourceProductId: "33333333-3333-4333-8333-333333333333",
+      sourceProductTitle: "Бебешки албум",
+      originalPrice: 9,
+      specialPrice: 6,
+    },
+  };
+
+  assert.deepEqual(resolveCartLineSummaryRows(line), [
+    { label: "Оферта", value: "Специална цена към „Бебешки албум“" },
+  ]);
+});
+
 test("campaign attribution stays on line but is hidden from customer summary", () => {
   const prepared = prepareCartLineInput({
     product,

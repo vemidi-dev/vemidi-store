@@ -21,6 +21,7 @@ test("admin form field names stay aligned with product draft parsing", () => {
   formData.set(adminFormFields.product.additionalInfo, "Допълнителни детайли");
   formData.set(adminFormFields.product.fulfillmentNote, "Изработка до 5 дни");
   formData.set(adminFormFields.product.price, "29.90");
+  formData.set(adminFormFields.product.visibility, "upsell_only");
   formData.set(adminFormFields.product.isCustomizable, "on");
   formData.append(adminFormFields.product.categoryIds, "category-one");
   formData.append(adminFormFields.product.categoryIds, "category-one");
@@ -104,6 +105,7 @@ test("admin form field names stay aligned with product draft parsing", () => {
     wish_template_ids: ["wish-one", "wish-two"],
     option_groups: [],
     status: "draft",
+    visibility: "upsell_only",
   });
 });
 

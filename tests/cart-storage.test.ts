@@ -75,6 +75,30 @@ test("makeCartLineId uses structured personalization values when available", () 
   assert.equal(first, second);
 });
 
+test("makeCartLineId separates upsell offer lines from regular product lines", () => {
+  const regular = makeCartLineId("gift-box");
+  const upsell = makeCartLineId(
+    "gift-box",
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    {
+      upsellOfferId: "offer-1",
+      upsellSourceProductId: "source-1",
+    },
+  );
+
+  assert.notEqual(regular, upsell);
+  assert.equal(
+    upsell,
+    makeCartLineId("gift-box", undefined, undefined, undefined, undefined, {
+      upsellOfferId: "offer-1",
+      upsellSourceProductId: "source-1",
+    }),
+  );
+});
+
 test("normalizeCartQuantity rejects invalid values and applies cart limits", () => {
   assert.equal(normalizeCartQuantity(Number.NaN), 0);
   assert.equal(normalizeCartQuantity(Number.POSITIVE_INFINITY), 0);
@@ -156,6 +180,41 @@ test("parseStoredCart returns an empty cart for invalid JSON and non-arrays", ()
   assert.deepEqual(parseStoredCart(null), []);
   assert.deepEqual(parseStoredCart("{broken"), []);
   assert.deepEqual(parseStoredCart(JSON.stringify({ slug: "product" })), []);
+});
+
+test("parseStoredCart preserves valid upsell metadata", () => {
+  const stored = JSON.stringify([
+    {
+      productId: "11111111-1111-4111-8111-111111111111",
+      slug: "papionka-s-ime",
+      title: "Папионка с име",
+      price: 6,
+      quantity: 2,
+      upsell: {
+        offerId: "22222222-2222-4222-8222-222222222222",
+        sourceProductId: "33333333-3333-4333-8333-333333333333",
+        sourceProductTitle: "Бебешки албум",
+        originalPrice: 9,
+        specialPrice: 6,
+      },
+    },
+  ]);
+
+  const [line] = parseStoredCart(stored);
+
+  assert.equal(line.upsell?.offerId, "22222222-2222-4222-8222-222222222222");
+  assert.equal(line.upsell?.sourceProductTitle, "Бебешки албум");
+  assert.equal(line.lineId, makeCartLineId(
+    "11111111-1111-4111-8111-111111111111",
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    {
+      upsellOfferId: "22222222-2222-4222-8222-222222222222",
+      upsellSourceProductId: "33333333-3333-4333-8333-333333333333",
+    },
+  ));
 });
 
 test("getCartTotals calculates item count and subtotal", () => {

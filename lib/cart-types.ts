@@ -4,6 +4,14 @@ import type { SelectedProductColor } from "@/lib/product-colors";
 import type { ProductPersonalizationValue } from "@/lib/product-personalization";
 import type { CartLineDisplaySnapshot } from "@/lib/cart/build-cart-line-display";
 
+export type CartLineUpsell = {
+  offerId: string;
+  sourceProductId: Product["id"];
+  sourceProductTitle: string;
+  originalPrice: number;
+  specialPrice: number;
+};
+
 export type CartLine = {
   lineId: string;
   /** Stable UUID identity for checkout and cart merging. */
@@ -25,6 +33,8 @@ export type CartLine = {
   displaySnapshot?: CartLineDisplaySnapshot;
   /** Snapshot of stocked quantity limit when the line was added. */
   maxCartQuantity?: number;
+  /** Snapshot when the item was added from a product upsell offer. */
+  upsell?: CartLineUpsell;
 };
 
 export type CartLineAttribution = Pick<CartLine, "campaign" | "source" | "landingUrl">;

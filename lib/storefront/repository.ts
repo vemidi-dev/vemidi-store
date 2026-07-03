@@ -32,6 +32,7 @@ import {
   isProductStorefrontPublished,
   normalizeProductPublicationStatus,
 } from "@/lib/product-publication";
+import { isProductCatalogVisible } from "@/lib/product-visibility";
 import {
   resolveProductRoute,
   type ProductRouteResolution,
@@ -157,9 +158,10 @@ async function fetchStorefrontCatalog(): Promise<StorefrontCatalog> {
       supabase
         .from("products")
         .select(
-          "id,slug,product_code,name,subtitle,description,price,image_url,is_customizable,is_sold_out,fulfillment_type,stock_quantity,card_badge,primary_category_id,meta_title,meta_description,og_title,og_description,status,created_at,updated_at",
+          "id,slug,product_code,name,heading_subtitle,subtitle,description,price,image_url,is_customizable,is_sold_out,fulfillment_type,stock_quantity,card_badge,primary_category_id,meta_title,meta_description,og_title,og_description,status,visibility,created_at,updated_at",
         )
         .eq("status", "published")
+        .eq("visibility", "public")
         .order("created_at", { ascending: false }),
       supabase
         .from("categories")
@@ -511,7 +513,7 @@ async function loadProductDetails(
   let productQuery = supabase
     .from("products")
     .select(
-      "id,slug,product_code,name,heading_subtitle,subtitle,description,additional_info,fulfillment_note,personalization_info,dimensions_materials,ordering_info,price,image_url,is_customizable,is_sold_out,fulfillment_type,stock_quantity,card_badge,meta_title,meta_description,og_title,og_description,status",
+      "id,slug,product_code,name,heading_subtitle,subtitle,description,additional_info,fulfillment_note,personalization_info,dimensions_materials,ordering_info,price,image_url,is_customizable,is_sold_out,fulfillment_type,stock_quantity,card_badge,meta_title,meta_description,og_title,og_description,status,visibility",
     )
     .eq("id", productId);
 
@@ -527,6 +529,9 @@ async function loadProductDetails(
 
   const status = normalizeProductPublicationStatus(data.status, "published");
   if (requirePublished && !isProductStorefrontPublished(status)) {
+    return null;
+  }
+  if (requirePublished && !isProductCatalogVisible(data.visibility)) {
     return null;
   }
 

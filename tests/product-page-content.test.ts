@@ -39,6 +39,7 @@ const baseProductRow: ProductRow = {
   image_url: null,
   is_customizable: false,
   is_sold_out: false,
+  visibility: "public",
 };
 
 test("toProduct maps headingSubtitle from product rows", () => {

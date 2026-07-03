@@ -6,6 +6,7 @@ import {
   isProductStorefrontPublished,
   normalizeProductPublicationStatus,
 } from "@/lib/product-publication";
+import { isProductCatalogVisible } from "@/lib/product-visibility";
 
 import {
   toProduct,
@@ -29,7 +30,7 @@ export type ProductRouteResolution =
     };
 
 const productListColumns =
-  "id,slug,product_code,name,heading_subtitle,subtitle,description,additional_info,fulfillment_note,personalization_info,dimensions_materials,ordering_info,price,image_url,is_customizable,is_sold_out,fulfillment_type,stock_quantity,card_badge,status";
+  "id,slug,product_code,name,heading_subtitle,subtitle,description,additional_info,fulfillment_note,personalization_info,dimensions_materials,ordering_info,price,image_url,is_customizable,is_sold_out,fulfillment_type,stock_quantity,card_badge,status,visibility";
 
 async function loadProductRowById(supabase: SupabaseClient, productId: string) {
   const { data, error } = await supabase
@@ -89,7 +90,7 @@ export async function resolveProductRoute(
     }
 
     const status = normalizeProductPublicationStatus(row.status, "published");
-    if (!isProductStorefrontPublished(status)) {
+    if (!isProductStorefrontPublished(status) || !isProductCatalogVisible(row.visibility)) {
       return { kind: "not_found" };
     }
 
@@ -99,7 +100,7 @@ export async function resolveProductRoute(
   const row = await loadProductRowBySlug(supabase, param);
   if (row) {
     const status = normalizeProductPublicationStatus(row.status, "published");
-    if (!isProductStorefrontPublished(status)) {
+    if (!isProductStorefrontPublished(status) || !isProductCatalogVisible(row.visibility)) {
       return { kind: "not_found" };
     }
 
@@ -117,7 +118,11 @@ export async function resolveProductRoute(
       historicalRow?.status,
       "published",
     );
-    if (!historicalRow || !isProductStorefrontPublished(historicalStatus)) {
+    if (
+      !historicalRow ||
+      !isProductStorefrontPublished(historicalStatus) ||
+      !isProductCatalogVisible(historicalRow.visibility)
+    ) {
       return { kind: "not_found" };
     }
 

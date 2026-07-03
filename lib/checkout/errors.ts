@@ -17,6 +17,13 @@ export const checkoutErrorMessages: Record<string, string> = {
   insufficient_stock:
     "Няма достатъчна наличност за един или повече продукти. Върнете се в количката и коригирайте количествата.",
   invalid_product_price: "Цената на продукт не може да бъде потвърдена.",
+  invalid_upsell_price: "Цената на специалната оферта не може да бъде потвърдена.",
+  invalid_upsell_offer:
+    "Една от специалните оферти вече не е активна. Върнете се в количката и я добавете отново.",
+  invalid_upsell_quantity:
+    "Количеството за специална оферта е по-голямо от позволеното.",
+  upsell_only_product_requires_offer:
+    "Този артикул се предлага само като добавка към друг продукт.",
   personalization_too_long: "Текстът за персонализация е твърде дълъг.",
   invalid_personalization_fields: "Данните за персонализация са невалидни.",
   required_personalization_missing: "Попълнете всички задължителни полета за персонализация.",

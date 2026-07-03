@@ -7,6 +7,7 @@ import {
   isProductStorefrontPublished,
   normalizeProductPublicationStatus,
 } from "@/lib/product-publication";
+import { filterCatalogVisibleProducts } from "@/lib/product-visibility";
 
 test("isProductStorefrontPublished allows only published", () => {
   assert.equal(isProductStorefrontPublished("published"), true);
@@ -43,4 +44,20 @@ test("filterStorefrontPublishedProductIds keeps published ids only", () => {
     filterStorefrontPublishedProductIds(["a", "b", "c"], publishedIds),
     ["a", "c"],
   );
+});
+
+test("published upsell-only products can be excluded from storefront catalog", () => {
+  const products = filterStorefrontPublishedProducts([
+    { id: "public", status: "published" as const, visibility: "public" as const },
+    {
+      id: "upsell",
+      status: "published" as const,
+      visibility: "upsell_only" as const,
+    },
+    { id: "draft", status: "draft" as const, visibility: "public" as const },
+  ]);
+
+  assert.deepEqual(filterCatalogVisibleProducts(products), [
+    { id: "public", status: "published", visibility: "public" },
+  ]);
 });

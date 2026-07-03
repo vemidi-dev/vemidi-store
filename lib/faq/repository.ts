@@ -191,6 +191,10 @@ export async function getProductFaqItems(
     (productItems ?? []) as ProductFaqItemJoinRow[],
   );
 
+  if (individualCandidates.length > 0) {
+    return mergeProductFaqCandidates(individualCandidates, []);
+  }
+
   const activeProductGroups = ((productGroups ?? []) as ProductFaqGroupJoinRow[]).filter(
     (association) => isEligibleProductGroupRow(association.faq_groups),
   );

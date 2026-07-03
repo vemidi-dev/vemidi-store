@@ -77,6 +77,13 @@ export function buildSelectedColorSummaryRows(
 export function resolveCartLineSummaryRows(line: CartLine): CartLineSummaryRow[] {
   const rows: CartLineSummaryRow[] = [];
 
+  if (line.upsell) {
+    rows.push({
+      label: "Оферта",
+      value: `Специална цена към „${line.upsell.sourceProductTitle}“`,
+    });
+  }
+
   if (line.displaySnapshot?.optionRows.length) {
     rows.push(...line.displaySnapshot.optionRows);
   } else {

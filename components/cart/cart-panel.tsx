@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 
 import { useCart } from "@/components/cart/cart-provider";
 import { CartLineSummaryDetails } from "@/components/cart/cart-line-summary-details";
@@ -10,9 +11,51 @@ import { isCartQuantityAtLimit, resolveCartQuantityLimit } from "@/lib/cart/quan
 import { PageContainer } from "@/components/layout/page-container";
 import { formatEur } from "@/lib/format-eur";
 import type { CartPageContent } from "@/lib/content/site-content";
+import type { ProductUpsellOffer } from "@/lib/storefront/product-upsells";
+
+type CartUpsellOffersResponse = {
+  offersByProductId?: Record<string, ProductUpsellOffer[]>;
+};
 
 export function CartPanel({ content }: { content: CartPageContent }) {
-  const { lines, itemCount, subtotal, setQuantity, removeLine } = useCart();
+  const { lines, itemCount, subtotal, addProduct, setQuantity, removeLine } =
+    useCart();
+  const [offersByProductId, setOffersByProductId] = useState<
+    Record<string, ProductUpsellOffer[]>
+  >({});
+  const mainProductIds = useMemo(
+    () => [...new Set(lines.filter((line) => !line.upsell).map((line) => line.productId))],
+    [lines],
+  );
+
+  useEffect(() => {
+    if (mainProductIds.length === 0) {
+      setOffersByProductId({});
+      return;
+    }
+
+    let isActive = true;
+    fetch("/api/cart-upsells", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ productIds: mainProductIds }),
+    })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data: CartUpsellOffersResponse | null) => {
+        if (isActive) {
+          setOffersByProductId(data?.offersByProductId ?? {});
+        }
+      })
+      .catch(() => {
+        if (isActive) {
+          setOffersByProductId({});
+        }
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [mainProductIds]);
 
   if (lines.length === 0) {
     return (
@@ -97,6 +140,91 @@ export function CartPanel({ content }: { content: CartPageContent }) {
                       </p>
 
                       <CartLineSummaryDetails line={line} className="mt-3" />
+
+                      {!line.upsell && offersByProductId[line.productId]?.length ? (
+                        <details className="mt-3 rounded-xl border border-boutique-line bg-white px-3 py-2">
+                          <summary className="cursor-pointer text-xs font-semibold text-boutique-sage-deep">
+                            Специални добавки към този продукт
+                          </summary>
+                          <div className="mt-3 grid gap-2">
+                            {offersByProductId[line.productId].map((offer) => {
+                              const isAdded = lines.some(
+                                (cartLine) =>
+                                  cartLine.upsell?.offerId === offer.id &&
+                                  cartLine.upsell.sourceProductId === line.productId,
+                              );
+                              const image = offer.product.images.find(
+                                (item) => item.src,
+                              );
+
+                              return (
+                                <div
+                                  key={offer.id}
+                                  className="grid grid-cols-[3rem_minmax(0,1fr)_auto] items-center gap-3 rounded-lg border border-boutique-line/70 bg-boutique-bg/40 p-2"
+                                >
+                                  <span className="relative aspect-square overflow-hidden rounded-md border border-boutique-line bg-white">
+                                    {image ? (
+                                      <Image
+                                        src={image.src}
+                                        alt={image.alt ?? offer.product.title}
+                                        fill
+                                        sizes="48px"
+                                        className="object-cover"
+                                      />
+                                    ) : (
+                                      <span className="grid h-full w-full place-items-center text-sm text-boutique-muted">
+                                        в—‡
+                                      </span>
+                                    )}
+                                  </span>
+                                  <span className="min-w-0">
+                                    <span className="block truncate text-xs font-semibold text-boutique-ink">
+                                      {offer.title ?? offer.product.title}
+                                    </span>
+                                    <span className="mt-0.5 block text-xs text-boutique-muted">
+                                      {formatEur(offer.specialPrice)}
+                                    </span>
+                                  </span>
+                                  <button
+                                    type="button"
+                                    disabled={isAdded || !offer.product.orderable}
+                                    onClick={() =>
+                                      addProduct(
+                                        offer.product,
+                                        offer.suggestedQuantity,
+                                        undefined,
+                                        undefined,
+                                        undefined,
+                                        undefined,
+                                        undefined,
+                                        {
+                                          unitPrice: offer.specialPrice,
+                                          upsell: {
+                                            offerId: offer.id,
+                                            sourceProductId: line.productId,
+                                            sourceProductTitle: line.title,
+                                            originalPrice: offer.product.price,
+                                            specialPrice: offer.specialPrice,
+                                          },
+                                        },
+                                      )
+                                    }
+                                    className="rounded-lg bg-boutique-sage-deep px-3 py-2 text-xs font-semibold text-white transition hover:bg-boutique-ink disabled:cursor-not-allowed disabled:opacity-50"
+                                  >
+                                    {isAdded ? "Добавено" : "Добавете"}
+                                  </button>
+                                </div>
+                              );
+                            })}
+                            <Link
+                              href={`${getProductPath(line.slug)}#product-upsell-title`}
+                              className="text-xs font-semibold text-boutique-sage-deep underline-offset-4 hover:underline"
+                            >
+                              Разгледайте на продуктовата страница
+                            </Link>
+                          </div>
+                        </details>
+                      ) : null}
                     </div>
 
                     <div className="col-span-2 flex items-center justify-between gap-3 border-t border-boutique-line/70 pt-3 sm:col-span-1 sm:flex-col sm:items-end sm:justify-between sm:border-0 sm:pt-0">

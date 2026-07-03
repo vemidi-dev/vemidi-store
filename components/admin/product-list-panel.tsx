@@ -34,7 +34,9 @@ import { ProductGalleryAddForm } from "@/components/admin/product-gallery-add-fo
 import { ProductGalleryReplaceForm } from "@/components/admin/product-gallery-replace-form";
 import { ProductImageFileInput } from "@/components/admin/product-image-file-input";
 import { ProductFulfillmentFields } from "@/components/admin/product-fulfillment-fields";
+import { ProductVisibilityField } from "@/components/admin/product-visibility-field";
 import { ProductCardBadgeField } from "@/components/admin/product-card-badge-field";
+import { ProductUpsellOffersEditor } from "@/components/admin/product-upsell-offers-editor";
 import { ProductColorFieldsEditor } from "@/components/admin/product-color-fields-editor";
 import { ProductOptionGroupsEditor } from "@/components/admin/product-option-groups-editor";
 import { ProductPersonalizationFieldsEditor } from "@/components/admin/product-personalization-fields-editor";
@@ -165,6 +167,7 @@ export function ProductListPanel({
     faqItemIdsByProductId,
     featuredProductById,
     relatedProductIdsByProductId,
+    upsellOffersByProductId,
     optionGroupsByProductId,
     optionValuesByGroupId,
     landingPagesByProductId,
@@ -774,6 +777,24 @@ export function ProductListPanel({
                         helperClassName={adminHelperClass}
                       />
                     </AdminLazyDetailsMount>
+                    <AdminLazyDetailsMount
+                      id={`product-edit-${product.id}-upsells`}
+                      className="rounded-lg border border-boutique-line/70 bg-boutique-bg p-3 md:col-span-2"
+                      summary={
+                        <span className="cursor-pointer px-1 text-sm font-medium text-boutique-ink">
+                          Upsell предложения
+                        </span>
+                      }
+                      contentClassName="mt-3"
+                    >
+                      <ProductUpsellOffersEditor
+                        sourceProductId={product.id}
+                        products={products}
+                        offers={upsellOffersByProductId.get(product.id) ?? []}
+                        helperClassName={adminHelperClass}
+                        fieldClassName={adminFieldClass}
+                      />
+                    </AdminLazyDetailsMount>
                     <fieldset className="space-y-3 rounded-lg border border-boutique-line/70 bg-boutique-bg p-3 md:col-span-2">
                       <legend className="px-1 text-sm font-medium text-boutique-ink">
                         Въпроси и отговори
@@ -798,6 +819,14 @@ export function ProductListPanel({
 
                     <div className="md:col-span-2">
                       <ProductCardBadgeField defaultValue={product.card_badge} />
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <ProductVisibilityField
+                        defaultValue={product.visibility}
+                        fieldClassName={adminFieldClass}
+                        helperClassName={adminHelperClass}
+                      />
                     </div>
 
                     <div className="md:col-span-2">

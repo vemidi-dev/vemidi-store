@@ -57,7 +57,28 @@ type SubmittedCartItem = {
   campaign?: unknown;
   source?: unknown;
   landingUrl?: unknown;
+  upsell?: unknown;
 };
+
+function parseSubmittedUpsell(value: unknown) {
+  if (typeof value !== "object" || value === null) {
+    return null;
+  }
+
+  const record = value as Record<string, unknown>;
+  const offerId = typeof record.offerId === "string" ? record.offerId.trim() : "";
+  const sourceProductId =
+    typeof record.sourceProductId === "string" ? record.sourceProductId.trim() : "";
+
+  if (!isUuid(offerId) || !isUuid(sourceProductId)) {
+    return null;
+  }
+
+  return {
+    offerId,
+    sourceProductId,
+  };
+}
 
 function text(formData: FormData, name: string, maxLength: number) {
   return String(formData.get(name) ?? "").trim().slice(0, maxLength);
@@ -320,6 +341,7 @@ export async function createStoreOrder(
       personalizationFields: validated.fields,
       selectedColors: Array.isArray(item.selectedColors) ? item.selectedColors : [],
       optionSelections: optionValidated.selections,
+      upsell: parseSubmittedUpsell(item.upsell),
     });
   }
 

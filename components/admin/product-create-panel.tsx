@@ -9,6 +9,7 @@ import { ProductOptionGroupsEditor } from "@/components/admin/product-option-gro
 import { ProductPersonalizationFieldsEditor } from "@/components/admin/product-personalization-fields-editor";
 import { ProductPublicationStatusField } from "@/components/admin/product-publication-status-field";
 import { ProductFulfillmentFields } from "@/components/admin/product-fulfillment-fields";
+import { ProductVisibilityField } from "@/components/admin/product-visibility-field";
 import { ProductCardBadgeField } from "@/components/admin/product-card-badge-field";
 import { ProductContentSeoFields } from "@/components/admin/product-content-seo-fields";
 import { ProductPageContentFields } from "@/components/admin/product-page-content-fields";
@@ -298,6 +299,12 @@ export function ProductCreatePanel({
           </label>
 
           <ProductCardBadgeField defaultValue={draft?.cardBadge} />
+
+          <ProductVisibilityField
+            defaultValue={draft?.visibility}
+            fieldClassName={adminFieldClass}
+            helperClassName={adminHelperClass}
+          />
 
           <ProductFulfillmentFields
             initialFulfillmentType={draft?.fulfillmentType}

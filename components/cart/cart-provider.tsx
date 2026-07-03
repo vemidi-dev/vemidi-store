@@ -27,11 +27,17 @@ import {
   prepareCartLineInput,
 } from "@/lib/cart/prepare-cart-line";
 import { normalizeCartQuantityWithLimit } from "@/lib/cart/quantity-limits";
+import { removeCartLineWithLinkedUpsells } from "@/lib/cart/remove-cart-line";
 import {
   getCartTotals,
   parseStoredCart,
 } from "@/lib/cart-storage";
-import { CART_STORAGE_KEY, LEGACY_CART_STORAGE_KEY, type CartLine } from "@/lib/cart-types";
+import {
+  CART_STORAGE_KEY,
+  LEGACY_CART_STORAGE_KEY,
+  type CartLine,
+  type CartLineUpsell,
+} from "@/lib/cart-types";
 import { trackMetaAddToCart } from "@/lib/consent/meta-pixel-client";
 import type { SelectedProductColor } from "@/lib/product-colors";
 import type { ProductPersonalizationValue } from "@/lib/product-personalization";
@@ -54,6 +60,10 @@ type CartContextValue = {
     personalizationFields?: ProductPersonalizationValue[],
     attribution?: CampaignAttribution,
     optionSelections?: ProductOptionSelection[],
+    overrides?: {
+      unitPrice?: number;
+      upsell?: CartLineUpsell;
+    },
   ) => void;
   ensureCampaignHandoffLine: (
     input: CampaignHandoffCartInput,
@@ -136,13 +146,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const showAddedToast = useCallback(
-    (product: Pick<Product, "title" | "images" | "price">, quantity: number) => {
+    (
+      product: Pick<Product, "title" | "images" | "price">,
+      quantity: number,
+      price?: number,
+    ) => {
       const toastId = Date.now();
       setAddedToast({
         id: toastId,
         title: product.title,
         imageSrc: product.images.find((image) => image.src)?.src,
-        price: product.price,
+        price: price ?? product.price,
         quantity,
       });
 
@@ -167,6 +181,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
       personalizationFields?: ProductPersonalizationValue[],
       attribution?: CampaignAttribution,
       optionSelections?: ProductOptionSelection[],
+      overrides?: {
+        unitPrice?: number;
+        upsell?: CartLineUpsell;
+      },
     ) => {
       const prepared = prepareCartLineInput({
         product,
@@ -176,6 +194,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         personalizationFields,
         attribution,
         optionSelections,
+        unitPriceOverride: overrides?.unitPrice,
+        upsell: overrides?.upsell,
       });
       if (!prepared) {
         return;
@@ -189,11 +209,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }
 
       setLines((prev) => mergeCartLineForAdd(prev, prepared));
-      showAddedToast(product, prepared.normalizedQuantity);
+      showAddedToast(product, prepared.normalizedQuantity, prepared.line.price);
       trackMetaAddToCart({
         slug: product.slug,
         title: product.title,
-        price: product.price,
+        price: prepared.line.price,
         quantity: prepared.normalizedQuantity,
       });
     },
@@ -245,7 +265,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const line = prev.find((entry) => entry.lineId === lineId);
       const next = normalizeCartQuantityWithLimit(quantity, line?.maxCartQuantity);
       if (next === 0) {
-        return prev.filter((l) => l.lineId !== lineId);
+        return removeCartLineWithLinkedUpsells(prev, lineId);
       }
 
       return prev.map((l) => (l.lineId === lineId ? { ...l, quantity: next } : l));
@@ -253,7 +273,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const removeLine = useCallback((lineId: string) => {
-    setLines((prev) => prev.filter((l) => l.lineId !== lineId));
+    setLines((prev) => removeCartLineWithLinkedUpsells(prev, lineId));
   }, []);
 
   const clear = useCallback(() => setLines([]), []);

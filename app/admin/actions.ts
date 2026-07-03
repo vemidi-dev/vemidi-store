@@ -25,6 +25,7 @@ import {
   normalizeSlug,
   parseProductFulfillmentFromFormData,
   parseProductPublicationStatus,
+  parseProductVisibility,
   parseSelectLimit,
 } from "@/lib/admin/form-data";
 import {
@@ -41,6 +42,10 @@ import {
 } from "@/lib/admin/category-related";
 import { parseProductContentFromFormData } from "@/lib/admin/product-content";
 import { parseProductPageContentFromFormData } from "@/lib/admin/product-page-content";
+import {
+  parseProductUpsellOffersFromFormData,
+  syncProductUpsellOffers,
+} from "@/lib/admin/product-upsell-admin";
 import { adminFormFields } from "@/lib/admin/form-fields";
 import { normalizeProductCardBadge } from "@/lib/product-card";
 import {
@@ -610,6 +615,7 @@ export async function createProduct(formData: FormData) {
   const activeTab = getAdminTab(formData, "products");
   const draft = makeCreateProductDraft(formData);
   const publicationStatus = parseProductPublicationStatus(formData, "draft");
+  const visibility = parseProductVisibility(formData);
 
   const name = getString(formData, adminFormFields.product.name);
   const subtitle = getOptionalString(formData, adminFormFields.product.subtitle);
@@ -743,7 +749,7 @@ export async function createProduct(formData: FormData) {
   const newProductId = String(productId);
   const { error: statusError } = await supabase
     .from("products")
-    .update({ status: "draft" })
+    .update({ status: "draft", visibility })
     .eq("id", newProductId);
 
   if (statusError) {
@@ -849,6 +855,7 @@ export async function updateProduct(formData: FormData) {
   const activeTab = getAdminTab(formData, "products");
 
   const id = getString(formData, adminFormFields.common.id);
+  const visibility = parseProductVisibility(formData);
   const name = getString(formData, adminFormFields.product.name);
   const subtitle = getOptionalString(formData, adminFormFields.product.subtitle);
   const headingSubtitle = getOptionalString(formData, adminFormFields.product.headingSubtitle);
@@ -896,6 +903,8 @@ export async function updateProduct(formData: FormData) {
     parseProductOptionGroups(formData);
   const { payload: productContent, error: productContentError } =
     parseProductContentFromFormData(formData);
+  const { offers: upsellOffers, error: upsellOffersError } =
+    parseProductUpsellOffersFromFormData(formData);
 
   if (slugError) {
     redirectWithProductEdit("error", slugError, id);
@@ -931,6 +940,9 @@ export async function updateProduct(formData: FormData) {
   }
   if (fulfillmentError) {
     redirectWithProductEdit("error", fulfillmentError, id);
+  }
+  if (upsellOffersError) {
+    redirectWithProductEdit("error", upsellOffersError, id);
   }
   detectDuplicateOptionWarnings(
     optionGroups,
@@ -999,11 +1011,16 @@ export async function updateProduct(formData: FormData) {
 
   const { error: statusError } = await supabase
     .from("products")
-    .update({ status: publicationStatus })
+    .update({ status: publicationStatus, visibility })
     .eq("id", id);
 
   if (statusError) {
-    redirectWithProductEdit("error", "Статусът на продукта не беше запазен.", id);
+    redirectWithProductEdit("error", "Статусът или видимостта на продукта не бяха запазени.", id);
+  }
+
+  const upsellSyncError = await syncProductUpsellOffers(supabase, id, upsellOffers);
+  if (upsellSyncError) {
+    redirectWithProductEdit("error", upsellSyncError, id);
   }
 
   const faqSyncError = await syncProductFaqAssociations(supabase, id, {
