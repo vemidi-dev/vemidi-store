@@ -147,7 +147,7 @@ export function CartPanel({ content }: { content: CartPageContent }) {
                           className="mt-3 rounded-xl border border-boutique-line bg-white px-3 py-2"
                         >
                           <summary className="cursor-pointer text-xs font-semibold text-boutique-sage-deep">
-                            Специални добавки към този продукт
+                            Специална оферта към този продукт
                           </summary>
                           <div className="mt-3 grid gap-2">
                             {offersByProductId[line.productId].map((offer) => {
@@ -165,7 +165,10 @@ export function CartPanel({ content }: { content: CartPageContent }) {
                                   key={offer.id}
                                   className="grid grid-cols-[3rem_minmax(0,1fr)_auto] items-center gap-3 rounded-lg border border-boutique-line/70 bg-boutique-bg/40 p-2"
                                 >
-                                  <span className="relative aspect-square overflow-hidden rounded-md border border-boutique-line bg-white">
+                                  <Link
+                                    href={getProductPath(offer.product.slug)}
+                                    className="relative aspect-square overflow-hidden rounded-md border border-boutique-line bg-white"
+                                  >
                                     {image ? (
                                       <Image
                                         src={image.src}
@@ -179,11 +182,13 @@ export function CartPanel({ content }: { content: CartPageContent }) {
                                         в—‡
                                       </span>
                                     )}
-                                  </span>
+                                  </Link>
                                   <span className="min-w-0">
-                                    <span className="block truncate text-xs font-semibold text-boutique-ink">
-                                      {offer.title ?? offer.product.title}
-                                    </span>
+                                    <Link href={getProductPath(offer.product.slug)}>
+                                      <span className="block truncate text-xs font-semibold text-boutique-ink transition hover:text-boutique-sage-deep">
+                                        {offer.title ?? offer.product.title}
+                                      </span>
+                                    </Link>
                                     <span className="mt-0.5 block text-xs text-boutique-muted">
                                       {formatEur(offer.specialPrice)}
                                     </span>

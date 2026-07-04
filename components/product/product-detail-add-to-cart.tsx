@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
@@ -28,6 +29,7 @@ import {
 import type { ColorQuantitiesByOptionId } from "@/lib/product-color-quantities";
 import { formatPriceDelta } from "@/lib/product-option-pricing";
 import { formatEur } from "@/lib/format-eur";
+import { getProductPath } from "@/lib/product-url";
 import type { ProductPersonalizationField } from "@/lib/product-personalization";
 import {
   buildPersonalizationFieldValues,
@@ -845,7 +847,7 @@ export function ProductDetailAddToCart({
           className="mt-4 rounded-2xl border border-boutique-line bg-boutique-bg/60 p-4"
         >
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-boutique-accent">
-            Специални добавки
+            Специална оферта
           </p>
           <h2
             id="product-upsell-title"
@@ -889,7 +891,10 @@ export function ProductDetailAddToCart({
                     }}
                     className="mt-6 h-5 w-5 rounded border-boutique-line text-boutique-sage-deep"
                   />
-                  <div className="relative aspect-square overflow-hidden rounded-lg border border-boutique-line bg-boutique-paper">
+                  <Link
+                    href={getProductPath(offer.product.slug)}
+                    className="relative aspect-square overflow-hidden rounded-lg border border-boutique-line bg-boutique-paper"
+                  >
                     {image ? (
                       <Image
                         src={image.src}
@@ -903,11 +908,13 @@ export function ProductDetailAddToCart({
                         ◇
                       </span>
                     )}
-                  </div>
+                  </Link>
                   <div className="min-w-0">
-                    <h3 className="text-sm font-semibold leading-snug text-boutique-ink">
-                      {offer.title ?? offer.product.title}
-                    </h3>
+                    <Link href={getProductPath(offer.product.slug)}>
+                      <h3 className="text-sm font-semibold leading-snug text-boutique-ink transition hover:text-boutique-sage-deep">
+                        {offer.title ?? offer.product.title}
+                      </h3>
+                    </Link>
                     {offer.description ? (
                       <p className="mt-1 text-xs leading-5 text-boutique-muted">
                         {offer.description}
