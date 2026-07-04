@@ -142,7 +142,10 @@ export function CartPanel({ content }: { content: CartPageContent }) {
                       <CartLineSummaryDetails line={line} className="mt-3" />
 
                       {!line.upsell && offersByProductId[line.productId]?.length ? (
-                        <details className="mt-3 rounded-xl border border-boutique-line bg-white px-3 py-2">
+                        <details
+                          open
+                          className="mt-3 rounded-xl border border-boutique-line bg-white px-3 py-2"
+                        >
                           <summary className="cursor-pointer text-xs font-semibold text-boutique-sage-deep">
                             Специални добавки към този продукт
                           </summary>
@@ -199,6 +202,8 @@ export function CartPanel({ content }: { content: CartPageContent }) {
                                         undefined,
                                         {
                                           unitPrice: offer.specialPrice,
+                                          maxCartQuantity: offer.maxQuantity,
+                                          suppressToast: true,
                                           upsell: {
                                             offerId: offer.id,
                                             sourceProductId: line.productId,

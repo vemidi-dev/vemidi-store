@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
@@ -8,6 +9,7 @@ import { useCart } from "@/components/cart/cart-provider";
 import { ProductOptionsSelector } from "@/components/product/product-options-selector";
 import type { CampaignAttribution } from "@/lib/campaign-attribution";
 import type { Product } from "@/lib/catalog";
+import type { ProductUpsellOffer } from "@/lib/storefront/product-upsells";
 import type { ProductOptionSelection } from "@/lib/product-options";
 import {
   getProductConfigurationDraftKey,
@@ -45,13 +47,23 @@ import {
 
 type ProductDetailAddToCartProps = {
   product: Product;
+  upsellOffers?: ProductUpsellOffer[];
   attribution?: CampaignAttribution;
   initialOptionSelections?: ProductOptionSelection[];
   layout?: "card" | "embedded";
 };
 
+function clampUpsellQuantity(value: number, maxQuantity: number) {
+  if (!Number.isFinite(value)) {
+    return 1;
+  }
+
+  return Math.min(maxQuantity, Math.max(1, Math.trunc(value)));
+}
+
 export function ProductDetailAddToCart({
   product,
+  upsellOffers = [],
   attribution,
   initialOptionSelections = [],
   layout = "card",
@@ -97,6 +109,15 @@ export function ProductDetailAddToCart({
   >({});
   const [added, setAdded] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedUpsellIds, setSelectedUpsellIds] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const [upsellQuantities, setUpsellQuantities] = useState<Record<string, number>>(
+    () =>
+      Object.fromEntries(
+        upsellOffers.map((offer) => [offer.id, offer.suggestedQuantity]),
+      ),
+  );
   const [wishFieldId, setWishFieldId] = useState<string | null>(null);
   const [wishOccasionFilter, setWishOccasionFilter] =
     useState<WishTemplateOccasionFilter>("all");
@@ -435,6 +456,34 @@ export function ProductDetailAddToCart({
       attribution,
       optionSelections.length ? optionSelections : undefined,
     );
+    upsellOffers
+      .filter((offer) => selectedUpsellIds.has(offer.id) && offer.product.orderable)
+      .forEach((offer) => {
+        addProduct(
+          offer.product,
+          clampUpsellQuantity(
+            upsellQuantities[offer.id] ?? offer.suggestedQuantity,
+            offer.maxQuantity,
+          ),
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          {
+            unitPrice: offer.specialPrice,
+            maxCartQuantity: offer.maxQuantity,
+            suppressToast: true,
+            upsell: {
+              offerId: offer.id,
+              sourceProductId: product.id,
+              sourceProductTitle: product.title,
+              originalPrice: offer.product.price,
+              specialPrice: offer.specialPrice,
+            },
+          },
+        );
+      });
     setError(null);
     setAdded(true);
     setTimeout(() => setAdded(false), 2200);
@@ -789,6 +838,154 @@ export function ProductDetailAddToCart({
       >
         {added ? "✓ Добавено в количката" : "Добавете в количката"}
       </button>
+
+      {upsellOffers.length ? (
+        <section
+          aria-labelledby="product-upsell-title"
+          className="mt-4 rounded-2xl border border-boutique-line bg-boutique-bg/60 p-4"
+        >
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-boutique-accent">
+            Специални добавки
+          </p>
+          <h2
+            id="product-upsell-title"
+            className="mt-1 font-heading text-2xl text-boutique-ink"
+          >
+            Добавете към подаръка
+          </h2>
+          <div className="mt-4 grid gap-3">
+            {upsellOffers.map((offer) => {
+              const selected = selectedUpsellIds.has(offer.id);
+              const quantity = clampUpsellQuantity(
+                upsellQuantities[offer.id] ?? offer.suggestedQuantity,
+                offer.maxQuantity,
+              );
+              const image = offer.product.images.find((item) => item.src);
+
+              return (
+                <article
+                  key={offer.id}
+                  className={`grid grid-cols-[auto_4rem_minmax(0,1fr)] gap-3 rounded-xl border bg-white p-3 transition ${
+                    selected
+                      ? "border-boutique-sage-deep shadow-boutique-sm"
+                      : "border-boutique-line"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selected}
+                    disabled={!offer.product.orderable}
+                    aria-label={`Добавете ${offer.product.title}`}
+                    onChange={(event) => {
+                      setSelectedUpsellIds((current) => {
+                        const next = new Set(current);
+                        if (event.target.checked) {
+                          next.add(offer.id);
+                        } else {
+                          next.delete(offer.id);
+                        }
+                        return next;
+                      });
+                    }}
+                    className="mt-6 h-5 w-5 rounded border-boutique-line text-boutique-sage-deep"
+                  />
+                  <div className="relative aspect-square overflow-hidden rounded-lg border border-boutique-line bg-boutique-paper">
+                    {image ? (
+                      <Image
+                        src={image.src}
+                        alt={image.alt ?? offer.product.title}
+                        fill
+                        sizes="64px"
+                        className="object-cover"
+                      />
+                    ) : (
+                      <span className="grid h-full w-full place-items-center text-sm text-boutique-muted">
+                        ◇
+                      </span>
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-semibold leading-snug text-boutique-ink">
+                      {offer.title ?? offer.product.title}
+                    </h3>
+                    {offer.description ? (
+                      <p className="mt-1 text-xs leading-5 text-boutique-muted">
+                        {offer.description}
+                      </p>
+                    ) : null}
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      <span className="font-heading text-xl text-boutique-sage-deep">
+                        {formatEur(offer.specialPrice)}
+                      </span>
+                      {offer.product.price > offer.specialPrice ? (
+                        <span className="text-xs text-boutique-muted line-through">
+                          {formatEur(offer.product.price)}
+                        </span>
+                      ) : null}
+                    </div>
+                    <div className="mt-3 inline-flex items-center rounded-lg border border-boutique-line bg-boutique-paper">
+                      <button
+                        type="button"
+                        aria-label="Намалете количеството"
+                        disabled={!selected}
+                        onClick={() =>
+                          setUpsellQuantities((current) => ({
+                            ...current,
+                            [offer.id]: clampUpsellQuantity(
+                              quantity - 1,
+                              offer.maxQuantity,
+                            ),
+                          }))
+                        }
+                        className="grid h-8 w-8 place-items-center text-lg text-boutique-muted transition hover:text-boutique-ink disabled:opacity-40"
+                      >
+                        −
+                      </button>
+                      <input
+                        type="number"
+                        min={1}
+                        max={offer.maxQuantity}
+                        disabled={!selected}
+                        value={quantity}
+                        onChange={(event) =>
+                          setUpsellQuantities((current) => ({
+                            ...current,
+                            [offer.id]: clampUpsellQuantity(
+                              Number(event.target.value),
+                              offer.maxQuantity,
+                            ),
+                          }))
+                        }
+                        className="h-8 w-10 border-x border-boutique-line bg-transparent text-center text-sm text-boutique-ink outline-none disabled:opacity-50"
+                      />
+                      <button
+                        type="button"
+                        aria-label="Увеличете количеството"
+                        disabled={!selected || quantity >= offer.maxQuantity}
+                        onClick={() =>
+                          setUpsellQuantities((current) => ({
+                            ...current,
+                            [offer.id]: clampUpsellQuantity(
+                              quantity + 1,
+                              offer.maxQuantity,
+                            ),
+                          }))
+                        }
+                        className="grid h-8 w-8 place-items-center text-lg text-boutique-muted transition hover:text-boutique-ink disabled:opacity-40"
+                      >
+                        +
+                      </button>
+                    </div>
+                    <p className="mt-1 text-[11px] text-boutique-muted">
+                      Максимум {offer.maxQuantity} бр.
+                    </p>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </section>
+      ) : null}
 
     </div>
     {showMobileBar ? (

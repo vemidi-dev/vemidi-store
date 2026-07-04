@@ -195,6 +195,28 @@ test("prepareCartLineInput stores display snapshot in cart line", () => {
   assert.equal(prepared!.line.campaign, "butterflies");
 });
 
+test("prepareCartLineInput applies upsell quantity override", () => {
+  const prepared = prepareCartLineInput({
+    product,
+    quantity: 5,
+    unitPriceOverride: 6,
+    maxCartQuantityOverride: 2,
+    upsell: {
+      offerId: "offer-1",
+      sourceProductId: "source-product",
+      sourceProductTitle: "Source product",
+      originalPrice: 9,
+      specialPrice: 6,
+    },
+  });
+
+  assert.ok(prepared);
+  assert.equal(prepared!.normalizedQuantity, 2);
+  assert.equal(prepared!.line.quantity, 2);
+  assert.equal(prepared!.line.maxCartQuantity, 2);
+  assert.equal(prepared!.line.price, 6);
+});
+
 test("legacy cart line without display snapshot uses safe fallback rows", () => {
   const line: CartLine = {
     lineId: "legacy-line",

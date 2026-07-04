@@ -62,6 +62,8 @@ type CartContextValue = {
     optionSelections?: ProductOptionSelection[],
     overrides?: {
       unitPrice?: number;
+      maxCartQuantity?: number;
+      suppressToast?: boolean;
       upsell?: CartLineUpsell;
     },
   ) => void;
@@ -183,6 +185,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
       optionSelections?: ProductOptionSelection[],
       overrides?: {
         unitPrice?: number;
+        maxCartQuantity?: number;
+        suppressToast?: boolean;
         upsell?: CartLineUpsell;
       },
     ) => {
@@ -195,6 +199,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         attribution,
         optionSelections,
         unitPriceOverride: overrides?.unitPrice,
+        maxCartQuantityOverride: overrides?.maxCartQuantity,
         upsell: overrides?.upsell,
       });
       if (!prepared) {
@@ -209,7 +214,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }
 
       setLines((prev) => mergeCartLineForAdd(prev, prepared));
-      showAddedToast(product, prepared.normalizedQuantity, prepared.line.price);
+      if (!overrides?.suppressToast) {
+        showAddedToast(product, prepared.normalizedQuantity, prepared.line.price);
+      }
       trackMetaAddToCart({
         slug: product.slug,
         title: product.title,

@@ -7,7 +7,6 @@ import { ProductDetailGalleryAside } from "@/components/product/product-detail-c
 import { ProductDetailGallery } from "@/components/product/product-detail-gallery";
 import { ProductDetailOccasionTags } from "@/components/product/product-detail-occasion-tags";
 import { ProductLandingPageCta } from "@/components/product/product-landing-page-cta";
-import { ProductUpsellOffers } from "@/components/product/product-upsell-offers";
 import { PageContainer } from "@/components/layout/page-container";
 import { ProductPrice } from "@/components/product/product-price";
 import { ProductCard } from "@/components/product/product-card";
@@ -190,11 +189,7 @@ export function ProductDetailView({
                 initialOptionSelections={initialOptionSelections}
                 layout="embedded"
                 product={product}
-              />
-
-              <ProductUpsellOffers
-                sourceProduct={product}
-                offers={upsellOffers}
+                upsellOffers={upsellOffers}
               />
 
               <ProductLandingPageCta landingPage={primaryLandingPage} />

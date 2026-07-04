@@ -26,6 +26,7 @@ export type PrepareCartLineInput = {
   attribution?: CampaignAttribution;
   optionSelections?: ProductOptionSelection[];
   unitPriceOverride?: number;
+  maxCartQuantityOverride?: number;
   upsell?: CartLineUpsell;
 };
 
@@ -41,7 +42,7 @@ export function prepareCartLineInput(
 ): PreparedCartLine | null {
   const normalizedQuantity = normalizeCartQuantityWithLimit(
     input.quantity,
-    input.product.maxCartQuantity,
+    input.maxCartQuantityOverride ?? input.product.maxCartQuantity,
   );
 
   if (
@@ -107,7 +108,7 @@ export function prepareCartLineInput(
       imageSrc: input.product.images.find((image) => image.src)?.src,
       price: estimatedPrice,
       quantity: normalizedQuantity,
-      maxCartQuantity: input.product.maxCartQuantity,
+      maxCartQuantity: input.maxCartQuantityOverride ?? input.product.maxCartQuantity,
       campaign: storedAttribution?.campaign,
       source: storedAttribution?.source,
       landingUrl: storedAttribution?.landingUrl,
