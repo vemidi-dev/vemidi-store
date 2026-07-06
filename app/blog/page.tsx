@@ -73,9 +73,11 @@ function TopicCard({
 function FeaturedArticleCard({
   post,
   ctaHref,
+  ctaLabel,
 }: {
   post: BlogPostRow;
   ctaHref: string | null;
+  ctaLabel: string | null;
 }) {
   return (
     <article className="overflow-hidden rounded-2xl border border-boutique-line bg-white shadow-boutique-sm">
@@ -100,10 +102,12 @@ function FeaturedArticleCard({
           <Link href={getArticleHref(post)} className="text-boutique-rose-deep">
             Прочетете статията →
           </Link>
-          {ctaHref && post.cta_link_label ? (
+          {ctaHref && ctaLabel ? (
             <Link href={ctaHref} className="text-boutique-sage-deep">
-              {post.cta_link_label} →
+              {ctaLabel} →
             </Link>
+          ) : post.cta_link_label?.trim() ? (
+            <span className="text-boutique-sage-deep">{post.cta_link_label.trim()}</span>
           ) : null}
         </div>
       </div>
@@ -136,6 +140,14 @@ export default async function BlogPage({ searchParams }: Props) {
       ? categoryById.get(post.cta_category_id)
       : null;
     return ctaCategory ? getCategoryListingHref(ctaCategory) : null;
+  };
+  const getCtaLabel = (post: BlogPostRow) => {
+    const label = post.cta_link_label?.trim();
+    if (label) return label;
+    const ctaCategory = post.cta_category_id
+      ? categoryById.get(post.cta_category_id)
+      : null;
+    return ctaCategory?.name ?? null;
   };
   const filtered = posts
     .filter((post) => {
@@ -201,6 +213,7 @@ export default async function BlogPage({ searchParams }: Props) {
                   key={post.id}
                   post={post}
                   ctaHref={getCtaHref(post)}
+                  ctaLabel={getCtaLabel(post)}
                 />
               ))}
             </div>
@@ -300,13 +313,17 @@ export default async function BlogPage({ searchParams }: Props) {
                           >
                             Прочетете статията →
                           </Link>
-                          {getCtaHref(post) && post.cta_link_label ? (
+                          {getCtaHref(post) && getCtaLabel(post) ? (
                             <Link
                               href={getCtaHref(post) ?? "/produkti"}
                               className="text-boutique-sage-deep"
                             >
-                              {post.cta_link_label} →
+                              {getCtaLabel(post)} →
                             </Link>
+                          ) : post.cta_link_label?.trim() ? (
+                            <span className="text-boutique-sage-deep">
+                              {post.cta_link_label.trim()}
+                            </span>
                           ) : null}
                         </div>
                       </div>
