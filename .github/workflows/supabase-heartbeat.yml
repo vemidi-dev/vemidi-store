@@ -1,0 +1,55 @@
+name: Supabase Heartbeat
+
+on:
+  schedule:
+    # 09:15 EEST / 08:15 EET on Monday, Wednesday, and Friday.
+    - cron: "15 6 * * 1,3,5"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  heartbeat:
+    name: Heartbeat ${{ matrix.target }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: store
+          - target: test
+
+    steps:
+      - name: Read-only heartbeat
+        env:
+          STORE_SUPABASE_URL: ${{ secrets.STORE_SUPABASE_URL }}
+          STORE_SUPABASE_ANON_KEY: ${{ secrets.STORE_SUPABASE_ANON_KEY }}
+          TEST_SUPABASE_URL: ${{ secrets.TEST_SUPABASE_URL }}
+          TEST_SUPABASE_ANON_KEY: ${{ secrets.TEST_SUPABASE_ANON_KEY }}
+          TARGET: ${{ matrix.target }}
+        run: |
+          set -euo pipefail
+
+          if [ "$TARGET" = "store" ]; then
+            SUPABASE_URL="$STORE_SUPABASE_URL"
+            SUPABASE_ANON_KEY="$STORE_SUPABASE_ANON_KEY"
+          else
+            SUPABASE_URL="$TEST_SUPABASE_URL"
+            SUPABASE_ANON_KEY="$TEST_SUPABASE_ANON_KEY"
+          fi
+
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "::error::Missing Supabase heartbeat secrets for $TARGET."
+            exit 1
+          fi
+
+          curl --fail-with-body --silent --show-error \
+            --request GET \
+            --header "apikey: $SUPABASE_ANON_KEY" \
+            --header "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            --header "Accept: application/json" \
+            "$SUPABASE_URL/rest/v1/products?select=id&limit=1" \
+            > /tmp/supabase-heartbeat.json
+
+          echo "Supabase heartbeat completed for ${{ matrix.target }}."
