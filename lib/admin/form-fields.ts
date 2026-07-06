@@ -35,6 +35,7 @@ export const adminFormFields = {
     ogDescription: "og_description",
     status: "status",
     visibility: "visibility",
+    upsellSectionTitle: "upsell_section_title",
     upsellTargetIds: "upsell_target_ids[]",
     upsellEnabledIds: "upsell_enabled_ids",
     upsellTitles: "upsell_offer_title[]",

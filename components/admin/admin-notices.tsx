@@ -26,6 +26,7 @@ const errorLabels: Record<keyof AdminData["errors"], string> = {
   homeFeaturedProducts: "избрани продукти за началната страница",
   relatedProducts: "свързани продукти",
   productUpsellOffers: "upsell предложения",
+  productUpsellSettings: "upsell настройки",
   categoryRelatedCategories: "свързани категории",
   optionGroups: "универсални опции",
   optionValues: "стойности на опции",

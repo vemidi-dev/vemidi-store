@@ -168,6 +168,7 @@ export function ProductListPanel({
     featuredProductById,
     relatedProductIdsByProductId,
     upsellOffersByProductId,
+    upsellSettingsByProductId,
     optionGroupsByProductId,
     optionValuesByGroupId,
     landingPagesByProductId,
@@ -791,6 +792,9 @@ export function ProductListPanel({
                         sourceProductId={product.id}
                         products={products}
                         offers={upsellOffersByProductId.get(product.id) ?? []}
+                        sectionTitle={
+                          upsellSettingsByProductId.get(product.id)?.section_title ?? ""
+                        }
                         helperClassName={adminHelperClass}
                         fieldClassName={adminFieldClass}
                       />

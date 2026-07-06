@@ -2,7 +2,22 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { adminFormFields } from "@/lib/admin/form-fields";
-import { parseProductUpsellOffersFromFormData } from "@/lib/admin/product-upsell-admin";
+import {
+  parseProductUpsellOffersFromFormData,
+  parseProductUpsellSettingsFromFormData,
+} from "@/lib/admin/product-upsell-admin";
+
+test("parseProductUpsellSettingsFromFormData keeps section title", () => {
+  const formData = new FormData();
+  formData.append(
+    adminFormFields.product.upsellSectionTitle,
+    "  Допълнете бебешкия комплект  ",
+  );
+
+  assert.deepEqual(parseProductUpsellSettingsFromFormData(formData), {
+    sectionTitle: "Допълнете бебешкия комплект",
+  });
+});
 
 test("parseProductUpsellOffersFromFormData keeps selected offers with quantity limits", () => {
   const formData = new FormData();

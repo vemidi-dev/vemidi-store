@@ -27,6 +27,13 @@ export type ProductUpsellOfferRow = {
   updated_at?: string | null;
 };
 
+export type ProductUpsellSettingsRow = {
+  source_product_id: string;
+  section_title: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+};
+
 export type ProductUpsellOffer = {
   id: string;
   sourceProductId: string;
@@ -38,6 +45,11 @@ export type ProductUpsellOffer = {
   maxQuantity: number;
   sortOrder: number;
   product: Product;
+};
+
+export type ProductUpsellSection = {
+  title: string | null;
+  offers: ProductUpsellOffer[];
 };
 
 export function normalizeUpsellQuantity(value: unknown, fallback = 1): number {
@@ -133,4 +145,24 @@ export async function getActiveProductUpsellOffers(
     const product = productById.get(offer.upsell_product_id);
     return product ? [mapProductUpsellOffer(offer, product)] : [];
   });
+}
+
+export async function getProductUpsellSectionTitle(
+  supabase: SupabaseClient,
+  sourceProductId: string,
+): Promise<string | null> {
+  const { data, error } = await supabase
+    .from("product_upsell_settings")
+    .select("section_title")
+    .eq("source_product_id", sourceProductId)
+    .maybeSingle();
+
+  if (error) {
+    return null;
+  }
+
+  const title = typeof data?.section_title === "string"
+    ? data.section_title.trim()
+    : "";
+  return title || null;
 }

@@ -11,6 +11,7 @@ type ProductUpsellOffersEditorProps = {
   sourceProductId: string;
   products: ProductRow[];
   offers: ProductUpsellOfferRow[];
+  sectionTitle: string;
   fieldClassName: string;
   helperClassName: string;
 };
@@ -37,6 +38,7 @@ export function ProductUpsellOffersEditor({
   sourceProductId,
   products,
   offers,
+  sectionTitle,
   fieldClassName,
   helperClassName,
 }: ProductUpsellOffersEditorProps) {
@@ -103,6 +105,20 @@ export function ProductUpsellOffersEditor({
         Изберете продукти, които да се предлагат като добавка. Търсенето работи
         по име, код и slug. Специалната цена важи само през upsell flow.
       </p>
+
+      <label className="block text-xs font-medium text-boutique-ink">
+        Заглавие на upsell секцията
+        <input
+          name={adminFormFields.product.upsellSectionTitle}
+          defaultValue={sectionTitle}
+          className={fieldClassName}
+          maxLength={120}
+          placeholder="Добавете към подаръка"
+        />
+        <span className="mt-1 block text-[11px] font-normal text-boutique-muted">
+          Ако е празно, в магазина ще се използва „Добавете към подаръка“.
+        </span>
+      </label>
 
       <div className="grid gap-3 rounded-lg border border-boutique-line/70 bg-white p-3 lg:grid-cols-[minmax(0,1fr)_16rem]">
         <label className="text-xs font-medium text-boutique-ink">

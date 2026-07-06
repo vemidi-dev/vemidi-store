@@ -38,6 +38,7 @@ type ProductDetailViewProps = {
   primaryLandingPage: ProductLandingPage | null;
   productFaqItems: FaqItem[];
   upsellOffers?: ProductUpsellOffer[];
+  upsellSectionTitle?: string | null;
   attribution?: CampaignAttribution;
   initialOptionSelections?: ProductOptionSelection[];
   productSeoContext: ProductSeoContext;
@@ -55,6 +56,7 @@ export function ProductDetailView({
   primaryLandingPage,
   productFaqItems,
   upsellOffers = [],
+  upsellSectionTitle = null,
   attribution,
   initialOptionSelections = [],
   productSeoContext,
@@ -190,6 +192,7 @@ export function ProductDetailView({
                 layout="embedded"
                 product={product}
                 upsellOffers={upsellOffers}
+                upsellSectionTitle={upsellSectionTitle}
               />
 
               <ProductLandingPageCta landingPage={primaryLandingPage} />

@@ -102,6 +102,12 @@ function parseCartLineUpsell(value: unknown): CartLineUpsell | undefined {
     typeof value.specialPrice === "number" && Number.isFinite(value.specialPrice)
       ? Math.max(0, value.specialPrice)
       : null;
+  const maxQuantityPerSource =
+    typeof value.maxQuantityPerSource === "number" &&
+    Number.isFinite(value.maxQuantityPerSource) &&
+    value.maxQuantityPerSource >= 1
+      ? Math.floor(value.maxQuantityPerSource)
+      : undefined;
 
   if (!offerId || !sourceProductId || !sourceProductTitle || originalPrice === null || specialPrice === null) {
     return undefined;
@@ -113,6 +119,7 @@ function parseCartLineUpsell(value: unknown): CartLineUpsell | undefined {
     sourceProductTitle,
     originalPrice,
     specialPrice,
+    ...(maxQuantityPerSource !== undefined ? { maxQuantityPerSource } : {}),
   };
 }
 

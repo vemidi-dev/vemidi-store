@@ -26,8 +26,8 @@ import {
   mergeCartLineForAdd,
   prepareCartLineInput,
 } from "@/lib/cart/prepare-cart-line";
-import { normalizeCartQuantityWithLimit } from "@/lib/cart/quantity-limits";
 import { removeCartLineWithLinkedUpsells } from "@/lib/cart/remove-cart-line";
+import { updateCartLineQuantityWithLinkedUpsells } from "@/lib/cart/update-cart-line-quantity";
 import {
   getCartTotals,
   parseStoredCart,
@@ -268,15 +268,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
   );
 
   const setQuantity = useCallback((lineId: string, quantity: number) => {
-    setLines((prev) => {
-      const line = prev.find((entry) => entry.lineId === lineId);
-      const next = normalizeCartQuantityWithLimit(quantity, line?.maxCartQuantity);
-      if (next === 0) {
-        return removeCartLineWithLinkedUpsells(prev, lineId);
-      }
-
-      return prev.map((l) => (l.lineId === lineId ? { ...l, quantity: next } : l));
-    });
+    setLines((prev) =>
+      updateCartLineQuantityWithLinkedUpsells(prev, lineId, quantity),
+    );
   }, []);
 
   const removeLine = useCallback((lineId: string) => {

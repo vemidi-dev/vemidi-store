@@ -7,7 +7,10 @@ import { getCampaignProductPageOptionSelections } from "@/lib/campaign-handoff";
 import { filterStorefrontVisibleCategories } from "@/lib/category-visibility";
 import { getProductFaqItems } from "@/lib/faq/repository";
 import { getPrimaryActiveProductLandingPage } from "@/lib/product-landing/repository";
-import { getActiveProductUpsellOffers } from "@/lib/storefront/product-upsells";
+import {
+  getActiveProductUpsellOffers,
+  getProductUpsellSectionTitle,
+} from "@/lib/storefront/product-upsells";
 import {
   buildCanonicalProductRedirectPath,
 } from "@/lib/product-url";
@@ -79,10 +82,16 @@ export default async function ProductDetailPage({
 
   const product = resolution.product;
   const supabase = await createClient();
-  const [primaryLandingPage, productFaqItems, upsellOffers] = await Promise.all([
+  const [
+    primaryLandingPage,
+    productFaqItems,
+    upsellOffers,
+    upsellSectionTitle,
+  ] = await Promise.all([
     supabase ? getPrimaryActiveProductLandingPage(supabase, product.id) : null,
     getProductFaqItems(product.id, supabase),
     supabase ? getActiveProductUpsellOffers(supabase, product.id) : [],
+    supabase ? getProductUpsellSectionTitle(supabase, product.id) : null,
   ]);
   const attribution = buildCampaignAttribution({
     campaign: Array.isArray(query.campaign) ? query.campaign[0] : query.campaign,
@@ -140,6 +149,7 @@ export default async function ProductDetailPage({
       primaryLandingPage={primaryLandingPage}
       productFaqItems={productFaqItems}
       upsellOffers={upsellOffers}
+      upsellSectionTitle={upsellSectionTitle}
       attribution={attribution}
       initialOptionSelections={initialOptionSelections}
       productSeoContext={productSeoContext}

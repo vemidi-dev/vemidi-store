@@ -50,6 +50,7 @@ import {
 type ProductDetailAddToCartProps = {
   product: Product;
   upsellOffers?: ProductUpsellOffer[];
+  upsellSectionTitle?: string | null;
   attribution?: CampaignAttribution;
   initialOptionSelections?: ProductOptionSelection[];
   layout?: "card" | "embedded";
@@ -66,6 +67,7 @@ function clampUpsellQuantity(value: number, maxQuantity: number) {
 export function ProductDetailAddToCart({
   product,
   upsellOffers = [],
+  upsellSectionTitle = null,
   attribution,
   initialOptionSelections = [],
   layout = "card",
@@ -482,6 +484,7 @@ export function ProductDetailAddToCart({
               sourceProductTitle: product.title,
               originalPrice: offer.product.price,
               specialPrice: offer.specialPrice,
+              maxQuantityPerSource: offer.maxQuantity,
             },
           },
         );
@@ -853,7 +856,7 @@ export function ProductDetailAddToCart({
             id="product-upsell-title"
             className="mt-1 font-heading text-2xl text-boutique-ink"
           >
-            Добавете към подаръка
+            {upsellSectionTitle?.trim() || "Добавете към подаръка"}
           </h2>
           <div className="mt-4 grid gap-3">
             {upsellOffers.map((offer) => {

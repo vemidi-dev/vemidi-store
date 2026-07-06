@@ -196,6 +196,7 @@ test("parseStoredCart preserves valid upsell metadata", () => {
         sourceProductTitle: "Бебешки албум",
         originalPrice: 9,
         specialPrice: 6,
+        maxQuantityPerSource: 2,
       },
     },
   ]);
@@ -204,6 +205,7 @@ test("parseStoredCart preserves valid upsell metadata", () => {
 
   assert.equal(line.upsell?.offerId, "22222222-2222-4222-8222-222222222222");
   assert.equal(line.upsell?.sourceProductTitle, "Бебешки албум");
+  assert.equal(line.upsell?.maxQuantityPerSource, 2);
   assert.equal(line.lineId, makeCartLineId(
     "11111111-1111-4111-8111-111111111111",
     undefined,

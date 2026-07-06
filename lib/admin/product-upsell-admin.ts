@@ -1,7 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { adminFormFields } from "@/lib/admin/form-fields";
-import type { ProductUpsellOfferRow } from "@/lib/storefront/product-upsells";
+import type {
+  ProductUpsellOfferRow,
+  ProductUpsellSettingsRow,
+} from "@/lib/storefront/product-upsells";
 
 export type ParsedProductUpsellOffer = {
   upsellProductId: string;
@@ -11,6 +14,10 @@ export type ParsedProductUpsellOffer = {
   suggestedQuantity: number;
   maxQuantity: number;
   sortOrder: number;
+};
+
+export type ParsedProductUpsellSettings = {
+  sectionTitle: string | null;
 };
 
 function getArray(formData: FormData, key: string) {
@@ -104,6 +111,53 @@ export function parseProductUpsellOffersFromFormData(formData: FormData): {
   return { offers, error: null };
 }
 
+export function parseProductUpsellSettingsFromFormData(
+  formData: FormData,
+): ParsedProductUpsellSettings {
+  const rawTitle = String(
+    formData.get(adminFormFields.product.upsellSectionTitle) ?? "",
+  ).trim();
+
+  return {
+    sectionTitle: rawTitle.slice(0, 120) || null,
+  };
+}
+
+export async function syncProductUpsellSettings(
+  supabase: SupabaseClient,
+  sourceProductId: string,
+  settings: ParsedProductUpsellSettings,
+): Promise<string | null> {
+  if (!settings.sectionTitle) {
+    const { error } = await supabase
+      .from("product_upsell_settings")
+      .delete()
+      .eq("source_product_id", sourceProductId);
+
+    if (error) {
+      return error.message.includes("product_upsell_settings")
+        ? "Липсва миграцията product_upsell_settings.sql в Supabase."
+        : "Заглавието на upsell секцията не беше обновено.";
+    }
+    return null;
+  }
+
+  const { error } = await supabase
+    .from("product_upsell_settings")
+    .upsert({
+      source_product_id: sourceProductId,
+      section_title: settings.sectionTitle,
+    });
+
+  if (error) {
+    return error.message.includes("product_upsell_settings")
+      ? "Липсва миграцията product_upsell_settings.sql в Supabase."
+      : "Заглавието на upsell секцията не беше запазено.";
+  }
+
+  return null;
+}
+
 export async function syncProductUpsellOffers(
   supabase: SupabaseClient,
   sourceProductId: string,
@@ -179,4 +233,10 @@ export function buildProductUpsellOfferMap(
     byProductId.set(row.source_product_id, offers);
   });
   return byProductId;
+}
+
+export function buildProductUpsellSettingsMap(
+  rows: ProductUpsellSettingsRow[],
+): Map<string, ProductUpsellSettingsRow> {
+  return new Map(rows.map((row) => [row.source_product_id, row]));
 }

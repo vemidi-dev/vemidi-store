@@ -10,6 +10,7 @@ export type CartLineUpsell = {
   sourceProductTitle: string;
   originalPrice: number;
   specialPrice: number;
+  maxQuantityPerSource?: number;
 };
 
 export type CartLine = {

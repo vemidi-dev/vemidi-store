@@ -207,7 +207,8 @@ export function CartPanel({ content }: { content: CartPageContent }) {
                                         undefined,
                                         {
                                           unitPrice: offer.specialPrice,
-                                          maxCartQuantity: offer.maxQuantity,
+                                          maxCartQuantity:
+                                            offer.maxQuantity * line.quantity,
                                           suppressToast: true,
                                           upsell: {
                                             offerId: offer.id,
@@ -215,6 +216,7 @@ export function CartPanel({ content }: { content: CartPageContent }) {
                                             sourceProductTitle: line.title,
                                             originalPrice: offer.product.price,
                                             specialPrice: offer.specialPrice,
+                                            maxQuantityPerSource: offer.maxQuantity,
                                           },
                                         },
                                       )
@@ -226,12 +228,6 @@ export function CartPanel({ content }: { content: CartPageContent }) {
                                 </div>
                               );
                             })}
-                            <Link
-                              href={`${getProductPath(line.slug)}#product-upsell-title`}
-                              className="text-xs font-semibold text-boutique-sage-deep underline-offset-4 hover:underline"
-                            >
-                              Разгледайте на продуктовата страница
-                            </Link>
                           </div>
                         </details>
                       ) : null}

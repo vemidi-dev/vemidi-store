@@ -44,7 +44,9 @@ import { parseProductContentFromFormData } from "@/lib/admin/product-content";
 import { parseProductPageContentFromFormData } from "@/lib/admin/product-page-content";
 import {
   parseProductUpsellOffersFromFormData,
+  parseProductUpsellSettingsFromFormData,
   syncProductUpsellOffers,
+  syncProductUpsellSettings,
 } from "@/lib/admin/product-upsell-admin";
 import { adminFormFields } from "@/lib/admin/form-fields";
 import { normalizeProductCardBadge } from "@/lib/product-card";
@@ -905,6 +907,7 @@ export async function updateProduct(formData: FormData) {
     parseProductContentFromFormData(formData);
   const { offers: upsellOffers, error: upsellOffersError } =
     parseProductUpsellOffersFromFormData(formData);
+  const upsellSettings = parseProductUpsellSettingsFromFormData(formData);
 
   if (slugError) {
     redirectWithProductEdit("error", slugError, id);
@@ -1021,6 +1024,15 @@ export async function updateProduct(formData: FormData) {
   const upsellSyncError = await syncProductUpsellOffers(supabase, id, upsellOffers);
   if (upsellSyncError) {
     redirectWithProductEdit("error", upsellSyncError, id);
+  }
+
+  const upsellSettingsSyncError = await syncProductUpsellSettings(
+    supabase,
+    id,
+    upsellSettings,
+  );
+  if (upsellSettingsSyncError) {
+    redirectWithProductEdit("error", upsellSettingsSyncError, id);
   }
 
   const faqSyncError = await syncProductFaqAssociations(supabase, id, {
