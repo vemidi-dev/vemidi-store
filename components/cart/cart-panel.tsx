@@ -269,7 +269,9 @@ export function CartPanel({ content }: { content: CartPageContent }) {
                       </div>
                       {atLimit ? (
                         <p className="mt-2 text-xs text-boutique-muted">
-                          Достигнахте наличното количество за този продукт.
+                          {line.upsell
+                            ? "Към тази оферта е достигнат максималният брой. Допълнителни бройки може да добавите отделно."
+                            : "Достигнахте наличното количество за този продукт."}
                         </p>
                       ) : null}
 
