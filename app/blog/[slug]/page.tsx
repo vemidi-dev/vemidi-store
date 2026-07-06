@@ -127,13 +127,20 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                   </p>
                 ) : null}
               </div>
-              {recommendation.href && recommendation.linkLabel ? (
+              {recommendation.href ? (
                 <Link
                   href={recommendation.href}
                   className="inline-flex rounded-full bg-boutique-ink px-6 py-3 text-sm font-semibold text-boutique-paper transition hover:bg-boutique-accent"
                 >
-                  {recommendation.linkLabel} →
+                  {recommendation.linkLabel ??
+                    recommendation.category?.name ??
+                    "Вижте още"}{" "}
+                  →
                 </Link>
+              ) : recommendation.linkLabel ? (
+                <p className="text-sm font-semibold text-boutique-ink">
+                  {recommendation.linkLabel}
+                </p>
               ) : null}
             </div>
 

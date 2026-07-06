@@ -89,21 +89,11 @@ function validateContentFields({
   }
 }
 
-function getBlogCta(formData: FormData, tab: AdminTab) {
-  const ctaLinkLabel = getOptionalString(formData, "cta_link_label");
-  const ctaCategoryId = getOptionalString(formData, "cta_category_id");
-
-  if (Boolean(ctaLinkLabel) !== Boolean(ctaCategoryId)) {
-    redirectWith(
-      "error",
-      ctaLinkLabel
-        ? "Изберете категория за линка под статията или изтрийте името на линка."
-        : "Добавете име на линка под статията или изберете „Без линк към категория“.",
-      tab,
-    );
-  }
-
-  return { ctaLinkLabel, ctaCategoryId };
+function getBlogCta(formData: FormData, _tab: AdminTab) {
+  return {
+    ctaLinkLabel: getOptionalString(formData, "cta_link_label"),
+    ctaCategoryId: getOptionalString(formData, "cta_category_id"),
+  };
 }
 
 function getBlogProductIds(formData: FormData) {

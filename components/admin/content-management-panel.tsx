@@ -148,7 +148,9 @@ export function ContentManagementPanel(props: ContentManagementPanelProps) {
                     </optgroup>
                   ) : null}
                 </select>
-                <p className={adminHelperClass}>Изберете повод или продуктова категория за препоръките под статията.</p>
+                <p className={adminHelperClass}>
+                  По избор: изберете повод или категория, за да се покаже кликабелен линк. Текстът по-горе се показва и без зададен линк.
+                </p>
               </label>
               <div className="rounded-xl border border-boutique-line bg-boutique-bg/40 p-4 md:col-span-2">
                 <h3 className="text-sm font-semibold text-boutique-ink">

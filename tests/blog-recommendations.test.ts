@@ -84,17 +84,32 @@ test("blog recommendation can show products without a link button", () => {
   assert.equal(recommendation?.products[0]?.id, "product-1");
 });
 
-test("blog recommendation is hidden without link or selected products", () => {
-  assert.equal(
-    resolveBlogRecommendation(
-      { cta_category_id: "occasion-1", cta_link_label: null },
-      catalog,
-    ),
-    null,
+test("blog recommendation can show link text without a clickable link", () => {
+  const recommendation = resolveBlogRecommendation(
+    { cta_category_id: null, cta_link_label: "Вижте още" },
+    catalog,
+    ["product-1"],
   );
+
+  assert.equal(recommendation?.href, null);
+  assert.equal(recommendation?.linkLabel, "Вижте още");
+  assert.equal(recommendation?.products[0]?.id, "product-1");
+});
+
+test("blog recommendation can show category link without label text", () => {
+  const recommendation = resolveBlogRecommendation(
+    { cta_category_id: "occasion-1", cta_link_label: null },
+    catalog,
+  );
+
+  assert.equal(recommendation?.href, "/povodi/krashtene");
+  assert.equal(recommendation?.linkLabel, null);
+});
+
+test("blog recommendation is hidden without content", () => {
   assert.equal(
     resolveBlogRecommendation(
-      { cta_category_id: null, cta_link_label: "Вижте още" },
+      { cta_category_id: null, cta_link_label: null },
       catalog,
     ),
     null,

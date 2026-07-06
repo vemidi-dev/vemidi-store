@@ -28,12 +28,12 @@ export function resolveBlogRecommendation(
     .map((productId) => productById.get(productId) ?? null)
     .filter((product): product is StorefrontProduct => product !== null);
 
-  if (!products.length && (!category || !linkLabel)) return null;
+  if (!products.length && !linkLabel && !category) return null;
 
   return {
     category,
-    href: category && linkLabel ? getCategoryListingHref(category) : null,
-    linkLabel: category && linkLabel ? linkLabel : null,
+    href: category ? getCategoryListingHref(category) : null,
+    linkLabel: linkLabel ?? null,
     products,
   };
 }
