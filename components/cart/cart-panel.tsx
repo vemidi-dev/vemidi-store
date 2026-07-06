@@ -109,7 +109,7 @@ export function CartPanel({ content }: { content: CartPageContent }) {
 
                 return (
                 <li key={line.lineId} className="p-4 sm:p-5">
-                  <div className="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-4 sm:grid-cols-[7rem_minmax(0,1fr)_auto]">
+                  <div className="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-4 sm:grid-cols-[7rem_minmax(0,1fr)_8.75rem]">
                     <Link
                       href={getProductPath(line.slug)}
                       className="relative aspect-square overflow-hidden rounded-xl border border-boutique-line bg-boutique-bg"
@@ -268,7 +268,7 @@ export function CartPanel({ content }: { content: CartPageContent }) {
                         </button>
                       </div>
                       {atLimit ? (
-                        <p className="mt-2 text-xs text-boutique-muted">
+                        <p className="mt-2 max-w-36 text-right text-xs leading-5 text-boutique-muted">
                           {line.upsell
                             ? "Към тази оферта е достигнат максималният брой. Допълнителни бройки може да добавите отделно."
                             : "Достигнахте наличното количество за този продукт."}
