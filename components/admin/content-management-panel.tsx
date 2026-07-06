@@ -9,14 +9,19 @@ import {
   updateEvent,
 } from "@/app/admin/content-actions";
 import { ImageFileInput } from "@/components/admin/image-file-input";
+import { RelatedProductPicker } from "@/components/admin/related-product-picker";
 import { adminFieldClass, adminHelperClass, adminPanelClass } from "@/components/admin/styles";
+import { adminFormFields } from "@/lib/admin/form-fields";
 import type { BlogPostRow, CategoryRow, EventRow } from "@/lib/admin/types";
+import type { PromotionProductOption } from "@/lib/promotion-admin";
 
 type ContentManagementPanelProps =
   | {
       kind: "blog";
       items: BlogPostRow[];
       categories: CategoryRow[];
+      products: PromotionProductOption[];
+      productIdsByPostId: Map<string, string[]>;
       error: { message: string } | null;
     }
   | { kind: "events"; items: EventRow[]; error: { message: string } | null };
@@ -37,6 +42,19 @@ export function ContentManagementPanel(props: ContentManagementPanelProps) {
   const singular = isBlog ? "публикация" : "събитие";
   const productCategories = props.kind === "blog"
     ? props.categories.filter((category) => category.category_type === "product")
+    : [];
+  const occasionCategories = props.kind === "blog"
+    ? props.categories.filter((category) => category.category_type === "occasion")
+    : [];
+  const recommendationCategories = props.kind === "blog"
+    ? [...occasionCategories, ...productCategories]
+    : [];
+  const productPickerCategories = props.kind === "blog"
+    ? props.categories.map((category) => ({
+        id: category.id,
+        name: category.name,
+        categoryType: category.category_type,
+      }))
     : [];
   const blogCategories = props.kind === "blog"
     ? [...new Set(props.items.map((item) => item.category).filter(Boolean))] as string[]
@@ -115,12 +133,41 @@ export function ContentManagementPanel(props: ContentManagementPanelProps) {
                 Линкът да води към
                 <select name="cta_category_id" className={adminFieldClass} defaultValue="">
                   <option value="">Без линк към категория</option>
-                  {productCategories.map((category) => (
-                    <option key={category.id} value={category.id}>{category.name}</option>
-                  ))}
+                  {occasionCategories.length ? (
+                    <optgroup label="По повод">
+                      {occasionCategories.map((category) => (
+                        <option key={category.id} value={category.id}>{category.name}</option>
+                      ))}
+                    </optgroup>
+                  ) : null}
+                  {productCategories.length ? (
+                    <optgroup label="Категории">
+                      {productCategories.map((category) => (
+                        <option key={category.id} value={category.id}>{category.name}</option>
+                      ))}
+                    </optgroup>
+                  ) : null}
                 </select>
-                <p className={adminHelperClass}>Избира се категория от продуктовия каталог.</p>
+                <p className={adminHelperClass}>Изберете повод или продуктова категория за препоръките под статията.</p>
               </label>
+              <div className="rounded-xl border border-boutique-line bg-boutique-bg/40 p-4 md:col-span-2">
+                <h3 className="text-sm font-semibold text-boutique-ink">
+                  Показани продукти под статията
+                </h3>
+                <p className={adminHelperClass}>
+                  Изберете конкретните продукти, които да се показват. Филтрите по категория и повод помагат за по-бърз избор.
+                </p>
+                <div className="mt-3">
+                  <RelatedProductPicker
+                    products={props.products}
+                    categories={productPickerCategories}
+                    excludeProductId=""
+                    selectedRelatedIds={[]}
+                    hiddenFieldName={adminFormFields.blog.productIds}
+                    pageSize={30}
+                  />
+                </div>
+              </div>
             </>
           ) : (
             <>
@@ -228,7 +275,7 @@ export function ContentManagementPanel(props: ContentManagementPanelProps) {
               const blogPost = isBlog ? (item as BlogPostRow) : null;
               const currentCtaCategoryIsMissing = Boolean(
                 blogPost?.cta_category_id &&
-                !productCategories.some((category) => category.id === blogPost.cta_category_id),
+                !recommendationCategories.some((category) => category.id === blogPost.cta_category_id),
               );
               return (
                 <article key={item.id} className="rounded-xl border border-boutique-line bg-boutique-bg p-5">
@@ -295,9 +342,20 @@ export function ContentManagementPanel(props: ContentManagementPanelProps) {
                                   Текущата категория (провери типа ѝ)
                                 </option>
                               ) : null}
-                              {productCategories.map((category) => (
-                                <option key={category.id} value={category.id}>{category.name}</option>
-                              ))}
+                              {occasionCategories.length ? (
+                                <optgroup label="По повод">
+                                  {occasionCategories.map((category) => (
+                                    <option key={category.id} value={category.id}>{category.name}</option>
+                                  ))}
+                                </optgroup>
+                              ) : null}
+                              {productCategories.length ? (
+                                <optgroup label="Категории">
+                                  {productCategories.map((category) => (
+                                    <option key={category.id} value={category.id}>{category.name}</option>
+                                  ))}
+                                </optgroup>
+                              ) : null}
                             </select>
                             {currentCtaCategoryIsMissing ? (
                               <p className="mt-2 text-xs text-amber-700">
@@ -305,6 +363,24 @@ export function ContentManagementPanel(props: ContentManagementPanelProps) {
                               </p>
                             ) : null}
                           </label>
+                          <div className="rounded-xl border border-boutique-line bg-boutique-bg/40 p-4 md:col-span-2">
+                            <h3 className="text-sm font-semibold text-boutique-ink">
+                              Показани продукти под статията
+                            </h3>
+                            <p className={adminHelperClass}>
+                              Изберете конкретните продукти, които да се показват. Филтрите по категория и повод помагат за по-бърз избор.
+                            </p>
+                            <div className="mt-3">
+                              <RelatedProductPicker
+                                products={props.products}
+                                categories={productPickerCategories}
+                                excludeProductId=""
+                                selectedRelatedIds={props.productIdsByPostId.get(item.id) ?? []}
+                                hiddenFieldName={adminFormFields.blog.productIds}
+                                pageSize={30}
+                              />
+                            </div>
+                          </div>
                         </>
                       ) : event ? (
                         <>

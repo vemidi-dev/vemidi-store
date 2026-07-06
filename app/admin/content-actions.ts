@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { getFile, getOptionalString, getString, isChecked, normalizeSlug } from "@/lib/admin/form-data";
+import { adminFormFields } from "@/lib/admin/form-fields";
 import {
   deleteProductImage,
   getProductImagePath,
@@ -103,6 +104,65 @@ function getBlogCta(formData: FormData, tab: AdminTab) {
   }
 
   return { ctaLinkLabel, ctaCategoryId };
+}
+
+function getBlogProductIds(formData: FormData) {
+  const seen = new Set<string>();
+  return formData
+    .getAll(adminFormFields.blog.productIds)
+    .map((value) => String(value ?? "").trim())
+    .filter((value) => {
+      if (!value || seen.has(value)) {
+        return false;
+      }
+      seen.add(value);
+      return true;
+    });
+}
+
+function isMissingBlogPostProductsTable(error: { message?: string } | null) {
+  return Boolean(error?.message?.includes("blog_post_products"));
+}
+
+async function syncBlogPostProducts(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  postId: string,
+  productIds: string[],
+) {
+  if (!supabase) {
+    return "Supabase не е конфигуриран.";
+  }
+
+  const { error: deleteError } = await supabase
+    .from("blog_post_products")
+    .delete()
+    .eq("blog_post_id", postId);
+
+  if (deleteError) {
+    return isMissingBlogPostProductsTable(deleteError)
+      ? "Липсва миграцията blog_post_products.sql в Supabase."
+      : "Продуктите към статията не бяха обновени.";
+  }
+
+  if (productIds.length === 0) {
+    return null;
+  }
+
+  const { error: insertError } = await supabase.from("blog_post_products").insert(
+    productIds.map((productId, index) => ({
+      blog_post_id: postId,
+      product_id: productId,
+      sort_order: index,
+    })),
+  );
+
+  if (insertError) {
+    return isMissingBlogPostProductsTable(insertError)
+      ? "Липсва миграцията blog_post_products.sql в Supabase."
+      : "Продуктите към статията не бяха запазени.";
+  }
+
+  return null;
 }
 
 function redirectWith(kind: "success" | "error", message: string, tab: AdminTab): never {
@@ -207,6 +267,7 @@ async function createContent(formData: FormData, kind: ContentKind) {
 
   if (kind === "blog") {
     const { ctaLinkLabel, ctaCategoryId } = getBlogCta(formData, tab);
+    row.__blogProductIds = getBlogProductIds(formData);
     row.category = getOptionalString(formData, "category");
     row.author = getOptionalString(formData, "author") ?? "VeMiDi crafts";
     row.read_minutes = parseOptionalNumber(formData, "read_minutes", true);
@@ -255,12 +316,32 @@ async function createContent(formData: FormData, kind: ContentKind) {
     }
   }
 
-  const { error } = await supabase.from(config[kind].table).insert(row);
+  const blogProductIds = Array.isArray(row.__blogProductIds)
+    ? (row.__blogProductIds as string[])
+    : [];
+  delete row.__blogProductIds;
+
+  const { data: inserted, error } = await supabase
+    .from(config[kind].table)
+    .insert(row)
+    .select("id")
+    .maybeSingle();
   if (error) {
     if (uploaded) {
       await deleteProductImage(supabase, uploaded.path).catch(() => undefined);
     }
     redirectWith("error", `Съдържанието не беше добавено: ${error.message}`, tab);
+  }
+
+  if (kind === "blog" && inserted?.id) {
+    const syncError = await syncBlogPostProducts(
+      supabase,
+      String(inserted.id),
+      blogProductIds,
+    );
+    if (syncError) {
+      redirectWith("error", syncError, tab);
+    }
   }
 
   revalidateContent(kind, slug);
@@ -309,6 +390,7 @@ async function updateContent(
 
   if (kind === "blog") {
     const { ctaLinkLabel, ctaCategoryId } = getBlogCta(formData, tab);
+    row.__blogProductIds = getBlogProductIds(formData);
     row.category = getOptionalString(formData, "category");
     row.author = getOptionalString(formData, "author") ?? "VeMiDi crafts";
     row.read_minutes = parseOptionalNumber(formData, "read_minutes", true);
@@ -359,6 +441,11 @@ async function updateContent(
     }
   }
 
+  const blogProductIds = Array.isArray(row.__blogProductIds)
+    ? (row.__blogProductIds as string[])
+    : [];
+  delete row.__blogProductIds;
+
   const { error } = await supabase.from(config[kind].table).update(row).eq("id", id);
   if (error) {
     if (uploaded) {
@@ -371,6 +458,13 @@ async function updateContent(
     const oldPath = getProductImagePath(previousRow.image_url);
     if (oldPath) {
       await deleteProductImage(supabase, oldPath).catch(() => undefined);
+    }
+  }
+
+  if (kind === "blog") {
+    const syncError = await syncBlogPostProducts(supabase, id, blogProductIds);
+    if (syncError) {
+      redirectWith("error", syncError, tab);
     }
   }
 

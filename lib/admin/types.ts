@@ -80,6 +80,12 @@ export type BlogPostRow = {
   updated_at: string;
 };
 
+export type BlogPostProductRow = {
+  blog_post_id: string;
+  product_id: string;
+  sort_order: number;
+};
+
 export type EventRow = {
   id: string;
   title: string;

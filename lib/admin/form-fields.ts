@@ -79,6 +79,9 @@ export const adminFormFields = {
     homeSortOrder: "home_sort_order",
     relatedProductIds: "related_product_ids",
   },
+  blog: {
+    productIds: "blog_product_ids",
+  },
   colorPalette: {
     groupId: "group_id",
     label: "label",

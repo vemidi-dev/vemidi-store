@@ -513,7 +513,15 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   if (activeTab === "blog" || activeTab === "events") {
     const table = activeTab === "blog" ? "blog_posts" : "events";
     const orderColumn = activeTab === "blog" ? "created_at" : "starts_at";
-    const [result, categoriesResult, registrationsResult, galleryResult] =
+    const [
+      result,
+      categoriesResult,
+      registrationsResult,
+      galleryResult,
+      productsResult,
+      productCategoriesResult,
+      blogPostProductsResult,
+    ] =
       await Promise.all([
         supabase
           .from(table)
@@ -535,7 +543,59 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               .order("sort_order", { ascending: true })
               .order("created_at", { ascending: true })
           : Promise.resolve({ data: [], error: null }),
+        activeTab === "blog"
+          ? supabase
+              .from("products")
+              .select("id,name,slug,price,image_url,is_sold_out")
+              .eq("status", "published")
+              .eq("visibility", "public")
+              .order("name")
+          : Promise.resolve({ data: [], error: null }),
+        activeTab === "blog"
+          ? supabase.from("product_categories").select("product_id,category_id")
+          : Promise.resolve({ data: [], error: null }),
+        activeTab === "blog"
+          ? supabase
+              .from("blog_post_products")
+              .select("blog_post_id,product_id,sort_order")
+              .order("sort_order", { ascending: true })
+          : Promise.resolve({ data: [], error: null }),
       ]);
+    const blogPostProductIdsByPostId = new Map<string, string[]>();
+    for (const link of blogPostProductsResult.data ?? []) {
+      const postId =
+        typeof link.blog_post_id === "string" ? link.blog_post_id : "";
+      const productId =
+        typeof link.product_id === "string" ? link.product_id : "";
+      if (!postId || !productId) {
+        continue;
+      }
+      const ids = blogPostProductIdsByPostId.get(postId) ?? [];
+      ids.push(productId);
+      blogPostProductIdsByPostId.set(postId, ids);
+    }
+    const blogRecommendationProducts =
+      activeTab === "blog"
+        ? buildPromotionProductOptions(
+            (productsResult.data ?? []) as Array<{
+              id: string;
+              name: string;
+              slug: string;
+              price: number;
+              image_url: string | null;
+              is_sold_out: boolean;
+            }>,
+            (categoriesResult.data ?? []) as Array<{
+              id: string;
+              name: string;
+              category_type: "product" | "occasion";
+            }>,
+            (productCategoriesResult.data ?? []) as Array<{
+              product_id: string;
+              category_id: string;
+            }>,
+          )
+        : [];
 
     return (
       <section className="pb-24 pt-10">
@@ -558,6 +618,8 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                 kind="blog"
                 items={(result.data ?? []) as import("@/lib/admin/types").BlogPostRow[]}
                 categories={(categoriesResult.data ?? []) as import("@/lib/admin/types").CategoryRow[]}
+                products={blogRecommendationProducts}
+                productIdsByPostId={blogPostProductIdsByPostId}
                 error={result.error}
               />
             ) : (

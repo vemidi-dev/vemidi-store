@@ -20,6 +20,7 @@ type RelatedProductPickerProps = {
   categories: RelatedProductCategoryOption[];
   excludeProductId: string;
   selectedRelatedIds: string[];
+  hiddenFieldName?: string;
   pageSize?: number;
 };
 
@@ -28,6 +29,7 @@ export function RelatedProductPicker({
   categories,
   excludeProductId,
   selectedRelatedIds,
+  hiddenFieldName = adminFormFields.merchandising.relatedProductIds,
   pageSize = 40,
 }: RelatedProductPickerProps) {
   const [selectedIds, setSelectedIds] = useState(
@@ -117,7 +119,7 @@ export function RelatedProductPicker({
         <input
           key={productId}
           type="hidden"
-          name={adminFormFields.merchandising.relatedProductIds}
+          name={hiddenFieldName}
           value={productId}
         />
       ))}
