@@ -2,6 +2,7 @@ import {
   createColorGroup,
   createColorOption,
   deleteColorGroup,
+  deleteColorOption,
   moveColorOption,
   updateColorGroup,
   updateColorOption,
@@ -248,6 +249,16 @@ export function ColorManagementPanel({
                               </button>
                             </form>
                           ))}
+                          <form action={deleteColorOption}>
+                            <input
+                              type="hidden"
+                              name={adminFormFields.colorPalette.optionId}
+                              value={option.id}
+                            />
+                            <button className="rounded-full border border-red-200 px-2 py-0.5 text-[10px] font-semibold text-red-700">
+                              Изтрий
+                            </button>
+                          </form>
                         </div>
                       </div>
                     ))}

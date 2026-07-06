@@ -172,6 +172,34 @@ export async function updateColorOption(formData: FormData) {
   );
 }
 
+export async function deleteColorOption(formData: FormData) {
+  const supabase = await getAuthorizedClient();
+  const id = getString(formData, adminFormFields.colorPalette.optionId);
+  if (!id) {
+    done("error", "Липсва цвят за изтриване.");
+  }
+
+  const { count, error: usageError } = await supabase
+    .from("product_color_field_options")
+    .select("field_id", { count: "exact", head: true })
+    .eq("color_option_id", id);
+  if (usageError) {
+    done("error", "Не успяхме да проверим дали цветът се използва.");
+  }
+  if ((count ?? 0) > 0) {
+    done(
+      "error",
+      "Цветът се използва от продукт. Премахнете го от продуктите преди изтриване.",
+    );
+  }
+
+  const { error } = await supabase.from("color_options").delete().eq("id", id);
+  done(
+    error ? "error" : "success",
+    error ? "Цветът не беше изтрит." : "Цветът е изтрит.",
+  );
+}
+
 export async function moveColorOption(formData: FormData) {
   const supabase = await getAuthorizedClient();
   const id = getString(formData, adminFormFields.colorPalette.optionId);

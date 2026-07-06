@@ -180,7 +180,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
   if (activeTab === "wishes") {
     const [categories, wishes, links] = await Promise.all([
-      supabase.from("categories").select("id,name,slug,category_type,parent_id,image_url,image_alt,cover_image_url,cover_image_alt,show_on_home,home_sort_order,card_description").eq("category_type", "occasion").order("name"),
+      supabase.from("categories").select("id,name,slug,category_type,parent_id,image_url,image_alt,cover_image_url,cover_image_alt,show_on_home,home_sort_order,card_description").eq("category_type", "occasion").order("home_sort_order").order("name"),
       supabase.from("wish_templates").select("id,title,body,is_active,sort_order").order("sort_order"),
       supabase.from("wish_template_occasions").select("wish_template_id,category_id"),
     ]);

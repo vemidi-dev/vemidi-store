@@ -89,6 +89,11 @@ export default async function OccasionsPage() {
 
   const occasions = filterStorefrontVisibleCategories(categories)
     .filter((category) => category.category_type === "occasion")
+    .sort(
+      (left, right) =>
+        left.home_sort_order - right.home_sort_order ||
+        left.name.localeCompare(right.name, "bg"),
+    )
     .map(
       (category): OccasionWithCount => ({
         ...toShowcaseCategory(category),
