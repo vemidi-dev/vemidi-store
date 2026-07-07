@@ -19,6 +19,9 @@ function getSupabaseRemotePattern() {
 }
 
 const supabaseRemotePattern = getSupabaseRemotePattern();
+const disableImageOptimization =
+  process.env.DISABLE_IMAGE_OPTIMIZATION === "true" ||
+  process.env.NEXT_PUBLIC_DISABLE_IMAGE_OPTIMIZATION === "true";
 
 const nextConfig: NextConfig = {
   distDir: process.env.NODE_ENV === "development" ? ".next-dev" : ".next",
@@ -35,6 +38,10 @@ const nextConfig: NextConfig = {
     },
   },
   images: {
+    unoptimized: disableImageOptimization,
+    deviceSizes: [360, 640, 768, 1024, 1280, 1536],
+    imageSizes: [32, 48, 64, 96, 128, 256, 384],
+    minimumCacheTTL: 60 * 60 * 24 * 30,
     remotePatterns: [
       ...(supabaseRemotePattern ? [supabaseRemotePattern] : []),
     ],

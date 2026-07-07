@@ -53,6 +53,7 @@ function SiteMediaSlot({ row }: { row: SiteMediaRow }) {
             alt={resolved.alt}
             fill
             sizes="(max-width: 1024px) 100vw, 224px"
+            unoptimized
             className="object-cover"
           />
         </div>

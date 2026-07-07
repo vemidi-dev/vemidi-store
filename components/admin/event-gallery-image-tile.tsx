@@ -74,6 +74,7 @@ export function EventGalleryImageTile({
                 fill
                 sizes="80px"
                 loading="lazy"
+                unoptimized
                 onError={() => setBroken(true)}
                 className="object-cover"
               />

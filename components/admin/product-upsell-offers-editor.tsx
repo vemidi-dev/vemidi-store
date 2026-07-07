@@ -178,6 +178,7 @@ export function ProductUpsellOffersEditor({
                         alt={product.name}
                         fill
                         sizes="72px"
+                        unoptimized
                         className="object-cover"
                       />
                     ) : (
