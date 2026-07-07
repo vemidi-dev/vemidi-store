@@ -15,6 +15,7 @@ import {
 } from "@/lib/content/site-media";
 import { buildBlogMetadata } from "@/lib/seo/blog-route";
 import { getStorefrontCatalog } from "@/lib/storefront/repository";
+import type { StorefrontCategory } from "@/lib/storefront/types";
 
 type Props = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -36,6 +37,27 @@ function formatDate(value: string | null) {
 
 function getArticleHref(post: BlogPostRow) {
   return `/blog/${post.slug}`;
+}
+
+function sortOccasionsByMenuOrder(
+  left: StorefrontCategory,
+  right: StorefrontCategory,
+) {
+  return (
+    left.home_sort_order - right.home_sort_order ||
+    left.name.localeCompare(right.name, "bg")
+  );
+}
+
+function OccasionQuickLink({ category }: { category: StorefrontCategory }) {
+  return (
+    <Link
+      href={getCategoryListingHref(category)}
+      className="rounded-full border border-boutique-line bg-white px-4 py-2 text-sm font-semibold text-boutique-ink transition hover:border-boutique-sage-deep hover:text-boutique-sage-deep"
+    >
+      {category.name}
+    </Link>
+  );
 }
 
 function TopicCard({
@@ -67,6 +89,59 @@ function TopicCard({
         </p>
       </div>
     </Link>
+  );
+}
+
+function LeadArticleCard({
+  post,
+  ctaHref,
+  ctaLabel,
+}: {
+  post: BlogPostRow;
+  ctaHref: string | null;
+  ctaLabel: string | null;
+}) {
+  return (
+    <article className="grid overflow-hidden rounded-2xl border border-boutique-line bg-white shadow-boutique-sm lg:grid-cols-[1.05fr_0.95fr]">
+      <Link href={getArticleHref(post)} className="block min-h-72">
+        <ContentImage
+          src={post.image_url}
+          alt={post.title}
+          label="Снимка за водещата статия"
+        />
+      </Link>
+      <div className="flex flex-col justify-center p-6 sm:p-8">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-boutique-rose-deep">
+          {post.category ?? "Блог"}
+        </p>
+        <h2 className="mt-3 font-heading text-3xl leading-tight text-boutique-ink sm:text-4xl">
+          <Link href={getArticleHref(post)}>{post.title}</Link>
+        </h2>
+        <p className="mt-4 line-clamp-4 text-sm leading-7 text-boutique-muted">
+          {post.excerpt}
+        </p>
+        <div className="mt-6 flex flex-wrap gap-3">
+          <Link
+            href={getArticleHref(post)}
+            className="rounded-full bg-boutique-ink px-5 py-2.5 text-sm font-semibold text-boutique-paper transition hover:bg-boutique-accent"
+          >
+            Прочетете статията →
+          </Link>
+          {ctaHref && ctaLabel ? (
+            <Link
+              href={ctaHref}
+              className="rounded-full border border-boutique-line bg-white px-5 py-2.5 text-sm font-semibold text-boutique-sage-deep transition hover:border-boutique-sage-deep"
+            >
+              {ctaLabel} →
+            </Link>
+          ) : post.cta_link_label?.trim() ? (
+            <span className="inline-flex items-center rounded-full border border-boutique-line bg-boutique-paper px-5 py-2.5 text-sm font-semibold text-boutique-sage-deep">
+              {post.cta_link_label.trim()}
+            </span>
+          ) : null}
+        </div>
+      </div>
+    </article>
   );
 }
 
@@ -129,6 +204,14 @@ export default async function BlogPage({ searchParams }: Props) {
   const categories = [
     ...new Set(posts.map((post) => post.category).filter(Boolean)),
   ] as string[];
+  const occasionQuickLinks = catalog.categories
+    .filter(
+      (catalogCategory) =>
+        catalogCategory.category_type === "occasion" &&
+        catalogCategory.is_visible !== false,
+    )
+    .sort(sortOccasionsByMenuOrder)
+    .slice(0, 8);
   const categoryById = new Map(
     catalog.categories.map((catalogCategory) => [
       catalogCategory.id,
@@ -165,8 +248,12 @@ export default async function BlogPage({ searchParams }: Props) {
         new Date(a.published_at ?? a.created_at).getTime()
       );
     });
-  const latestPosts = posts.slice(0, 3);
-  const topicCategories = categories.slice(0, 4);
+  const leadPost = posts.find((post) => post.is_featured) ?? posts[0] ?? null;
+  const latestPosts = posts
+    .filter((post) => post.id !== leadPost?.id)
+    .slice(0, 3);
+  const popularPosts = posts.filter((post) => post.is_popular).slice(0, 4);
+  const topicCategories = categories.slice(0, 6);
 
   return (
     <div>
@@ -179,10 +266,92 @@ export default async function BlogPage({ searchParams }: Props) {
         imageAlt={heroImage.alt}
       />
 
-      {topicCategories.length ? (
+      {occasionQuickLinks.length || popularPosts.length ? (
+        <section className="border-b border-boutique-line bg-boutique-paper/70 py-10">
+          <PageContainer>
+            <div className="grid gap-8 lg:grid-cols-[1fr_22rem] lg:items-start">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-boutique-sage-deep">
+                  Актуално сега
+                </p>
+                <h2 className="mt-2 font-heading text-3xl text-boutique-ink">
+                  Изберете повод и разгледайте идеи
+                </h2>
+                <div className="mt-5 flex flex-wrap gap-2">
+                  {occasionQuickLinks.map((catalogCategory) => (
+                    <OccasionQuickLink
+                      key={catalogCategory.id}
+                      category={catalogCategory}
+                    />
+                  ))}
+                </div>
+              </div>
+              {popularPosts.length ? (
+                <div className="rounded-2xl border border-boutique-line bg-white p-5">
+                  <h2 className="font-heading text-2xl text-boutique-ink">
+                    Популярни теми
+                  </h2>
+                  <div className="mt-3 grid gap-2">
+                    {popularPosts.map((post) => (
+                      <Link
+                        key={post.id}
+                        href={getArticleHref(post)}
+                        className="rounded-xl border border-boutique-line/70 px-4 py-3 text-sm font-semibold text-boutique-ink transition hover:border-boutique-sage-deep hover:text-boutique-sage-deep"
+                      >
+                        {post.title}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          </PageContainer>
+        </section>
+      ) : null}
+
+      {leadPost ? (
         <section className="py-12">
           <PageContainer>
-            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="mb-6 flex items-end justify-between gap-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-boutique-rose-deep">
+                  Водеща статия
+                </p>
+                <h2 className="mt-2 font-heading text-4xl text-boutique-ink">
+                  Най-полезно за момента
+                </h2>
+              </div>
+              <Link
+                href="#all-articles"
+                className="hidden text-sm font-semibold text-boutique-rose-deep underline-offset-4 hover:underline sm:inline"
+              >
+                Вижте всички статии →
+              </Link>
+            </div>
+            <LeadArticleCard
+              post={leadPost}
+              ctaHref={getCtaHref(leadPost)}
+              ctaLabel={getCtaLabel(leadPost)}
+            />
+          </PageContainer>
+        </section>
+      ) : null}
+
+      {topicCategories.length ? (
+        <section className="border-y border-boutique-line bg-boutique-paper py-12">
+          <PageContainer>
+            <div className="flex items-end justify-between gap-4">
+              <h2 className="font-heading text-4xl text-boutique-ink">
+                Разгледайте по тема
+              </h2>
+              <Link
+                href="#all-articles"
+                className="text-sm font-semibold text-boutique-rose-deep underline-offset-4 hover:underline"
+              >
+                Всички статии →
+              </Link>
+            </div>
+            <div className="mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
               {topicCategories.map((topic) => (
                 <TopicCard
                   key={topic}
@@ -196,7 +365,7 @@ export default async function BlogPage({ searchParams }: Props) {
       ) : null}
 
       {latestPosts.length ? (
-        <section className="border-y border-boutique-line bg-boutique-paper py-12">
+        <section className="py-12">
           <PageContainer>
             <div className="flex items-end justify-between gap-4">
               <h2 className="font-heading text-4xl text-boutique-ink">Последни статии</h2>
@@ -353,6 +522,16 @@ export default async function BlogPage({ searchParams }: Props) {
                   >
                     Към магазина →
                   </Link>
+                  {occasionQuickLinks.length ? (
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {occasionQuickLinks.slice(0, 6).map((catalogCategory) => (
+                        <OccasionQuickLink
+                          key={catalogCategory.id}
+                          category={catalogCategory}
+                        />
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
                 <div className="aspect-[16/9]">
                   <MediaPlaceholder label="Снимка за магазина" />

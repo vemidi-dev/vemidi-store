@@ -81,6 +81,22 @@ export function RelatedProductPicker({
   const selectedInFilterCount = filteredProducts.filter((product) =>
     selectedIds.has(product.id),
   ).length;
+  const unselectedInFilterCount = filteredProducts.length - selectedInFilterCount;
+  const activeFilterParts = [
+    productCategoryId !== "all"
+      ? productCategories.find((category) => category.id === productCategoryId)
+          ?.name
+      : null,
+    occasionCategoryId !== "all"
+      ? occasionCategories.find((category) => category.id === occasionCategoryId)
+          ?.name
+      : null,
+    query.trim() ? `търсене: ${query.trim()}` : null,
+    onlySelected ? "само избрани" : null,
+  ].filter(Boolean);
+  const activeFilterLabel = activeFilterParts.length
+    ? activeFilterParts.join(" · ")
+    : "всички продукти";
 
   useEffect(() => {
     setVisibleLimit(pageSize);
@@ -174,6 +190,15 @@ export function RelatedProductPicker({
           />
           Само избрани
         </label>
+      </div>
+
+      <div className="mt-3 rounded-lg border border-boutique-line bg-boutique-paper/70 px-3 py-2 text-xs leading-relaxed text-boutique-muted">
+        <span className="font-semibold text-boutique-ink">Bulk избор:</span>{" "}
+        текущ филтър: {activeFilterLabel}. Във филтъра са избрани{" "}
+        {selectedInFilterCount} от {filteredProducts.length}
+        {unselectedInFilterCount > 0
+          ? `, могат да се добавят още ${unselectedInFilterCount}`
+          : ""}.
       </div>
 
       <div className="mt-3 flex flex-wrap gap-2">
