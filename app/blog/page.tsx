@@ -5,7 +5,6 @@ import { ContentImage } from "@/components/content/content-image";
 import { NewsletterForm } from "@/components/content/newsletter-form";
 import { PageContainer } from "@/components/layout/page-container";
 import { VisualPageHero } from "@/components/layout/visual-page-hero";
-import { MediaPlaceholder } from "@/components/ui/media-placeholder";
 import type { BlogPostRow } from "@/lib/admin/types";
 import { getCategoryListingHref } from "@/lib/category-url";
 import { getPublishedBlogPosts } from "@/lib/content/repository";
@@ -201,6 +200,7 @@ export default async function BlogPage({ searchParams }: Props) {
     getSiteMediaMap(),
   ]);
   const heroImage = resolveSiteMediaFromMap(siteMediaMap, "blog.hero");
+  const shopHeroImage = resolveSiteMediaFromMap(siteMediaMap, "shop.hero");
   const categories = [
     ...new Set(posts.map((post) => post.category).filter(Boolean)),
   ] as string[];
@@ -534,7 +534,11 @@ export default async function BlogPage({ searchParams }: Props) {
                   ) : null}
                 </div>
                 <div className="aspect-[16/9]">
-                  <MediaPlaceholder label="Снимка за магазина" />
+                  <ContentImage
+                    src={shopHeroImage.src}
+                    alt={shopHeroImage.alt}
+                    label="Снимка за магазина"
+                  />
                 </div>
               </section>
 
