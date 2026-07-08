@@ -8,6 +8,7 @@ import {
   updateBlogPost,
   updateEvent,
 } from "@/app/admin/content-actions";
+import { BlogRichTextEditor } from "@/components/admin/blog-rich-text-editor";
 import { ImageFileInput } from "@/components/admin/image-file-input";
 import { RelatedProductPicker } from "@/components/admin/related-product-picker";
 import { adminFieldClass, adminHelperClass, adminPanelClass } from "@/components/admin/styles";
@@ -87,11 +88,23 @@ export function ContentManagementPanel(props: ContentManagementPanelProps) {
             <textarea name="excerpt" required={!isBlog} rows={2} maxLength={320} className={`${adminFieldClass} resize-y`} />
             {isBlog ? <p className={adminHelperClass}>Задължително при публикуване; може да остане празно в чернова.</p> : null}
           </label>
-          <label className="text-sm font-medium text-boutique-ink md:col-span-2">
+          <div className="text-sm font-medium text-boutique-ink md:col-span-2">
             Пълен текст
-            <textarea name="content" required={!isBlog} rows={9} className={`${adminFieldClass} resize-y`} />
-          <p className={adminHelperClass}>Натискайте Enter за нов ред. Празен ред добавя по-голям интервал между абзаците.</p>
-          </label>
+            {isBlog ? (
+              <BlogRichTextEditor
+                name="content"
+                required={false}
+                rows={9}
+                className={`${adminFieldClass} resize-y`}
+                helperClassName={adminHelperClass}
+              />
+            ) : (
+              <>
+                <textarea name="content" required rows={9} className={`${adminFieldClass} resize-y`} />
+                <p className={adminHelperClass}>Натискайте Enter за нов ред. Празен ред добавя по-голям интервал между абзаците.</p>
+              </>
+            )}
+          </div>
           {isBlog ? (
             <>
               <label className="text-sm font-medium text-boutique-ink">
@@ -318,10 +331,21 @@ export function ContentManagementPanel(props: ContentManagementPanelProps) {
                         Кратко описание
                         <textarea name="excerpt" required={!isBlog} rows={2} defaultValue={item.excerpt} className={`${adminFieldClass} resize-y`} />
                       </label>
-                      <label className="text-sm font-medium text-boutique-ink md:col-span-2">
+                      <div className="text-sm font-medium text-boutique-ink md:col-span-2">
                         Пълен текст
-                        <textarea name="content" required={!isBlog} rows={9} defaultValue={item.content} className={`${adminFieldClass} resize-y`} />
-                      </label>
+                        {isBlog ? (
+                          <BlogRichTextEditor
+                            name="content"
+                            defaultValue={item.content}
+                            required={false}
+                            rows={9}
+                            className={`${adminFieldClass} resize-y`}
+                            helperClassName={adminHelperClass}
+                          />
+                        ) : (
+                          <textarea name="content" required rows={9} defaultValue={item.content} className={`${adminFieldClass} resize-y`} />
+                        )}
+                      </div>
                       {isBlog ? (
                         <>
                           <label className="text-sm font-medium text-boutique-ink">Категория<input name="category" list="blog-category-suggestions" defaultValue={(item as BlogPostRow).category ?? ""} className={adminFieldClass} /></label>

@@ -100,6 +100,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         excerpt={post.excerpt}
         content={post.content}
         imageUrl={post.image_url}
+        richText
         meta={[
           post.author ?? "VeMiDi crafts",
           ...(date ? [date] : []),

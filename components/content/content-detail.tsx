@@ -1,5 +1,6 @@
 import { ContentImage } from "@/components/content/content-image";
 import { PageContainer } from "@/components/layout/page-container";
+import { BlogRichText } from "@/lib/content/blog-rich-text";
 import { withPlainTextClass } from "@/lib/plain-text";
 import type { ReactNode } from "react";
 
@@ -10,6 +11,7 @@ export function ContentDetail({
   content,
   imageUrl,
   meta,
+  richText = false,
   children,
 }: {
   eyebrow: string;
@@ -18,6 +20,7 @@ export function ContentDetail({
   content: string;
   imageUrl: string | null;
   meta?: string[];
+  richText?: boolean;
   children?: ReactNode;
 }) {
   return (
@@ -41,7 +44,9 @@ export function ContentDetail({
           <ContentImage src={imageUrl} alt={title} label="Снимка към съдържанието" />
         </div>
         <div className="mx-auto mt-10 max-w-3xl">
-          {content ? (
+          {content && richText ? (
+            <BlogRichText content={content} />
+          ) : content ? (
             <div className={withPlainTextClass("text-base leading-8 text-boutique-muted")}>
               {content}
             </div>
