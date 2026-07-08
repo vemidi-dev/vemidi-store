@@ -49,7 +49,7 @@ type InlineToken =
 type BlockToken =
   | { type: "paragraph"; children: InlineToken[] }
   | { type: "heading"; level: 2 | 3; children: InlineToken[] }
-  | { type: "list"; items: InlineToken[][] };
+  | { type: "list"; ordered: boolean; items: InlineToken[][] };
 
 function isAllowedUrl(href: string) {
   return (
@@ -127,33 +127,68 @@ function parseInline(text: string): InlineToken[] {
 
 export function parseBlogRichText(text: string): BlockToken[] {
   const blocks: BlockToken[] = [];
-  const paragraphs = text
-    .split(/\n{2,}/)
-    .map((block) => block.trim())
-    .filter(Boolean);
+  const paragraphLines: string[] = [];
+  let list: { ordered: boolean; items: InlineToken[][] } | null = null;
 
-  for (const paragraph of paragraphs) {
-    if (paragraph.startsWith("### ")) {
-      blocks.push({ type: "heading", level: 3, children: parseInline(paragraph.slice(4).trim()) });
-      continue;
+  function flushParagraph() {
+    const paragraph = paragraphLines.join(" ").trim();
+    paragraphLines.length = 0;
+    if (paragraph) {
+      blocks.push({ type: "paragraph", children: parseInline(paragraph) });
     }
+  }
 
-    if (paragraph.startsWith("## ")) {
-      blocks.push({ type: "heading", level: 2, children: parseInline(paragraph.slice(3).trim()) });
-      continue;
-    }
-
-    const lines = paragraph.split("\n").map((line) => line.trim());
-    if (lines.every((line) => line.startsWith("- ") && line.length > 2)) {
+  function flushList() {
+    if (list?.items.length) {
       blocks.push({
         type: "list",
-        items: lines.map((line) => parseInline(line.slice(2).trim())),
+        ordered: list.ordered,
+        items: list.items,
+      });
+    }
+    list = null;
+  }
+
+  for (const rawLine of text.split(/\r?\n/)) {
+    const line = rawLine.trim();
+
+    if (!line) {
+      flushParagraph();
+      flushList();
+      continue;
+    }
+
+    const headingMatch = line.match(/^(#{2,3})\s+(.+)$/);
+    if (headingMatch) {
+      flushParagraph();
+      flushList();
+      blocks.push({
+        type: "heading",
+        level: headingMatch[1]?.length === 3 ? 3 : 2,
+        children: parseInline((headingMatch[2] ?? "").trim()),
       });
       continue;
     }
 
-    blocks.push({ type: "paragraph", children: parseInline(paragraph) });
+    const unorderedItem = line.match(/^[-*]\s+(.+)$/);
+    const orderedItem = line.match(/^\d+[.)]\s+(.+)$/);
+    if (unorderedItem || orderedItem) {
+      const ordered = Boolean(orderedItem);
+      flushParagraph();
+      if (list && list.ordered !== ordered) {
+        flushList();
+      }
+      list ??= { ordered, items: [] };
+      list.items.push(parseInline((orderedItem?.[1] ?? unorderedItem?.[1] ?? "").trim()));
+      continue;
+    }
+
+    flushList();
+    paragraphLines.push(line);
   }
+
+  flushParagraph();
+  flushList();
 
   return blocks;
 }
@@ -230,14 +265,15 @@ export function BlogRichText({ content }: { content: string }) {
         }
 
         if (block.type === "list") {
+          const Tag = block.ordered ? "ol" : "ul";
           return (
-            <ul key={index} className="space-y-2 pl-5">
+            <Tag key={index} className="space-y-2 pl-5">
               {block.items.map((item, itemIndex) => (
-                <li key={itemIndex} className="list-disc pl-1">
+                <li key={itemIndex} className={`${block.ordered ? "list-decimal" : "list-disc"} pl-1`}>
                   {renderInline(item, `li-${index}-${itemIndex}`)}
                 </li>
               ))}
-            </ul>
+            </Tag>
           );
         }
 

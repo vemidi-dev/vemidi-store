@@ -25,6 +25,29 @@ test("blog rich text parser supports safe blocks and inline formatting", () => {
   assert.equal(blocks[2]?.type, "list");
 });
 
+test("blog rich text parser handles headings and ordered lists without blank lines", () => {
+  const blocks = parseBlogRichText(
+    [
+      "## Какво да подарим за кръщене?",
+      "Кръщенето е специален момент.",
+      "1. *Паричен подарък, поднесен по красив начин*",
+      "2. **Персонализиран спомен**",
+    ].join("\n"),
+  );
+
+  assert.equal(blocks.length, 3);
+  assert.equal(blocks[0]?.type, "heading");
+  assert.equal(blocks[1]?.type, "paragraph");
+  assert.deepEqual(blocks[2], {
+    type: "list",
+    ordered: true,
+    items: [
+      [{ type: "italic", children: [{ type: "text", value: "Паричен подарък, поднесен по красив начин" }] }],
+      [{ type: "bold", children: [{ type: "text", value: "Персонализиран спомен" }] }],
+    ],
+  });
+});
+
 test("blog rich text parser leaves unsafe links as text", () => {
   const blocks = parseBlogRichText("[опасен](javascript:alert(1))");
 
