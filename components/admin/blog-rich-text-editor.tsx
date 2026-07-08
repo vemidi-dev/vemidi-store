@@ -90,6 +90,7 @@ export function BlogRichTextEditor({
 
   return (
     <div className="mt-2 rounded-xl border border-boutique-line bg-boutique-paper">
+      <input type="hidden" name={name} value={value} />
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-boutique-line px-3 py-2">
         <div className="flex flex-wrap items-center gap-1.5">
           <button type="button" className={toolbarButtonClass} onClick={() => withSelection((text, start, end) => insertAround(text, start, end, "**"))}>
@@ -145,7 +146,6 @@ export function BlogRichTextEditor({
       {mode === "edit" ? (
         <textarea
           ref={textareaRef}
-          name={name}
           required={required}
           rows={rows}
           value={value}

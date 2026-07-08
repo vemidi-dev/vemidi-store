@@ -129,6 +129,9 @@ async function syncBlogPostProducts(
     .eq("blog_post_id", postId);
 
   if (deleteError) {
+    if (isMissingBlogPostProductsTable(deleteError) && productIds.length === 0) {
+      return null;
+    }
     return isMissingBlogPostProductsTable(deleteError)
       ? "Липсва миграцията blog_post_products.sql в Supabase."
       : "Продуктите към статията не бяха обновени.";
