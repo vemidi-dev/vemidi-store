@@ -60,6 +60,18 @@ export type ProductPersonalizationFieldRow = {
   sort_order: number;
 };
 
+export type BlogCategoryRow = {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  image_url: string | null;
+  sort_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
 export type BlogPostRow = {
   id: string;
   title: string;
@@ -68,6 +80,8 @@ export type BlogPostRow = {
   content: string;
   image_url: string | null;
   category: string | null;
+  blog_category_id?: string | null;
+  blog_category?: BlogCategoryRow | null;
   author: string | null;
   read_minutes: number | null;
   is_featured: boolean;

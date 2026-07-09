@@ -7,6 +7,7 @@ import { ContentImage } from "@/components/content/content-image";
 import { BlogProductCarousel } from "@/components/blog/blog-product-carousel";
 import { JsonLd } from "@/components/seo/json-ld";
 import { resolveBlogRecommendation } from "@/lib/blog-recommendations";
+import { postsShareBlogCategory } from "@/lib/blog-categories";
 import {
   getBlogPostProductIds,
   getPublishedBlogPost,
@@ -63,7 +64,8 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     .filter((candidate) => candidate.slug !== slug)
     .sort(
       (a, b) =>
-        Number(b.category === post.category) - Number(a.category === post.category),
+        Number(postsShareBlogCategory(b, post)) -
+        Number(postsShareBlogCategory(a, post)),
     )
     .slice(0, 3);
   const relatedEvents = events

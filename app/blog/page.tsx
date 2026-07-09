@@ -5,9 +5,17 @@ import { ContentImage } from "@/components/content/content-image";
 import { NewsletterForm } from "@/components/content/newsletter-form";
 import { PageContainer } from "@/components/layout/page-container";
 import { VisualPageHero } from "@/components/layout/visual-page-hero";
-import type { BlogPostRow } from "@/lib/admin/types";
+import type { BlogCategoryRow, BlogPostRow } from "@/lib/admin/types";
+import {
+  getBlogCategoryFilterHref,
+  getBlogPostCategoryName,
+  matchesBlogCategoryFilter,
+} from "@/lib/blog-categories";
 import { getCategoryListingHref } from "@/lib/category-url";
-import { getPublishedBlogPosts } from "@/lib/content/repository";
+import {
+  getActiveBlogCategories,
+  getPublishedBlogPosts,
+} from "@/lib/content/repository";
 import {
   getSiteMediaMap,
   resolveSiteMediaFromMap,
@@ -63,26 +71,26 @@ function TopicCard({
   category,
   post,
 }: {
-  category: string;
+  category: BlogCategoryRow;
   post?: BlogPostRow;
 }) {
   return (
     <Link
-      href={`/blog?category=${encodeURIComponent(category)}#all-articles`}
+      href={getBlogCategoryFilterHref(category.slug)}
       className="group overflow-hidden rounded-2xl border border-boutique-line bg-white shadow-boutique-sm transition hover:-translate-y-1 hover:shadow-boutique"
     >
       <div className="aspect-[4/3] overflow-hidden">
         <ContentImage
           src={post?.image_url ?? null}
-          alt={category}
-          label={`Снимка за тема „${category}“`}
+          alt={category.name}
+          label={`Снимка за тема „${category.name}“`}
         />
       </div>
       <div className="relative p-5 pt-7">
         <span className="absolute -top-7 left-5 grid h-14 w-14 place-items-center rounded-full border border-boutique-rose/30 bg-white font-heading text-xl text-boutique-rose-deep">
           ♡
         </span>
-        <h2 className="font-heading text-2xl text-boutique-ink">{category}</h2>
+        <h2 className="font-heading text-2xl text-boutique-ink">{category.name}</h2>
         <p className="mt-2 text-sm leading-6 text-boutique-muted">
           Разгледайте идеи, вдъхновение и полезни насоки по тази тема.
         </p>
@@ -111,7 +119,7 @@ function LeadArticleCard({
       </Link>
       <div className="flex flex-col justify-center p-6 sm:p-8">
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-boutique-rose-deep">
-          {post.category ?? "Блог"}
+          {getBlogPostCategoryName(post)}
         </p>
         <h2 className="mt-3 font-heading text-3xl leading-tight text-boutique-ink sm:text-4xl">
           <Link href={getArticleHref(post)}>{post.title}</Link>
@@ -164,7 +172,7 @@ function FeaturedArticleCard({
       </Link>
       <div className="p-6">
         <p className="text-xs font-semibold uppercase tracking-[0.12em] text-boutique-rose-deep">
-          {post.category ?? "Блог"}
+          {getBlogPostCategoryName(post)}
         </p>
         <h3 className="mt-3 font-heading text-2xl leading-tight text-boutique-ink">
           <Link href={getArticleHref(post)}>{post.title}</Link>
@@ -194,16 +202,18 @@ export default async function BlogPage({ searchParams }: Props) {
   const query = first(params.q).trim().toLocaleLowerCase("bg");
   const category = first(params.category);
   const sort = first(params.sort) || "newest";
-  const [posts, catalog, siteMediaMap] = await Promise.all([
+  const [posts, blogCategories, catalog, siteMediaMap] = await Promise.all([
     getPublishedBlogPosts(),
+    getActiveBlogCategories(),
     getStorefrontCatalog(),
     getSiteMediaMap(),
   ]);
   const heroImage = resolveSiteMediaFromMap(siteMediaMap, "blog.hero");
   const shopHeroImage = resolveSiteMediaFromMap(siteMediaMap, "shop.hero");
-  const categories = [
-    ...new Set(posts.map((post) => post.category).filter(Boolean)),
-  ] as string[];
+  const categoriesBySlug = new Map(
+    blogCategories.map((blogCategory) => [blogCategory.slug, blogCategory]),
+  );
+  const topicCategories = blogCategories.slice(0, 6);
   const occasionQuickLinks = catalog.categories
     .filter(
       (catalogCategory) =>
@@ -237,7 +247,10 @@ export default async function BlogPage({ searchParams }: Props) {
       const searchable = `${post.title} ${post.excerpt} ${post.content}`.toLocaleLowerCase(
         "bg",
       );
-      return (!query || searchable.includes(query)) && (!category || post.category === category);
+      return (
+        (!query || searchable.includes(query)) &&
+        matchesBlogCategoryFilter(post, category, categoriesBySlug)
+      );
     })
     .sort((a, b) => {
       if (sort === "popular") {
@@ -253,7 +266,6 @@ export default async function BlogPage({ searchParams }: Props) {
     .filter((post) => post.id !== leadPost?.id)
     .slice(0, 3);
   const popularPosts = posts.filter((post) => post.is_popular).slice(0, 4);
-  const topicCategories = categories.slice(0, 6);
 
   return (
     <div>
@@ -354,9 +366,13 @@ export default async function BlogPage({ searchParams }: Props) {
             <div className="mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
               {topicCategories.map((topic) => (
                 <TopicCard
-                  key={topic}
+                  key={topic.id}
                   category={topic}
-                  post={posts.find((post) => post.category === topic)}
+                  post={posts.find(
+                    (post) =>
+                      post.blog_category_id === topic.id ||
+                      (!post.blog_category_id && post.category === topic.name),
+                  )}
                 />
               ))}
             </div>
@@ -406,17 +422,17 @@ export default async function BlogPage({ searchParams }: Props) {
                 >
                   Всички
                 </Link>
-                {categories.map((topic) => (
+                {blogCategories.map((topic) => (
                   <Link
-                    key={topic}
-                    href={`/blog?category=${encodeURIComponent(topic)}#all-articles`}
+                    key={topic.id}
+                    href={getBlogCategoryFilterHref(topic.slug)}
                     className={`rounded-full border px-5 py-2 text-sm transition ${
-                      category === topic
+                      category === topic.slug
                         ? "border-boutique-sage-deep bg-boutique-sage-deep text-white"
                         : "border-boutique-line bg-white text-boutique-ink hover:border-boutique-sage/50"
                     }`}
                   >
-                    {topic}
+                    {topic.name}
                   </Link>
                 ))}
               </div>
@@ -466,7 +482,7 @@ export default async function BlogPage({ searchParams }: Props) {
                       </Link>
                       <div>
                         <p className="text-xs font-semibold uppercase tracking-[0.1em] text-boutique-rose-deep">
-                          {post.category ?? "Блог"}
+                          {getBlogPostCategoryName(post)}
                           {post.published_at ? ` · ${formatDate(post.published_at)}` : ""}
                         </p>
                         <h3 className="mt-2 font-heading text-2xl leading-tight text-boutique-ink">

@@ -13,7 +13,7 @@ import { ImageFileInput } from "@/components/admin/image-file-input";
 import { RelatedProductPicker } from "@/components/admin/related-product-picker";
 import { adminFieldClass, adminHelperClass, adminPanelClass } from "@/components/admin/styles";
 import { adminFormFields } from "@/lib/admin/form-fields";
-import type { BlogPostRow, CategoryRow, EventRow } from "@/lib/admin/types";
+import type { BlogCategoryRow, BlogPostRow, CategoryRow, EventRow } from "@/lib/admin/types";
 import type { PromotionProductOption } from "@/lib/promotion-admin";
 
 type ContentManagementPanelProps =
@@ -21,6 +21,7 @@ type ContentManagementPanelProps =
       kind: "blog";
       items: BlogPostRow[];
       categories: CategoryRow[];
+      blogCategories: BlogCategoryRow[];
       products: PromotionProductOption[];
       productIdsByPostId: Map<string, string[]>;
       error: { message: string } | null;
@@ -57,8 +58,8 @@ export function ContentManagementPanel(props: ContentManagementPanelProps) {
         categoryType: category.category_type,
       }))
     : [];
-  const blogCategories = props.kind === "blog"
-    ? [...new Set(props.items.map((item) => item.category).filter(Boolean))] as string[]
+  const activeBlogCategories = props.kind === "blog"
+    ? props.blogCategories.filter((category) => category.is_active)
     : [];
 
   return (
@@ -109,17 +110,19 @@ export function ContentManagementPanel(props: ContentManagementPanelProps) {
             <>
               <label className="text-sm font-medium text-boutique-ink">
                 Категория
-                <input
-                  name="category"
-                  list="blog-category-suggestions"
-                  maxLength={100}
+                <select
+                  name={adminFormFields.blog.blogCategoryId}
                   className={adminFieldClass}
-                  placeholder="Напр. Идеи за подаръци"
-                />
-                <datalist id="blog-category-suggestions">
-                  {blogCategories.map((category) => <option key={category} value={category} />)}
-                </datalist>
-                <p className={adminHelperClass}>Въведете собствено име на блог категория.</p>
+                  defaultValue=""
+                >
+                  <option value="">Без блог категория</option>
+                  {activeBlogCategories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+                <p className={adminHelperClass}>Категориите се управляват от секцията „Блог категории“.</p>
               </label>
               <label className="text-sm font-medium text-boutique-ink">
                 Автор
@@ -292,6 +295,11 @@ export function ContentManagementPanel(props: ContentManagementPanelProps) {
                 blogPost?.cta_category_id &&
                 !recommendationCategories.some((category) => category.id === blogPost.cta_category_id),
               );
+              const currentBlogCategoryIsMissing = Boolean(
+                blogPost?.blog_category_id &&
+                props.kind === "blog" &&
+                !props.blogCategories.some((category) => category.id === blogPost.blog_category_id),
+              );
               return (
                 <article key={item.id} className="rounded-xl border border-boutique-line bg-boutique-bg p-5">
                   <div className="flex flex-wrap items-start justify-between gap-4">
@@ -348,7 +356,34 @@ export function ContentManagementPanel(props: ContentManagementPanelProps) {
                       </div>
                       {isBlog ? (
                         <>
-                          <label className="text-sm font-medium text-boutique-ink">Категория<input name="category" list="blog-category-suggestions" defaultValue={(item as BlogPostRow).category ?? ""} className={adminFieldClass} /></label>
+                          <label className="text-sm font-medium text-boutique-ink">
+                            Категория
+                            <select
+                              name={adminFormFields.blog.blogCategoryId}
+                              defaultValue={(item as BlogPostRow).blog_category_id ?? ""}
+                              className={adminFieldClass}
+                            >
+                              <option value="">Без блог категория</option>
+                              {currentBlogCategoryIsMissing && blogPost?.blog_category_id ? (
+                                <option value={blogPost.blog_category_id}>
+                                  Текущата блог категория (липсва в списъка)
+                                </option>
+                              ) : null}
+                              {activeBlogCategories.map((category) => (
+                                <option key={category.id} value={category.id}>
+                                  {category.name}
+                                </option>
+                              ))}
+                            </select>
+                            {!blogPost?.blog_category_id && blogPost?.category ? (
+                              <>
+                                <input type="hidden" name="category" value={blogPost.category} />
+                                <p className="mt-2 text-xs text-amber-700">
+                                  Статията има стара текстова категория „{blogPost.category}“. Изберете нова блог категория, за да я мигрирате.
+                                </p>
+                              </>
+                            ) : null}
+                          </label>
                           <label className="text-sm font-medium text-boutique-ink">Автор<input name="author" defaultValue={(item as BlogPostRow).author ?? "VeMiDi crafts"} className={adminFieldClass} /></label>
                           <label className="text-sm font-medium text-boutique-ink">Време за четене<input name="read_minutes" type="number" min="1" defaultValue={(item as BlogPostRow).read_minutes ?? ""} className={adminFieldClass} /></label>
                           <div className="flex flex-wrap items-center gap-5">

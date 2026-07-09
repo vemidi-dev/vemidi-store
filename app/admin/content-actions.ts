@@ -6,6 +6,10 @@ import { redirect } from "next/navigation";
 import { getFile, getOptionalString, getString, isChecked, normalizeSlug } from "@/lib/admin/form-data";
 import { adminFormFields } from "@/lib/admin/form-fields";
 import {
+  parseBlogPostCategoryId,
+  resolveBlogPostCategorySync,
+} from "@/lib/blog-categories";
+import {
   deleteProductImage,
   getProductImagePath,
   uploadAdminImage,
@@ -89,11 +93,42 @@ function validateContentFields({
   }
 }
 
-function getBlogCta(formData: FormData, _tab: AdminTab) {
+function getBlogCta(formData: FormData) {
   return {
     ctaLinkLabel: getOptionalString(formData, "cta_link_label"),
     ctaCategoryId: getOptionalString(formData, "cta_category_id"),
   };
+}
+
+async function getBlogCategoryFields(
+  supabase: NonNullable<Awaited<ReturnType<typeof createClient>>>,
+  formData: FormData,
+) {
+  const blogCategoryId = parseBlogPostCategoryId(formData);
+  const legacyCategory = getOptionalString(formData, "category");
+
+  if (!blogCategoryId) {
+    return { blog_category_id: null, category: legacyCategory };
+  }
+
+  const { data, error } = await supabase
+    .from("blog_categories")
+    .select("id,name")
+    .eq("id", blogCategoryId)
+    .maybeSingle();
+
+  if (error) {
+    return { blog_category_id: blogCategoryId, category: legacyCategory };
+  }
+
+  return resolveBlogPostCategorySync(
+    blogCategoryId,
+    new Map(
+      data
+        ? [[String(data.id), { id: String(data.id), name: String(data.name) }]]
+        : [],
+    ),
+  );
 }
 
 function getBlogProductIds(formData: FormData) {
@@ -259,9 +294,11 @@ async function createContent(formData: FormData, kind: ContentKind) {
   };
 
   if (kind === "blog") {
-    const { ctaLinkLabel, ctaCategoryId } = getBlogCta(formData, tab);
+    const { ctaLinkLabel, ctaCategoryId } = getBlogCta(formData);
+    const blogCategoryFields = await getBlogCategoryFields(supabase, formData);
     row.__blogProductIds = getBlogProductIds(formData);
-    row.category = getOptionalString(formData, "category");
+    row.blog_category_id = blogCategoryFields.blog_category_id;
+    row.category = blogCategoryFields.category;
     row.author = getOptionalString(formData, "author") ?? "VeMiDi crafts";
     row.read_minutes = parseOptionalNumber(formData, "read_minutes", true);
     row.is_featured = isChecked(formData, "is_featured");
@@ -382,9 +419,11 @@ async function updateContent(
   };
 
   if (kind === "blog") {
-    const { ctaLinkLabel, ctaCategoryId } = getBlogCta(formData, tab);
+    const { ctaLinkLabel, ctaCategoryId } = getBlogCta(formData);
+    const blogCategoryFields = await getBlogCategoryFields(supabase, formData);
     row.__blogProductIds = getBlogProductIds(formData);
-    row.category = getOptionalString(formData, "category");
+    row.blog_category_id = blogCategoryFields.blog_category_id;
+    row.category = blogCategoryFields.category;
     row.author = getOptionalString(formData, "author") ?? "VeMiDi crafts";
     row.read_minutes = parseOptionalNumber(formData, "read_minutes", true);
     row.is_featured = isChecked(formData, "is_featured");
