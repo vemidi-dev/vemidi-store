@@ -13,6 +13,7 @@ import { ProductListPanel } from "@/components/admin/product-list-panel";
 import { OrdersPanel } from "@/components/admin/orders-panel";
 import { WithdrawalsPanel } from "@/components/admin/withdrawals-panel";
 import { ContentManagementPanel } from "@/components/admin/content-management-panel";
+import { BlogCategoryManagementPanel } from "@/components/admin/blog-category-management-panel";
 import { EventManagementPanel } from "@/components/admin/event-management-panel";
 import { EventGalleryManagementPanel } from "@/components/admin/event-gallery-management-panel";
 import { EventRegistrationsPanel } from "@/components/admin/event-registrations-panel";
@@ -521,6 +522,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       productsResult,
       productCategoriesResult,
       blogPostProductsResult,
+      blogCategoriesResult,
     ] =
       await Promise.all([
         supabase
@@ -559,6 +561,13 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               .from("blog_post_products")
               .select("blog_post_id,product_id,sort_order")
               .order("sort_order", { ascending: true })
+          : Promise.resolve({ data: [], error: null }),
+        activeTab === "blog"
+          ? supabase
+              .from("blog_categories")
+              .select("id,name,slug,description,image_url,sort_order,is_active,created_at,updated_at")
+              .order("sort_order", { ascending: true })
+              .order("name", { ascending: true })
           : Promise.resolve({ data: [], error: null }),
       ]);
     const blogPostProductIdsByPostId = new Map<string, string[]>();
@@ -614,14 +623,25 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               </div>
             ) : null}
             {activeTab === "blog" ? (
-              <ContentManagementPanel
-                kind="blog"
-                items={(result.data ?? []) as import("@/lib/admin/types").BlogPostRow[]}
-                categories={(categoriesResult.data ?? []) as import("@/lib/admin/types").CategoryRow[]}
-                products={blogRecommendationProducts}
-                productIdsByPostId={blogPostProductIdsByPostId}
-                error={result.error}
-              />
+              <>
+                <BlogCategoryManagementPanel
+                  categories={
+                    (blogCategoriesResult.data ?? []) as import("@/lib/admin/types").BlogCategoryRow[]
+                  }
+                  error={blogCategoriesResult.error}
+                />
+                <ContentManagementPanel
+                  kind="blog"
+                  items={(result.data ?? []) as import("@/lib/admin/types").BlogPostRow[]}
+                  categories={(categoriesResult.data ?? []) as import("@/lib/admin/types").CategoryRow[]}
+                  blogCategories={
+                    (blogCategoriesResult.data ?? []) as import("@/lib/admin/types").BlogCategoryRow[]
+                  }
+                  products={blogRecommendationProducts}
+                  productIdsByPostId={blogPostProductIdsByPostId}
+                  error={result.error}
+                />
+              </>
             ) : (
               <>
                 <EventManagementPanel

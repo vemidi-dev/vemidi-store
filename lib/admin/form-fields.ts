@@ -81,6 +81,15 @@ export const adminFormFields = {
   },
   blog: {
     productIds: "blog_product_ids",
+    blogCategoryId: "blog_category_id",
+  },
+  blogCategory: {
+    id: "blog_category_row_id",
+    name: "blog_category_name",
+    slug: "blog_category_slug",
+    description: "blog_category_description",
+    sortOrder: "blog_category_sort_order",
+    isActive: "blog_category_is_active",
   },
   colorPalette: {
     groupId: "group_id",

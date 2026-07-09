@@ -32,6 +32,11 @@ export const metadata: Metadata = {
     template: `%s | ${siteConfig.name}`,
   },
   description: siteConfig.description,
+   verification: {
+    other: {
+      "p:domain_verify": "a15f9e3f348a85333466556af10a92e6",
+    },
+  },
   applicationName: siteConfig.name,
   category: "Ръчно изработени подаръци",
   keywords: [

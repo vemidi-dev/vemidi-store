@@ -1,31 +1,91 @@
-import type { BlogPostRow, EventRow } from "@/lib/admin/types";
+import type { BlogCategoryRow, BlogPostRow, EventRow } from "@/lib/admin/types";
 import { createClient } from "@/lib/supabase/server";
+
+const blogPostSelect = `
+  *,
+  blog_category:blog_categories (
+    id,
+    name,
+    slug,
+    description,
+    image_url,
+    sort_order,
+    is_active
+  )
+`;
+
+function isMissingBlogCategoriesTable(error: { message?: string } | null) {
+  return Boolean(error?.message?.includes("blog_categories"));
+}
+
+export async function getActiveBlogCategories(): Promise<BlogCategoryRow[]> {
+  const supabase = await createClient();
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from("blog_categories")
+    .select("*")
+    .eq("is_active", true)
+    .order("sort_order", { ascending: true })
+    .order("name", { ascending: true });
+
+  return error ? [] : ((data ?? []) as BlogCategoryRow[]);
+}
 
 export async function getPublishedBlogPosts(): Promise<BlogPostRow[]> {
   const supabase = await createClient();
   if (!supabase) return [];
 
-  const { data, error } = await supabase
+  const joined = await supabase
+    .from("blog_posts")
+    .select(blogPostSelect)
+    .eq("is_published", true)
+    .order("published_at", { ascending: false });
+
+  if (!joined.error) {
+    return (joined.data ?? []) as BlogPostRow[];
+  }
+
+  if (!isMissingBlogCategoriesTable(joined.error)) {
+    return [];
+  }
+
+  const fallback = await supabase
     .from("blog_posts")
     .select("*")
     .eq("is_published", true)
     .order("published_at", { ascending: false });
 
-  return error ? [] : ((data ?? []) as BlogPostRow[]);
+  return fallback.error ? [] : ((fallback.data ?? []) as BlogPostRow[]);
 }
 
 export async function getPublishedBlogPost(slug: string): Promise<BlogPostRow | null> {
   const supabase = await createClient();
   if (!supabase) return null;
 
-  const { data, error } = await supabase
+  const joined = await supabase
+    .from("blog_posts")
+    .select(blogPostSelect)
+    .eq("slug", slug)
+    .eq("is_published", true)
+    .maybeSingle();
+
+  if (!joined.error) {
+    return joined.data as BlogPostRow | null;
+  }
+
+  if (!isMissingBlogCategoriesTable(joined.error)) {
+    return null;
+  }
+
+  const fallback = await supabase
     .from("blog_posts")
     .select("*")
     .eq("slug", slug)
     .eq("is_published", true)
     .maybeSingle();
 
-  return error ? null : (data as BlogPostRow | null);
+  return fallback.error ? null : (fallback.data as BlogPostRow | null);
 }
 
 export async function getBlogPostProductIds(postId: string): Promise<string[]> {
