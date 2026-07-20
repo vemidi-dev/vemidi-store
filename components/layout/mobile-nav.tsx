@@ -76,10 +76,14 @@ function MobileNavSection({
             </Link>
           </li>
           {items.map((item) => (
-            <li key={item.id}>
+            <li key={item.id} className={item.isChild ? "ml-4 border-l border-boutique-line/80 pl-2" : ""}>
               <Link
                 href={item.href}
-                className={`${mobileSubLinkClass} ${item.isChild ? "pl-3" : ""}`}
+                className={`${mobileSubLinkClass} ${
+                  item.isChild
+                    ? "pl-4 text-[0.8125rem] text-boutique-muted/90"
+                    : "font-medium text-boutique-ink"
+                }`}
                 onClick={onNavigate}
               >
                 {item.name}

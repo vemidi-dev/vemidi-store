@@ -89,9 +89,9 @@ export function BlogRichTextEditor({
   }
 
   return (
-    <div className="mt-2 rounded-xl border border-boutique-line bg-boutique-paper">
+    <div className="mt-2 max-h-[72vh] overflow-hidden rounded-xl border border-boutique-line bg-boutique-paper">
       <input type="hidden" name={name} value={value} />
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-boutique-line px-3 py-2">
+      <div className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-2 border-b border-boutique-line bg-boutique-paper px-3 py-2">
         <div className="flex flex-wrap items-center gap-1.5">
           <button type="button" className={toolbarButtonClass} onClick={() => withSelection((text, start, end) => insertAround(text, start, end, "**"))}>
             B
@@ -150,10 +150,10 @@ export function BlogRichTextEditor({
           rows={rows}
           value={value}
           onChange={(event) => setValue(event.target.value)}
-          className={`${className ?? ""} mt-0 rounded-none border-0 bg-white focus:ring-0`}
+          className={`${className ?? ""} mt-0 max-h-[52vh] min-h-72 overflow-y-auto rounded-none border-0 bg-white focus:ring-0`}
         />
       ) : (
-        <div className="min-h-56 bg-white px-4 py-4">
+        <div className="max-h-[52vh] min-h-72 overflow-y-auto bg-white px-4 py-4">
           {hasPreview ? preview : <p className="text-sm text-boutique-muted">Няма текст за преглед.</p>}
         </div>
       )}
