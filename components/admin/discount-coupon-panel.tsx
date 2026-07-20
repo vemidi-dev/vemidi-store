@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import {
   createDiscountCoupon,
   setDiscountCouponActive,
@@ -5,6 +7,14 @@ import {
 import { adminFieldClass, adminPanelClass } from "@/components/admin/styles";
 import { adminFormFields } from "@/lib/admin/form-fields";
 import type { DiscountCouponRow } from "@/lib/admin/types";
+
+export type DiscountCouponOrderInfo = {
+  id: string;
+  shortId: string;
+  customerName: string;
+  customerEmail: string | null;
+  customerPhone: string;
+};
 
 function formatUsedAt(value: string | null) {
   if (!value) {
@@ -21,9 +31,11 @@ function formatUsedAt(value: string | null) {
 
 export function DiscountCouponPanel({
   coupons,
+  ordersById,
   loadError,
 }: {
   coupons: DiscountCouponRow[];
+  ordersById: Record<string, DiscountCouponOrderInfo>;
   loadError: string | null;
 }) {
   return (
@@ -95,6 +107,10 @@ export function DiscountCouponPanel({
         <ul className="mt-5 divide-y divide-boutique-line overflow-hidden rounded-xl border border-boutique-line">
           {coupons.map((coupon) => {
             const used = Boolean(coupon.used_at || coupon.used_order_id);
+            const orderInfo = coupon.used_order_id
+              ? ordersById[coupon.used_order_id]
+              : undefined;
+
             return (
               <li
                 key={coupon.id}
@@ -111,10 +127,39 @@ export function DiscountCouponPanel({
                     {coupon.is_active ? "Активен" : "Неактивен"}
                     {" · "}
                     {used ? `Използван ${formatUsedAt(coupon.used_at)}` : "Неизползван"}
-                    {coupon.used_order_id
-                      ? ` · поръчка ${coupon.used_order_id.slice(0, 8)}…`
-                      : null}
                   </p>
+                  {used ? (
+                    <div className="text-xs leading-relaxed text-boutique-muted">
+                      {orderInfo ? (
+                        <>
+                          <p>
+                            Поръчка{" "}
+                            <Link
+                              href={`/admin?tab=orders&q=${encodeURIComponent(orderInfo.shortId)}`}
+                              className="font-semibold text-boutique-sage-deep underline-offset-2 hover:underline"
+                            >
+                              {orderInfo.shortId}
+                            </Link>
+                          </p>
+                          <p>
+                            {orderInfo.customerName}
+                            {orderInfo.customerPhone ? ` · ${orderInfo.customerPhone}` : ""}
+                            {orderInfo.customerEmail ? ` · ${orderInfo.customerEmail}` : ""}
+                          </p>
+                        </>
+                      ) : coupon.used_order_id ? (
+                        <p>
+                          Поръчка{" "}
+                          <Link
+                            href={`/admin?tab=orders&q=${encodeURIComponent(coupon.used_order_id.slice(0, 8))}`}
+                            className="font-semibold text-boutique-sage-deep underline-offset-2 hover:underline"
+                          >
+                            {coupon.used_order_id.slice(0, 8).toUpperCase()}
+                          </Link>
+                        </p>
+                      ) : null}
+                    </div>
+                  ) : null}
                 </div>
                 {!used ? (
                   <form action={setDiscountCouponActive}>

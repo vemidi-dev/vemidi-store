@@ -413,6 +413,37 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           )
           .order("created_at", { ascending: false });
 
+    const usedOrderIds = Array.from(
+      new Set(
+        (couponsResult.data ?? [])
+          .map((coupon) =>
+            typeof coupon.used_order_id === "string" ? coupon.used_order_id : null,
+          )
+          .filter((id): id is string => Boolean(id)),
+      ),
+    );
+    const couponOrdersById: Record<
+      string,
+      import("@/components/admin/discount-coupon-panel").DiscountCouponOrderInfo
+    > = {};
+    if (usedOrderIds.length > 0) {
+      const { data: usedOrders } = await supabase
+        .from("orders")
+        .select("id,customer_name,customer_email,customer_phone")
+        .in("id", usedOrderIds);
+      for (const order of usedOrders ?? []) {
+        const id = String(order.id);
+        couponOrdersById[id] = {
+          id,
+          shortId: id.slice(0, 8).toUpperCase(),
+          customerName: String(order.customer_name ?? ""),
+          customerEmail:
+            typeof order.customer_email === "string" ? order.customer_email : null,
+          customerPhone: String(order.customer_phone ?? ""),
+        };
+      }
+    }
+
     return (
       <section className="pb-24 pt-10">
         <PageContainer>
@@ -433,6 +464,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               coupons={
                 (couponsResult.data ?? []) as import("@/lib/admin/types").DiscountCouponRow[]
               }
+              ordersById={couponOrdersById}
               loadError={couponsResult.error?.message ?? null}
             />
             {promotionsResult.error ? (

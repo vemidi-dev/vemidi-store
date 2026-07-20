@@ -9,12 +9,14 @@ import {
   createStoreOrder,
   type CheckoutActionState,
 } from "@/app/checkout/actions";
+import { previewDiscountCoupon } from "@/app/checkout/coupon-actions";
 import { CheckoutDeliveryFields } from "@/components/checkout/checkout-delivery-fields";
 import { MetaPixelInitiateCheckoutBridge } from "@/components/consent/meta-pixel-initiate-checkout-bridge";
 import { CartLineSummaryDetails } from "@/components/cart/cart-line-summary-details";
 import { useCart } from "@/components/cart/cart-provider";
 import { PageContainer } from "@/components/layout/page-container";
 import { formatEur } from "@/lib/format-eur";
+import type { CouponPreviewResult } from "@/lib/checkout/coupon";
 import {
   CHECKOUT_LANDING_RETURN_LABEL,
   getCheckoutLandingReturnLinkProps,
@@ -69,10 +71,52 @@ export function CheckoutPanel({ content }: { content: CheckoutPageContent }) {
   const [customerEmail, setCustomerEmail] = useState("");
   const [note, setNote] = useState("");
   const [privacyConsent, setPrivacyConsent] = useState(false);
+  const [couponInput, setCouponInput] = useState("");
+  const [couponPending, setCouponPending] = useState(false);
+  const [couponError, setCouponError] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<
+    Extract<CouponPreviewResult, { ok: true }> | null
+  >(null);
 
   useEffect(() => {
     setIdempotencyKey(crypto.randomUUID());
   }, []);
+
+  useEffect(() => {
+    setAppliedCoupon(null);
+    setCouponError("");
+  }, [subtotal]);
+
+  const handleCouponInputChange = (value: string) => {
+    setCouponInput(value);
+    if (appliedCoupon || couponError) {
+      setAppliedCoupon(null);
+      setCouponError("");
+    }
+  };
+
+  const handleApplyCoupon = async () => {
+    setCouponPending(true);
+    setCouponError("");
+    try {
+      const result = await previewDiscountCoupon({
+        code: couponInput,
+        subtotal,
+      });
+      if (!result.ok) {
+        setAppliedCoupon(null);
+        setCouponError(result.message);
+        return;
+      }
+      setCouponInput(result.code);
+      setAppliedCoupon(result);
+    } catch {
+      setAppliedCoupon(null);
+      setCouponError("Купонът временно не може да бъде проверен.");
+    } finally {
+      setCouponPending(false);
+    }
+  };
 
   useEffect(() => {
     if (state.ok) {
@@ -325,11 +369,27 @@ export function CheckoutPanel({ content }: { content: CheckoutPageContent }) {
                 </li>
               ))}
             </ul>
-            <div className="mt-6 flex items-center justify-between border-t border-boutique-line pt-5">
-              <span className="font-semibold text-boutique-ink">Общо</span>
-              <span className="font-heading text-2xl text-boutique-ink">
-                {formatEur(subtotal)}
-              </span>
+            <div className="mt-6 space-y-3 border-t border-boutique-line pt-5">
+              <div className="flex items-center justify-between gap-4 text-sm">
+                <span className="text-boutique-muted">Междинна сума</span>
+                <span className="font-medium text-boutique-ink">{formatEur(subtotal)}</span>
+              </div>
+              {appliedCoupon ? (
+                <div className="flex items-center justify-between gap-4 text-sm">
+                  <span className="text-boutique-muted">
+                    Отстъпка ({appliedCoupon.code}, {appliedCoupon.discountPercentage}%)
+                  </span>
+                  <span className="font-medium text-boutique-ink">
+                    −{formatEur(appliedCoupon.discountAmount)}
+                  </span>
+                </div>
+              ) : null}
+              <div className="flex items-center justify-between gap-4">
+                <span className="font-semibold text-boutique-ink">Общо</span>
+                <span className="font-heading text-2xl text-boutique-ink">
+                  {formatEur(appliedCoupon?.total ?? subtotal)}
+                </span>
+              </div>
             </div>
             <div className="mt-5">
               <label
@@ -338,19 +398,50 @@ export function CheckoutPanel({ content }: { content: CheckoutPageContent }) {
               >
                 Код за отстъпка
               </label>
-              <input
-                id="coupon_code"
-                name="coupon_code"
-                type="text"
-                autoComplete="off"
-                spellCheck={false}
-                maxLength={32}
-                placeholder="Въведете код"
-                className={fieldClass}
-              />
-              <p className="mt-2 text-xs leading-relaxed text-boutique-muted">
-                Кодът ще бъде проверен при поръчка.
-              </p>
+              <div className="mt-2 flex gap-2">
+                <input
+                  id="coupon_code"
+                  name="coupon_code"
+                  type="text"
+                  value={couponInput}
+                  onChange={(event) => handleCouponInputChange(event.target.value)}
+                  autoComplete="off"
+                  spellCheck={false}
+                  maxLength={32}
+                  placeholder="Въведете код"
+                  className={`${fieldClass} mt-0`}
+                />
+                <button
+                  type="button"
+                  onClick={handleApplyCoupon}
+                  disabled={couponPending || !couponInput.trim()}
+                  className="shrink-0 rounded-xl border border-boutique-line bg-white px-4 py-3 text-sm font-semibold text-boutique-ink transition hover:border-boutique-sage/40 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {couponPending ? "…" : "Приложи"}
+                </button>
+              </div>
+              {appliedCoupon ? (
+                <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs leading-relaxed text-emerald-800">
+                  <p className="font-semibold">Купонът е приложен</p>
+                  <p className="mt-1">
+                    {appliedCoupon.code} · {appliedCoupon.discountPercentage}% · −
+                    {formatEur(appliedCoupon.discountAmount)}
+                  </p>
+                  <p className="mt-1 text-emerald-700/90">
+                    Крайната сума се потвърждава отново при поръчка.
+                  </p>
+                </div>
+              ) : null}
+              {couponError ? (
+                <p className="mt-2 text-xs text-red-700" role="alert">
+                  {couponError}
+                </p>
+              ) : null}
+              {!appliedCoupon && !couponError ? (
+                <p className="mt-2 text-xs leading-relaxed text-boutique-muted">
+                  Натиснете „Приложи“, за да проверите кода преди поръчка.
+                </p>
+              ) : null}
             </div>
             <p className="mt-2 text-xs leading-relaxed text-boutique-muted">
               {content["checkout.delivery_price_note"]}
