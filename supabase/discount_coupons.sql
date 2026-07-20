@@ -628,3 +628,114 @@ revoke all on function public.create_store_order(jsonb, jsonb, jsonb, text, uuid
 revoke all on function public.create_store_order(jsonb, jsonb, jsonb, text, uuid, jsonb, text) from authenticated;
 grant execute on function public.create_store_order(jsonb, jsonb, jsonb, text, uuid, jsonb, text) to service_role;
 
+
+-- ---------------------------------------------------------------------------
+-- Coupon-aware personalization pricing trigger
+-- Replaces apply_personalization_field_pricing so order coupons are preserved.
+-- ---------------------------------------------------------------------------
+
+create or replace function public.apply_personalization_field_pricing()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_items jsonb;
+  v_item jsonb;
+  v_item_index integer;
+  v_product_id uuid;
+  v_quantity integer;
+  v_delta numeric(10, 2);
+  v_unit_price numeric(10, 2);
+  v_line_total numeric(10, 2);
+  v_subtotal numeric(10, 2) := 0;
+  v_discount_amount numeric(10, 2) := null;
+  v_final numeric(10, 2);
+begin
+  v_items := new.raw_payload #> '{order,items}';
+
+  if jsonb_typeof(v_items) <> 'array' then
+    return new;
+  end if;
+
+  if jsonb_array_length(v_items) = 0 then
+    return new;
+  end if;
+
+  for v_item_index in 0..jsonb_array_length(v_items) - 1
+  loop
+    v_item := v_items -> v_item_index;
+
+    if
+      not (v_item ? 'productId')
+      or not (v_item ? 'unitPrice')
+      or not (v_item ? 'quantity')
+    then
+      return new;
+    end if;
+
+    begin
+      v_product_id := (v_item ->> 'productId')::uuid;
+      v_quantity := greatest(1, (v_item ->> 'quantity')::integer);
+      v_unit_price := coalesce((v_item ->> 'unitPrice')::numeric, 0);
+    exception
+      when others then
+        return new;
+    end;
+
+    select coalesce(sum(field.price_delta), 0)
+      into v_delta
+      from jsonb_array_elements(
+        case
+          when jsonb_typeof(v_item -> 'personalizationFields') = 'array'
+            then v_item -> 'personalizationFields'
+          else '[]'::jsonb
+        end
+      ) as submitted(value)
+      join public.product_personalization_fields field
+        on field.id::text = submitted.value ->> 'fieldId'
+       and field.product_id = v_product_id
+      where nullif(btrim(coalesce(submitted.value ->> 'value', '')), '') is not null;
+
+    v_unit_price := v_unit_price + v_delta;
+    v_line_total := v_unit_price * v_quantity;
+    v_subtotal := v_subtotal + v_line_total;
+
+    v_item := jsonb_set(v_item, '{personalizationDelta}', to_jsonb(v_delta), true);
+    v_item := jsonb_set(v_item, '{unitPrice}', to_jsonb(v_unit_price), true);
+    v_item := jsonb_set(v_item, '{lineTotal}', to_jsonb(v_line_total), true);
+    v_items := jsonb_set(v_items, array[v_item_index::text], v_item, false);
+  end loop;
+
+  begin
+    v_discount_amount := nullif(btrim(coalesce(new.raw_payload #>> '{order,discountAmount}', '')), '')::numeric;
+  exception
+    when others then
+      v_discount_amount := null;
+  end;
+
+  if v_discount_amount is not null and v_discount_amount > 0 then
+    new.raw_payload := jsonb_set(
+      new.raw_payload,
+      '{order,subtotalPrice}',
+      to_jsonb(v_subtotal),
+      true
+    );
+    v_final := greatest(0, v_subtotal - v_discount_amount);
+  else
+    v_final := v_subtotal;
+  end if;
+
+  new.total_price := v_final;
+  new.raw_payload := jsonb_set(new.raw_payload, '{order,items}', v_items, false);
+  new.raw_payload := jsonb_set(
+    new.raw_payload,
+    '{order,totalPrice}',
+    to_jsonb(v_final),
+    true
+  );
+
+  return new;
+end;
+$$;

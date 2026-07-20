@@ -71,6 +71,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   const ordersQuery = parseOrdersQuery({
     status: firstValue(params.status),
     search: firstValue(params.q),
+    orderId: firstValue(params.order_id),
     source: firstValue(params.source),
     dateFrom: firstValue(params.date_from),
     dateTo: firstValue(params.date_to),

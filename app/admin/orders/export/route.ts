@@ -40,6 +40,7 @@ export async function GET(request: NextRequest) {
   const query = parseOrdersQuery({
     status: params.get("status") ?? "",
     search: params.get("q") ?? "",
+    orderId: params.get("order_id") ?? "",
     source: params.get("source") ?? "",
     dateFrom: params.get("date_from") ?? "",
     dateTo: params.get("date_to") ?? "",

@@ -135,7 +135,7 @@ export function DiscountCouponPanel({
                           <p>
                             Поръчка{" "}
                             <Link
-                              href={`/admin?tab=orders&q=${encodeURIComponent(orderInfo.shortId)}`}
+                              href={`/admin?tab=orders&order_id=${encodeURIComponent(orderInfo.id)}`}
                               className="font-semibold text-boutique-sage-deep underline-offset-2 hover:underline"
                             >
                               {orderInfo.shortId}
@@ -151,7 +151,7 @@ export function DiscountCouponPanel({
                         <p>
                           Поръчка{" "}
                           <Link
-                            href={`/admin?tab=orders&q=${encodeURIComponent(coupon.used_order_id.slice(0, 8))}`}
+                            href={`/admin?tab=orders&order_id=${encodeURIComponent(coupon.used_order_id)}`}
                             className="font-semibold text-boutique-sage-deep underline-offset-2 hover:underline"
                           >
                             {coupon.used_order_id.slice(0, 8).toUpperCase()}

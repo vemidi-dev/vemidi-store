@@ -2,6 +2,10 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  buildOrdersCustomerSearchOrFilter,
+  parseOrdersQuery,
+} from "@/lib/admin/orders";
+import {
   buildCouponPreviewFailure,
   buildCouponPreviewSuccess,
   computeCouponDiscount,
@@ -79,4 +83,39 @@ test("extractOrderCouponSummary reads coupon fields from raw_payload without bre
       totalPrice: 85,
     },
   );
+});
+
+test("order search helper never uses id.ilike on uuid", () => {
+  const filter = buildOrdersCustomerSearchOrFilter("Anna");
+  assert.ok(filter);
+  assert.match(filter, /customer_name\.ilike/);
+  assert.doesNotMatch(filter, /id\.ilike/);
+
+  assert.equal(buildOrdersCustomerSearchOrFilter("  "), null);
+
+  const byUuid = parseOrdersQuery({
+    orderId: "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+    search: "should-be-ignored-when-eq",
+  });
+  assert.equal(byUuid.orderId, "f47ac10b-58cc-4372-a567-0e02b2c3d479");
+
+  const shortRef = parseOrdersQuery({ orderId: "F47AC10B" });
+  assert.equal(shortRef.orderId, "");
+});
+
+test("extractOrderCouponSummary keeps distinct subtotal discount and final total", () => {
+  const summary = extractOrderCouponSummary({
+    order: {
+      couponCode: "SAVE20",
+      discountPercentage: "20",
+      subtotalPrice: "120.00",
+      discountAmount: "24",
+      totalPrice: "96",
+    },
+  });
+  assert.ok(summary);
+  assert.equal(summary.subtotalPrice, 120);
+  assert.equal(summary.discountAmount, 24);
+  assert.equal(summary.totalPrice, 96);
+  assert.notEqual(summary.subtotalPrice, summary.totalPrice);
 });

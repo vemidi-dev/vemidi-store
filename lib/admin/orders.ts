@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { getProductPath } from "@/lib/product-url";
+import { isUuid } from "@/lib/is-uuid";
 
 import type { ProductOptionSelectionSnapshot } from "@/lib/product-options";
 import { formatOrderOptionLine, parseOrderOptionSelections } from "@/lib/order-option-display";
@@ -149,6 +150,7 @@ export type OrderRow = {
 export type OrdersQuery = {
   status: string;
   search: string;
+  orderId: string;
   source: string;
   dateFrom: string;
   dateTo: string;
@@ -223,6 +225,7 @@ export function normalizeOrderPageSize(value: string) {
 export function parseOrdersQuery(params: {
   status?: string;
   search?: string;
+  orderId?: string;
   source?: string;
   dateFrom?: string;
   dateTo?: string;
@@ -232,9 +235,11 @@ export function parseOrdersQuery(params: {
   page?: string;
   pageSize?: string;
 }): OrdersQuery {
+  const orderId = (params.orderId ?? "").trim();
   return {
     status: params.status ?? "",
     search: params.search ?? "",
+    orderId: isUuid(orderId) ? orderId : "",
     source: params.source ?? "",
     dateFrom: params.dateFrom ?? "",
     dateTo: params.dateTo ?? "",
@@ -248,6 +253,17 @@ export function parseOrdersQuery(params: {
 
 export function sanitizeOrderSearchTerm(value: string) {
   return value.trim().replace(/[%_,]/g, " ").replace(/\s+/g, " ").slice(0, 120);
+}
+
+/** Safe PostgREST search: never uses id.ilike on uuid columns. */
+export function buildOrdersCustomerSearchOrFilter(search: string): string | null {
+  const term = sanitizeOrderSearchTerm(search);
+  if (!term) {
+    return null;
+  }
+
+  const pattern = `%${term}%`;
+  return `customer_name.ilike.${pattern},customer_phone.ilike.${pattern},customer_email.ilike.${pattern}`;
 }
 
 export function getOrderStatusLabel(status: string | null) {
@@ -675,12 +691,16 @@ export function buildOrdersCsv(
 function applyServerFilters(query: any, {
     status,
     search,
+    orderId,
     dateFrom,
     dateTo,
     payment,
     delivery,
     source,
-  }: Pick<OrdersQuery, "status" | "search" | "dateFrom" | "dateTo" | "payment" | "delivery" | "source">,
+  }: Pick<
+    OrdersQuery,
+    "status" | "search" | "orderId" | "dateFrom" | "dateTo" | "payment" | "delivery" | "source"
+  >,
 ) {
   let next = query;
 
@@ -719,12 +739,13 @@ function applyServerFilters(query: any, {
     );
   }
 
-  const term = sanitizeOrderSearchTerm(search);
-  if (term) {
-    const pattern = `%${term}%`;
-    next = next.or(
-      `customer_name.ilike.${pattern},customer_phone.ilike.${pattern},customer_email.ilike.${pattern},id.ilike.${pattern}`,
-    );
+  if (orderId && isUuid(orderId)) {
+    next = next.eq("id", orderId);
+  } else {
+    const customerSearch = buildOrdersCustomerSearchOrFilter(search);
+    if (customerSearch) {
+      next = next.or(customerSearch);
+    }
   }
 
   return next;
@@ -893,6 +914,7 @@ export function buildOrdersListHref(query: OrdersQuery, overrides: Partial<Order
 
   if (merged.status) params.set("status", merged.status);
   if (merged.search) params.set("q", merged.search);
+  if (merged.orderId) params.set("order_id", merged.orderId);
   if (merged.source) params.set("source", merged.source);
   if (merged.dateFrom) params.set("date_from", merged.dateFrom);
   if (merged.dateTo) params.set("date_to", merged.dateTo);
