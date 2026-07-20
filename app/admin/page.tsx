@@ -21,6 +21,7 @@ import { SubscriberManagementPanel } from "@/components/admin/subscriber-managem
 import { SiteContentManagementPanel } from "@/components/admin/site-content-management-panel";
 import { SiteMediaManagementPanel } from "@/components/admin/site-media-management-panel";
 import { PromotionManagementPanel } from "@/components/admin/promotion-management-panel";
+import { DiscountCouponPanel } from "@/components/admin/discount-coupon-panel";
 import { WishManagementPanel } from "@/components/admin/wish-management-panel";
 import { FaqManagementPanel } from "@/components/admin/faq-management-panel";
 import { PageContainer } from "@/components/layout/page-container";
@@ -377,7 +378,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   }
 
   if (activeTab === "promotions") {
-    const [productsResult, categoriesResult, productCategoriesResult, campaignsResult] =
+    const [productsResult, categoriesResult, productCategoriesResult, campaignsResult, couponsResult] =
       await Promise.all([
         supabase
           .from("products")
@@ -389,6 +390,12 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           .from("promotion_campaigns")
           .select(
             "id,name,discount_percentage,starts_at,ends_at,is_active,created_at,updated_at",
+          )
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("discount_coupons")
+          .select(
+            "id,code,discount_percentage,is_active,used_at,used_order_id,created_at,updated_at",
           )
           .order("created_at", { ascending: false }),
       ]);
@@ -422,6 +429,12 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                 {error || success}
               </div>
             ) : null}
+            <DiscountCouponPanel
+              coupons={
+                (couponsResult.data ?? []) as import("@/lib/admin/types").DiscountCouponRow[]
+              }
+              loadError={couponsResult.error?.message ?? null}
+            />
             {promotionsResult.error ? (
               <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                 Промоциите не могат да бъдат заредени. Изпълнете

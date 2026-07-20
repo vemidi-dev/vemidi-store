@@ -331,6 +331,27 @@ export function CheckoutPanel({ content }: { content: CheckoutPageContent }) {
                 {formatEur(subtotal)}
               </span>
             </div>
+            <div className="mt-5">
+              <label
+                htmlFor="coupon_code"
+                className="text-xs font-semibold uppercase tracking-wider text-boutique-muted"
+              >
+                Код за отстъпка
+              </label>
+              <input
+                id="coupon_code"
+                name="coupon_code"
+                type="text"
+                autoComplete="off"
+                spellCheck={false}
+                maxLength={32}
+                placeholder="Въведете код"
+                className={fieldClass}
+              />
+              <p className="mt-2 text-xs leading-relaxed text-boutique-muted">
+                Кодът ще бъде проверен при поръчка.
+              </p>
+            </div>
             <p className="mt-2 text-xs leading-relaxed text-boutique-muted">
               {content["checkout.delivery_price_note"]}
             </p>

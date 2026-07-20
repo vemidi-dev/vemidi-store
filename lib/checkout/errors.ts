@@ -48,6 +48,9 @@ export const checkoutErrorMessages: Record<string, string> = {
     "Поръчката вече се обработва. Изчакайте момент и опитайте отново.",
   rate_limit_exceeded:
     "Направени са твърде много опити. Изчакайте 15 минути и опитайте отново.",
+  coupon_invalid: "Кодът за отстъпка е невалиден.",
+  coupon_used: "Този код за отстъпка вече е използван.",
+  coupon_inactive: "Този код за отстъпка не е активен.",
 };
 
 export function mapCheckoutError(message: string) {
