@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import type { TouchEvent } from "react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import type { ProductImage } from "@/lib/catalog";
 import { MediaPlaceholder } from "@/components/ui/media-placeholder";
@@ -65,6 +65,7 @@ function GalleryThumbnailButton({
     <button
       type="button"
       onClick={onSelect}
+      data-gallery-thumb={index}
       className={`relative overflow-hidden rounded-xl border-2 bg-white transition duration-300 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-boutique-sage focus-visible:ring-offset-2 motion-reduce:transition-none ${
         isActive
           ? "border-boutique-ink shadow-[0_12px_24px_-12px_rgb(44_40_37_/0.18)]"
@@ -88,9 +89,30 @@ function GalleryThumbnailButton({
   );
 }
 
+function GalleryImageCounter({
+  current,
+  total,
+  className,
+}: {
+  current: number;
+  total: number;
+  className?: string;
+}) {
+  return (
+    <span
+      className={`pointer-events-none absolute bottom-3 right-3 z-10 rounded-full border border-white/70 bg-white/90 px-2.5 py-1 text-xs font-medium tracking-wide text-boutique-ink shadow-md ${className ?? ""}`}
+      aria-live="polite"
+    >
+      {current} / {total}
+    </span>
+  );
+}
+
 export function ProductDetailGallery({ images, className }: ProductDetailGalleryProps) {
   const [active, setActive] = useState(0);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const desktopThumbsRef = useRef<HTMLUListElement>(null);
+  const mobileThumbsRef = useRef<HTMLUListElement>(null);
   const safeIndex = Math.min(active, Math.max(0, images.length - 1));
   const main = images[safeIndex] ?? images[0];
   const hasMultipleImages = images.length > 1;
@@ -105,6 +127,21 @@ export function ProductDetailGallery({ images, className }: ProductDetailGallery
 
   const showPreviousImage = () => showImage(safeIndex - 1);
   const showNextImage = () => showImage(safeIndex + 1);
+
+  useEffect(() => {
+    if (!hasMultipleImages) {
+      return;
+    }
+
+    const selector = `[data-gallery-thumb="${safeIndex}"]`;
+    for (const list of [desktopThumbsRef.current, mobileThumbsRef.current]) {
+      list?.querySelector<HTMLElement>(selector)?.scrollIntoView({
+        block: "nearest",
+        inline: "nearest",
+        behavior: "smooth",
+      });
+    }
+  }, [hasMultipleImages, safeIndex]);
 
   const handleTouchEnd = (event: TouchEvent<HTMLDivElement>) => {
     if (!hasMultipleImages || !touchStartRef.current) {
@@ -167,6 +204,11 @@ export function ProductDetailGallery({ images, className }: ProductDetailGallery
           >
             ›
           </button>
+          <GalleryImageCounter
+            current={safeIndex + 1}
+            total={images.length}
+            className="lg:hidden"
+          />
         </>
       ) : null}
     </div>
@@ -174,24 +216,33 @@ export function ProductDetailGallery({ images, className }: ProductDetailGallery
 
   return (
     <div className={`flex flex-col gap-4 lg:gap-5 ${className ?? ""}`}>
-      <div className="hidden lg:flex lg:items-start lg:gap-4">
+      <div className="hidden lg:flex lg:gap-4">
         {hasMultipleImages ? (
-          <ul
-            className="flex w-24 shrink-0 flex-col gap-3"
-            aria-label="Миниатюри на продукта"
-          >
-            {images.map((img, i) => (
-              <li key={img.src}>
-                <GalleryThumbnailButton
-                  image={img}
-                  index={i}
-                  isActive={i === safeIndex}
-                  onSelect={() => setActive(i)}
-                  className="aspect-square w-24"
-                />
-              </li>
-            ))}
-          </ul>
+          <div className="relative w-24 shrink-0 self-stretch">
+            <ul
+              ref={desktopThumbsRef}
+              className="absolute inset-0 flex flex-col gap-3 overflow-y-auto overscroll-contain [scrollbar-gutter:stable] [scrollbar-width:thin] [scrollbar-color:rgb(44_40_37_/0.28)_transparent]"
+              aria-label="Миниатюри на продукта"
+            >
+              {images.map((img, i) => (
+                <li key={img.src} className="shrink-0">
+                  <GalleryThumbnailButton
+                    image={img}
+                    index={i}
+                    isActive={i === safeIndex}
+                    onSelect={() => setActive(i)}
+                    className="aspect-square w-24"
+                  />
+                </li>
+              ))}
+            </ul>
+            {images.length > 5 ? (
+              <div
+                className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-boutique-bg via-boutique-bg/70 to-transparent"
+                aria-hidden
+              />
+            ) : null}
+          </div>
         ) : null}
         {mainImageWithArrows}
       </div>
@@ -200,17 +251,18 @@ export function ProductDetailGallery({ images, className }: ProductDetailGallery
         {mainImageWithArrows}
         {hasMultipleImages ? (
           <ul
-            className="mt-4 grid grid-cols-4 gap-3 sm:grid-cols-6"
+            ref={mobileThumbsRef}
+            className="-mx-1 mt-4 flex gap-3 overflow-x-auto overscroll-x-contain px-1 pb-1 [scrollbar-width:thin] [scrollbar-color:rgb(44_40_37_/0.28)_transparent]"
             aria-label="Миниатюри на продукта"
           >
             {images.map((img, i) => (
-              <li key={img.src}>
+              <li key={img.src} className="shrink-0">
                 <GalleryThumbnailButton
                   image={img}
                   index={i}
                   isActive={i === safeIndex}
                   onSelect={() => setActive(i)}
-                  className="aspect-square w-full"
+                  className="aspect-square w-20"
                 />
               </li>
             ))}
