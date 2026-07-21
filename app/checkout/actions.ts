@@ -11,6 +11,7 @@ import {
   checkoutErrorMessages,
   mapCheckoutError,
 } from "@/lib/checkout/errors";
+import { normalizeCouponCode } from "@/lib/checkout/coupon";
 import { formatOrderReference } from "@/lib/checkout/order-confirmation";
 import {
   validatePersonalizationFields,
@@ -374,6 +375,15 @@ export async function createStoreOrder(
       campaign: orderAttribution.campaign ?? null,
       landingUrl: orderAttribution.landingUrl ?? null,
     };
+  }
+
+  const rawCoupon = String(formData.get("coupon_code") ?? "").trim();
+  if (rawCoupon) {
+    const couponCode = normalizeCouponCode(rawCoupon);
+    if (!couponCode) {
+      return { ok: false, message: checkoutErrorMessages.coupon_invalid };
+    }
+    rpcPayload.p_coupon_code = couponCode;
   }
 
   const { data, error } = await supabase.rpc("create_store_order", rpcPayload);

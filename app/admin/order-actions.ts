@@ -25,6 +25,7 @@ function parseReturnQuery(formData: FormData) {
   return parseOrdersQuery({
     status: String(formData.get("return_status") ?? ""),
     search: String(formData.get("return_q") ?? ""),
+    orderId: String(formData.get("return_order_id") ?? ""),
     source: String(formData.get("return_source") ?? ""),
     dateFrom: String(formData.get("return_date_from") ?? ""),
     dateTo: String(formData.get("return_date_to") ?? ""),

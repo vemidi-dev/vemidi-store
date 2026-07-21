@@ -25,6 +25,7 @@ import {
 } from "@/lib/admin/order-item-display";
 import type { OrderNotificationSummary } from "@/lib/admin/order-notifications";
 import { OrderNotificationStatus } from "@/components/admin/order-notification-status";
+import { extractOrderCouponSummary } from "@/lib/checkout/coupon";
 
 function valueOrDash(value: string | null | undefined) {
   return value?.trim() || "—";
@@ -40,6 +41,7 @@ export function OrderDetailsSection({
   const storeItems = parseStoreOrderItems(order);
   const itemCount = getOrderItemCount(order);
   const personalizationSummary = getOrderPersonalizationSummary(order);
+  const couponSummary = extractOrderCouponSummary(order.raw_payload);
 
   return (
     <div className="space-y-5 text-sm">
@@ -65,6 +67,50 @@ export function OrderDetailsSection({
           ))}
         </dl>
       </section>
+
+      {couponSummary ? (
+        <section>
+          <h4 className="text-xs font-semibold uppercase tracking-wider text-boutique-muted">
+            Купон за отстъпка
+          </h4>
+          <dl className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {[
+              ["Код", couponSummary.couponCode],
+              [
+                "Процент",
+                couponSummary.discountPercentage != null
+                  ? `${couponSummary.discountPercentage}%`
+                  : "—",
+              ],
+              [
+                "Преди отстъпка",
+                couponSummary.subtotalPrice != null
+                  ? formatOrderPrice(couponSummary.subtotalPrice, order.currency)
+                  : "—",
+              ],
+              [
+                "Отстъпка",
+                couponSummary.discountAmount != null
+                  ? formatOrderPrice(couponSummary.discountAmount, order.currency)
+                  : "—",
+              ],
+              [
+                "След отстъпка",
+                couponSummary.totalPrice != null
+                  ? formatOrderPrice(couponSummary.totalPrice, order.currency)
+                  : formatOrderPrice(order.total_price, order.currency),
+              ],
+            ].map(([label, value]) => (
+              <div key={label}>
+                <dt className="text-xs font-semibold uppercase tracking-wider text-boutique-muted">
+                  {label}
+                </dt>
+                <dd className="mt-1 break-words text-boutique-ink">{value}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      ) : null}
 
       <section>
         <h4 className="text-xs font-semibold uppercase tracking-wider text-boutique-muted">

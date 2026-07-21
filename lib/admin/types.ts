@@ -18,6 +18,18 @@ export type AdminTab =
 
 export type SubscriptionTopic = "blog" | "products" | "events";
 
+export type DiscountCouponRow = {
+  id: string;
+  code: string;
+  discount_percentage: number;
+  is_active: boolean;
+  used_at: string | null;
+  used_order_id: string | null;
+  expires_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type NewsletterSubscriberRow = {
   id: string;
   email: string;

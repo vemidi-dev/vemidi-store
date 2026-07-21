@@ -152,6 +152,13 @@ export const adminFormFields = {
     productIds: "product_ids",
     campaignId: "campaign_id",
   },
+  discountCoupon: {
+    id: "discount_coupon_id",
+    code: "discount_coupon_code",
+    discountPercentage: "discount_coupon_percentage",
+    isActive: "discount_coupon_is_active",
+    expiresAt: "discount_coupon_expires_at",
+  },
   landingPage: {
     id: "landing_page_id",
     productId: "product_id",

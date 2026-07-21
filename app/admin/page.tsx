@@ -21,6 +21,7 @@ import { SubscriberManagementPanel } from "@/components/admin/subscriber-managem
 import { SiteContentManagementPanel } from "@/components/admin/site-content-management-panel";
 import { SiteMediaManagementPanel } from "@/components/admin/site-media-management-panel";
 import { PromotionManagementPanel } from "@/components/admin/promotion-management-panel";
+import { DiscountCouponPanel } from "@/components/admin/discount-coupon-panel";
 import { WishManagementPanel } from "@/components/admin/wish-management-panel";
 import { FaqManagementPanel } from "@/components/admin/faq-management-panel";
 import { PageContainer } from "@/components/layout/page-container";
@@ -70,6 +71,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   const ordersQuery = parseOrdersQuery({
     status: firstValue(params.status),
     search: firstValue(params.q),
+    orderId: firstValue(params.order_id),
     source: firstValue(params.source),
     dateFrom: firstValue(params.date_from),
     dateTo: firstValue(params.date_to),
@@ -377,7 +379,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   }
 
   if (activeTab === "promotions") {
-    const [productsResult, categoriesResult, productCategoriesResult, campaignsResult] =
+    const [productsResult, categoriesResult, productCategoriesResult, campaignsResult, couponsResult] =
       await Promise.all([
         supabase
           .from("products")
@@ -389,6 +391,12 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           .from("promotion_campaigns")
           .select(
             "id,name,discount_percentage,starts_at,ends_at,is_active,created_at,updated_at",
+          )
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("discount_coupons")
+          .select(
+            "id,code,discount_percentage,is_active,used_at,used_order_id,expires_at,created_at,updated_at",
           )
           .order("created_at", { ascending: false }),
       ]);
@@ -406,6 +414,37 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           )
           .order("created_at", { ascending: false });
 
+    const usedOrderIds = Array.from(
+      new Set(
+        (couponsResult.data ?? [])
+          .map((coupon) =>
+            typeof coupon.used_order_id === "string" ? coupon.used_order_id : null,
+          )
+          .filter((id): id is string => Boolean(id)),
+      ),
+    );
+    const couponOrdersById: Record<
+      string,
+      import("@/components/admin/discount-coupon-panel").DiscountCouponOrderInfo
+    > = {};
+    if (usedOrderIds.length > 0) {
+      const { data: usedOrders } = await supabase
+        .from("orders")
+        .select("id,customer_name,customer_email,customer_phone")
+        .in("id", usedOrderIds);
+      for (const order of usedOrders ?? []) {
+        const id = String(order.id);
+        couponOrdersById[id] = {
+          id,
+          shortId: id.slice(0, 8).toUpperCase(),
+          customerName: String(order.customer_name ?? ""),
+          customerEmail:
+            typeof order.customer_email === "string" ? order.customer_email : null,
+          customerPhone: String(order.customer_phone ?? ""),
+        };
+      }
+    }
+
     return (
       <section className="pb-24 pt-10">
         <PageContainer>
@@ -422,6 +461,13 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                 {error || success}
               </div>
             ) : null}
+            <DiscountCouponPanel
+              coupons={
+                (couponsResult.data ?? []) as import("@/lib/admin/types").DiscountCouponRow[]
+              }
+              ordersById={couponOrdersById}
+              loadError={couponsResult.error?.message ?? null}
+            />
             {promotionsResult.error ? (
               <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                 Промоциите не могат да бъдат заредени. Изпълнете
