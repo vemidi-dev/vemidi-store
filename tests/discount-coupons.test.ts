@@ -9,6 +9,7 @@ import {
   buildCouponPreviewFailure,
   buildCouponPreviewSuccess,
   computeCouponDiscount,
+  describeInvalidCouponCheckoutMessage,
   extractOrderCouponSummary,
   isCouponExpired,
   normalizeCouponCode,
@@ -29,6 +30,25 @@ test("mapCheckoutError localizes coupon failures including expired", () => {
   assert.equal(mapCheckoutError("coupon_used"), checkoutErrorMessages.coupon_used);
   assert.equal(mapCheckoutError("coupon_inactive"), checkoutErrorMessages.coupon_inactive);
   assert.equal(mapCheckoutError("coupon_expired"), checkoutErrorMessages.coupon_expired);
+});
+
+test("describeInvalidCouponCheckoutMessage explains code will not be applied", () => {
+  assert.equal(
+    describeInvalidCouponCheckoutMessage("coupon_expired"),
+    "Кодът е изтекъл и няма да бъде приложен.",
+  );
+  assert.equal(
+    describeInvalidCouponCheckoutMessage("coupon_invalid"),
+    "Кодът е невалиден и няма да бъде приложен.",
+  );
+  assert.equal(
+    describeInvalidCouponCheckoutMessage("coupon_used"),
+    "Кодът е вече използван и няма да бъде приложен.",
+  );
+  assert.equal(
+    describeInvalidCouponCheckoutMessage("coupon_inactive"),
+    "Кодът е неактивен и няма да бъде приложен.",
+  );
 });
 
 test("computeCouponDiscount rounds preview amounts and never goes below zero", () => {

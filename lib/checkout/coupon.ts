@@ -113,6 +113,23 @@ export function buildCouponPreviewFailure(
   };
 }
 
+/** Clear checkout UX copy when a typed code will not be applied. */
+export function describeInvalidCouponCheckoutMessage(
+  code: CouponFailureCode,
+): string {
+  switch (code) {
+    case "coupon_expired":
+      return "Кодът е изтекъл и няма да бъде приложен.";
+    case "coupon_used":
+      return "Кодът е вече използван и няма да бъде приложен.";
+    case "coupon_inactive":
+      return "Кодът е неактивен и няма да бъде приложен.";
+    case "coupon_invalid":
+    default:
+      return "Кодът е невалиден и няма да бъде приложен.";
+  }
+}
+
 function asFiniteNumber(value: unknown): number | null {
   if (typeof value === "number" && Number.isFinite(value)) {
     return value;

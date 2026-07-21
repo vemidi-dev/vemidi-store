@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect, useState } from "react";
-import { useFormStatus } from "react-dom";
+import { useActionState, useEffect, useRef, useState } from "react";
+import { flushSync, useFormStatus } from "react-dom";
 
 import {
   createStoreOrder,
@@ -16,7 +16,10 @@ import { CartLineSummaryDetails } from "@/components/cart/cart-line-summary-deta
 import { useCart } from "@/components/cart/cart-provider";
 import { PageContainer } from "@/components/layout/page-container";
 import { formatEur } from "@/lib/format-eur";
-import type { CouponPreviewResult } from "@/lib/checkout/coupon";
+import {
+  describeInvalidCouponCheckoutMessage,
+  type CouponPreviewResult,
+} from "@/lib/checkout/coupon";
 import {
   CHECKOUT_LANDING_RETURN_LABEL,
   getCheckoutLandingReturnLinkProps,
@@ -40,17 +43,19 @@ import {
 function SubmitOrderButton({
   ready,
   label,
+  blocked,
 }: {
   ready: boolean;
   label: string;
+  blocked?: boolean;
 }) {
   const { pending } = useFormStatus();
 
   return (
     <button
       type="submit"
-      disabled={pending || !ready}
-      className="mt-6 w-full rounded-full bg-boutique-ink px-6 py-3.5 text-sm font-semibold text-boutique-paper transition hover:bg-boutique-accent disabled:cursor-wait disabled:opacity-60"
+      disabled={pending || !ready || Boolean(blocked)}
+      className="mt-6 w-full rounded-full bg-boutique-ink px-6 py-3.5 text-sm font-semibold text-boutique-paper transition hover:bg-boutique-accent disabled:cursor-not-allowed disabled:opacity-60"
     >
       {pending ? "Изпращане..." : label}
     </button>
@@ -65,6 +70,7 @@ export function CheckoutPanel({ content }: { content: CheckoutPageContent }) {
     ? getCheckoutLandingReturnLinkProps(landingReturnUrl)
     : null;
   const [state, formAction] = useActionState(createStoreOrder, initialState);
+  const formRef = useRef<HTMLFormElement>(null);
   const [idempotencyKey, setIdempotencyKey] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
@@ -87,6 +93,12 @@ export function CheckoutPanel({ content }: { content: CheckoutPageContent }) {
     setCouponError("");
   }, [subtotal]);
 
+  const clearCouponState = () => {
+    setCouponInput("");
+    setAppliedCoupon(null);
+    setCouponError("");
+  };
+
   const handleCouponInputChange = (value: string) => {
     setCouponInput(value);
     if (appliedCoupon || couponError) {
@@ -105,7 +117,7 @@ export function CheckoutPanel({ content }: { content: CheckoutPageContent }) {
       });
       if (!result.ok) {
         setAppliedCoupon(null);
-        setCouponError(result.message);
+        setCouponError(describeInvalidCouponCheckoutMessage(result.code));
         return;
       }
       setCouponInput(result.code);
@@ -116,6 +128,17 @@ export function CheckoutPanel({ content }: { content: CheckoutPageContent }) {
     } finally {
       setCouponPending(false);
     }
+  };
+
+  const handleRemoveCoupon = () => {
+    clearCouponState();
+  };
+
+  const handleOrderWithoutCoupon = () => {
+    flushSync(() => {
+      clearCouponState();
+    });
+    formRef.current?.requestSubmit();
   };
 
   useEffect(() => {
@@ -175,6 +198,7 @@ export function CheckoutPanel({ content }: { content: CheckoutPageContent }) {
       <MetaPixelInitiateCheckoutBridge lines={lines} subtotal={subtotal} />
       <PageContainer>
         <form
+          ref={formRef}
           action={formAction}
           className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_380px]"
         >
@@ -184,6 +208,9 @@ export function CheckoutPanel({ content }: { content: CheckoutPageContent }) {
             value={JSON.stringify(lines)}
           />
           <input type="hidden" name="idempotency_key" value={idempotencyKey} />
+          {appliedCoupon ? (
+            <input type="hidden" name="coupon_code" value={appliedCoupon.code} />
+          ) : null}
           <input
             name="website"
             tabIndex={-1}
@@ -401,7 +428,6 @@ export function CheckoutPanel({ content }: { content: CheckoutPageContent }) {
               <div className="mt-2 flex gap-2">
                 <input
                   id="coupon_code"
-                  name="coupon_code"
                   type="text"
                   value={couponInput}
                   onChange={(event) => handleCouponInputChange(event.target.value)}
@@ -433,9 +459,34 @@ export function CheckoutPanel({ content }: { content: CheckoutPageContent }) {
                 </div>
               ) : null}
               {couponError ? (
-                <p className="mt-2 text-xs text-red-700" role="alert">
-                  {couponError}
-                </p>
+                <div
+                  className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-3"
+                  role="alert"
+                >
+                  <p className="text-xs font-semibold leading-relaxed text-red-800">
+                    {couponError}
+                  </p>
+                  <p className="mt-1 text-xs leading-relaxed text-red-700/90">
+                    Премахнете кода или поръчайте без отстъпка.
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={handleRemoveCoupon}
+                      className="rounded-xl border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-800 transition hover:border-red-300"
+                    >
+                      Премахни кода
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleOrderWithoutCoupon}
+                      disabled={!idempotencyKey}
+                      className="rounded-xl bg-boutique-ink px-3 py-2 text-xs font-semibold text-boutique-paper transition hover:bg-boutique-accent disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      Поръчай без купон
+                    </button>
+                  </div>
+                </div>
               ) : null}
               {!appliedCoupon && !couponError ? (
                 <p className="mt-2 text-xs leading-relaxed text-boutique-muted">
@@ -449,6 +500,7 @@ export function CheckoutPanel({ content }: { content: CheckoutPageContent }) {
             <SubmitOrderButton
               ready={Boolean(idempotencyKey)}
               label={content["checkout.submit_button"]}
+              blocked={Boolean(couponError)}
             />
             {landingReturnLinkProps ? (
               <a
