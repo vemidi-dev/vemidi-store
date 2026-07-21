@@ -25,6 +25,7 @@ export type DiscountCouponRow = {
   is_active: boolean;
   used_at: string | null;
   used_order_id: string | null;
+  expires_at: string | null;
   created_at: string;
   updated_at: string;
 };

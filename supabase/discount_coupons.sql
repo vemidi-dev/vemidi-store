@@ -11,6 +11,7 @@ create table if not exists public.discount_coupons (
   is_active boolean not null default true,
   used_at timestamptz null,
   used_order_id uuid null references public.orders (id) on delete set null,
+  expires_at timestamptz null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint discount_coupons_code_unique unique (code),
@@ -20,9 +21,16 @@ create table if not exists public.discount_coupons (
     check (discount_percentage > 0 and discount_percentage <= 100)
 );
 
+alter table public.discount_coupons
+  add column if not exists expires_at timestamptz null;
+
 create index if not exists discount_coupons_active_unused_idx
   on public.discount_coupons (is_active, used_at)
   where used_at is null;
+
+create index if not exists discount_coupons_expires_at_idx
+  on public.discount_coupons (expires_at)
+  where expires_at is not null;
 
 drop trigger if exists discount_coupons_set_updated_at on public.discount_coupons;
 create trigger discount_coupons_set_updated_at
@@ -117,6 +125,7 @@ declare
   v_discount_percentage numeric(5, 2) := null;
   v_coupon_code text := null;
   v_coupon_id uuid := null;
+  v_coupon_expires_at timestamptz := null;
   v_coupon record;
 begin
   if p_idempotency_key is null then
@@ -492,6 +501,7 @@ begin
   v_discount_percentage := null;
   v_coupon_code := null;
   v_coupon_id := null;
+  v_coupon_expires_at := null;
 
   if nullif(trim(coalesce(p_coupon_code, '')), '') is not null then
     v_coupon_code := upper(trim(p_coupon_code));
@@ -506,7 +516,8 @@ begin
       discount_percentage,
       is_active,
       used_at,
-      used_order_id
+      used_order_id,
+      expires_at
       into v_coupon
       from public.discount_coupons
       where code = v_coupon_code
@@ -524,8 +535,13 @@ begin
       raise exception 'coupon_used' using errcode = '22023';
     end if;
 
+    if v_coupon.expires_at is not null and v_coupon.expires_at <= now() then
+      raise exception 'coupon_expired' using errcode = '22023';
+    end if;
+
     v_coupon_id := v_coupon.id;
     v_coupon_code := v_coupon.code;
+    v_coupon_expires_at := v_coupon.expires_at;
     v_discount_percentage := v_coupon.discount_percentage;
     v_discount_amount := round(v_subtotal * v_discount_percentage / 100.0, 2);
     v_total := greatest(0, v_subtotal - v_discount_amount);
@@ -589,6 +605,7 @@ begin
         'items', v_items,
         'subtotalPrice', v_subtotal,
         'couponCode', v_coupon_code,
+        'couponExpiresAt', v_coupon_expires_at,
         'discountPercentage', v_discount_percentage,
         'discountAmount', v_discount_amount,
         'totalPrice', v_total,

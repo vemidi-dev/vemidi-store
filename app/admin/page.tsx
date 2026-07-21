@@ -396,7 +396,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         supabase
           .from("discount_coupons")
           .select(
-            "id,code,discount_percentage,is_active,used_at,used_order_id,created_at,updated_at",
+            "id,code,discount_percentage,is_active,used_at,used_order_id,expires_at,created_at,updated_at",
           )
           .order("created_at", { ascending: false }),
       ]);

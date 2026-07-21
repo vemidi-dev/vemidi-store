@@ -35,6 +35,20 @@ async function getAuthorizedClient() {
   return supabase;
 }
 
+function parseExpiresAt(raw: string): string | null | "invalid" {
+  const value = raw.trim();
+  if (!value) {
+    return null;
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "invalid";
+  }
+
+  return date.toISOString();
+}
+
 export async function createDiscountCoupon(formData: FormData) {
   const supabase = await getAuthorizedClient();
   const code = normalizeCouponCode(getString(formData, adminFormFields.discountCoupon.code));
@@ -46,6 +60,9 @@ export async function createDiscountCoupon(formData: FormData) {
   const isActive =
     formData.get(adminFormFields.discountCoupon.isActive) === "on" ||
     formData.get(adminFormFields.discountCoupon.isActive) === "true";
+  const expiresAt = parseExpiresAt(
+    getString(formData, adminFormFields.discountCoupon.expiresAt),
+  );
 
   if (!code) {
     done("error", "Кодът трябва да е 4–32 символа (A–Z, 0–9).");
@@ -55,10 +72,15 @@ export async function createDiscountCoupon(formData: FormData) {
     done("error", "Процентът трябва да е между 0 и 100 (без 0).");
   }
 
+  if (expiresAt === "invalid") {
+    done("error", "Невалидна дата за „Валиден до“.");
+  }
+
   const { error } = await supabase.from("discount_coupons").insert({
     code,
     discount_percentage: percentage,
     is_active: isActive,
+    expires_at: expiresAt,
   });
 
   if (error) {

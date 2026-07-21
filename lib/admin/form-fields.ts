@@ -157,6 +157,7 @@ export const adminFormFields = {
     code: "discount_coupon_code",
     discountPercentage: "discount_coupon_percentage",
     isActive: "discount_coupon_is_active",
+    expiresAt: "discount_coupon_expires_at",
   },
   landingPage: {
     id: "landing_page_id",

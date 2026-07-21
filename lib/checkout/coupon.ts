@@ -1,5 +1,11 @@
 import { checkoutErrorMessages } from "@/lib/checkout/errors";
 
+export type CouponFailureCode =
+  | "coupon_invalid"
+  | "coupon_used"
+  | "coupon_inactive"
+  | "coupon_expired";
+
 export type CouponPreviewResult =
   | {
       ok: true;
@@ -8,10 +14,11 @@ export type CouponPreviewResult =
       subtotal: number;
       discountAmount: number;
       total: number;
+      expiresAt: string | null;
     }
   | {
       ok: false;
-      code: "coupon_invalid" | "coupon_used" | "coupon_inactive";
+      code: CouponFailureCode;
       message: string;
     };
 
@@ -21,6 +28,7 @@ export type OrderCouponSummary = {
   subtotalPrice: number | null;
   discountAmount: number | null;
   totalPrice: number | null;
+  couponExpiresAt: string | null;
 };
 
 export function normalizeCouponCode(raw: unknown): string | null {
@@ -38,6 +46,22 @@ export function normalizeCouponCode(raw: unknown): string | null {
   }
 
   return code;
+}
+
+export function isCouponExpired(
+  expiresAt: string | null | undefined,
+  now: Date = new Date(),
+): boolean {
+  if (!expiresAt) {
+    return false;
+  }
+
+  const expires = new Date(expiresAt);
+  if (Number.isNaN(expires.getTime())) {
+    return false;
+  }
+
+  return expires.getTime() <= now.getTime();
 }
 
 export function computeCouponDiscount(
@@ -61,6 +85,7 @@ export function buildCouponPreviewSuccess(input: {
   code: string;
   discountPercentage: number;
   subtotal: number;
+  expiresAt?: string | null;
 }): Extract<CouponPreviewResult, { ok: true }> {
   const { discountAmount, total } = computeCouponDiscount(
     input.subtotal,
@@ -74,11 +99,12 @@ export function buildCouponPreviewSuccess(input: {
     subtotal: Math.round(Math.max(0, input.subtotal) * 100) / 100,
     discountAmount,
     total,
+    expiresAt: input.expiresAt ?? null,
   };
 }
 
 export function buildCouponPreviewFailure(
-  code: "coupon_invalid" | "coupon_used" | "coupon_inactive",
+  code: CouponFailureCode,
 ): Extract<CouponPreviewResult, { ok: false }> {
   return {
     ok: false,
@@ -96,6 +122,17 @@ function asFiniteNumber(value: unknown): number | null {
     return Number.isFinite(parsed) ? parsed : null;
   }
   return null;
+}
+
+function asIsoTimestamp(value: unknown): string | null {
+  if (typeof value !== "string" || !value.trim()) {
+    return null;
+  }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+  return date.toISOString();
 }
 
 export function extractOrderCouponSummary(rawPayload: unknown): OrderCouponSummary | null {
@@ -122,5 +159,6 @@ export function extractOrderCouponSummary(rawPayload: unknown): OrderCouponSumma
     subtotalPrice: asFiniteNumber(record.subtotalPrice),
     discountAmount: asFiniteNumber(record.discountAmount),
     totalPrice: asFiniteNumber(record.totalPrice),
+    couponExpiresAt: asIsoTimestamp(record.couponExpiresAt),
   };
 }

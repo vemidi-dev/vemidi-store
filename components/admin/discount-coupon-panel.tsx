@@ -7,6 +7,7 @@ import {
 import { adminFieldClass, adminPanelClass } from "@/components/admin/styles";
 import { adminFormFields } from "@/lib/admin/form-fields";
 import type { DiscountCouponRow } from "@/lib/admin/types";
+import { isCouponExpired } from "@/lib/checkout/coupon";
 
 export type DiscountCouponOrderInfo = {
   id: string;
@@ -16,7 +17,7 @@ export type DiscountCouponOrderInfo = {
   customerPhone: string;
 };
 
-function formatUsedAt(value: string | null) {
+function formatDateTime(value: string | null) {
   if (!value) {
     return "—";
   }
@@ -27,6 +28,18 @@ function formatUsedAt(value: string | null) {
   }
 
   return date.toLocaleString("bg-BG");
+}
+
+function formatExpiryLabel(expiresAt: string | null) {
+  if (!expiresAt) {
+    return "Без срок";
+  }
+
+  if (isCouponExpired(expiresAt)) {
+    return `Изтекъл ${formatDateTime(expiresAt)}`;
+  }
+
+  return `Валиден до ${formatDateTime(expiresAt)}`;
 }
 
 export function DiscountCouponPanel({
@@ -56,8 +69,8 @@ export function DiscountCouponPanel({
         </div>
       ) : null}
 
-      <form action={createDiscountCoupon} className="mt-5 grid gap-3 sm:grid-cols-4">
-        <label className="text-xs font-semibold uppercase tracking-wider text-boutique-muted sm:col-span-1">
+      <form action={createDiscountCoupon} className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        <label className="text-xs font-semibold uppercase tracking-wider text-boutique-muted">
           Код
           <input
             name={adminFormFields.discountCoupon.code}
@@ -67,7 +80,7 @@ export function DiscountCouponPanel({
             className={`${adminFieldClass} mt-1 uppercase`}
           />
         </label>
-        <label className="text-xs font-semibold uppercase tracking-wider text-boutique-muted sm:col-span-1">
+        <label className="text-xs font-semibold uppercase tracking-wider text-boutique-muted">
           Процент
           <input
             name={adminFormFields.discountCoupon.discountPercentage}
@@ -80,7 +93,15 @@ export function DiscountCouponPanel({
             className={`${adminFieldClass} mt-1`}
           />
         </label>
-        <label className="flex items-end gap-2 pb-3 text-sm text-boutique-ink sm:col-span-1">
+        <label className="text-xs font-semibold uppercase tracking-wider text-boutique-muted">
+          Валиден до
+          <input
+            name={adminFormFields.discountCoupon.expiresAt}
+            type="datetime-local"
+            className={`${adminFieldClass} mt-1`}
+          />
+        </label>
+        <label className="flex items-end gap-2 pb-3 text-sm text-boutique-ink">
           <input
             type="checkbox"
             name={adminFormFields.discountCoupon.isActive}
@@ -89,7 +110,7 @@ export function DiscountCouponPanel({
           />
           Активен
         </label>
-        <div className="flex items-end sm:col-span-1">
+        <div className="flex items-end">
           <button
             type="submit"
             className="w-full rounded-xl bg-boutique-ink px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-boutique-sage-deep"
@@ -107,6 +128,7 @@ export function DiscountCouponPanel({
         <ul className="mt-5 divide-y divide-boutique-line overflow-hidden rounded-xl border border-boutique-line">
           {coupons.map((coupon) => {
             const used = Boolean(coupon.used_at || coupon.used_order_id);
+            const expired = isCouponExpired(coupon.expires_at);
             const orderInfo = coupon.used_order_id
               ? ordersById[coupon.used_order_id]
               : undefined;
@@ -114,7 +136,9 @@ export function DiscountCouponPanel({
             return (
               <li
                 key={coupon.id}
-                className="flex flex-col gap-3 bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+                className={`flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between ${
+                  expired ? "bg-amber-50/70" : "bg-white"
+                }`}
               >
                 <div className="min-w-0 space-y-1 text-sm">
                   <p className="font-semibold tracking-wide text-boutique-ink">
@@ -126,7 +150,11 @@ export function DiscountCouponPanel({
                   <p className="text-xs text-boutique-muted">
                     {coupon.is_active ? "Активен" : "Неактивен"}
                     {" · "}
-                    {used ? `Използван ${formatUsedAt(coupon.used_at)}` : "Неизползван"}
+                    {used ? `Използван ${formatDateTime(coupon.used_at)}` : "Неизползван"}
+                    {" · "}
+                    <span className={expired ? "font-semibold text-amber-800" : undefined}>
+                      {formatExpiryLabel(coupon.expires_at)}
+                    </span>
                   </p>
                   {used ? (
                     <div className="text-xs leading-relaxed text-boutique-muted">

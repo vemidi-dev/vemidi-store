@@ -3,6 +3,7 @@
 import {
   buildCouponPreviewFailure,
   buildCouponPreviewSuccess,
+  isCouponExpired,
   normalizeCouponCode,
   type CouponPreviewResult,
 } from "@/lib/checkout/coupon";
@@ -33,7 +34,7 @@ export async function previewDiscountCoupon(input: {
 
   const { data, error } = await supabase
     .from("discount_coupons")
-    .select("code,discount_percentage,is_active,used_at,used_order_id")
+    .select("code,discount_percentage,is_active,used_at,used_order_id,expires_at")
     .eq("code", code)
     .maybeSingle();
 
@@ -49,6 +50,15 @@ export async function previewDiscountCoupon(input: {
     return buildCouponPreviewFailure("coupon_used");
   }
 
+  const expiresAt =
+    typeof data.expires_at === "string" && data.expires_at.trim()
+      ? data.expires_at
+      : null;
+
+  if (isCouponExpired(expiresAt)) {
+    return buildCouponPreviewFailure("coupon_expired");
+  }
+
   const percentage = Number(data.discount_percentage);
   if (!Number.isFinite(percentage) || percentage <= 0 || percentage > 100) {
     return buildCouponPreviewFailure("coupon_invalid");
@@ -58,5 +68,6 @@ export async function previewDiscountCoupon(input: {
     code: String(data.code),
     discountPercentage: percentage,
     subtotal,
+    expiresAt,
   });
 }
