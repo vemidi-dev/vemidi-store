@@ -12,14 +12,24 @@ type ProductContentSeoFieldsProps = {
     ProductRow,
     "meta_title" | "meta_description" | "og_title" | "og_description"
   >;
+  defaults?: {
+    meta_title?: string;
+    meta_description?: string;
+    og_title?: string;
+    og_description?: string;
+  };
   className?: string;
 };
 
 export function ProductContentSeoFields({
   product,
+  defaults: defaultsOverride,
   className = "mt-4",
 }: ProductContentSeoFieldsProps) {
-  const defaults = getProductContentFormDefaults(product);
+  const defaults = {
+    ...getProductContentFormDefaults(product),
+    ...defaultsOverride,
+  };
 
   return (
     <AdminSectionAccordion

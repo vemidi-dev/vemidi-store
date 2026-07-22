@@ -102,6 +102,8 @@ export function parseProductCreateDraft(raw: string): ProductCreateDraft | null 
               min_select?: unknown;
               max_select?: unknown;
               option_ids?: unknown;
+              selection_mode?: unknown;
+              required_total_quantity?: unknown;
             };
             const label = typeof candidate.label === "string" ? candidate.label : "";
             const groupId = typeof candidate.group_id === "string" ? candidate.group_id : "";
@@ -123,12 +125,34 @@ export function parseProductCreateDraft(raw: string): ProductCreateDraft | null 
                     .map((value) => value.trim())
                     .filter(Boolean)
                 : [];
+            const selectionMode: ProductDraftColorField["selectionMode"] =
+              candidate.selection_mode === "quantity" ? "quantity" : "choice";
+            const requiredTotalRaw =
+              typeof candidate.required_total_quantity === "string" ||
+              typeof candidate.required_total_quantity === "number"
+                ? Number(candidate.required_total_quantity)
+                : NaN;
+            const requiredTotalQuantity =
+              selectionMode === "quantity" &&
+              Number.isFinite(requiredTotalRaw) &&
+              requiredTotalRaw >= 1
+                ? Math.trunc(requiredTotalRaw)
+                : null;
 
             if (!label && !groupId && optionIds.length === 0) {
               return null;
             }
 
-            return { label, groupId, minSelect, maxSelect, optionIds };
+            const result: ProductDraftColorField = {
+              label,
+              groupId,
+              minSelect,
+              maxSelect,
+              optionIds,
+              selectionMode,
+              requiredTotalQuantity,
+            };
+            return result;
           })
           .filter((field): field is ProductDraftColorField => field !== null)
       : [];

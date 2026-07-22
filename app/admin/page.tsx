@@ -748,6 +748,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                 faqItems={data.faqItems}
                 draft={draft}
                 imageReselectWarning={imageReselectWarning}
+                successMessage={success}
               />
               <ProductListPanel data={data} editProductId={editProductId || undefined} />
             </>
