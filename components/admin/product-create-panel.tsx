@@ -1,3 +1,8 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
 import { createProduct } from "@/app/admin/actions";
 import { AdminUnsavedChangesGuard } from "@/components/admin/admin-unsaved-changes-guard";
 import { AdminFormPendingGuard } from "@/components/admin/admin-form-pending-guard";
@@ -25,6 +30,15 @@ import {
 } from "@/components/admin/styles";
 import { adminFormFields } from "@/lib/admin/form-fields";
 import {
+  clearProductCreateLocalDraft,
+  PRODUCT_CREATE_LOCAL_DRAFT_DEBOUNCE_MS,
+  readProductCreateLocalDraft,
+  shouldClearProductCreateLocalDraftOnSuccess,
+  validateProductCreateColorFieldsClient,
+  writeProductCreateLocalDraft,
+  type ProductCreateLocalDraft,
+} from "@/lib/admin/product-create-local-draft";
+import {
   getCategoryDisplayLabel,
   sortCategoriesForDisplay,
 } from "@/lib/category-hierarchy";
@@ -49,7 +63,27 @@ type ProductCreatePanelProps = {
   faqItems: FaqItemRow[];
   draft: ProductCreateDraft | null;
   imageReselectWarning?: boolean;
+  successMessage?: string;
 };
+
+function mergeDrafts(
+  serverDraft: ProductCreateDraft | null,
+  localDraft: ProductCreateLocalDraft | null,
+): ProductCreateLocalDraft | null {
+  if (serverDraft) {
+    return {
+      ...serverDraft,
+      savedAt: localDraft?.savedAt ?? null,
+      metaTitle: localDraft?.metaTitle ?? "",
+      metaDescription: localDraft?.metaDescription ?? "",
+      ogTitle: localDraft?.ogTitle ?? "",
+      ogDescription: localDraft?.ogDescription ?? "",
+      faqGroupIds: localDraft?.faqGroupIds ?? [],
+      faqItemIds: localDraft?.faqItemIds ?? [],
+    };
+  }
+  return localDraft;
+}
 
 export function ProductCreatePanel({
   categories,
@@ -59,17 +93,128 @@ export function ProductCreatePanel({
   wishOccasionLinks,
   faqProductGroups,
   faqItems,
-  draft,
+  draft: serverDraft,
   imageReselectWarning = false,
+  successMessage = "",
 }: ProductCreatePanelProps) {
-  const productCategories = sortCategoriesForDisplay(
-    categories.filter((category) => category.category_type === "product"),
+  const formRef = useRef<HTMLFormElement>(null);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const router = useRouter();
+  const [hydrated, setHydrated] = useState(false);
+  const [activeDraft, setActiveDraft] = useState<ProductCreateLocalDraft | null>(null);
+  const [draftStatus, setDraftStatus] = useState("");
+  const [hadLocalDraft, setHadLocalDraft] = useState(false);
+  const [clientError, setClientError] = useState("");
+  const [formKey, setFormKey] = useState(0);
+
+  useEffect(() => {
+    if (successMessage && shouldClearProductCreateLocalDraftOnSuccess(successMessage)) {
+      clearProductCreateLocalDraft();
+      setActiveDraft(null);
+      setDraftStatus("");
+      setHadLocalDraft(false);
+      setHydrated(true);
+      return;
+    }
+
+    const localDraft = readProductCreateLocalDraft();
+    const merged = mergeDrafts(serverDraft, localDraft);
+    setHadLocalDraft(Boolean(localDraft) && !serverDraft);
+    setActiveDraft(merged);
+    if (localDraft && !serverDraft) {
+      setDraftStatus("Има запазена чернова");
+    } else if (serverDraft) {
+      setDraftStatus("Възстановени данни след грешка");
+      // Keep local copy so a truncated URL draft is not the only recovery path.
+      queueMicrotask(() => {
+        const form = formRef.current;
+        if (form) {
+          writeProductCreateLocalDraft(new FormData(form));
+        }
+      });
+    }
+    setHydrated(true);
+  }, [serverDraft, successMessage]);
+
+  const persistDraft = useCallback(() => {
+    const form = formRef.current;
+    if (!form) {
+      return;
+    }
+    if (writeProductCreateLocalDraft(new FormData(form))) {
+      setDraftStatus("Черновата е запазена");
+      setHadLocalDraft(true);
+    }
+  }, []);
+
+  const schedulePersist = useCallback(() => {
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current);
+    }
+    saveTimerRef.current = setTimeout(() => {
+      persistDraft();
+    }, PRODUCT_CREATE_LOCAL_DRAFT_DEBOUNCE_MS);
+  }, [persistDraft]);
+
+  useEffect(() => {
+    return () => {
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current);
+      }
+    };
+  }, []);
+
+  const handleClearDraft = () => {
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current);
+    }
+    clearProductCreateLocalDraft();
+    setActiveDraft(null);
+    setHadLocalDraft(false);
+    setDraftStatus("");
+    setClientError("");
+    setFormKey((value) => value + 1);
+    router.replace(makeAdminTabHref("products"));
+  };
+
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    const colorError = validateProductCreateColorFieldsClient(formData);
+    if (colorError) {
+      event.preventDefault();
+      setClientError(colorError);
+      persistDraft();
+      return;
+    }
+    setClientError("");
+    writeProductCreateLocalDraft(formData);
+  };
+
+  const productCategories = useMemo(
+    () =>
+      sortCategoriesForDisplay(
+        categories.filter((category) => category.category_type === "product"),
+      ),
+    [categories],
   );
-  const occasionCategories = categories.filter(
-    (category) => category.category_type === "occasion",
+  const occasionCategories = useMemo(
+    () => categories.filter((category) => category.category_type === "occasion"),
+    [categories],
   );
-  const selectedPrimaryCategoryId = draft?.primaryCategoryId ?? null;
-  const shouldStartOpen = Boolean(draft) || imageReselectWarning;
+  const selectedPrimaryCategoryId = activeDraft?.primaryCategoryId ?? null;
+  const shouldStartOpen =
+    Boolean(activeDraft) || imageReselectWarning || hadLocalDraft;
+
+  if (!hydrated) {
+    return (
+      <article className={adminPanelClass}>
+        <div className="px-4 py-6 text-sm text-boutique-muted sm:px-5">
+          Зареждане на формуляра…
+        </div>
+      </article>
+    );
+  }
 
   return (
     <article className={adminPanelClass}>
@@ -89,7 +234,38 @@ export function ProductCreatePanel({
             публикувате директно, ако всички задължителни полета и поне една снимка са налични.
           </p>
 
-      <form id="admin-create-product-form" action={createProduct} className="mt-7 space-y-7">
+          {draftStatus || hadLocalDraft ? (
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-boutique-line bg-boutique-bg px-3 py-2 text-xs text-boutique-muted">
+              <p aria-live="polite">{draftStatus || "Има запазена чернова"}</p>
+              <button
+                type="button"
+                onClick={handleClearDraft}
+                className="rounded-full border border-boutique-line bg-white px-3 py-1.5 font-semibold text-boutique-ink transition hover:border-boutique-accent/40"
+              >
+                Изчисти черновата
+              </button>
+            </div>
+          ) : null}
+
+          {clientError ? (
+            <div
+              role="alert"
+              className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+            >
+              {clientError}
+            </div>
+          ) : null}
+
+      <form
+        key={formKey}
+        id="admin-create-product-form"
+        ref={formRef}
+        action={createProduct}
+        className="mt-7 space-y-7"
+        onInput={schedulePersist}
+        onChange={schedulePersist}
+        onSubmit={handleSubmit}
+      >
         <AdminUnsavedChangesGuard formId="admin-create-product-form" />
         <input type="hidden" name={adminFormFields.common.tab} value="products" />
 
@@ -103,7 +279,7 @@ export function ProductCreatePanel({
               <input
                 name={adminFormFields.product.name}
                 required
-                defaultValue={draft?.name ?? ""}
+                defaultValue={activeDraft?.name ?? ""}
                 className={adminFieldClass}
                 placeholder="Напр. Гравирана рамка"
               />
@@ -119,7 +295,7 @@ export function ProductCreatePanel({
                 step="0.01"
                 min="0"
                 required
-                defaultValue={draft?.price ?? ""}
+                defaultValue={activeDraft?.price ?? ""}
                 className={adminFieldClass}
                 placeholder="0.00"
               />
@@ -136,13 +312,13 @@ export function ProductCreatePanel({
           </legend>
           <ProductPageContentFields
             defaults={{
-              headingSubtitle: draft?.headingSubtitle ?? "",
-              subtitle: draft?.subtitle ?? "",
-              description: draft?.description ?? "",
-              additionalInfo: draft?.additionalInfo ?? "",
-              personalization_info: draft?.personalizationInfo ?? "",
-              dimensions_materials: draft?.dimensionsMaterials ?? "",
-              ordering_info: draft?.orderingInfo ?? "",
+              headingSubtitle: activeDraft?.headingSubtitle ?? "",
+              subtitle: activeDraft?.subtitle ?? "",
+              description: activeDraft?.description ?? "",
+              additionalInfo: activeDraft?.additionalInfo ?? "",
+              personalization_info: activeDraft?.personalizationInfo ?? "",
+              dimensions_materials: activeDraft?.dimensionsMaterials ?? "",
+              ordering_info: activeDraft?.orderingInfo ?? "",
             }}
             fieldClassName={adminFieldClass}
             helperClassName={adminHelperClass}
@@ -150,11 +326,18 @@ export function ProductCreatePanel({
         </fieldset>
 
         <ProductSeoFields
-          initialSlug={draft?.slug ?? ""}
+          initialSlug={activeDraft?.slug ?? ""}
           mode="create"
         />
 
-        <ProductContentSeoFields />
+        <ProductContentSeoFields
+          defaults={{
+            meta_title: activeDraft?.metaTitle ?? "",
+            meta_description: activeDraft?.metaDescription ?? "",
+            og_title: activeDraft?.ogTitle ?? "",
+            og_description: activeDraft?.ogDescription ?? "",
+          }}
+        />
 
         {imageReselectWarning ? (
           <div
@@ -214,7 +397,7 @@ export function ProductCreatePanel({
                                 name={adminFormFields.product.categoryIds}
                                 type="checkbox"
                                 value={category.id}
-                                defaultChecked={draft?.categoryIds.includes(category.id)}
+                                defaultChecked={activeDraft?.categoryIds.includes(category.id)}
                                 className="h-4 w-4 rounded border-boutique-line text-boutique-accent"
                               />
                               {getCategoryDisplayLabel(categories, category)}
@@ -264,7 +447,7 @@ export function ProductCreatePanel({
             wishes={wishes}
             occasions={occasionCategories}
             wishOccasionLinks={wishOccasionLinks}
-            selectedIds={draft?.wishTemplateIds}
+            selectedIds={activeDraft?.wishTemplateIds}
             helperClassName={adminHelperClass}
           />
         </AdminLazyDetailsMount>
@@ -276,6 +459,8 @@ export function ProductCreatePanel({
           <ProductFaqFields
             productGroups={faqProductGroups}
             items={faqItems}
+            selectedGroupIds={activeDraft?.faqGroupIds}
+            selectedItemIds={activeDraft?.faqItemIds}
             helperClassName={adminHelperClass}
           />
         </fieldset>
@@ -289,7 +474,7 @@ export function ProductCreatePanel({
             <textarea
               name={adminFormFields.product.fulfillmentNote}
               rows={2}
-              defaultValue={draft?.fulfillmentNote ?? ""}
+              defaultValue={activeDraft?.fulfillmentNote ?? ""}
               className={`${adminFieldClass} resize-y`}
               placeholder="Напр. Изпращане за 5-10 работни дни..."
             />
@@ -298,24 +483,24 @@ export function ProductCreatePanel({
             </p>
           </label>
 
-          <ProductCardBadgeField defaultValue={draft?.cardBadge} />
+          <ProductCardBadgeField defaultValue={activeDraft?.cardBadge} />
 
           <ProductVisibilityField
-            defaultValue={draft?.visibility}
+            defaultValue={activeDraft?.visibility}
             fieldClassName={adminFieldClass}
             helperClassName={adminHelperClass}
           />
 
           <ProductFulfillmentFields
-            initialFulfillmentType={draft?.fulfillmentType}
-            initialStockQuantity={draft?.stockQuantity}
+            initialFulfillmentType={activeDraft?.fulfillmentType}
+            initialStockQuantity={activeDraft?.stockQuantity}
           />
 
           <label className="inline-flex items-center gap-2 text-sm font-medium text-boutique-ink">
             <input
               name={adminFormFields.product.isSoldOut}
               type="checkbox"
-              defaultChecked={draft?.isSoldOut}
+              defaultChecked={activeDraft?.isSoldOut}
               className="h-4 w-4 rounded border-boutique-line text-boutique-accent"
             />
             Изчерпан
@@ -330,7 +515,7 @@ export function ProductCreatePanel({
             Персонализация
           </legend>
           <ProductPersonalizationFieldsEditor
-            initialFields={draft?.personalizationFields}
+            initialFields={activeDraft?.personalizationFields}
             helperClassName={adminHelperClass}
             fieldClassName={adminFieldClass}
           />
@@ -347,9 +532,9 @@ export function ProductCreatePanel({
           contentClassName="mt-4"
         >
           <ProductOptionGroupsEditor
-            initialGroups={draft?.optionGroups}
+            initialGroups={activeDraft?.optionGroups}
             allDependencyOptions={[]}
-            basePrice={Number(draft?.price) || 0}
+            basePrice={Number(activeDraft?.price) || 0}
             helperClassName={adminHelperClass}
             fieldClassName={adminFieldClass}
           />
@@ -362,7 +547,7 @@ export function ProductCreatePanel({
           <ProductColorFieldsEditor
             colorGroups={colorGroups}
             colorOptions={colorOptions}
-            initialFields={draft?.colorFields}
+            initialFields={activeDraft?.colorFields}
             helperClassName={adminHelperClass}
             fieldClassName={adminFieldClass}
           />
@@ -371,7 +556,7 @@ export function ProductCreatePanel({
         <div className="flex flex-wrap items-end justify-between gap-5 border-t border-boutique-line/70 pt-6">
           <div className="min-w-[min(100%,16rem)] space-y-3">
             <ProductPublicationStatusField
-              defaultValue={draft?.publicationStatus ?? "draft"}
+              defaultValue={activeDraft?.publicationStatus ?? "draft"}
               allowedStatuses={["draft", "published"]}
               fieldClassName={adminFieldClass}
               helperClassName={adminHelperClass}
