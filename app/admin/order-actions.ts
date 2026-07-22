@@ -5,11 +5,13 @@ import { redirect } from "next/navigation";
 
 import {
   buildOrdersListHref,
+  describeOrderDeleteError,
   isOrderStatus,
   parseOrdersQuery,
 } from "@/lib/admin/orders";
 import { checkIsAdmin } from "@/lib/supabase/admin-auth";
 import { createClient } from "@/lib/supabase/server";
+import { isUuid } from "@/lib/is-uuid";
 
 function redirectToOrders(
   kind: "success" | "error",
@@ -71,4 +73,52 @@ export async function updateOrderStatus(formData: FormData) {
 
   revalidatePath("/admin");
   redirectToOrders("success", "Статусът на поръчката е обновен.", query);
+}
+
+export async function deleteOrder(formData: FormData) {
+  const id = String(formData.get("id") ?? "").trim();
+  const query = parseReturnQuery(formData);
+  const queryWithoutOrder = { ...query, orderId: "" };
+
+  if (!id || !isUuid(id)) {
+    redirectToOrders("error", "Невалидни данни за поръчката.", queryWithoutOrder);
+  }
+
+  const supabase = await createClient();
+  if (!supabase) {
+    redirectToOrders("error", "Supabase не е конфигуриран.", queryWithoutOrder);
+  }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/admin/login?message=Моля, влезте като администратор.");
+  }
+
+  const { isAdmin, error: adminError } = await checkIsAdmin(supabase, user.id);
+  if (adminError || !isAdmin) {
+    redirect("/admin/login?message=Профилът няма администраторски права.");
+  }
+
+  const { error, count } = await supabase
+    .from("orders")
+    .delete({ count: "exact" })
+    .eq("id", id);
+
+  if (error) {
+    redirectToOrders("error", describeOrderDeleteError(error), queryWithoutOrder);
+  }
+
+  if (!count) {
+    redirectToOrders(
+      "error",
+      "Поръчката не беше намерена или вече е изтрита.",
+      queryWithoutOrder,
+    );
+  }
+
+  revalidatePath("/admin");
+  redirect(`/admin?tab=orders&success=${encodeURIComponent("Поръчката е изтрита.")}`);
 }

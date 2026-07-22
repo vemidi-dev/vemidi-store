@@ -5,6 +5,7 @@ alter table public.orders enable row level security;
 
 grant select on table public.orders to authenticated;
 grant update (status) on table public.orders to authenticated;
+grant delete on table public.orders to authenticated;
 
 drop policy if exists "orders_select_admin_only" on public.orders;
 create policy "orders_select_admin_only"
@@ -20,3 +21,10 @@ for update
 to authenticated
 using (public.is_admin((select auth.uid())))
 with check (public.is_admin((select auth.uid())));
+
+drop policy if exists "orders_delete_admin_only" on public.orders;
+create policy "orders_delete_admin_only"
+on public.orders
+for delete
+to authenticated
+using (public.is_admin((select auth.uid())));

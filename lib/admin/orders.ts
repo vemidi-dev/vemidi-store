@@ -928,3 +928,24 @@ export function buildOrdersListHref(query: OrdersQuery, overrides: Partial<Order
 
   return `/admin?${params.toString()}`;
 }
+
+type OrderDeleteErrorLike = {
+  code?: string | null;
+  message?: string | null;
+};
+
+export function describeOrderDeleteError(error: OrderDeleteErrorLike | null | undefined): string {
+  if (!error) {
+    return "Поръчката не беше изтрита.";
+  }
+
+  if (error.code === "23503" || /foreign key constraint/i.test(error.message ?? "")) {
+    return "Поръчката не може да бъде изтрита, защото има свързани записи в системата.";
+  }
+
+  if (error.code === "42501" || /permission denied/i.test(error.message ?? "")) {
+    return "Нямате права да изтриете тази поръчка.";
+  }
+
+  return "Поръчката не беше изтрита.";
+}
