@@ -3,6 +3,7 @@
 import { Fragment, useMemo, useState } from "react";
 
 import { OrderDetailsSection } from "@/components/admin/order-details-section";
+import { OrderDeleteForm } from "@/components/admin/order-delete-form";
 import { OrderStatusForm } from "@/components/admin/order-status-form";
 import { OrdersExportPanel } from "@/components/admin/orders-export-panel";
 import {
@@ -217,6 +218,11 @@ export function OrdersListView({
                       orderId={order.id}
                       query={query}
                     />
+                    <OrderDeleteForm
+                      orderId={order.id}
+                      orderShortId={getOrderShortId(order)}
+                      query={query}
+                    />
                   </div>
                 </div>
               </details>
@@ -377,6 +383,11 @@ export function OrdersListView({
                           <OrderStatusForm
                             currentStatus={order.status}
                             orderId={order.id}
+                            query={query}
+                          />
+                          <OrderDeleteForm
+                            orderId={order.id}
+                            orderShortId={getOrderShortId(order)}
                             query={query}
                           />
                         </div>

@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   buildOrdersCsv,
   defaultOrderCsvColumns,
+  describeOrderDeleteError,
   filterOrders,
   getOrderCounts,
   getOrderPersonalizationSummary,
@@ -237,4 +238,19 @@ test("landing-only orders expose kit fields for admin detail panels", () => {
   assert.equal(isLandingOnlyOrder(landingOrder), true);
   assert.equal(getLandingOrderColoringLabel("paints"), "Бои");
   assert.equal(getOrderSourceLabel(landingOrder), "Кампания (butterflies)");
+});
+
+test("describeOrderDeleteError localizes FK and permission failures", () => {
+  assert.equal(
+    describeOrderDeleteError({
+      code: "23503",
+      message: 'update or delete on table "orders" violates foreign key constraint',
+    }),
+    "Поръчката не може да бъде изтрита, защото има свързани записи в системата.",
+  );
+  assert.equal(
+    describeOrderDeleteError({ code: "42501", message: "permission denied for table orders" }),
+    "Нямате права да изтриете тази поръчка.",
+  );
+  assert.equal(describeOrderDeleteError(null), "Поръчката не беше изтрита.");
 });
