@@ -13,6 +13,7 @@ export type ProductOptionValue = {
   isDefault: boolean;
   isActive: boolean;
   isSoldOut: boolean;
+  imageUrl?: string | null;
   sku?: string | null;
   sortOrder: number;
 };
@@ -48,6 +49,7 @@ export type ProductOptionSelectionSnapshotValue = {
   label: string;
   key: string;
   priceDelta: number;
+  imageUrl?: string | null;
   sku?: string | null;
 };
 

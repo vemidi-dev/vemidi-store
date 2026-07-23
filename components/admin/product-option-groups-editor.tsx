@@ -24,6 +24,7 @@ type LocalGroup = Omit<ParsedOptionGroup, "values"> & {
 type ProductOptionGroupsEditorProps = {
   initialGroups?: InitialOptionGroup[];
   allDependencyOptions: Array<{ id: string; label: string; groupName: string }>;
+  productImages?: Array<{ src: string; label: string }>;
   basePrice: number;
   helperClassName: string;
   fieldClassName: string;
@@ -70,6 +71,7 @@ function makeEmptyValue(sortOrder: number, basePrice: number): LocalValue {
     isDefault: false,
     isActive: true,
     isSoldOut: false,
+    imageUrl: null,
     sku: null,
     sortOrder,
   };
@@ -226,6 +228,7 @@ function OptionGroupCollapsedFields({
 export function ProductOptionGroupsEditor({
   initialGroups = [],
   allDependencyOptions,
+  productImages = [],
   basePrice: initialBasePrice,
   helperClassName,
   fieldClassName,
@@ -714,6 +717,31 @@ export function ProductOptionGroupsEditor({
                                   value.key === "no"
                                 ? "Без доплащане"
                                 : "0 означава без доплащане"}
+                          </span>
+                        </label>
+                        <label className="text-sm font-medium text-boutique-ink md:col-span-3">
+                          Свързана снимка
+                          <select
+                            className={fieldClassName}
+                            value={value.imageUrl ?? ""}
+                            onChange={(event) => {
+                              const nextValues = group.values.map((item) =>
+                                item.uid === value.uid
+                                  ? { ...item, imageUrl: event.target.value || null }
+                                  : item,
+                              );
+                              updateGroup(group.uid, { values: nextValues });
+                            }}
+                          >
+                            <option value="">Без смяна на снимката</option>
+                            {productImages.map((image, imageIndex) => (
+                              <option key={`${image.src}-${imageIndex}`} value={image.src}>
+                                {image.label || `Снимка ${imageIndex + 1}`}
+                              </option>
+                            ))}
+                          </select>
+                          <span className="mt-1 block text-xs font-normal text-boutique-muted">
+                            При избор на този вариант клиентът ще види тази снимка като основна.
                           </span>
                         </label>
                         <button

@@ -10,6 +10,7 @@ import { MediaPlaceholder } from "@/components/ui/media-placeholder";
 type ProductDetailGalleryProps = {
   images: ProductImage[];
   className?: string;
+  syncKey?: string;
 };
 
 function GalleryMainImage({
@@ -108,7 +109,11 @@ function GalleryImageCounter({
   );
 }
 
-export function ProductDetailGallery({ images, className }: ProductDetailGalleryProps) {
+export function ProductDetailGallery({
+  images,
+  className,
+  syncKey,
+}: ProductDetailGalleryProps) {
   const [active, setActive] = useState(0);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   const desktopThumbsRef = useRef<HTMLUListElement>(null);
@@ -127,6 +132,35 @@ export function ProductDetailGallery({ images, className }: ProductDetailGallery
 
   const showPreviousImage = () => showImage(safeIndex - 1);
   const showNextImage = () => showImage(safeIndex + 1);
+
+  useEffect(() => {
+    if (!syncKey) {
+      return;
+    }
+
+    const handleOptionImageChange = (event: Event) => {
+      const detail = (event as CustomEvent<{
+        productId?: string;
+        imageUrl?: string | null;
+      }>).detail;
+      if (detail?.productId !== syncKey) {
+        return;
+      }
+      if (!detail.imageUrl) {
+        setActive(0);
+        return;
+      }
+
+      const index = images.findIndex((image) => image.src === detail.imageUrl);
+      if (index >= 0) {
+        setActive(index);
+      }
+    };
+
+    window.addEventListener("vemidi:product-option-image", handleOptionImageChange);
+    return () =>
+      window.removeEventListener("vemidi:product-option-image", handleOptionImageChange);
+  }, [images, syncKey]);
 
   useEffect(() => {
     if (!hasMultipleImages) {
