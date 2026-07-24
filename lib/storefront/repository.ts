@@ -360,7 +360,11 @@ async function fetchStorefrontProductSeoContext(
       list.findIndex((entry) => entry.id === category.id) === index,
   );
   const categorySlugs = direct
-    .filter((category) => category.category_type === "product")
+    .filter(
+      (category) =>
+        category.category_type === "product" ||
+        category.category_type === "material",
+    )
     .map((category) => category.slug);
 
   return {

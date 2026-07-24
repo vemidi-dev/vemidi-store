@@ -36,6 +36,17 @@ const categories: StorefrontCategory[] = [
     card_description: null,
     createdAt: null,
   },
+  {
+    id: "wood",
+    name: "Дървени заготовки",
+    slug: "durveni-zagotovki",
+    category_type: "material",
+    parent_id: null,
+    show_on_home: true,
+    home_sort_order: 2,
+    card_description: null,
+    createdAt: null,
+  },
 ];
 
 test("category breadcrumb includes parent for subcategory", () => {
@@ -85,6 +96,25 @@ test("occasion breadcrumb uses /povodi landing path", () => {
   assert.deepEqual(
     items.map((item) => item.path),
     ["/", "/povodi", "/povodi/svatba"],
+  );
+});
+
+test("product breadcrumb supports material primary category", () => {
+  const items = buildProductBreadcrumbItems(categories, {
+    title: "Дървен комплект",
+    slug: "durven-komplekt",
+    categorySlugs: ["durveni-zagotovki"],
+    primaryCategoryId: "wood",
+  });
+
+  assert.deepEqual(
+    items.map((item) => item.path),
+    [
+      "/",
+      "/zagotovki-i-materiali",
+      "/zagotovki-i-materiali/durveni-zagotovki",
+      "/produkti/durven-komplekt",
+    ],
   );
 });
 

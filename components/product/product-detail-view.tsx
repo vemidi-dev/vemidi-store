@@ -14,7 +14,7 @@ import { JsonLd } from "@/components/seo/json-ld";
 import { VisibleBreadcrumbs } from "@/components/seo/visible-breadcrumbs";
 import type { Product } from "@/lib/catalog";
 import type { CampaignAttribution } from "@/lib/campaign-attribution";
-import { getCategoryPath } from "@/lib/category-url";
+import { getCategoryListingHref } from "@/lib/category-url";
 import type { ProductOptionSelection } from "@/lib/product-options";
 import type { StorefrontCategory } from "@/lib/storefront/types";
 import { isProductOnPromotion } from "@/lib/product-pricing";
@@ -178,7 +178,7 @@ export function ProductDetailView({
 
               {showCategoryLink && primaryCategory ? (
                 <Link
-                  href={getCategoryPath(primaryCategory.slug)}
+                  href={getCategoryListingHref(primaryCategory)}
                   className="mt-5 inline-flex w-fit items-center gap-2 text-sm font-semibold text-boutique-sage-deep underline-offset-4 transition hover:text-boutique-ink hover:underline"
                 >
                   Разгледайте още от „{primaryCategory.name}“

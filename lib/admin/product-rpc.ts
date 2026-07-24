@@ -159,7 +159,7 @@ export async function duplicateProductAtomic(
 }
 
 const rpcErrorMessages: Record<string, string> = {
-  primary_category_required: "Изберете основна продуктова категория.",
+  primary_category_required: "Изберете основна категория.",
   invalid_primary_category: "Избраната основна категория е невалидна.",
   primary_category_not_assigned:
     "Основната категория трябва да е избрана и в категориите на продукта.",

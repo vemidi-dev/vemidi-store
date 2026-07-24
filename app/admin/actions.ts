@@ -178,6 +178,10 @@ function parseSubmittedProductSlug(formData: FormData, productName: string) {
   return { slug: validated.slug, error: null };
 }
 
+function allowsPrimaryProductCategory(categoryType: string) {
+  return categoryType === "product" || categoryType === "material";
+}
+
 async function validatePrimaryProductCategory(
   supabase: NonNullable<Awaited<ReturnType<typeof createClient>>>,
   categoryIds: string[],
@@ -193,7 +197,7 @@ async function validatePrimaryProductCategory(
     .eq("id", primaryCategoryId)
     .maybeSingle();
 
-  return !error && data?.category_type === "product";
+  return !error && allowsPrimaryProductCategory(String(data?.category_type ?? ""));
 }
 
 function redirectAfterDuplicate(newProductId: string, message: string): never {

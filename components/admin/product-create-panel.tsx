@@ -210,6 +210,7 @@ export function ProductCreatePanel({
     [categories],
   );
   const selectedPrimaryCategoryId = activeDraft?.primaryCategoryId ?? null;
+  const primaryCategoryTypes = new Set(["product", "material"]);
   const shouldStartOpen =
     Boolean(activeDraft) || imageReselectWarning || hadLocalDraft;
 
@@ -410,7 +411,7 @@ export function ProductCreatePanel({
                               />
                               {getCategoryDisplayLabel(categories, category)}
                             </label>
-                            {category.category_type === "product" ? (
+                            {primaryCategoryTypes.has(category.category_type) ? (
                               <label
                                 className="inline-flex shrink-0 items-center gap-1 text-xs text-boutique-muted"
                                 title="Основна категория за breadcrumb и SEO"
@@ -434,7 +435,7 @@ export function ProductCreatePanel({
                 </div>
               )}
               <p className={adminHelperClass}>
-                Отметнете категориите на продукта. При продуктовите категории маркирайте една
+                Отметнете категориите на продукта. При продуктовите категории или заготовките маркирайте една
                 категория като „Основна“ за breadcrumb и SEO.
               </p>
             </fieldset>
