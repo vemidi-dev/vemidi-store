@@ -105,7 +105,7 @@ function ProductThumbnail({
         />
       ) : (
         <div className="grid h-full w-full place-items-center text-[9px] text-boutique-muted">
-          —
+          вЂ”
         </div>
       )}
     </div>
@@ -125,7 +125,7 @@ function ProductStatusBadge({
         className="inline-flex rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-red-800"
         title={fulfillmentStatus}
       >
-        Изчерпан
+        РР·С‡РµСЂРїР°РЅ
       </span>
     );
   }
@@ -178,6 +178,9 @@ export function ProductListPanel({
   const occasionCategories = categories.filter(
     (category) => category.category_type === "occasion",
   );
+  const materialCategories = sortCategoriesForDisplay(
+    categories.filter((category) => category.category_type === "material"),
+  );
   const productCategories = sortCategoriesForDisplay(
     categories.filter((category) => category.category_type === "product"),
   );
@@ -208,37 +211,37 @@ export function ProductListPanel({
     <article className={adminPanelClass}>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 className="font-heading text-2xl text-boutique-ink">Всички продукти</h2>
+          <h2 className="font-heading text-2xl text-boutique-ink">Р’СЃРёС‡РєРё РїСЂРѕРґСѓРєС‚Рё</h2>
           <p className="mt-1 text-sm text-boutique-muted">
-            {products.length} продукта · компактен списък с търсене, филтри и пагинация
+            {products.length} РїСЂРѕРґСѓРєС‚Р° В· РєРѕРјРїР°РєС‚РµРЅ СЃРїРёСЃСЉРє СЃ С‚СЉСЂСЃРµРЅРµ, С„РёР»С‚СЂРё Рё РїР°РіРёРЅР°С†РёСЏ
           </p>
         </div>
       </div>
 
       {products.length === 0 ? (
-        <p className="mt-5 text-sm text-boutique-muted">Няма добавени продукти.</p>
+        <p className="mt-5 text-sm text-boutique-muted">РќСЏРјР° РґРѕР±Р°РІРµРЅРё РїСЂРѕРґСѓРєС‚Рё.</p>
       ) : (
         <>
           <AdminListControls
             containerId="admin-product-list"
             itemSelector="[data-admin-product]"
             total={products.length}
-            searchPlaceholder="Име, категория или цена..."
+            searchPlaceholder="РРјРµ, РєР°С‚РµРіРѕСЂРёСЏ РёР»Рё С†РµРЅР°..."
             filters={[
               {
                 key: "availability",
-                label: "Наличност",
+                label: "РќР°Р»РёС‡РЅРѕСЃС‚",
                 dataAttribute: "filterStatus",
                 options: [
-                  { value: "active", label: "Активни" },
-                  { value: "sold-out", label: "Изчерпани" },
-                  { value: "featured", label: "На началната" },
-                  { value: "customizable", label: "С персонализация" },
+                  { value: "active", label: "РђРєС‚РёРІРЅРё" },
+                  { value: "sold-out", label: "РР·С‡РµСЂРїР°РЅРё" },
+                  { value: "featured", label: "РќР° РЅР°С‡Р°Р»РЅР°С‚Р°" },
+                  { value: "customizable", label: "РЎ РїРµСЂСЃРѕРЅР°Р»РёР·Р°С†РёСЏ" },
                 ],
               },
               {
                 key: "publication",
-                label: "Статус",
+                label: "РЎС‚Р°С‚СѓСЃ",
                 dataAttribute: "publicationStatus",
                 options: [
                   { value: "draft", label: PRODUCT_PUBLICATION_STATUS_LABELS.draft },
@@ -254,7 +257,7 @@ export function ProductListPanel({
               },
               {
                 key: "product",
-                label: "Категория",
+                label: "РљР°С‚РµРіРѕСЂРёСЏ",
                 dataAttribute: "productCats",
                 options: productCategories.map((category) => ({
                   value: category.id,
@@ -263,7 +266,7 @@ export function ProductListPanel({
               },
               {
                 key: "occasion",
-                label: "Повод",
+                label: "РџРѕРІРѕРґ",
                 dataAttribute: "occasionCats",
                 options: occasionCategories.map((category) => ({
                   value: category.id,
@@ -272,12 +275,12 @@ export function ProductListPanel({
               },
             ]}
             sortOptions={[
-              { value: "order-desc", label: "Най-нови", attribute: "sortIndex", direction: "desc" },
-              { value: "order-asc", label: "Най-стари", attribute: "sortIndex", direction: "asc" },
-              { value: "name-asc", label: "Име А–Я", attribute: "sortName", direction: "asc" },
-              { value: "name-desc", label: "Име Я–А", attribute: "sortName", direction: "desc" },
-              { value: "price-asc", label: "Цена ↑", attribute: "sortPrice", direction: "asc" },
-              { value: "price-desc", label: "Цена ↓", attribute: "sortPrice", direction: "desc" },
+              { value: "order-desc", label: "РќР°Р№-РЅРѕРІРё", attribute: "sortIndex", direction: "desc" },
+              { value: "order-asc", label: "РќР°Р№-СЃС‚Р°СЂРё", attribute: "sortIndex", direction: "asc" },
+              { value: "name-asc", label: "РРјРµ РђвЂ“РЇ", attribute: "sortName", direction: "asc" },
+              { value: "name-desc", label: "РРјРµ РЇвЂ“Рђ", attribute: "sortName", direction: "desc" },
+              { value: "price-asc", label: "Р¦РµРЅР° в†‘", attribute: "sortPrice", direction: "asc" },
+              { value: "price-desc", label: "Р¦РµРЅР° в†“", attribute: "sortPrice", direction: "desc" },
             ]}
             defaultSort="order-desc"
             pageSize={30}
@@ -326,10 +329,10 @@ export function ProductListPanel({
                 : product.is_customizable
                   ? [
                       {
-                        label: "Текст за персонализация",
+                        label: "РўРµРєСЃС‚ Р·Р° РїРµСЂСЃРѕРЅР°Р»РёР·Р°С†РёСЏ",
                         key: "personalization",
                         type: "textarea" as const,
-                        placeholder: "Въведете желания текст",
+                        placeholder: "Р’СЉРІРµРґРµС‚Рµ Р¶РµР»Р°РЅРёСЏ С‚РµРєСЃС‚",
                         maxLength: 1000,
                         priceDelta: 0,
                         required: false,
@@ -460,18 +463,18 @@ export function ProductListPanel({
                         <ProductPublicationBadge status={publicationStatus} />
                         {featuredProductById.has(product.id) ? (
                           <span className="inline-flex rounded-full bg-boutique-warm px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-boutique-ink">
-                            На началната
+                            РќР° РЅР°С‡Р°Р»РЅР°С‚Р°
                           </span>
                         ) : null}
                         {product.is_customizable ? (
                           <span className="inline-flex rounded-full bg-boutique-bg px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-boutique-muted">
-                            Персонализация
+                            РџРµСЂСЃРѕРЅР°Р»РёР·Р°С†РёСЏ
                           </span>
                         ) : null}
                       </div>
                       <div className="mt-2 flex flex-wrap gap-1">
                         {productTypeCategories.length === 0 && occasionTypeCategories.length === 0 ? (
-                          <span className={categoryChipClass}>Без категория</span>
+                          <span className={categoryChipClass}>Р‘РµР· РєР°С‚РµРіРѕСЂРёСЏ</span>
                         ) : (
                           <>
                             {productTypeCategories.map((category) => (
@@ -500,20 +503,20 @@ export function ProductListPanel({
 
                   <div className="flex shrink-0 flex-col items-start gap-2 sm:items-end lg:min-w-[5.5rem]">
                     <p className="text-sm font-semibold text-boutique-ink">
-                      {Number(product.price).toFixed(2)} €
+                      {Number(product.price).toFixed(2)} в‚¬
                     </p>
                   </div>
 
                   <div
                     className="flex w-full flex-wrap items-center gap-1 border-t border-boutique-line/50 pt-2 lg:w-auto lg:border-t-0 lg:pt-0"
                     role="group"
-                    aria-label={`Действия за ${product.name}`}
+                    aria-label={`Р”РµР№СЃС‚РІРёСЏ Р·Р° ${product.name}`}
                   >
                     <AdminOpenDetailsButton
                       detailsId={`product-edit-${product.id}`}
                       className={actionPrimaryClass}
                     >
-                      Редакция
+                      Р РµРґР°РєС†РёСЏ
                     </AdminOpenDetailsButton>
                     <a
                       href={getAdminProductPreviewPath(product.id)}
@@ -521,7 +524,7 @@ export function ProductListPanel({
                       rel="noopener noreferrer"
                       className={actionSecondaryClass}
                     >
-                      Преглед
+                      РџСЂРµРіР»РµРґ
                     </a>
                     {publicationStatus === "draft" ? (
                       <form action={publishProduct} className="inline">
@@ -531,7 +534,7 @@ export function ProductListPanel({
                           value={product.id}
                         />
                         <button type="submit" className={actionSecondaryClass}>
-                          Публикуване
+                          РџСѓР±Р»РёРєСѓРІР°РЅРµ
                         </button>
                       </form>
                     ) : null}
@@ -549,18 +552,18 @@ export function ProductListPanel({
                         value={product.is_sold_out ? "false" : "true"}
                       />
                       <button type="submit" className={actionSecondaryClass}>
-                        {product.is_sold_out ? "Активирай" : "Изчерпан"}
+                        {product.is_sold_out ? "РђРєС‚РёРІРёСЂР°Р№" : "РР·С‡РµСЂРїР°РЅ"}
                       </button>
                     </form>
                     <AdminConfirmForm
                       action={deleteProduct}
-                      confirmMessage={`Сигурни ли сте, че искате да изтриете „${product.name}"?`}
+                      confirmMessage={`РЎРёРіСѓСЂРЅРё Р»Рё СЃС‚Рµ, С‡Рµ РёСЃРєР°С‚Рµ РґР° РёР·С‚СЂРёРµС‚Рµ вЂћ${product.name}"?`}
                       className="inline"
                     >
                       <input type="hidden" name={adminFormFields.common.tab} value="products" />
                       <input type="hidden" name={adminFormFields.common.id} value={product.id} />
                       <button type="submit" className={actionDangerClass}>
-                        Изтрий
+                        РР·С‚СЂРёР№
                       </button>
                     </AdminConfirmForm>
                   </div>
@@ -573,9 +576,9 @@ export function ProductListPanel({
                   contentClassName="border-t border-boutique-line/50 px-3 py-4 pb-20 sm:px-4"
                   summary={
                     <>
-                      <span>Редактирай продукт</span>
+                      <span>Р РµРґР°РєС‚РёСЂР°Р№ РїСЂРѕРґСѓРєС‚</span>
                       <span className="text-xs font-normal text-boutique-muted" aria-hidden>
-                        Форма
+                        Р¤РѕСЂРјР°
                       </span>
                     </>
                   }
@@ -597,7 +600,7 @@ export function ProductListPanel({
                     />
 
                     <label className="text-sm font-medium text-boutique-ink">
-                      Име
+                      РРјРµ
                       <input
                         name={adminFormFields.product.name}
                         defaultValue={product.name}
@@ -606,7 +609,7 @@ export function ProductListPanel({
                       />
                     </label>
                     <label className="text-sm font-medium text-boutique-ink">
-                      Основна цена / цена на най-евтиния вариант (евро)
+                      РћСЃРЅРѕРІРЅР° С†РµРЅР° / С†РµРЅР° РЅР° РЅР°Р№-РµРІС‚РёРЅРёСЏ РІР°СЂРёР°РЅС‚ (РµРІСЂРѕ)
                       <input
                         name={adminFormFields.product.price}
                         type="number"
@@ -625,7 +628,7 @@ export function ProductListPanel({
                     <div className="md:col-span-2">
                       <fieldset className="space-y-4 rounded-lg border border-boutique-line/70 bg-boutique-bg/40 p-4">
                         <legend className="px-1 text-xs font-semibold uppercase tracking-[0.16em] text-boutique-muted">
-                          Съдържание на продуктовата страница
+                          РЎСЉРґСЉСЂР¶Р°РЅРёРµ РЅР° РїСЂРѕРґСѓРєС‚РѕРІР°С‚Р° СЃС‚СЂР°РЅРёС†Р°
                         </legend>
                         <ProductPageContentFields
                           defaults={{
@@ -656,23 +659,23 @@ export function ProductListPanel({
 
                     <fieldset className="rounded-lg border border-boutique-line/70 bg-boutique-bg p-3 md:col-span-2">
                       <legend className="px-1 text-sm font-medium text-boutique-ink">
-                        Категории
+                        РљР°С‚РµРіРѕСЂРёРё
                       </legend>
                       {categories.length === 0 ? (
-                        <p className={adminHelperClass}>Няма налични категории.</p>
+                        <p className={adminHelperClass}>РќСЏРјР° РЅР°Р»РёС‡РЅРё РєР°С‚РµРіРѕСЂРёРё.</p>
                       ) : (
                         <div className="mt-2 space-y-4">
-                          {(["product", "occasion"] as const).map((categoryType) => (
+                          {([
+                            ["product", productCategories],
+                            ["occasion", occasionCategories],
+                            ["material", materialCategories],
+                          ] as const).map(([categoryType, groupedCategories]) => (
                             <div key={categoryType}>
                               <p className="text-xs font-semibold uppercase tracking-wider text-boutique-muted">
-                                {categoryType === "product" ? "Продукти" : "Поводи"}
+                                {categoryType === "product" ? "Продукти" : categoryType === "material" ? "Заготовки и материали" : "Поводи"}
                               </p>
                               <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                                {sortCategoriesForDisplay(
-                                  categories.filter(
-                                    (category) => category.category_type === categoryType,
-                                  ),
-                                )
+                                {groupedCategories
                                   .map((category) => (
                                     <div
                                       key={`${product.id}-${category.id}-edit`}
@@ -691,17 +694,17 @@ export function ProductListPanel({
                                       {category.category_type === "product" ? (
                                         <label
                                           className="inline-flex shrink-0 items-center gap-1 text-xs text-boutique-muted"
-                                          title="Основна категория за breadcrumb и SEO"
+                                          title="РћСЃРЅРѕРІРЅР° РєР°С‚РµРіРѕСЂРёСЏ Р·Р° breadcrumb Рё SEO"
                                         >
                                           <input
                                             name={adminFormFields.product.primaryCategoryId}
                                             type="radio"
                                             value={category.id}
                                             defaultChecked={primaryCategoryId === category.id}
-                                            aria-label={`Основна за SEO: ${getCategoryDisplayLabel(categories, category)}`}
+                                            aria-label={`РћСЃРЅРѕРІРЅР° Р·Р° SEO: ${getCategoryDisplayLabel(categories, category)}`}
                                             className="h-3.5 w-3.5 border-boutique-line text-boutique-accent"
                                           />
-                                          Основна
+                                          РћСЃРЅРѕРІРЅР°
                                         </label>
                                       ) : null}
                                     </div>
@@ -712,8 +715,8 @@ export function ProductListPanel({
                         </div>
                       )}
                       <p className={`${adminHelperClass} mt-2`}>
-                        Отметнете категориите на продукта. При продуктовите категории маркирайте
-                        една категория като „Основна“ за breadcrumb и SEO.
+                        РћС‚РјРµС‚РЅРµС‚Рµ РєР°С‚РµРіРѕСЂРёРёС‚Рµ РЅР° РїСЂРѕРґСѓРєС‚Р°. РџСЂРё РїСЂРѕРґСѓРєС‚РѕРІРёС‚Рµ РєР°С‚РµРіРѕСЂРёРё РјР°СЂРєРёСЂР°Р№С‚Рµ
+                        РµРґРЅР° РєР°С‚РµРіРѕСЂРёСЏ РєР°С‚Рѕ вЂћРћСЃРЅРѕРІРЅР°вЂњ Р·Р° breadcrumb Рё SEO.
                       </p>
                     </fieldset>
 
@@ -722,7 +725,7 @@ export function ProductListPanel({
                       className="rounded-lg border border-boutique-line/70 bg-boutique-bg p-3 md:col-span-2"
                       summary={
                         <span className="cursor-pointer px-1 text-sm font-medium text-boutique-ink">
-                          Опции и ценообразуване
+                          РћРїС†РёРё Рё С†РµРЅРѕРѕР±СЂР°Р·СѓРІР°РЅРµ
                         </span>
                       }
                       contentClassName="mt-3"
@@ -739,8 +742,8 @@ export function ProductListPanel({
                                 {
                                   src: image.image_url,
                                   label: [
-                                    `Снимка ${imageIndex + 1}`,
-                                    image.is_primary ? "(основна)" : "",
+                                    `РЎРЅРёРјРєР° ${imageIndex + 1}`,
+                                    image.is_primary ? "(РѕСЃРЅРѕРІРЅР°)" : "",
                                     image.alt_text ? `- ${image.alt_text}` : "",
                                   ].filter(Boolean).join(" "),
                                 },
@@ -748,7 +751,7 @@ export function ProductListPanel({
                               ...(product.image_url
                                 ? [[
                                     product.image_url,
-                                    { src: product.image_url, label: "Основна снимка" },
+                                    { src: product.image_url, label: "РћСЃРЅРѕРІРЅР° СЃРЅРёРјРєР°" },
                                   ] as const]
                                 : []),
                             ].filter(([src]) => Boolean(src)),
@@ -762,7 +765,7 @@ export function ProductListPanel({
 
                     <fieldset className="space-y-3 rounded-lg border border-boutique-line/70 bg-boutique-bg p-3 md:col-span-2">
                       <legend className="px-1 text-sm font-medium text-boutique-ink">
-                        Цветови настройки
+                        Р¦РІРµС‚РѕРІРё РЅР°СЃС‚СЂРѕР№РєРё
                       </legend>
                       <ProductColorFieldsEditor
                         colorGroups={colorGroups}
@@ -775,7 +778,7 @@ export function ProductListPanel({
 
                     <fieldset className="space-y-3 rounded-lg border border-boutique-line/70 bg-boutique-bg p-3 md:col-span-2">
                       <legend className="px-1 text-sm font-medium text-boutique-ink">
-                        Персонализация
+                        РџРµСЂСЃРѕРЅР°Р»РёР·Р°С†РёСЏ
                       </legend>
                       <ProductPersonalizationFieldsEditor
                         initialFields={initialPersonalizationFields}
@@ -788,7 +791,7 @@ export function ProductListPanel({
                       className="rounded-lg border border-boutique-line/70 bg-boutique-bg p-3 md:col-span-2"
                       summary={
                         <span className="cursor-pointer px-1 text-sm font-medium text-boutique-ink">
-                          Подходящи готови пожелания
+                          РџРѕРґС…РѕРґСЏС‰Рё РіРѕС‚РѕРІРё РїРѕР¶РµР»Р°РЅРёСЏ
                         </span>
                       }
                       contentClassName="mt-3"
@@ -809,7 +812,7 @@ export function ProductListPanel({
                       className="rounded-lg border border-boutique-line/70 bg-boutique-bg p-3 md:col-span-2"
                       summary={
                         <span className="cursor-pointer px-1 text-sm font-medium text-boutique-ink">
-                          Upsell предложения
+                          Upsell РїСЂРµРґР»РѕР¶РµРЅРёСЏ
                         </span>
                       }
                       contentClassName="mt-3"
@@ -828,7 +831,7 @@ export function ProductListPanel({
                     </AdminLazyDetailsMount>
                     <fieldset className="space-y-3 rounded-lg border border-boutique-line/70 bg-boutique-bg p-3 md:col-span-2">
                       <legend className="px-1 text-sm font-medium text-boutique-ink">
-                        Въпроси и отговори
+                        Р’СЉРїСЂРѕСЃРё Рё РѕС‚РіРѕРІРѕСЂРё
                       </legend>
                       <ProductFaqFields
                         productGroups={faqProductGroups}
@@ -839,7 +842,7 @@ export function ProductListPanel({
                       />
                     </fieldset>
                     <label className="text-sm font-medium text-boutique-ink md:col-span-2">
-                      Бележка за доставка/изработка
+                      Р‘РµР»РµР¶РєР° Р·Р° РґРѕСЃС‚Р°РІРєР°/РёР·СЂР°Р±РѕС‚РєР°
                       <textarea
                         name={adminFormFields.product.fulfillmentNote}
                         rows={2}
@@ -872,11 +875,11 @@ export function ProductListPanel({
                         <ProductImageFileInput
                           name={adminFormFields.product.imageFiles}
                           altTextName={adminFormFields.product.imageAltTexts}
-                          label="Снимки на продукта"
+                          label="РЎРЅРёРјРєРё РЅР° РїСЂРѕРґСѓРєС‚Р°"
                           className={adminFieldClass}
                           helperClassName={adminHelperClass}
                           existingGalleryCount={galleryImageCount}
-                          helperText="Изберете снимки и натиснете „Запази промените“. PNG, JPG или WEBP — оптимизират се автоматично."
+                          helperText="РР·Р±РµСЂРµС‚Рµ СЃРЅРёРјРєРё Рё РЅР°С‚РёСЃРЅРµС‚Рµ вЂћР—Р°РїР°Р·Рё РїСЂРѕРјРµРЅРёС‚РµвЂњ. PNG, JPG РёР»Рё WEBP вЂ” РѕРїС‚РёРјРёР·РёСЂР°С‚ СЃРµ Р°РІС‚РѕРјР°С‚РёС‡РЅРѕ."
                         />
                       </div>
                     ) : null}
@@ -888,14 +891,14 @@ export function ProductListPanel({
                         defaultChecked={product.is_sold_out}
                         className="h-4 w-4 rounded border-boutique-line text-boutique-accent"
                       />
-                      Изчерпан
+                      РР·С‡РµСЂРїР°РЅ
                     </label>
 
                     <div className="md:col-span-2">
                       <AdminFormPendingGuard
                         message={
                           hasNoGalleryImages
-                            ? "Запазване и качване на снимки… Моля, не затваряйте страницата."
+                            ? "Р—Р°РїР°Р·РІР°РЅРµ Рё РєР°С‡РІР°РЅРµ РЅР° СЃРЅРёРјРєРёвЂ¦ РњРѕР»СЏ, РЅРµ Р·Р°С‚РІР°СЂСЏР№С‚Рµ СЃС‚СЂР°РЅРёС†Р°С‚Р°."
                             : undefined
                         }
                       />
@@ -904,7 +907,7 @@ export function ProductListPanel({
 
                   <AdminConfirmForm
                     action={deleteProduct}
-                    confirmMessage={`Сигурни ли сте, че искате да изтриете „${product.name}"?`}
+                    confirmMessage={`РЎРёРіСѓСЂРЅРё Р»Рё СЃС‚Рµ, С‡Рµ РёСЃРєР°С‚Рµ РґР° РёР·С‚СЂРёРµС‚Рµ вЂћ${product.name}"?`}
                     className="mt-5 border-t border-red-100 pt-4"
                   >
                     <input type="hidden" name={adminFormFields.common.tab} value="products" />
@@ -913,7 +916,7 @@ export function ProductListPanel({
                       type="submit"
                       className="rounded-full border border-red-300 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-red-700 transition hover:bg-red-50"
                     >
-                      Изтрий продукта
+                      РР·С‚СЂРёР№ РїСЂРѕРґСѓРєС‚Р°
                     </button>
                   </AdminConfirmForm>
 
@@ -929,10 +932,10 @@ export function ProductListPanel({
                     className="mt-5 border-t border-boutique-line/70 pt-5"
                   >
                     <div>
-                      <h4 className="font-semibold text-boutique-ink">Галерия</h4>
+                      <h4 className="font-semibold text-boutique-ink">Р“Р°Р»РµСЂРёСЏ</h4>
                       <p className="mt-1 text-xs text-boutique-muted">
-                        Добавяйте, заменяйте или изтривайте отделни снимки. Промяната на
-                        настройките на продукта не засяга галерията.
+                        Р”РѕР±Р°РІСЏР№С‚Рµ, Р·Р°РјРµРЅСЏР№С‚Рµ РёР»Рё РёР·С‚СЂРёРІР°Р№С‚Рµ РѕС‚РґРµР»РЅРё СЃРЅРёРјРєРё. РџСЂРѕРјСЏРЅР°С‚Р° РЅР°
+                        РЅР°СЃС‚СЂРѕР№РєРёС‚Рµ РЅР° РїСЂРѕРґСѓРєС‚Р° РЅРµ Р·Р°СЃСЏРіР° РіР°Р»РµСЂРёСЏС‚Р°.
                       </p>
                     </div>
 
@@ -941,7 +944,7 @@ export function ProductListPanel({
                         role="status"
                         className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
                       >
-                        {DUPLICATE_MISSING_IMAGES_NOTICE} Добавете снимки от формата по-долу.
+                        {DUPLICATE_MISSING_IMAGES_NOTICE} Р”РѕР±Р°РІРµС‚Рµ СЃРЅРёРјРєРё РѕС‚ С„РѕСЂРјР°С‚Р° РїРѕ-РґРѕР»Сѓ.
                       </p>
                     ) : null}
 
@@ -966,11 +969,11 @@ export function ProductListPanel({
                             />
                             <div className="mt-3 flex items-center justify-between gap-2">
                               <span className="text-xs text-boutique-muted">
-                                Снимка {index + 1}
+                                РЎРЅРёРјРєР° {index + 1}
                               </span>
                               {image.is_primary ? (
                                 <span className="rounded-full bg-boutique-warm px-2 py-1 text-[0.65rem] font-semibold text-boutique-ink">
-                                  Основна
+                                  РћСЃРЅРѕРІРЅР°
                                 </span>
                               ) : (
                                 <form action={setPrimaryProductImage}>
@@ -980,7 +983,7 @@ export function ProductListPanel({
                                     value={image.id}
                                   />
                                   <button className="text-xs font-semibold text-boutique-sage-deep">
-                                    Направи основна
+                                    РќР°РїСЂР°РІРё РѕСЃРЅРѕРІРЅР°
                                   </button>
                                 </form>
                               )}
@@ -992,18 +995,18 @@ export function ProductListPanel({
                                 value={image.id}
                               />
                               <label className="block text-xs font-medium text-boutique-ink">
-                                Alt текст
+                                Alt С‚РµРєСЃС‚
                                 <input
                                   name={adminFormFields.productImage.altText}
                                   type="text"
                                   maxLength={160}
                                   defaultValue={image.alt_text ?? ""}
-                                  placeholder="Кратко описание на снимката"
+                                  placeholder="РљСЂР°С‚РєРѕ РѕРїРёСЃР°РЅРёРµ РЅР° СЃРЅРёРјРєР°С‚Р°"
                                   className={`${adminFieldClass} mt-1 text-xs`}
                                 />
                               </label>
                               <button className="rounded-full border border-boutique-line px-3 py-1.5 text-xs font-semibold text-boutique-ink transition hover:border-boutique-sage-deep/50">
-                                Запази alt
+                                Р—Р°РїР°Р·Рё alt
                               </button>
                             </form>
                             <div className="mt-3 flex flex-wrap gap-2">
@@ -1022,7 +1025,7 @@ export function ProductListPanel({
                                   disabled={index === 0}
                                   className="rounded-full border border-boutique-line px-3 py-1.5 text-xs disabled:opacity-35"
                                 >
-                                  Наляво
+                                  РќР°Р»СЏРІРѕ
                                 </button>
                               </form>
                               <form action={moveProductImage}>
@@ -1040,7 +1043,7 @@ export function ProductListPanel({
                                   disabled={index === productImages.length - 1}
                                   className="rounded-full border border-boutique-line px-3 py-1.5 text-xs disabled:opacity-35"
                                 >
-                                  Надясно
+                                  РќР°РґСЏСЃРЅРѕ
                                 </button>
                               </form>
                               <form action={deleteProductGalleryImage}>
@@ -1050,7 +1053,7 @@ export function ProductListPanel({
                                   value={image.id}
                                 />
                                 <button className="rounded-full border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-700">
-                                  Изтрий
+                                  РР·С‚СЂРёР№
                                 </button>
                               </form>
                             </div>
@@ -1069,7 +1072,7 @@ export function ProductListPanel({
                     detailsId={`product-edit-${product.id}`}
                     productAnchorId={productEditAnchorId(product.id)}
                     saveLabel={
-                      hasNoGalleryImages ? "Запази промените и качи" : "Запази промените"
+                      hasNoGalleryImages ? "Р—Р°РїР°Р·Рё РїСЂРѕРјРµРЅРёС‚Рµ Рё РєР°С‡Рё" : "Р—Р°РїР°Р·Рё РїСЂРѕРјРµРЅРёС‚Рµ"
                     }
                     extraActions={
                       <>
@@ -1079,7 +1082,7 @@ export function ProductListPanel({
                           rel="noopener noreferrer"
                           className="rounded-full border border-boutique-line bg-white px-4 py-2 text-xs font-semibold text-boutique-ink transition hover:border-boutique-sage-deep hover:text-boutique-sage-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-boutique-accent/30"
                         >
-                          Преглед
+                          РџСЂРµРіР»РµРґ
                         </a>
                         {publicationStatus === "draft" ? (
                           <form action={publishProduct} className="inline">
@@ -1092,7 +1095,7 @@ export function ProductListPanel({
                               type="submit"
                               className="rounded-full border border-boutique-sage-deep/40 bg-boutique-sage/10 px-4 py-2 text-xs font-semibold text-boutique-sage-deep transition hover:border-boutique-sage-deep hover:bg-boutique-sage/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-boutique-accent/30"
                             >
-                              Публикуване
+                              РџСѓР±Р»РёРєСѓРІР°РЅРµ
                             </button>
                           </form>
                         ) : null}
@@ -1103,9 +1106,9 @@ export function ProductListPanel({
 
                 <details className={productSectionClass}>
                   <summary className={productSectionSummaryClass}>
-                    <span>Витрина и свързани продукти</span>
+                    <span>Р’РёС‚СЂРёРЅР° Рё СЃРІСЉСЂР·Р°РЅРё РїСЂРѕРґСѓРєС‚Рё</span>
                     <span className="text-xs font-normal text-boutique-muted" aria-hidden>
-                      Витрина
+                      Р’РёС‚СЂРёРЅР°
                     </span>
                   </summary>
                   <div className="border-t border-boutique-line/50 px-3 py-4 sm:px-4">
@@ -1131,7 +1134,7 @@ export function ProductListPanel({
                       type="submit"
                       className="mt-4 rounded-full bg-boutique-ink px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-boutique-paper transition hover:bg-boutique-accent"
                     >
-                      Запази настройките
+                      Р—Р°РїР°Р·Рё РЅР°СЃС‚СЂРѕР№РєРёС‚Рµ
                     </button>
                   </form>
                   </div>

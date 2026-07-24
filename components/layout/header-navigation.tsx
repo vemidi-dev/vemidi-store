@@ -6,11 +6,13 @@ import { NavDropdown } from "@/components/layout/nav-dropdown";
 import { siteConfig } from "@/config/site";
 import {
   HEADER_CATEGORY_DROPDOWN,
+  HEADER_MATERIAL_DROPDOWN,
   HEADER_OCCASION_DROPDOWN,
   type HeaderNavDropdownItem,
 } from "@/lib/category-navigation";
 import {
   CATEGORY_INDEX_PATH,
+  MATERIAL_INDEX_PATH,
   OCCASION_INDEX_PATH,
 } from "@/lib/category-url";
 
@@ -20,6 +22,7 @@ const navLinkClass =
 type HeaderNavigationProps = {
   productCategoryItems: HeaderNavDropdownItem[];
   occasionCategoryItems: HeaderNavDropdownItem[];
+  materialCategoryItems: HeaderNavDropdownItem[];
   interactionMode: "hover" | "click";
   onNavigate?: () => void;
   className?: string;
@@ -28,6 +31,7 @@ type HeaderNavigationProps = {
 export function HeaderNavigation({
   productCategoryItems,
   occasionCategoryItems,
+  materialCategoryItems,
   interactionMode,
   onNavigate,
   className,
@@ -57,6 +61,20 @@ export function HeaderNavigation({
               indexHref={HEADER_OCCASION_DROPDOWN.href}
               indexLabel={HEADER_OCCASION_DROPDOWN.indexLabel}
               items={occasionCategoryItems}
+              interactionMode={interactionMode}
+              onNavigate={onNavigate}
+            />
+          );
+        }
+
+        if (item.href === MATERIAL_INDEX_PATH) {
+          return (
+            <NavDropdown
+              key={item.href}
+              label={item.label}
+              indexHref={HEADER_MATERIAL_DROPDOWN.href}
+              indexLabel={HEADER_MATERIAL_DROPDOWN.indexLabel}
+              items={materialCategoryItems}
               interactionMode={interactionMode}
               onNavigate={onNavigate}
             />

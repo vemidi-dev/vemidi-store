@@ -3,6 +3,7 @@ import {
   isPromotionActive,
   type ProductPromotionRow,
 } from "@/lib/product-pricing";
+import type { CategoryType } from "@/lib/admin/types";
 
 export type PromotionLifecycleStatus =
   | "inactive"
@@ -241,7 +242,7 @@ export function buildPromotionProductOptions(
   categories: Array<{
     id: string;
     name: string;
-    category_type: "product" | "occasion";
+    category_type: CategoryType;
   }>,
   productCategories: Array<{
     product_id: string;

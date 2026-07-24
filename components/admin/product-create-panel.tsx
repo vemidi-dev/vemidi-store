@@ -202,6 +202,13 @@ export function ProductCreatePanel({
     () => categories.filter((category) => category.category_type === "occasion"),
     [categories],
   );
+  const materialCategories = useMemo(
+    () =>
+      sortCategoriesForDisplay(
+        categories.filter((category) => category.category_type === "material"),
+      ),
+    [categories],
+  );
   const selectedPrimaryCategoryId = activeDraft?.primaryCategoryId ?? null;
   const shouldStartOpen =
     Boolean(activeDraft) || imageReselectWarning || hadLocalDraft;
@@ -384,6 +391,7 @@ export function ProductCreatePanel({
                   {[
                     ["Продукти", productCategories],
                     ["Поводи", occasionCategories],
+                    ["Заготовки и материали", materialCategories],
                   ].map(([label, groupedCategories]) => (
                     <div key={label as string}>
                       <p className="text-xs font-semibold uppercase tracking-wider text-boutique-muted">

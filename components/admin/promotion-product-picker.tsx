@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 
 import { adminFieldClass } from "@/components/admin/styles";
 import { adminFormFields } from "@/lib/admin/form-fields";
+import type { CategoryType } from "@/lib/admin/types";
 import { formatEur } from "@/lib/format-eur";
 import {
   filterPromotionProducts,
@@ -13,7 +14,7 @@ import {
 type PromotionCategoryOption = {
   id: string;
   name: string;
-  categoryType: "product" | "occasion";
+  categoryType: CategoryType;
 };
 
 type PromotionProductPickerProps = {

@@ -11,13 +11,14 @@ import {
   adminFieldClass,
 } from "@/components/admin/styles";
 import { adminFormFields } from "@/lib/admin/form-fields";
+import type { CategoryType } from "@/lib/admin/types";
 import type { PromotionProductOption } from "@/lib/promotion-admin";
 import type { ProductPromotionRow } from "@/lib/product-pricing";
 
 type PromotionCategoryOption = {
   id: string;
   name: string;
-  categoryType: "product" | "occasion";
+  categoryType: CategoryType;
 };
 
 export function PromotionCampaignCreateForm({
