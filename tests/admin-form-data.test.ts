@@ -9,7 +9,10 @@ import {
   makeCreateProductDraft,
 } from "@/lib/admin/form-data";
 import { parseProductCreateDraft } from "@/lib/admin/params";
-import { parseProductOptionGroups } from "@/lib/admin/parse-option-groups";
+import {
+  hasProductOptionGroupsPayload,
+  parseProductOptionGroups,
+} from "@/lib/admin/parse-option-groups";
 
 test("admin form field names stay aligned with product draft parsing", () => {
   const formData = new FormData();
@@ -134,6 +137,7 @@ test("all current admin tabs are accepted", () => {
 
 test("mixed product option groups keep their row values aligned", () => {
   const formData = new FormData();
+  formData.set(adminFormFields.optionGroup.present, "1");
   const appendRow = (values: {
     name: string;
     key: string;
@@ -206,6 +210,19 @@ test("mixed product option groups keep their row values aligned", () => {
   assert.equal(parsed.groups[1]?.placeholder, "Въведете име");
   assert.equal(parsed.groups[1]?.maxLength, 50);
   assert.equal(parsed.groups[1]?.textPriceDelta, 3);
+});
+
+test("option group payload sentinel distinguishes missing editor from intentional empty options", () => {
+  const missing = new FormData();
+  const presentEmpty = new FormData();
+  presentEmpty.set(adminFormFields.optionGroup.present, "1");
+
+  assert.equal(hasProductOptionGroupsPayload(missing), false);
+  assert.equal(hasProductOptionGroupsPayload(presentEmpty), true);
+  assert.deepEqual(parseProductOptionGroups(presentEmpty), {
+    groups: [],
+    error: null,
+  });
 });
 
 test("product create draft preserves option groups for recovery", () => {

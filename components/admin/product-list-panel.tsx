@@ -726,6 +726,7 @@ export function ProductListPanel({
                         </span>
                       }
                       contentClassName="mt-3"
+                      initiallyMounted
                     >
                       <ProductOptionGroupsEditor
                         initialGroups={initialOptionGroups}
@@ -791,6 +792,7 @@ export function ProductListPanel({
                         </span>
                       }
                       contentClassName="mt-3"
+                      initiallyMounted
                     >
                       <ProductWishSelector
                         wishes={wishTemplates}
@@ -811,6 +813,7 @@ export function ProductListPanel({
                         </span>
                       }
                       contentClassName="mt-3"
+                      initiallyMounted
                     >
                       <ProductUpsellOffersEditor
                         sourceProductId={product.id}

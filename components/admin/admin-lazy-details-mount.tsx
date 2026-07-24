@@ -9,6 +9,7 @@ type AdminLazyDetailsMountProps = {
   summary: ReactNode;
   children: ReactNode;
   contentClassName?: string;
+  initiallyMounted?: boolean;
 };
 
 export function AdminLazyDetailsMount({
@@ -18,8 +19,9 @@ export function AdminLazyDetailsMount({
   summary,
   children,
   contentClassName,
+  initiallyMounted = false,
 }: AdminLazyDetailsMountProps) {
-  const [mounted, setMounted] = useState(false);
+  const [mounted, setMounted] = useState(initiallyMounted);
 
   useEffect(() => {
     const details = document.getElementById(id);

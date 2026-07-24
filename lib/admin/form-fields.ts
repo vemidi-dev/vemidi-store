@@ -119,6 +119,7 @@ export const adminFormFields = {
     allowsWishes: "personalization_allows_wishes[]",
   },
   optionGroup: {
+    present: "option_group_present",
     ids: "option_group_id[]",
     names: "option_group_name[]",
     keys: "option_group_key[]",

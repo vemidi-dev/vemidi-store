@@ -306,6 +306,7 @@ export function ProductOptionGroupsEditor({
 
   return (
     <div ref={editorRef} className="space-y-4">
+      <input type="hidden" name={adminFormFields.optionGroup.present} value="1" />
       <p className={helperClassName}>
         Добавете група за всеки въпрос към клиента, например „Размер на комплекта“,
         „Оцветяване“ или „Персонализация“. При избор между варианти добавете отделен ред

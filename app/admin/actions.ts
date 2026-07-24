@@ -52,6 +52,7 @@ import { adminFormFields } from "@/lib/admin/form-fields";
 import { normalizeProductCardBadge } from "@/lib/product-card";
 import {
   detectDuplicateOptionWarnings,
+  hasProductOptionGroupsPayload,
   parseProductOptionGroups,
 } from "@/lib/admin/parse-option-groups";
 import { copyProductGalleryImagesToProduct } from "@/lib/admin/copy-product-gallery";
@@ -278,6 +279,18 @@ async function getProductGalleryImageCount(
   }
 
   return product?.image_url ? 1 : 0;
+}
+
+async function productHasOptionGroups(
+  supabase: NonNullable<Awaited<ReturnType<typeof createClient>>>,
+  productId: string,
+) {
+  const { count, error } = await supabase
+    .from("product_option_groups")
+    .select("id", { count: "exact", head: true })
+    .eq("product_id", productId);
+
+  return !error && (count ?? 0) > 0;
 }
 
 async function loadProductPublishValidationInput(
@@ -901,6 +914,7 @@ export async function updateProduct(formData: FormData) {
     fields: personalizationFields,
     error: personalizationFieldsError,
   } = parseProductPersonalizationFields(formData);
+  const hasOptionPayload = hasProductOptionGroupsPayload(formData);
   const { groups: optionGroups, error: optionGroupsError } =
     parseProductOptionGroups(formData);
   const { payload: productContent, error: productContentError } =
@@ -915,6 +929,13 @@ export async function updateProduct(formData: FormData) {
 
   if (!id || !name || price === null || categoryIds.length === 0) {
     redirectWith("error", "Невалидни данни за редакция.", activeTab);
+  }
+  if (!hasOptionPayload && (await productHasOptionGroups(supabase, id))) {
+    redirectWithProductEdit(
+      "error",
+      "Опциите на продукта не бяха заредени. Отворете „Опции и ценообразуване“ и опитайте отново.",
+      id,
+    );
   }
   if (!(await validatePrimaryProductCategory(supabase, categoryIds, primaryCategoryId))) {
     redirectWithProductEdit(

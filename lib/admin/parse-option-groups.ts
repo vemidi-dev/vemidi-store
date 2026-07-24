@@ -18,6 +18,10 @@ function parseNumber(value: string, fallback: number) {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
+export function hasProductOptionGroupsPayload(formData: FormData) {
+  return formData.has(adminFormFields.optionGroup.present);
+}
+
 export function parseProductOptionGroups(formData: FormData): {
   groups: ParsedOptionGroup[];
   error: string | null;
