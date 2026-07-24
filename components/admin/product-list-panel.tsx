@@ -105,7 +105,7 @@ function ProductThumbnail({
         />
       ) : (
         <div className="grid h-full w-full place-items-center text-[9px] text-boutique-muted">
-          вЂ”
+          —
         </div>
       )}
     </div>

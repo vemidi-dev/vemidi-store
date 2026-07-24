@@ -93,7 +93,7 @@ test("partial landing handoff merges personalization colors and options into the
 
 test("stale stored option selections are dropped when configured defaults changed", () => {
   const stored = parseProductConfigurationDraft(JSON.stringify({
-    values: { note: "Р—Р°РїР°Р·Рё" },
+    values: { note: "Запази" },
     enabledOptionalFieldIds: [],
     selectedColorOptionIdsByFieldId: {},
     optionSelections: [{ groupId: "size", valueIds: ["old-default"] }],
@@ -107,7 +107,7 @@ test("stale stored option selections are dropped when configured defaults change
     "size:new-default",
   );
 
-  assert.deepEqual(restored?.values, { note: "Р—Р°РїР°Р·Рё" });
+  assert.deepEqual(restored?.values, { note: "Запази" });
   assert.deepEqual(restored?.optionSelections, []);
   assert.equal(restored?.optionDefaultsSignature, "size:new-default");
 });
