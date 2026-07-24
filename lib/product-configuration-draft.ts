@@ -17,6 +17,7 @@ export type ProductConfigurationDraft = {
   selectedColorOptionIdsByFieldId: Record<string, string[]>;
   selectedColorQuantitiesByFieldId: Record<string, ColorQuantitiesByOptionId>;
   optionSelections: ProductOptionSelection[];
+  optionDefaultsSignature?: string;
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -132,6 +133,11 @@ export function parseProductConfigurationDraft(
       return null;
     }
 
+    const optionDefaultsSignature =
+      typeof parsed.optionDefaultsSignature === "string"
+        ? parsed.optionDefaultsSignature.slice(0, 2000)
+        : undefined;
+
     return {
       values: parseStringRecord(parsed.values),
       enabledOptionalFieldIds: parseStringArray(parsed.enabledOptionalFieldIds),
@@ -142,6 +148,7 @@ export function parseProductConfigurationDraft(
         parsed.selectedColorQuantitiesByFieldId,
       ),
       optionSelections: parseOptionSelections(parsed.optionSelections),
+      ...(optionDefaultsSignature ? { optionDefaultsSignature } : {}),
     };
   } catch {
     return null;
@@ -246,7 +253,11 @@ export function resolveProductConfigurationDraft(
     "personalization" | "personalizationFields" | "selectedColors" | "optionSelections"
   > | null,
   fields: readonly ProductPersonalizationField[] = [],
+  optionDefaultsSignature?: string,
 ): ProductConfigurationDraft | null {
+  const storedOptionSelectionsAreCurrent =
+    !optionDefaultsSignature ||
+    storedDraft?.optionDefaultsSignature === optionDefaultsSignature;
   const base = storedDraft ?? {
     values: {},
     enabledOptionalFieldIds: [],
@@ -254,13 +265,18 @@ export function resolveProductConfigurationDraft(
     selectedColorQuantitiesByFieldId: {},
     optionSelections: [],
   };
+  const currentBase: ProductConfigurationDraft = {
+    ...base,
+    optionSelections: storedOptionSelectionsAreCurrent ? base.optionSelections : [],
+    ...(optionDefaultsSignature ? { optionDefaultsSignature } : {}),
+  };
 
   if (!cartLine) {
-    return storedDraft;
+    return storedDraft ? currentBase : null;
   }
 
   return mergeProductConfigurationDraft(
-    base,
+    currentBase,
     buildConfigurationIncomingFromCartLine(cartLine, fields),
   );
 }
@@ -318,5 +334,8 @@ export function mergeProductConfigurationDraft(
       base.optionSelections,
       incoming.optionSelections ?? [],
     ),
+    ...(base.optionDefaultsSignature
+      ? { optionDefaultsSignature: base.optionDefaultsSignature }
+      : {}),
   };
 }

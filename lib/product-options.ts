@@ -122,3 +122,25 @@ export function buildDefaultOptionSelections(
     }];
   });
 }
+
+export function buildProductOptionDefaultsSignature(
+  groups: ProductOptionGroup[],
+) {
+  return groups
+    .filter((group) => group.isActive)
+    .sort((a, b) => a.sortOrder - b.sortOrder || a.id.localeCompare(b.id))
+    .map((group) => {
+      if (!isChoiceOptionGroup(group)) {
+        return `${group.id}:text`;
+      }
+
+      const defaults = group.values
+        .filter((value) => value.isActive && !value.isSoldOut && value.isDefault)
+        .sort((a, b) => a.sortOrder - b.sortOrder || a.id.localeCompare(b.id))
+        .map((value) => value.id)
+        .join(",");
+
+      return `${group.id}:${defaults}`;
+    })
+    .join("|");
+}

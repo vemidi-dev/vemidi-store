@@ -6,6 +6,7 @@ import {
   mergeProductConfigurationDraft,
   mergeProductOptionSelections,
   parseProductConfigurationDraft,
+  resolveProductConfigurationDraft,
 } from "@/lib/product-configuration-draft";
 
 test("product configuration draft restores every customer selection", () => {
@@ -88,4 +89,25 @@ test("partial landing handoff merges personalization colors and options into the
     selectedColorQuantitiesByFieldId: {},
     optionSelections: [{ groupId: "size", valueIds: ["maxi"] }],
   });
+});
+
+test("stale stored option selections are dropped when configured defaults changed", () => {
+  const stored = parseProductConfigurationDraft(JSON.stringify({
+    values: { note: "Р—Р°РїР°Р·Рё" },
+    enabledOptionalFieldIds: [],
+    selectedColorOptionIdsByFieldId: {},
+    optionSelections: [{ groupId: "size", valueIds: ["old-default"] }],
+    optionDefaultsSignature: "size:old-default",
+  }));
+
+  const restored = resolveProductConfigurationDraft(
+    stored,
+    null,
+    [],
+    "size:new-default",
+  );
+
+  assert.deepEqual(restored?.values, { note: "Р—Р°РїР°Р·Рё" });
+  assert.deepEqual(restored?.optionSelections, []);
+  assert.equal(restored?.optionDefaultsSignature, "size:new-default");
 });

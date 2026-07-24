@@ -12,6 +12,7 @@ import type { Product } from "@/lib/catalog";
 import { formatOrderOptionLine, parseOrderOptionSelections } from "@/lib/order-option-display";
 import {
   buildDefaultOptionSelections,
+  buildProductOptionDefaultsSignature,
   getBooleanOptionValues,
   getVisibleOptionGroups,
   type ProductOptionGroup,
@@ -189,6 +190,49 @@ test("multiple min/max validation", () => {
 test("default option is suggested for storefront", () => {
   const defaults = buildDefaultOptionSelections(baseProduct.optionGroups!);
   assert.deepEqual(defaults, [{ groupId: groupSizeId, valueIds: [valueSmallId] }]);
+});
+
+test("middle default option is suggested for storefront", () => {
+  const mediumId = "88888888-8888-4888-8888-888888888888";
+  const group = makeGroup({
+    values: [
+      {
+        id: valueSmallId,
+        label: "РњР°Р»СЉРє",
+        key: "small",
+        priceDelta: 0,
+        isDefault: false,
+        isActive: true,
+        isSoldOut: false,
+        sortOrder: 0,
+      },
+      {
+        id: mediumId,
+        label: "РЎСЂРµРґРµРЅ",
+        key: "medium",
+        priceDelta: 4.5,
+        isDefault: true,
+        isActive: true,
+        isSoldOut: false,
+        sortOrder: 1,
+      },
+      {
+        id: valueLargeId,
+        label: "Р“РѕР»СЏРј",
+        key: "large",
+        priceDelta: 8,
+        isDefault: false,
+        isActive: true,
+        isSoldOut: false,
+        sortOrder: 2,
+      },
+    ],
+  });
+
+  assert.deepEqual(buildDefaultOptionSelections([group]), [
+    { groupId: groupSizeId, valueIds: [mediumId] },
+  ]);
+  assert.match(buildProductOptionDefaultsSignature([group]), new RegExp(mediumId));
 });
 
 test("inactive option value is rejected", () => {

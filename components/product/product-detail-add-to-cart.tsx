@@ -13,6 +13,10 @@ import type { Product } from "@/lib/catalog";
 import type { ProductUpsellOffer } from "@/lib/storefront/product-upsells";
 import type { ProductOptionSelection } from "@/lib/product-options";
 import {
+  buildDefaultOptionSelections,
+  buildProductOptionDefaultsSignature,
+} from "@/lib/product-options";
+import {
   getProductConfigurationDraftKey,
   mergeProductOptionSelections,
   parseProductConfigurationDraft,
@@ -167,6 +171,14 @@ export function ProductDetailAddToCart({
   const [draftReady, setDraftReady] = useState(false);
   const colorFields = useMemo(() => product.colorFields ?? [], [product.colorFields]);
   const optionGroups = useMemo(() => product.optionGroups ?? [], [product.optionGroups]);
+  const defaultOptionSelections = useMemo(
+    () => buildDefaultOptionSelections(optionGroups),
+    [optionGroups],
+  );
+  const optionDefaultsSignature = useMemo(
+    () => buildProductOptionDefaultsSignature(optionGroups),
+    [optionGroups],
+  );
 
   useEffect(() => {
     if (!cartReady) {
@@ -183,7 +195,12 @@ export function ProductDetailAddToCart({
     }
 
     const cartLine = lines.find((line) => line.productId === product.id) ?? null;
-    const draft = resolveProductConfigurationDraft(storedDraft, cartLine, fields);
+    const draft = resolveProductConfigurationDraft(
+      storedDraft,
+      cartLine,
+      fields,
+      optionDefaultsSignature,
+    );
 
     if (draft) {
       try {
@@ -257,7 +274,10 @@ export function ProductDetailAddToCart({
       setSelectedByGroup(restoredColors);
       setQuantitiesByField(restoredQuantities);
       setOptionSelections(
-        mergeProductOptionSelections(restoredOptions, initialOptionSelections),
+        mergeProductOptionSelections(
+          defaultOptionSelections,
+          mergeProductOptionSelections(restoredOptions, initialOptionSelections),
+        ),
       );
     }
 
@@ -265,9 +285,11 @@ export function ProductDetailAddToCart({
   }, [
     cartReady,
     colorFields,
+    defaultOptionSelections,
     fields,
     initialOptionSelections,
     lines,
+    optionDefaultsSignature,
     optionGroups,
     product.id,
   ]);
@@ -286,6 +308,7 @@ export function ProductDetailAddToCart({
           selectedColorOptionIdsByFieldId: selectedByGroup,
           selectedColorQuantitiesByFieldId: quantitiesByField,
           optionSelections,
+          optionDefaultsSignature,
         }),
       );
     } catch {
@@ -295,6 +318,7 @@ export function ProductDetailAddToCart({
     draftReady,
     enabledOptionalFields,
     optionSelections,
+    optionDefaultsSignature,
     product.id,
     selectedByGroup,
     quantitiesByField,
