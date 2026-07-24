@@ -6,6 +6,7 @@ import {
   type HierarchicalCategory,
 } from "@/lib/category-hierarchy";
 import { adminFormFields } from "@/lib/admin/form-fields";
+import type { CategoryType } from "@/lib/admin/types";
 
 export type CategoryRelatedRow = {
   category_id: string;
@@ -16,7 +17,7 @@ export type CategoryRelatedRow = {
 export type CategoryRelatedValidationCategory = {
   id: string;
   name: string;
-  category_type: "product" | "occasion";
+  category_type: CategoryType;
   parent_id: string | null;
 };
 
@@ -114,7 +115,7 @@ export function validateCategoryRelatedTargets(
   categoryId: string,
   relatedCategoryIds: string[],
   categories: CategoryRelatedValidationCategory[],
-  sourceCategoryType: "product" | "occasion",
+  sourceCategoryType: CategoryType,
 ): string | null {
   const categoryById = new Map(categories.map((category) => [category.id, category]));
 

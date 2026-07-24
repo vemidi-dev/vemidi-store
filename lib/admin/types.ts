@@ -18,6 +18,8 @@ export type AdminTab =
 
 export type SubscriptionTopic = "blog" | "products" | "events";
 
+export type CategoryType = "product" | "occasion" | "material";
+
 export type DiscountCouponRow = {
   id: string;
   code: string;
@@ -205,7 +207,7 @@ export type CategoryRow = {
   id: string;
   name: string;
   slug: string;
-  category_type: "product" | "occasion";
+  category_type: CategoryType;
   parent_id: string | null;
   image_url: string | null;
   image_alt: string | null;

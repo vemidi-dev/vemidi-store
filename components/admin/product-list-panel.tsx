@@ -105,7 +105,7 @@ function ProductThumbnail({
         />
       ) : (
         <div className="grid h-full w-full place-items-center text-[9px] text-boutique-muted">
-          —
+          вЂ”
         </div>
       )}
     </div>
@@ -177,6 +177,9 @@ export function ProductListPanel({
 
   const occasionCategories = categories.filter(
     (category) => category.category_type === "occasion",
+  );
+  const materialCategories = sortCategoriesForDisplay(
+    categories.filter((category) => category.category_type === "material"),
   );
   const productCategories = sortCategoriesForDisplay(
     categories.filter((category) => category.category_type === "product"),
@@ -662,17 +665,17 @@ export function ProductListPanel({
                         <p className={adminHelperClass}>Няма налични категории.</p>
                       ) : (
                         <div className="mt-2 space-y-4">
-                          {(["product", "occasion"] as const).map((categoryType) => (
+                          {([
+                            ["product", productCategories],
+                            ["occasion", occasionCategories],
+                            ["material", materialCategories],
+                          ] as const).map(([categoryType, groupedCategories]) => (
                             <div key={categoryType}>
                               <p className="text-xs font-semibold uppercase tracking-wider text-boutique-muted">
-                                {categoryType === "product" ? "Продукти" : "Поводи"}
+                                {categoryType === "product" ? "Продукти" : categoryType === "material" ? "Заготовки и материали" : "Поводи"}
                               </p>
                               <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                                {sortCategoriesForDisplay(
-                                  categories.filter(
-                                    (category) => category.category_type === categoryType,
-                                  ),
-                                )
+                                {groupedCategories
                                   .map((category) => (
                                     <div
                                       key={`${product.id}-${category.id}-edit`}

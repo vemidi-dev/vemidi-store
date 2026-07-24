@@ -7,6 +7,7 @@ export const siteConfig = {
     { href: "/produkti", label: "Продукти" },
     { href: "/categorii", label: "Категории" },
     { href: "/povodi", label: "По повод" },
+    { href: "/zagotovki-i-materiali", label: "Заготовки и материали" },
     { href: "/sabitiya", label: "Събития" },
     { href: "/blog", label: "Блог" },
     { href: "/za-nas", label: "За нас" },
@@ -16,6 +17,9 @@ export const siteConfig = {
     { href: "/produkti", label: "Всички продукти" },
     { href: "/categorii", label: "Категории" },
     { href: "/povodi", label: "По повод" },
+    { href: "/zagotovki-i-materiali", label: "Заготовки и материали" },
+    { href: "/blog", label: "Блог" },
+    { href: "/sabitiya", label: "Събития" },
   ],
   informationLinks: [
     { href: "/delivery", label: "Доставка и плащане" },
@@ -29,7 +33,7 @@ export const siteConfig = {
   business: {
     legalName: "Дрийм Гифтс ЕООД",
     registrationNumber: "208135190",
-    address: "София, Младост 2, блок 210",
+    address: "София, Младост 2, бл. 210",
     email: "vemidi.crafts@gmail.com",
     phoneDisplay: "0895 627 631",
     phoneHref: "+359895627631",

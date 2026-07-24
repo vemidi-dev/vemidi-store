@@ -2,12 +2,13 @@
 
 import { RelatedProductPicker } from "@/components/admin/related-product-picker";
 import { adminFormFields } from "@/lib/admin/form-fields";
+import type { CategoryType } from "@/lib/admin/types";
 import type { PromotionProductOption } from "@/lib/promotion-admin";
 
 type RelatedProductCategoryOption = {
   id: string;
   name: string;
-  categoryType: "product" | "occasion";
+  categoryType: CategoryType;
 };
 
 type ProductMerchandisingFieldsProps = {

@@ -17,7 +17,7 @@ import {
 } from "@/components/admin/styles";
 import { adminFormFields } from "@/lib/admin/form-fields";
 import { hasCategoryContentGap } from "@/lib/admin/category-content";
-import type { CategoryRow } from "@/lib/admin/types";
+import type { CategoryRow, CategoryType } from "@/lib/admin/types";
 
 type CategoryManagementViewProps = {
   categories: CategoryRow[];
@@ -25,12 +25,25 @@ type CategoryManagementViewProps = {
   relatedCategoryIdsByCategoryId: Map<string, string[]>;
 };
 
-type CategoryTab = "product" | "occasion";
+type CategoryTab = CategoryType;
 
 const tabLabels: Record<CategoryTab, string> = {
-  product: "По продукт",
-  occasion: "По повод",
+  product: "Р СџР С• Р С—РЎР‚Р С•Р Т‘РЎС“Р С”РЎвЂљ",
+  occasion: "Р СџР С• Р С—Р С•Р Р†Р С•Р Т‘",
+  material: "Р вЂ”Р В°Р С–Р С•РЎвЂљР С•Р Р†Р С”Р С‘ Р С‘ Р СР В°РЎвЂљР ВµРЎР‚Р С‘Р В°Р В»Р С‘",
 };
+
+const categoryTabs: CategoryTab[] = ["product", "occasion", "material"];
+
+function getCategoryTypeLabel(categoryType: CategoryType) {
+  if (categoryType === "product") {
+    return "РџСЂРѕРґСѓРєС‚";
+  }
+  if (categoryType === "material") {
+    return "РњР°С‚РµСЂРёР°Р»";
+  }
+  return "РџРѕРІРѕРґ";
+}
 
 export function CategoryManagementView({
   categories,
@@ -79,7 +92,7 @@ export function CategoryManagementView({
   return (
     <div className="mt-6">
       <div className="flex flex-wrap gap-2 border-b border-boutique-line pb-3">
-        {(["product", "occasion"] as const).map((tab) => (
+        {categoryTabs.map((tab) => (
           <button
             key={tab}
             type="button"
@@ -100,19 +113,19 @@ export function CategoryManagementView({
       </div>
 
       <label className="mt-4 block text-xs font-semibold uppercase tracking-wider text-boutique-muted">
-        Търсене
+        Р В РЎС›Р РЋР вЂ°Р РЋР вЂљР РЋР С“Р В Р’ВµР В Р вЂ¦Р В Р’Вµ
         <input
           type="search"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Име или slug..."
+          placeholder="Р В Р’ВР В РЎВР В Р’Вµ Р В РЎвЂР В Р’В»Р В РЎвЂ slug..."
           className="mt-1.5 w-full max-w-md rounded-lg border border-boutique-line bg-white px-3 py-2.5 text-sm font-normal normal-case tracking-normal text-boutique-ink outline-none focus:border-boutique-accent/50"
         />
       </label>
 
       {visibleCategories.length === 0 ? (
         <p className="mt-4 rounded-lg border border-dashed border-boutique-line px-4 py-3 text-sm text-boutique-muted">
-          Няма категории в тази група{normalizedQuery ? " по търсенето" : ""}.
+          Р В РЎСљР РЋР РЏР В РЎВР В Р’В° Р В РЎвЂќР В Р’В°Р РЋРІР‚С™Р В Р’ВµР В РЎвЂ“Р В РЎвЂўР РЋР вЂљР В РЎвЂР В РЎвЂ Р В Р вЂ  Р РЋРІР‚С™Р В Р’В°Р В Р’В·Р В РЎвЂ Р В РЎвЂ“Р РЋР вЂљР РЋРЎвЂњР В РЎвЂ”Р В Р’В°{normalizedQuery ? " Р В РЎвЂ”Р В РЎвЂў Р РЋРІР‚С™Р РЋР вЂ°Р РЋР вЂљР РЋР С“Р В Р’ВµР В Р вЂ¦Р В Р’ВµР РЋРІР‚С™Р В РЎвЂў" : ""}.
         </p>
       ) : (
         <div className="mt-4 overflow-hidden rounded-xl border border-boutique-line">
@@ -120,12 +133,12 @@ export function CategoryManagementView({
             className={`${adminTableHeadClass} hidden px-3 py-2 md:grid md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_6rem_5rem_4rem_auto] md:gap-2`}
             aria-hidden
           >
-            <span>Име</span>
+            <span>Р В Р’ВР В РЎВР В Р’Вµ</span>
             <span>Slug</span>
-            <span>Вид</span>
-            <span>Начална</span>
-            <span>Ред</span>
-            <span className="text-right">Действия</span>
+            <span>Р В РІР‚в„ўР В РЎвЂР В РўвЂ</span>
+            <span>Р В РЎСљР В Р’В°Р РЋРІР‚РЋР В Р’В°Р В Р’В»Р В Р вЂ¦Р В Р’В°</span>
+            <span>Р В Р’В Р В Р’ВµР В РўвЂ</span>
+            <span className="text-right">Р В РІР‚СњР В Р’ВµР В РІвЂћвЂ“Р РЋР С“Р РЋРІР‚С™Р В Р вЂ Р В РЎвЂР РЋР РЏ</span>
           </div>
 
           {visibleCategories.map((category) => {
@@ -148,25 +161,25 @@ export function CategoryManagementView({
             >
               <div className="hidden px-3 py-2 md:grid md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_6rem_5rem_4rem_auto] md:items-center md:gap-2">
                 <p className="truncate font-medium text-boutique-ink">
-                  {parentCategory ? "↳ " : ""}
+                  {parentCategory ? "Р Р†РІР‚В РЎвЂ“ " : ""}
                   {category.name}
                   {category.is_visible === false ? (
                     <span className="ml-2 rounded-full bg-boutique-muted/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-boutique-muted">
-                      Скрита
+                      Р В Р Р‹Р В РЎвЂќР РЋР вЂљР В РЎвЂР РЋРІР‚С™Р В Р’В°
                     </span>
                   ) : null}
                   {hasCategoryContentGap(category) ? (
                     <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-800">
-                      Липсва съдържание
+                      Р В РІР‚С”Р В РЎвЂР В РЎвЂ”Р РЋР С“Р В Р вЂ Р В Р’В° Р РЋР С“Р РЋР вЂ°Р В РўвЂР РЋР вЂ°Р РЋР вЂљР В Р’В¶Р В Р’В°Р В Р вЂ¦Р В РЎвЂР В Р’Вµ
                     </span>
                   ) : null}
                 </p>
                 <p className="truncate text-xs text-boutique-muted">{category.slug}</p>
                 <p className="text-xs text-boutique-muted">
-                  {category.category_type === "product" ? "Продукт" : "Повод"}
+                  {getCategoryTypeLabel(category.category_type)}
                 </p>
                 <p className="text-xs text-boutique-muted">
-                  {category.show_on_home ? "Да" : "Не"}
+                  {category.show_on_home ? "Р В РІР‚СњР В Р’В°" : "Р В РЎСљР В Р’Вµ"}
                 </p>
                 <p className="text-xs text-boutique-muted">{category.home_sort_order}</p>
                 <div className="flex flex-wrap justify-end gap-1">
@@ -177,10 +190,10 @@ export function CategoryManagementView({
                     <button
                       type="submit"
                       disabled={indexInTab === 0}
-                      aria-label="Премести нагоре"
+                      aria-label="Р В РЎСџР РЋР вЂљР В Р’ВµР В РЎВР В Р’ВµР РЋР С“Р РЋРІР‚С™Р В РЎвЂ Р В Р вЂ¦Р В Р’В°Р В РЎвЂ“Р В РЎвЂўР РЋР вЂљР В Р’Вµ"
                       className="grid h-7 w-7 place-items-center rounded-full border border-boutique-line text-xs disabled:opacity-35"
                     >
-                      ↑
+                      Р Р†РІР‚В РІР‚В
                     </button>
                   </form>
                   <form action={moveCategory} className="inline">
@@ -190,17 +203,17 @@ export function CategoryManagementView({
                     <button
                       type="submit"
                       disabled={indexInTab === siblings.length - 1}
-                      aria-label="Премести надолу"
+                      aria-label="Р В РЎСџР РЋР вЂљР В Р’ВµР В РЎВР В Р’ВµР РЋР С“Р РЋРІР‚С™Р В РЎвЂ Р В Р вЂ¦Р В Р’В°Р В РўвЂР В РЎвЂўР В Р’В»Р РЋРЎвЂњ"
                       className="grid h-7 w-7 place-items-center rounded-full border border-boutique-line text-xs disabled:opacity-35"
                     >
-                      ↓
+                      Р Р†РІР‚В РІР‚Сљ
                     </button>
                   </form>
                   <AdminOpenDetailsButton
                     detailsId={`category-edit-${category.id}`}
                     className="rounded-full border border-boutique-line px-2.5 py-1 text-[11px] font-semibold text-boutique-ink"
                   >
-                    Редакция
+                    Р В Р’В Р В Р’ВµР В РўвЂР В Р’В°Р В РЎвЂќР РЋРІР‚В Р В РЎвЂР РЋР РЏ
                   </AdminOpenDetailsButton>
                 </div>
               </div>
@@ -208,16 +221,16 @@ export function CategoryManagementView({
               <div className="flex items-center justify-between gap-2 px-2 py-2 md:hidden">
                 <div className="min-w-0">
                   <p className="truncate font-medium text-boutique-ink">
-                    {parentCategory ? "↳ " : ""}
+                    {parentCategory ? "Р Р†РІР‚В РЎвЂ“ " : ""}
                     {category.name}
                     {category.is_visible === false ? (
                       <span className="ml-2 rounded-full bg-boutique-muted/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-boutique-muted">
-                        Скрита
+                        Р В Р Р‹Р В РЎвЂќР РЋР вЂљР В РЎвЂР РЋРІР‚С™Р В Р’В°
                       </span>
                     ) : null}
                     {hasCategoryContentGap(category) ? (
                       <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-800">
-                        Липсва съдържание
+                        Р В РІР‚С”Р В РЎвЂР В РЎвЂ”Р РЋР С“Р В Р вЂ Р В Р’В° Р РЋР С“Р РЋР вЂ°Р В РўвЂР РЋР вЂ°Р РЋР вЂљР В Р’В¶Р В Р’В°Р В Р вЂ¦Р В РЎвЂР В Р’Вµ
                       </span>
                     ) : null}
                   </p>
@@ -233,7 +246,7 @@ export function CategoryManagementView({
                       disabled={indexInTab === 0}
                       className="grid h-7 w-7 place-items-center rounded-full border border-boutique-line text-xs disabled:opacity-35"
                     >
-                      ↑
+                      Р Р†РІР‚В РІР‚В
                     </button>
                   </form>
                   <form action={moveCategory}>
@@ -245,7 +258,7 @@ export function CategoryManagementView({
                       disabled={indexInTab === siblings.length - 1}
                       className="grid h-7 w-7 place-items-center rounded-full border border-boutique-line text-xs disabled:opacity-35"
                     >
-                      ↓
+                      Р Р†РІР‚В РІР‚Сљ
                     </button>
                   </form>
                 </div>
@@ -256,7 +269,7 @@ export function CategoryManagementView({
                 className="border-t border-boutique-line/60 bg-boutique-bg/40 px-3 py-2"
               >
                 <summary className="cursor-pointer text-xs font-semibold text-boutique-sage-deep md:sr-only">
-                  Редактирай категория
+                  Р В Р’В Р В Р’ВµР В РўвЂР В Р’В°Р В РЎвЂќР РЋРІР‚С™Р В РЎвЂР РЋР вЂљР В Р’В°Р В РІвЂћвЂ“ Р В РЎвЂќР В Р’В°Р РЋРІР‚С™Р В Р’ВµР В РЎвЂ“Р В РЎвЂўР РЋР вЂљР В РЎвЂР РЋР РЏ
                 </summary>
                 <form
                   action={updateCategory}
@@ -265,7 +278,7 @@ export function CategoryManagementView({
                   <input type="hidden" name={adminFormFields.common.tab} value="categories" />
                   <input type="hidden" name={adminFormFields.common.id} value={category.id} />
                   <label className="text-sm font-medium text-boutique-ink">
-                    Име
+                    Р В Р’ВР В РЎВР В Р’Вµ
                     <input
                       name={adminFormFields.category.name}
                       required
@@ -283,28 +296,30 @@ export function CategoryManagementView({
                     />
                   </label>
                   <label className="text-sm font-medium text-boutique-ink">
-                    Тип
+                    Р В РЎС›Р В РЎвЂР В РЎвЂ”
                     <select
                       name={adminFormFields.category.type}
                       defaultValue={category.category_type}
                       className={adminFieldClass}
                     >
-                      <option value="product">Продуктова категория</option>
-                      <option value="occasion">Повод</option>
+                      <option value="product">Р В РЎСџР РЋР вЂљР В РЎвЂўР В РўвЂР РЋРЎвЂњР В РЎвЂќР РЋРІР‚С™Р В РЎвЂўР В Р вЂ Р В Р’В° Р В РЎвЂќР В Р’В°Р РЋРІР‚С™Р В Р’ВµР В РЎвЂ“Р В РЎвЂўР РЋР вЂљР В РЎвЂР РЋР РЏ</option>
+                      <option value="occasion">Р В РЎСџР В РЎвЂўР В Р вЂ Р В РЎвЂўР В РўвЂ</option>
+                      <option value="material">Р В РІР‚вЂќР В Р’В°Р В РЎвЂ“Р В РЎвЂўР РЋРІР‚С™Р В РЎвЂўР В Р вЂ Р В РЎвЂќР В РЎвЂ Р В РЎвЂ Р В РЎВР В Р’В°Р РЋРІР‚С™Р В Р’ВµР РЋР вЂљР В РЎвЂР В Р’В°Р В Р’В»Р В РЎвЂ</option>
                     </select>
                   </label>
                   <label className="text-sm font-medium text-boutique-ink">
-                    Основна категория
+                    Р В РЎвЂєР РЋР С“Р В Р вЂ¦Р В РЎвЂўР В Р вЂ Р В Р вЂ¦Р В Р’В° Р В РЎвЂќР В Р’В°Р РЋРІР‚С™Р В Р’ВµР В РЎвЂ“Р В РЎвЂўР РЋР вЂљР В РЎвЂР РЋР РЏ
                     <select
                       name={adminFormFields.category.parentId}
                       defaultValue={category.parent_id ?? ""}
                       className={adminFieldClass}
                     >
-                      <option value="">Няма — основна категория</option>
+                      <option value="">Р В РЎСљР РЋР РЏР В РЎВР В Р’В° Р Р†Р вЂљРІР‚Сњ Р В РЎвЂўР РЋР С“Р В Р вЂ¦Р В РЎвЂўР В Р вЂ Р В Р вЂ¦Р В Р’В° Р В РЎвЂќР В Р’В°Р РЋРІР‚С™Р В Р’ВµР В РЎвЂ“Р В РЎвЂўР РЋР вЂљР В РЎвЂР РЋР РЏ</option>
                       {categories
                         .filter(
                           (entry) =>
-                            entry.category_type === "product" &&
+                            (entry.category_type === "product" ||
+                              entry.category_type === "material") &&
                             entry.parent_id === null &&
                             entry.id !== category.id,
                         )
@@ -319,7 +334,7 @@ export function CategoryManagementView({
                     </select>
                   </label>
                   <label className="text-sm font-medium text-boutique-ink md:col-span-3">
-                    Кратък текст за картата
+                    Р В РЎв„ўР РЋР вЂљР В Р’В°Р РЋРІР‚С™Р РЋР вЂ°Р В РЎвЂќ Р РЋРІР‚С™Р В Р’ВµР В РЎвЂќР РЋР С“Р РЋРІР‚С™ Р В Р’В·Р В Р’В° Р В РЎвЂќР В Р’В°Р РЋР вЂљР РЋРІР‚С™Р В Р’В°Р РЋРІР‚С™Р В Р’В°
                     <textarea
                       name={adminFormFields.category.cardDescription}
                       rows={2}
@@ -328,7 +343,7 @@ export function CategoryManagementView({
                     />
                   </label>
                   <label className="text-sm font-medium text-boutique-ink md:col-span-3">
-                    Снимка за карта на категорията
+                    Р В Р Р‹Р В Р вЂ¦Р В РЎвЂР В РЎВР В РЎвЂќР В Р’В° Р В Р’В·Р В Р’В° Р В РЎвЂќР В Р’В°Р РЋР вЂљР РЋРІР‚С™Р В Р’В° Р В Р вЂ¦Р В Р’В° Р В РЎвЂќР В Р’В°Р РЋРІР‚С™Р В Р’ВµР В РЎвЂ“Р В РЎвЂўР РЋР вЂљР В РЎвЂР РЋР РЏР РЋРІР‚С™Р В Р’В°
                     {category.image_url ? (
                       <span className="mt-2 flex items-center gap-3 rounded-lg border border-boutique-line bg-white p-2">
                         <span
@@ -337,7 +352,7 @@ export function CategoryManagementView({
                           aria-hidden
                         />
                         <span className="text-xs font-normal text-boutique-muted">
-                          Качете нова снимка, за да замените текущата.
+                          Р В РЎв„ўР В Р’В°Р РЋРІР‚РЋР В Р’ВµР РЋРІР‚С™Р В Р’Вµ Р В Р вЂ¦Р В РЎвЂўР В Р вЂ Р В Р’В° Р РЋР С“Р В Р вЂ¦Р В РЎвЂР В РЎВР В РЎвЂќР В Р’В°, Р В Р’В·Р В Р’В° Р В РўвЂР В Р’В° Р В Р’В·Р В Р’В°Р В РЎВР В Р’ВµР В Р вЂ¦Р В РЎвЂР РЋРІР‚С™Р В Р’Вµ Р РЋРІР‚С™Р В Р’ВµР В РЎвЂќР РЋРЎвЂњР РЋРІР‚В°Р В Р’В°Р РЋРІР‚С™Р В Р’В°.
                         </span>
                       </span>
                     ) : null}
@@ -349,18 +364,18 @@ export function CategoryManagementView({
                     />
                   </label>
                   <label className="text-sm font-medium text-boutique-ink md:col-span-3">
-                    Alt текст за карта
+                    Alt Р РЋРІР‚С™Р В Р’ВµР В РЎвЂќР РЋР С“Р РЋРІР‚С™ Р В Р’В·Р В Р’В° Р В РЎвЂќР В Р’В°Р РЋР вЂљР РЋРІР‚С™Р В Р’В°
                     <input
                       name={adminFormFields.category.imageAlt}
                       type="text"
                       maxLength={160}
                       defaultValue={category.image_alt ?? ""}
-                      placeholder="Кратко описание на снимката за картата"
+                      placeholder="Р В РЎв„ўР РЋР вЂљР В Р’В°Р РЋРІР‚С™Р В РЎвЂќР В РЎвЂў Р В РЎвЂўР В РЎвЂ”Р В РЎвЂР РЋР С“Р В Р’В°Р В Р вЂ¦Р В РЎвЂР В Р’Вµ Р В Р вЂ¦Р В Р’В° Р РЋР С“Р В Р вЂ¦Р В РЎвЂР В РЎВР В РЎвЂќР В Р’В°Р РЋРІР‚С™Р В Р’В° Р В Р’В·Р В Р’В° Р В РЎвЂќР В Р’В°Р РЋР вЂљР РЋРІР‚С™Р В Р’В°Р РЋРІР‚С™Р В Р’В°"
                       className={adminFieldClass}
                     />
                   </label>
                   <label className="text-sm font-medium text-boutique-ink md:col-span-3">
-                    Cover снимка за страницата
+                    Cover Р РЋР С“Р В Р вЂ¦Р В РЎвЂР В РЎВР В РЎвЂќР В Р’В° Р В Р’В·Р В Р’В° Р РЋР С“Р РЋРІР‚С™Р РЋР вЂљР В Р’В°Р В Р вЂ¦Р В РЎвЂР РЋРІР‚В Р В Р’В°Р РЋРІР‚С™Р В Р’В°
                     {category.cover_image_url ? (
                       <span className="mt-2 flex items-center gap-3 rounded-lg border border-boutique-line bg-white p-2">
                         <span
@@ -369,7 +384,7 @@ export function CategoryManagementView({
                           aria-hidden
                         />
                         <span className="text-xs font-normal text-boutique-muted">
-                          Качете нова cover снимка, за да замените текущата.
+                          Р В РЎв„ўР В Р’В°Р РЋРІР‚РЋР В Р’ВµР РЋРІР‚С™Р В Р’Вµ Р В Р вЂ¦Р В РЎвЂўР В Р вЂ Р В Р’В° cover Р РЋР С“Р В Р вЂ¦Р В РЎвЂР В РЎВР В РЎвЂќР В Р’В°, Р В Р’В·Р В Р’В° Р В РўвЂР В Р’В° Р В Р’В·Р В Р’В°Р В РЎВР В Р’ВµР В Р вЂ¦Р В РЎвЂР РЋРІР‚С™Р В Р’Вµ Р РЋРІР‚С™Р В Р’ВµР В РЎвЂќР РЋРЎвЂњР РЋРІР‚В°Р В Р’В°Р РЋРІР‚С™Р В Р’В°.
                         </span>
                       </span>
                     ) : null}
@@ -381,13 +396,13 @@ export function CategoryManagementView({
                     />
                   </label>
                   <label className="text-sm font-medium text-boutique-ink md:col-span-3">
-                    Alt текст за cover
+                    Alt Р РЋРІР‚С™Р В Р’ВµР В РЎвЂќР РЋР С“Р РЋРІР‚С™ Р В Р’В·Р В Р’В° cover
                     <input
                       name={adminFormFields.category.coverImageAlt}
                       type="text"
                       maxLength={160}
                       defaultValue={category.cover_image_alt ?? ""}
-                      placeholder="Кратко описание на cover снимката"
+                      placeholder="Р В РЎв„ўР РЋР вЂљР В Р’В°Р РЋРІР‚С™Р В РЎвЂќР В РЎвЂў Р В РЎвЂўР В РЎвЂ”Р В РЎвЂР РЋР С“Р В Р’В°Р В Р вЂ¦Р В РЎвЂР В Р’Вµ Р В Р вЂ¦Р В Р’В° cover Р РЋР С“Р В Р вЂ¦Р В РЎвЂР В РЎВР В РЎвЂќР В Р’В°Р РЋРІР‚С™Р В Р’В°"
                       className={adminFieldClass}
                     />
                   </label>
@@ -397,15 +412,15 @@ export function CategoryManagementView({
                       type="checkbox"
                       defaultChecked={category.is_visible !== false}
                       role="switch"
-                      aria-label="Показвай в магазина"
+                      aria-label="Р В РЎСџР В РЎвЂўР В РЎвЂќР В Р’В°Р В Р’В·Р В Р вЂ Р В Р’В°Р В РІвЂћвЂ“ Р В Р вЂ  Р В РЎВР В Р’В°Р В РЎвЂ“Р В Р’В°Р В Р’В·Р В РЎвЂР В Р вЂ¦Р В Р’В°"
                       className="h-4 w-4 rounded border-boutique-line text-boutique-accent"
                     />
-                    Показвай в магазина
+                    Р В РЎСџР В РЎвЂўР В РЎвЂќР В Р’В°Р В Р’В·Р В Р вЂ Р В Р’В°Р В РІвЂћвЂ“ Р В Р вЂ  Р В РЎВР В Р’В°Р В РЎвЂ“Р В Р’В°Р В Р’В·Р В РЎвЂР В Р вЂ¦Р В Р’В°
                   </label>
                   {productCount === 0 ? (
                     <p className="text-xs text-boutique-muted md:col-span-3">
-                      Категорията няма продукти. Можете да я оставите видима или да я
-                      скриете от магазина.
+                      Р В РЎв„ўР В Р’В°Р РЋРІР‚С™Р В Р’ВµР В РЎвЂ“Р В РЎвЂўР РЋР вЂљР В РЎвЂР РЋР РЏР РЋРІР‚С™Р В Р’В° Р В Р вЂ¦Р РЋР РЏР В РЎВР В Р’В° Р В РЎвЂ”Р РЋР вЂљР В РЎвЂўР В РўвЂР РЋРЎвЂњР В РЎвЂќР РЋРІР‚С™Р В РЎвЂ. Р В РЎС™Р В РЎвЂўР В Р’В¶Р В Р’ВµР РЋРІР‚С™Р В Р’Вµ Р В РўвЂР В Р’В° Р РЋР РЏ Р В РЎвЂўР РЋР С“Р РЋРІР‚С™Р В Р’В°Р В Р вЂ Р В РЎвЂР РЋРІР‚С™Р В Р’Вµ Р В Р вЂ Р В РЎвЂР В РўвЂР В РЎвЂР В РЎВР В Р’В° Р В РЎвЂР В Р’В»Р В РЎвЂ Р В РўвЂР В Р’В° Р РЋР РЏ
+                      Р РЋР С“Р В РЎвЂќР РЋР вЂљР В РЎвЂР В Р’ВµР РЋРІР‚С™Р В Р’Вµ Р В РЎвЂўР РЋРІР‚С™ Р В РЎВР В Р’В°Р В РЎвЂ“Р В Р’В°Р В Р’В·Р В РЎвЂР В Р вЂ¦Р В Р’В°.
                     </p>
                   ) : null}
                   <label className="inline-flex items-center gap-2 text-sm font-medium text-boutique-ink md:col-span-3">
@@ -415,7 +430,7 @@ export function CategoryManagementView({
                       defaultChecked={category.show_on_home}
                       className="h-4 w-4 rounded border-boutique-line text-boutique-accent"
                     />
-                    Показвай на началната страница
+                    Р В РЎСџР В РЎвЂўР В РЎвЂќР В Р’В°Р В Р’В·Р В Р вЂ Р В Р’В°Р В РІвЂћвЂ“ Р В Р вЂ¦Р В Р’В° Р В Р вЂ¦Р В Р’В°Р РЋРІР‚РЋР В Р’В°Р В Р’В»Р В Р вЂ¦Р В Р’В°Р РЋРІР‚С™Р В Р’В° Р РЋР С“Р РЋРІР‚С™Р РЋР вЂљР В Р’В°Р В Р вЂ¦Р В РЎвЂР РЋРІР‚В Р В Р’В°
                   </label>
                   <div className="md:col-span-3">
                     <CategoryContentSeoFields category={category} />
@@ -437,13 +452,13 @@ export function CategoryManagementView({
                       type="submit"
                       className="rounded-full bg-boutique-ink px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-boutique-paper"
                     >
-                      Запази
+                      Р В РІР‚вЂќР В Р’В°Р В РЎвЂ”Р В Р’В°Р В Р’В·Р В РЎвЂ
                     </button>
                   </div>
                 </form>
                 <AdminConfirmForm
                   action={deleteCategory}
-                  confirmMessage={`Сигурни ли сте, че искате да изтриете „${category.name}"?`}
+                  confirmMessage={`Р В Р Р‹Р В РЎвЂР В РЎвЂ“Р РЋРЎвЂњР РЋР вЂљР В Р вЂ¦Р В РЎвЂ Р В Р’В»Р В РЎвЂ Р РЋР С“Р РЋРІР‚С™Р В Р’Вµ, Р РЋРІР‚РЋР В Р’Вµ Р В РЎвЂР РЋР С“Р В РЎвЂќР В Р’В°Р РЋРІР‚С™Р В Р’Вµ Р В РўвЂР В Р’В° Р В РЎвЂР В Р’В·Р РЋРІР‚С™Р РЋР вЂљР В РЎвЂР В Р’ВµР РЋРІР‚С™Р В Р’Вµ Р Р†Р вЂљРЎвЂє${category.name}"?`}
                   className="mt-3 border-t border-red-100 pt-3"
                 >
                   <input type="hidden" name={adminFormFields.common.tab} value="categories" />
@@ -452,7 +467,7 @@ export function CategoryManagementView({
                     type="submit"
                     className="rounded-full border border-red-300 px-4 py-2 text-xs font-semibold text-red-700"
                   >
-                    Изтрий категорията
+                    Р В Р’ВР В Р’В·Р РЋРІР‚С™Р РЋР вЂљР В РЎвЂР В РІвЂћвЂ“ Р В РЎвЂќР В Р’В°Р РЋРІР‚С™Р В Р’ВµР В РЎвЂ“Р В РЎвЂўР РЋР вЂљР В РЎвЂР РЋР РЏР РЋРІР‚С™Р В Р’В°
                   </button>
                 </AdminConfirmForm>
               </details>

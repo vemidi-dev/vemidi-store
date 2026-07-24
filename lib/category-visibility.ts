@@ -71,3 +71,13 @@ export function findVisibleOccasionCategoryBySlug(
     (category) => category.category_type === "occasion" && category.slug === slug,
   );
 }
+
+export function findVisibleMaterialCategoryBySlug(
+  categories: StorefrontCategory[],
+  slug: string,
+): StorefrontCategory | null {
+  return findStorefrontVisibleCategory(
+    categories,
+    (category) => category.category_type === "material" && category.slug === slug,
+  );
+}
