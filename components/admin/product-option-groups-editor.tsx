@@ -24,6 +24,7 @@ type LocalGroup = Omit<ParsedOptionGroup, "values"> & {
 type ProductOptionGroupsEditorProps = {
   initialGroups?: InitialOptionGroup[];
   allDependencyOptions: Array<{ id: string; label: string; groupName: string }>;
+  productImages?: Array<{ src: string; label: string }>;
   basePrice: number;
   helperClassName: string;
   fieldClassName: string;
@@ -70,6 +71,7 @@ function makeEmptyValue(sortOrder: number, basePrice: number): LocalValue {
     isDefault: false,
     isActive: true,
     isSoldOut: false,
+    imageUrl: null,
     sku: null,
     sortOrder,
   };
@@ -226,6 +228,7 @@ function OptionGroupCollapsedFields({
 export function ProductOptionGroupsEditor({
   initialGroups = [],
   allDependencyOptions,
+  productImages = [],
   basePrice: initialBasePrice,
   helperClassName,
   fieldClassName,
@@ -716,6 +719,70 @@ export function ProductOptionGroupsEditor({
                                 : "0 означава без доплащане"}
                           </span>
                         </label>
+                        <div className="text-sm font-medium text-boutique-ink md:col-span-3">
+                          <span>Свързана снимка</span>
+                          {productImages.length ? (
+                            <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const nextValues = group.values.map((item) =>
+                                    item.uid === value.uid
+                                      ? { ...item, imageUrl: null }
+                                      : item,
+                                  );
+                                  updateGroup(group.uid, { values: nextValues });
+                                }}
+                                className={`min-h-[6rem] rounded-lg border px-3 py-2 text-left text-xs font-semibold transition ${
+                                  !value.imageUrl
+                                    ? "border-boutique-sage-deep bg-white ring-2 ring-boutique-sage/30"
+                                    : "border-boutique-line bg-white/70 hover:border-boutique-sage-deep/50"
+                                }`}
+                              >
+                                Без смяна
+                              </button>
+                              {productImages.map((image, imageIndex) => {
+                                const selected = value.imageUrl === image.src;
+                                return (
+                                  <button
+                                    key={`${image.src}-${imageIndex}`}
+                                    type="button"
+                                    onClick={() => {
+                                      const nextValues = group.values.map((item) =>
+                                        item.uid === value.uid
+                                          ? { ...item, imageUrl: image.src }
+                                          : item,
+                                      );
+                                      updateGroup(group.uid, { values: nextValues });
+                                    }}
+                                    className={`overflow-hidden rounded-lg border bg-white text-left text-xs font-semibold transition ${
+                                      selected
+                                        ? "border-boutique-sage-deep ring-2 ring-boutique-sage/30"
+                                        : "border-boutique-line hover:border-boutique-sage-deep/50"
+                                    }`}
+                                  >
+                                    <span
+                                      className="block aspect-[4/3] bg-boutique-paper bg-cover bg-center"
+                                      style={{ backgroundImage: `url(${image.src})` }}
+                                      role="img"
+                                      aria-label={image.label || `Снимка ${imageIndex + 1}`}
+                                    />
+                                    <span className="block px-2 py-2 leading-4">
+                                      {image.label || `Снимка ${imageIndex + 1}`}
+                                    </span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            <p className="mt-2 rounded-lg border border-boutique-line bg-white/70 px-3 py-2 text-xs font-normal text-boutique-muted">
+                              Първо качете снимки в галерията на продукта.
+                            </p>
+                          )}
+                          <span className="mt-1 block text-xs font-normal text-boutique-muted">
+                            При избор на този вариант клиентът ще види тази снимка като основна.
+                          </span>
+                        </div>
                         <button
                           type="button"
                           className="min-h-11 rounded-lg border border-red-200 px-3 text-sm text-red-700"

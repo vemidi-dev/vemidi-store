@@ -397,6 +397,27 @@ export function ProductDetailAddToCart({
     : product.price + personalizationDelta;
 
   useEffect(() => {
+    if (!optionGroups.length) {
+      return;
+    }
+
+    const selectedImageUrl =
+      optionSelections
+        .flatMap((selection) => {
+          const group = optionGroups.find((candidate) => candidate.id === selection.groupId);
+          return selection.valueIds
+            .map((valueId) => group?.values.find((value) => value.id === valueId)?.imageUrl)
+            .filter((imageUrl): imageUrl is string => Boolean(imageUrl));
+        })[0] ?? null;
+
+    window.dispatchEvent(
+      new CustomEvent("vemidi:product-option-image", {
+        detail: { productId: product.id, imageUrl: selectedImageUrl },
+      }),
+    );
+  }, [optionGroups, optionSelections, product.id]);
+
+  useEffect(() => {
     const configurator = configuratorRef.current;
     if (!configurator) {
       return;

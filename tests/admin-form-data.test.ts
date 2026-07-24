@@ -180,6 +180,7 @@ test("mixed product option groups keep their row values aligned", () => {
         isDefault: true,
         isActive: true,
         isSoldOut: false,
+        imageUrl: "https://example.com/mini.jpg",
       },
     ]),
   });
@@ -200,6 +201,7 @@ test("mixed product option groups keep their row values aligned", () => {
   assert.equal(parsed.error, null);
   assert.equal(parsed.groups[0]?.name, "Размер");
   assert.equal(parsed.groups[0]?.values[0]?.label, "Мини");
+  assert.equal(parsed.groups[0]?.values[0]?.imageUrl, "https://example.com/mini.jpg");
   assert.equal(parsed.groups[1]?.name, "Име");
   assert.equal(parsed.groups[1]?.placeholder, "Въведете име");
   assert.equal(parsed.groups[1]?.maxLength, 50);

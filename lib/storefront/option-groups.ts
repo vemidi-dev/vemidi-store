@@ -26,6 +26,7 @@ type OptionValueRow = {
   is_default: boolean;
   is_active: boolean;
   is_sold_out: boolean;
+  image_url?: string | null;
   sku: string | null;
   sort_order: number;
 };
@@ -70,6 +71,7 @@ export function mapProductOptionGroups(
           isDefault: value.is_default,
           isActive: value.is_active,
           isSoldOut: value.is_sold_out,
+          imageUrl: value.image_url ?? null,
           sku: value.sku,
           sortOrder: value.sort_order,
         })),

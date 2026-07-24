@@ -372,6 +372,7 @@ export type ProductOptionValueRow = {
   is_default: boolean;
   is_active: boolean;
   is_sold_out: boolean;
+  image_url: string | null;
   sku: string | null;
   sort_order: number;
 };
@@ -384,6 +385,7 @@ export type ParsedOptionValue = {
   isDefault: boolean;
   isActive: boolean;
   isSoldOut: boolean;
+  imageUrl?: string | null;
   sku: string | null;
   sortOrder: number;
 };

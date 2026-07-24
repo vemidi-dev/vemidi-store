@@ -534,6 +534,7 @@ export function ProductCreatePanel({
           <ProductOptionGroupsEditor
             initialGroups={activeDraft?.optionGroups}
             allDependencyOptions={[]}
+            productImages={[]}
             basePrice={Number(activeDraft?.price) || 0}
             helperClassName={adminHelperClass}
             fieldClassName={adminFieldClass}

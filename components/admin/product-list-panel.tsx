@@ -362,6 +362,7 @@ export function ProductListPanel({
                 isDefault: value.is_default,
                 isActive: value.is_active,
                 isSoldOut: value.is_sold_out,
+                imageUrl: value.image_url,
                 sku: value.sku,
                 sortOrder: value.sort_order,
               })),
@@ -729,6 +730,29 @@ export function ProductListPanel({
                       <ProductOptionGroupsEditor
                         initialGroups={initialOptionGroups}
                         allDependencyOptions={productDependencyOptions}
+                        productImages={[
+                          ...new Map(
+                            [
+                              ...productImages.map((image, imageIndex) => [
+                                image.image_url,
+                                {
+                                  src: image.image_url,
+                                  label: [
+                                    `Снимка ${imageIndex + 1}`,
+                                    image.is_primary ? "(основна)" : "",
+                                    image.alt_text ? `- ${image.alt_text}` : "",
+                                  ].filter(Boolean).join(" "),
+                                },
+                              ] as const),
+                              ...(product.image_url
+                                ? [[
+                                    product.image_url,
+                                    { src: product.image_url, label: "Основна снимка" },
+                                  ] as const]
+                                : []),
+                            ].filter(([src]) => Boolean(src)),
+                          ).values(),
+                        ]}
                         basePrice={Number(product.price) || 0}
                         helperClassName={adminHelperClass}
                         fieldClassName={adminFieldClass}

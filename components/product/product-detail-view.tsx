@@ -129,7 +129,7 @@ export function ProductDetailView({
 
           <div className="mt-8 flex flex-col gap-8 lg:mt-10 lg:grid lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:items-start lg:gap-x-16 xl:gap-x-20">
             <div className="order-1 min-w-0 lg:col-start-1 lg:row-start-1">
-              <ProductDetailGallery images={product.images} />
+              <ProductDetailGallery images={product.images} syncKey={product.id} />
             </div>
 
             <div className="order-2 flex min-w-0 flex-col lg:col-start-2 lg:row-start-1 lg:row-span-2">

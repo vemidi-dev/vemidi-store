@@ -587,7 +587,7 @@ async function loadProductDetails(
       supabase
         .from("product_option_values")
         .select(
-          "id,group_id,label,key,price_delta,is_default,is_active,is_sold_out,sku,sort_order",
+          "id,group_id,label,key,price_delta,is_default,is_active,is_sold_out,image_url,sku,sort_order",
         )
         .eq("is_active", true)
         .order("sort_order"),

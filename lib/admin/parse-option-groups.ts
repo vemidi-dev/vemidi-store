@@ -162,6 +162,7 @@ export function parseProductOptionGroups(formData: FormData): {
             isDefault,
             isActive: row.isActive !== false,
             isSoldOut: Boolean(row.isSoldOut),
+            imageUrl: typeof row.imageUrl === "string" ? row.imageUrl.trim() || null : null,
             sku: typeof row.sku === "string" ? row.sku.trim() || null : null,
             sortOrder: Number(row.sortOrder) || valueIndex,
           }];
