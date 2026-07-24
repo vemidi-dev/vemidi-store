@@ -737,7 +737,11 @@ export function ProductListPanel({
                                 image.image_url,
                                 {
                                   src: image.image_url,
-                                  label: image.alt_text || `Снимка ${imageIndex + 1}`,
+                                  label: [
+                                    `Снимка ${imageIndex + 1}`,
+                                    image.is_primary ? "(основна)" : "",
+                                    image.alt_text ? `- ${image.alt_text}` : "",
+                                  ].filter(Boolean).join(" "),
                                 },
                               ] as const),
                               ...(product.image_url
