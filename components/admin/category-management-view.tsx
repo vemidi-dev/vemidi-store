@@ -17,7 +17,7 @@ import {
 } from "@/components/admin/styles";
 import { adminFormFields } from "@/lib/admin/form-fields";
 import { hasCategoryContentGap } from "@/lib/admin/category-content";
-import type { CategoryRow } from "@/lib/admin/types";
+import type { CategoryRow, CategoryType } from "@/lib/admin/types";
 
 type CategoryManagementViewProps = {
   categories: CategoryRow[];
@@ -25,12 +25,25 @@ type CategoryManagementViewProps = {
   relatedCategoryIdsByCategoryId: Map<string, string[]>;
 };
 
-type CategoryTab = "product" | "occasion";
+type CategoryTab = CategoryType;
 
 const tabLabels: Record<CategoryTab, string> = {
   product: "По продукт",
   occasion: "По повод",
+  material: "Заготовки и материали",
 };
+
+const categoryTabs: CategoryTab[] = ["product", "occasion", "material"];
+
+function getCategoryTypeLabel(categoryType: CategoryType) {
+  if (categoryType === "product") {
+    return "Продукт";
+  }
+  if (categoryType === "material") {
+    return "Материал";
+  }
+  return "Повод";
+}
 
 export function CategoryManagementView({
   categories,
@@ -79,7 +92,7 @@ export function CategoryManagementView({
   return (
     <div className="mt-6">
       <div className="flex flex-wrap gap-2 border-b border-boutique-line pb-3">
-        {(["product", "occasion"] as const).map((tab) => (
+        {categoryTabs.map((tab) => (
           <button
             key={tab}
             type="button"
@@ -163,7 +176,7 @@ export function CategoryManagementView({
                 </p>
                 <p className="truncate text-xs text-boutique-muted">{category.slug}</p>
                 <p className="text-xs text-boutique-muted">
-                  {category.category_type === "product" ? "Продукт" : "Повод"}
+                  {getCategoryTypeLabel(category.category_type)}
                 </p>
                 <p className="text-xs text-boutique-muted">
                   {category.show_on_home ? "Да" : "Не"}
@@ -291,6 +304,7 @@ export function CategoryManagementView({
                     >
                       <option value="product">Продуктова категория</option>
                       <option value="occasion">Повод</option>
+                      <option value="material">Заготовки и материали</option>
                     </select>
                   </label>
                   <label className="text-sm font-medium text-boutique-ink">
@@ -304,7 +318,8 @@ export function CategoryManagementView({
                       {categories
                         .filter(
                           (entry) =>
-                            entry.category_type === "product" &&
+                            (entry.category_type === "product" ||
+                              entry.category_type === "material") &&
                             entry.parent_id === null &&
                             entry.id !== category.id,
                         )

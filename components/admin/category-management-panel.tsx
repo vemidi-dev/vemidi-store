@@ -23,7 +23,9 @@ export function CategoryManagementPanel({
   const parentCategories = categories
     .filter(
       (category) =>
-        category.category_type === "product" && category.parent_id === null,
+        (category.category_type === "product" ||
+          category.category_type === "material") &&
+          category.parent_id === null,
     )
     .sort((left, right) => left.name.localeCompare(right.name, "bg"));
 
@@ -81,6 +83,7 @@ export function CategoryManagementPanel({
               >
                 <option value="product">Продуктова категория</option>
                 <option value="occasion">Повод</option>
+                <option value="material">Заготовки и материали</option>
               </select>
             </label>
             <label className="text-sm font-medium text-boutique-ink">

@@ -487,14 +487,14 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                   (categoriesResult.data ?? []).map((category) => ({
                     id: String(category.id),
                     name: String(category.name),
-                    category_type: category.category_type as "product" | "occasion",
+                    category_type: category.category_type,
                   })),
                   productCategoriesResult.data ?? [],
                 )}
                 categories={(categoriesResult.data ?? []).map((category) => ({
                   id: String(category.id),
                   name: String(category.name),
-                  categoryType: category.category_type as "product" | "occasion",
+                  categoryType: category.category_type,
                 }))}
                 promotions={
                   (promotionsResult.data ?? []) as import("@/lib/product-pricing").ProductPromotionRow[]
@@ -643,7 +643,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             (categoriesResult.data ?? []) as Array<{
               id: string;
               name: string;
-              category_type: "product" | "occasion";
+              category_type: import("@/lib/admin/types").CategoryType;
             }>,
             (productCategoriesResult.data ?? []) as Array<{
               product_id: string;

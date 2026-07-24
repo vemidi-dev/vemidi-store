@@ -2,8 +2,10 @@ import { sortCategoriesForDisplay } from "@/lib/category-hierarchy";
 import { filterStorefrontVisibleCategories } from "@/lib/category-visibility";
 import {
   CATEGORY_INDEX_PATH,
+  MATERIAL_INDEX_PATH,
   OCCASION_INDEX_PATH,
   getCategoryPath,
+  getMaterialPath,
   getOccasionPath,
 } from "@/lib/category-url";
 import type { StorefrontCategory } from "@/lib/storefront/types";
@@ -48,6 +50,21 @@ export function buildOccasionCategoryNavItems(
     }));
 }
 
+export function buildMaterialCategoryNavItems(
+  categories: StorefrontCategory[],
+): HeaderNavDropdownItem[] {
+  return sortCategoriesForDisplay(
+    filterStorefrontVisibleCategories(categories).filter(
+      (category) => category.category_type === "material",
+    ),
+  ).map((category) => ({
+    id: category.id,
+    name: category.name,
+    href: getMaterialPath(category.slug),
+    isChild: category.parent_id !== null,
+  }));
+}
+
 export const HEADER_CATEGORY_DROPDOWN = {
   href: CATEGORY_INDEX_PATH,
   indexLabel: "Всички категории",
@@ -56,4 +73,9 @@ export const HEADER_CATEGORY_DROPDOWN = {
 export const HEADER_OCCASION_DROPDOWN = {
   href: OCCASION_INDEX_PATH,
   indexLabel: "Всички поводи",
+} as const;
+
+export const HEADER_MATERIAL_DROPDOWN = {
+  href: MATERIAL_INDEX_PATH,
+  indexLabel: "Всички заготовки и материали",
 } as const;

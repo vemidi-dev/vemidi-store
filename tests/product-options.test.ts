@@ -198,7 +198,7 @@ test("middle default option is suggested for storefront", () => {
     values: [
       {
         id: valueSmallId,
-        label: "РњР°Р»СЉРє",
+        label: "Малък",
         key: "small",
         priceDelta: 0,
         isDefault: false,
@@ -208,7 +208,7 @@ test("middle default option is suggested for storefront", () => {
       },
       {
         id: mediumId,
-        label: "РЎСЂРµРґРµРЅ",
+        label: "Среден",
         key: "medium",
         priceDelta: 4.5,
         isDefault: true,
@@ -218,7 +218,7 @@ test("middle default option is suggested for storefront", () => {
       },
       {
         id: valueLargeId,
-        label: "Р“РѕР»СЏРј",
+        label: "Голям",
         key: "large",
         priceDelta: 8,
         isDefault: false,

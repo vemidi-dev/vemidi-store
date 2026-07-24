@@ -178,6 +178,9 @@ export function ProductListPanel({
   const occasionCategories = categories.filter(
     (category) => category.category_type === "occasion",
   );
+  const materialCategories = sortCategoriesForDisplay(
+    categories.filter((category) => category.category_type === "material"),
+  );
   const productCategories = sortCategoriesForDisplay(
     categories.filter((category) => category.category_type === "product"),
   );
@@ -375,10 +378,17 @@ export function ProductListPanel({
             const productCategoryIds = assignedCategories
               .filter((category) => category.category_type === "product")
               .map((category) => category.id);
+            const primaryEligibleCategoryIds = assignedCategories
+              .filter(
+                (category) =>
+                  category.category_type === "product" ||
+                  category.category_type === "material",
+              )
+              .map((category) => category.id);
             const primaryCategoryId =
-              product.primary_category_id && productCategoryIds.includes(product.primary_category_id)
+              product.primary_category_id && primaryEligibleCategoryIds.includes(product.primary_category_id)
                 ? product.primary_category_id
-                : productCategoryIds[0] ?? null;
+                : primaryEligibleCategoryIds[0] ?? null;
             const productCategoryFilterIds = Array.from(
               new Set([
                 ...productCategoryIds,
@@ -415,6 +425,9 @@ export function ProductListPanel({
             );
             const occasionTypeCategories = assignedCategories.filter(
               (category) => category.category_type === "occasion",
+            );
+            const materialTypeCategories = assignedCategories.filter(
+              (category) => category.category_type === "material",
             );
             const publicationStatus = normalizeProductPublicationStatus(
               product.status,
@@ -470,7 +483,9 @@ export function ProductListPanel({
                         ) : null}
                       </div>
                       <div className="mt-2 flex flex-wrap gap-1">
-                        {productTypeCategories.length === 0 && occasionTypeCategories.length === 0 ? (
+                        {productTypeCategories.length === 0 &&
+                        occasionTypeCategories.length === 0 &&
+                        materialTypeCategories.length === 0 ? (
                           <span className={categoryChipClass}>Без категория</span>
                         ) : (
                           <>
@@ -487,6 +502,15 @@ export function ProductListPanel({
                               <span
                                 key={`${product.id}-occasion-cat-${category.id}`}
                                 className={`${categoryChipClass} border-boutique-sage/25 bg-boutique-sage/10 text-boutique-sage-deep`}
+                                title={category.name}
+                              >
+                                {category.name}
+                              </span>
+                            ))}
+                            {materialTypeCategories.map((category) => (
+                              <span
+                                key={`${product.id}-material-cat-${category.id}`}
+                                className={`${categoryChipClass} border-boutique-accent/25 bg-boutique-accent/10 text-boutique-accent`}
                                 title={category.name}
                               >
                                 {category.name}
@@ -662,17 +686,17 @@ export function ProductListPanel({
                         <p className={adminHelperClass}>Няма налични категории.</p>
                       ) : (
                         <div className="mt-2 space-y-4">
-                          {(["product", "occasion"] as const).map((categoryType) => (
+                          {([
+                            ["product", productCategories],
+                            ["occasion", occasionCategories],
+                            ["material", materialCategories],
+                          ] as const).map(([categoryType, groupedCategories]) => (
                             <div key={categoryType}>
                               <p className="text-xs font-semibold uppercase tracking-wider text-boutique-muted">
-                                {categoryType === "product" ? "Продукти" : "Поводи"}
+                                {categoryType === "product" ? "Продукти" : categoryType === "material" ? "Заготовки и материали" : "Поводи"}
                               </p>
                               <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                                {sortCategoriesForDisplay(
-                                  categories.filter(
-                                    (category) => category.category_type === categoryType,
-                                  ),
-                                )
+                                {groupedCategories
                                   .map((category) => (
                                     <div
                                       key={`${product.id}-${category.id}-edit`}
@@ -688,7 +712,7 @@ export function ProductListPanel({
                                         />
                                         {getCategoryDisplayLabel(categories, category)}
                                       </label>
-                                      {category.category_type === "product" ? (
+                                      {category.category_type === "product" || category.category_type === "material" ? (
                                         <label
                                           className="inline-flex shrink-0 items-center gap-1 text-xs text-boutique-muted"
                                           title="Основна категория за breadcrumb и SEO"
@@ -712,7 +736,7 @@ export function ProductListPanel({
                         </div>
                       )}
                       <p className={`${adminHelperClass} mt-2`}>
-                        Отметнете категориите на продукта. При продуктовите категории маркирайте
+                        Отметнете категориите на продукта. При продуктовите категории или заготовките маркирайте
                         една категория като „Основна“ за breadcrumb и SEO.
                       </p>
                     </fieldset>

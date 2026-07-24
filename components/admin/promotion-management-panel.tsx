@@ -8,6 +8,7 @@ import { PromotionCampaignList } from "@/components/admin/promotion-campaign-lis
 import { PromotionPricePreview } from "@/components/admin/promotion-price-preview";
 import { adminFieldClass, adminPanelClass } from "@/components/admin/styles";
 import { adminFormFields } from "@/lib/admin/form-fields";
+import type { CategoryType } from "@/lib/admin/types";
 import { formatEur } from "@/lib/format-eur";
 import {
   formatPromotionLifecycleStatus,
@@ -22,7 +23,7 @@ import {
 type PromotionCategoryOption = {
   id: string;
   name: string;
-  categoryType: "product" | "occasion";
+  categoryType: CategoryType;
 };
 
 function toDateTimeLocal(value: string) {

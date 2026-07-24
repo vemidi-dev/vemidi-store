@@ -8,6 +8,7 @@ import { PageContainer } from "@/components/layout/page-container";
 import { SocialLinks } from "@/components/layout/social-links";
 import {
   buildOccasionCategoryNavItems,
+  buildMaterialCategoryNavItems,
   buildProductCategoryNavItems,
 } from "@/lib/category-navigation";
 import { getSiteContent } from "@/lib/content/site-content";
@@ -20,6 +21,7 @@ export async function Header() {
   ]);
   const productCategoryItems = buildProductCategoryNavItems(categories);
   const occasionCategoryItems = buildOccasionCategoryNavItems(categories);
+  const materialCategoryItems = buildMaterialCategoryNavItems(categories);
 
   return (
     <div className="sticky top-0 z-50 shadow-[0_1px_0_rgb(44_40_37_/0.05)]">
@@ -51,6 +53,7 @@ export async function Header() {
             <HeaderNavigation
               productCategoryItems={productCategoryItems}
               occasionCategoryItems={occasionCategoryItems}
+              materialCategoryItems={materialCategoryItems}
               interactionMode="hover"
             />
           </nav>
@@ -66,6 +69,7 @@ export async function Header() {
             <MobileNav
               productCategoryItems={productCategoryItems}
               occasionCategoryItems={occasionCategoryItems}
+              materialCategoryItems={materialCategoryItems}
             />
           </div>
         </div>
@@ -78,6 +82,7 @@ export async function Header() {
         <HeaderNavigation
           productCategoryItems={productCategoryItems}
           occasionCategoryItems={occasionCategoryItems}
+          materialCategoryItems={materialCategoryItems}
           interactionMode="hover"
           className="mx-auto flex max-w-6xl flex-wrap justify-center gap-x-6 gap-y-3"
         />

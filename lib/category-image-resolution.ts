@@ -1,9 +1,10 @@
 import { getCategoryImageSrc } from "@/lib/category-images";
+import type { CategoryType } from "@/lib/admin/types";
 
 export type CategoryImageSource = {
   name: string;
   slug: string;
-  category_type: "product" | "occasion";
+  category_type: CategoryType;
   image_url?: string | null;
   image_alt?: string | null;
   cover_image_url?: string | null;

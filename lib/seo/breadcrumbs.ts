@@ -1,6 +1,8 @@
 import {
   CATEGORY_INDEX_PATH,
+  MATERIAL_INDEX_PATH,
   OCCASION_INDEX_PATH,
+  getCategoryListingHref,
   getCategoryPath,
   getOccasionPath,
 } from "@/lib/category-url";
@@ -78,8 +80,10 @@ export function resolvePrimaryProductCategory(
 ): StorefrontCategory | null {
   const matches = categories.filter(
     (category) =>
-      category.category_type === "product" &&
-      productCategorySlugs.includes(category.slug),
+      (category.category_type === "product" ||
+        category.category_type === "material") &&
+      (productCategorySlugs.includes(category.slug) ||
+        category.id === primaryCategoryId),
   );
 
   if (matches.length === 0) {
@@ -130,11 +134,20 @@ export function buildProductBreadcrumbItems(
 
   return dedupeBreadcrumbItems([
     buildHomeBreadcrumb(),
-    { name: "Категории", path: CATEGORY_INDEX_PATH },
+    {
+      name:
+        category.category_type === "material"
+          ? "Заготовки и материали"
+          : "Категории",
+      path:
+        category.category_type === "material"
+          ? MATERIAL_INDEX_PATH
+          : CATEGORY_INDEX_PATH,
+    },
     ...(parent
-      ? [{ name: parent.name, path: getCategoryPath(parent.slug) }]
+      ? [{ name: parent.name, path: getCategoryListingHref(parent) }]
       : []),
-    { name: category.name, path: getCategoryPath(category.slug) },
+    { name: category.name, path: getCategoryListingHref(category) },
     { name: product.title, path: getProductPath(product.slug) },
   ]);
 }

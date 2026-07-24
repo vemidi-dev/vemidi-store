@@ -7,11 +7,13 @@ import { createPortal } from "react-dom";
 import { NavCartLink } from "@/components/layout/nav-cart-link";
 import {
   HEADER_CATEGORY_DROPDOWN,
+  HEADER_MATERIAL_DROPDOWN,
   HEADER_OCCASION_DROPDOWN,
   type HeaderNavDropdownItem,
 } from "@/lib/category-navigation";
 import {
   CATEGORY_INDEX_PATH,
+  MATERIAL_INDEX_PATH,
   OCCASION_INDEX_PATH,
 } from "@/lib/category-url";
 import { siteConfig } from "@/config/site";
@@ -25,6 +27,7 @@ const mobileSubLinkClass =
 type MobileNavProps = {
   productCategoryItems: HeaderNavDropdownItem[];
   occasionCategoryItems: HeaderNavDropdownItem[];
+  materialCategoryItems: HeaderNavDropdownItem[];
 };
 
 function MobileNavSection({
@@ -99,6 +102,7 @@ function MobileNavSection({
 export function MobileNav({
   productCategoryItems,
   occasionCategoryItems,
+  materialCategoryItems,
 }: MobileNavProps) {
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -229,6 +233,19 @@ export function MobileNav({
                           indexHref={HEADER_OCCASION_DROPDOWN.href}
                           indexLabel={HEADER_OCCASION_DROPDOWN.indexLabel}
                           items={occasionCategoryItems}
+                          onNavigate={closeMenu}
+                        />
+                      );
+                    }
+
+                    if (item.href === MATERIAL_INDEX_PATH) {
+                      return (
+                        <MobileNavSection
+                          key={item.href}
+                          label={item.label}
+                          indexHref={HEADER_MATERIAL_DROPDOWN.href}
+                          indexLabel={HEADER_MATERIAL_DROPDOWN.indexLabel}
+                          items={materialCategoryItems}
                           onNavigate={closeMenu}
                         />
                       );

@@ -1,4 +1,4 @@
-type CategoryType = "product" | "occasion";
+type CategoryType = "product" | "occasion" | "material";
 
 /**
  * Slug aliases when admin slug differs from the image file basename.
@@ -105,6 +105,10 @@ export function getCategoryImageSrc(
     }
 
     return `/assets/categories/product/${imageSlug}.webp`;
+  }
+
+  if (categoryType === "material") {
+    return "/assets/products.png";
   }
 
   const fileName = OCCASION_IMAGE_FILES[imageSlug] ?? OCCASION_IMAGE_FILES[slug];

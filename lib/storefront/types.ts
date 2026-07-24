@@ -1,4 +1,5 @@
 import type { Product } from "@/lib/catalog";
+import type { CategoryType } from "@/lib/admin/types";
 
 export type CategoryContentSeoFields = {
   hero_description?: string | null;
@@ -16,7 +17,7 @@ export type StorefrontCategory = {
   id: string;
   name: string;
   slug: string;
-  category_type: "product" | "occasion";
+  category_type: CategoryType;
   parent_id: string | null;
   image_url?: string | null;
   image_alt?: string | null;

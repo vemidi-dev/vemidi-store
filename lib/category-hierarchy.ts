@@ -1,8 +1,10 @@
+import type { CategoryType } from "@/lib/admin/types";
+
 export type HierarchicalCategory = {
   id: string;
   name: string;
   slug: string;
-  category_type: "product" | "occasion";
+  category_type: CategoryType;
   parent_id: string | null;
   home_sort_order: number;
 };

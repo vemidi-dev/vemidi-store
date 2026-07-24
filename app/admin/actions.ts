@@ -110,6 +110,15 @@ import { createClient } from "@/lib/supabase/server";
 const ADMIN_PATH = "/admin";
 const ADMIN_LOGIN_PATH = "/admin/login";
 const MAX_DRAFT_QUERY_LENGTH = 6000;
+const CATEGORY_TYPES = ["product", "occasion", "material"] as const;
+
+function isCategoryType(value: string): value is (typeof CATEGORY_TYPES)[number] {
+  return CATEGORY_TYPES.includes(value as (typeof CATEGORY_TYPES)[number]);
+}
+
+function categoryTypeAllowsParent(categoryType: string) {
+  return categoryType === "product" || categoryType === "material";
+}
 
 function redirectWith(
   kind: "success" | "error",
@@ -169,6 +178,10 @@ function parseSubmittedProductSlug(formData: FormData, productName: string) {
   return { slug: validated.slug, error: null };
 }
 
+function allowsPrimaryProductCategory(categoryType: string) {
+  return categoryType === "product" || categoryType === "material";
+}
+
 async function validatePrimaryProductCategory(
   supabase: NonNullable<Awaited<ReturnType<typeof createClient>>>,
   categoryIds: string[],
@@ -184,7 +197,7 @@ async function validatePrimaryProductCategory(
     .eq("id", primaryCategoryId)
     .maybeSingle();
 
-  return !error && data?.category_type === "product";
+  return !error && allowsPrimaryProductCategory(String(data?.category_type ?? ""));
 }
 
 function redirectAfterDuplicate(newProductId: string, message: string): never {
@@ -253,6 +266,8 @@ function revalidateCategoryPaths() {
   revalidatePath("/categorii");
   revalidatePath("/povodi");
   revalidatePath("/povodi");
+  revalidatePath("/zagotovki-i-materiali");
+  revalidatePath("/zagotovki-i-materiali/[slug]", "page");
   revalidatePath("/produkti");
   revalidatePath("/categorii/[slug]", "page");
   revalidatePath("/categorii/[slug]", "page");
@@ -1766,7 +1781,7 @@ export async function createCategory(formData: FormData) {
     parseCategoryContentFromFormData(formData);
   const relatedCategoryIds = parseRelatedCategoryIdsFromFormData(formData);
 
-  if (!name || !slug || !["product", "occasion"].includes(categoryType)) {
+  if (!name || !slug || !isCategoryType(categoryType)) {
     redirectWith("error", "Попълнете име и slug за категорията.", activeTab);
   }
 
@@ -1774,7 +1789,7 @@ export async function createCategory(formData: FormData) {
     redirectWith("error", categoryContentError, activeTab);
   }
 
-  if (parentId && categoryType !== "product") {
+  if (parentId && !categoryTypeAllowsParent(categoryType)) {
     redirectWith("error", "Само продуктовите категории могат да имат подкатегории.", activeTab);
   }
 
@@ -1787,7 +1802,7 @@ export async function createCategory(formData: FormData) {
     if (
       parentError ||
       !parentCategory ||
-      parentCategory.category_type !== "product" ||
+      parentCategory.category_type !== categoryType ||
       parentCategory.parent_id
     ) {
       redirectWith("error", "Избраната основна категория е невалидна.", activeTab);
@@ -1873,7 +1888,7 @@ export async function createCategory(formData: FormData) {
     newCategory.id,
     relatedCategoryIds,
     validationCategories,
-    categoryType as "product" | "occasion",
+    categoryType,
   );
   if (relatedValidationError) {
     await supabase.from("categories").delete().eq("id", newCategory.id);
@@ -1932,7 +1947,7 @@ export async function updateCategory(formData: FormData) {
     parseCategoryContentFromFormData(formData);
   const relatedCategoryIds = parseRelatedCategoryIdsFromFormData(formData);
 
-  if (!id || !name || !slug || !["product", "occasion"].includes(categoryType)) {
+  if (!id || !name || !slug || !isCategoryType(categoryType)) {
     redirectWith("error", "Невалидни данни за категория.", activeTab);
   }
 
@@ -1943,7 +1958,7 @@ export async function updateCategory(formData: FormData) {
   if (parentId === id) {
     redirectWith("error", "Категорията не може да бъде собствена подкатегория.", activeTab);
   }
-  if (parentId && categoryType !== "product") {
+  if (parentId && !categoryTypeAllowsParent(categoryType)) {
     redirectWith("error", "Само продуктовите категории могат да имат подкатегории.", activeTab);
   }
   if (parentId) {
@@ -1955,7 +1970,7 @@ export async function updateCategory(formData: FormData) {
     if (
       parentError ||
       !parentCategory ||
-      parentCategory.category_type !== "product" ||
+      parentCategory.category_type !== categoryType ||
       parentCategory.parent_id
     ) {
       redirectWith("error", "Избраната основна категория е невалидна.", activeTab);
@@ -1967,7 +1982,7 @@ export async function updateCategory(formData: FormData) {
     id,
     relatedCategoryIds,
     validationCategories,
-    categoryType as "product" | "occasion",
+    categoryType,
   );
   if (relatedValidationError) {
     redirectWith("error", relatedValidationError, activeTab);
