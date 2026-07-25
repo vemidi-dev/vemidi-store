@@ -1037,15 +1037,15 @@ export function ProductDetailAddToCart({
                     className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-boutique-line bg-white px-4 py-3 text-sm font-semibold text-boutique-ink transition duration-200 ease-out hover:-translate-y-1 hover:border-boutique-sage-deep hover:text-boutique-sage-deep hover:shadow-[0_12px_24px_-10px_rgb(44_40_37_/0.16)] active:translate-y-0 active:shadow-sm motion-reduce:transition-none motion-reduce:hover:translate-y-0"
                   >
                     {expandedColorFields.has(field.id)
-                      ? "РџРѕРєР°Р¶РµС‚Рµ РїРѕ-РјР°Р»РєРѕ"
-                      : `Р’РёР¶С‚Рµ РІСЃРёС‡РєРё С†РІРµС‚РѕРІРµ (${field.options.length})`}
+                      ? "Покажи по-малко"
+                      : `Вижте всички цветове (${field.options.length})`}
                     <span
                       aria-hidden="true"
                       className={`transition motion-reduce:transition-none ${
                         expandedColorFields.has(field.id) ? "rotate-180" : ""
                       }`}
                     >
-                      вЊ„
+                      ⌄
                     </span>
                   </button>
                 ) : null}
@@ -1060,21 +1060,21 @@ export function ProductDetailAddToCart({
       <div className="mt-5 rounded-2xl border border-boutique-line bg-white/70 p-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p className="text-sm font-semibold text-boutique-ink">РљРѕР»РёС‡РµСЃС‚РІРѕ</p>
+            <p className="text-sm font-semibold text-boutique-ink">Количество</p>
             {remainingStockForSelection !== null ? (
               <p className="mt-1 text-xs text-boutique-muted">
-                РќР°Р»РёС‡РЅРё Р·Р° РґРѕР±Р°РІСЏРЅРµ: {remainingStockForSelection} Р±СЂ.
+                Налични за добавяне: {remainingStockForSelection} бр.
               </p>
             ) : (
               <p className="mt-1 text-xs text-boutique-muted">
-                Р—Р° РїСЂРѕРґСѓРєС‚Рё РїРѕ РїРѕСЂСЉС‡РєР° РјР°РєСЃРёРјСѓРјСЉС‚ Рµ 99 Р±СЂ.
+                За продукти по поръчка максимумът е 99 бр.
               </p>
             )}
           </div>
           <div className="inline-flex items-center rounded-xl border border-boutique-line bg-boutique-paper">
             <button
               type="button"
-              aria-label="РќР°РјР°Р»РµС‚Рµ РєРѕР»РёС‡РµСЃС‚РІРѕС‚Рѕ"
+              aria-label="Намалете количеството"
               disabled={quantity <= 1 || stockSelectionBlocked}
               onClick={() =>
                 setQuantity((current) =>
@@ -1083,7 +1083,7 @@ export function ProductDetailAddToCart({
               }
               className="grid h-11 w-11 place-items-center text-xl text-boutique-muted transition hover:text-boutique-ink disabled:opacity-40"
             >
-              в€’
+              −
             </button>
             <input
               type="number"
@@ -1100,7 +1100,7 @@ export function ProductDetailAddToCart({
             />
             <button
               type="button"
-              aria-label="РЈРІРµР»РёС‡РµС‚Рµ РєРѕР»РёС‡РµСЃС‚РІРѕС‚Рѕ"
+              aria-label="Увеличете количеството"
               disabled={quantity >= maxSelectableQuantity || stockSelectionBlocked}
               onClick={() =>
                 setQuantity((current) =>
@@ -1115,13 +1115,13 @@ export function ProductDetailAddToCart({
         </div>
         {selectedQuantity > 1 ? (
           <p className="mt-3 text-sm text-boutique-muted">
-            РћР±С‰Рѕ Р·Р° {selectedQuantity} Р±СЂ.:{" "}
+            Общо за {selectedQuantity} бр.:{" "}
             <strong className="text-boutique-ink">{formatEur(displayedLinePrice)}</strong>
           </p>
         ) : null}
         {stockSelectionBlocked ? (
           <p className="mt-3 text-sm font-medium text-red-700">
-            Р’СЃРёС‡РєРё РЅР°Р»РёС‡РЅРё Р±СЂРѕР№РєРё РІРµС‡Рµ СЃР° РІ РєРѕР»РёС‡РєР°С‚Р°.
+            Всички налични бройки вече са добавени към избраните варианти или количката.
           </p>
         ) : null}
       </div>
@@ -1193,9 +1193,10 @@ export function ProductDetailAddToCart({
             )}
           </section>
         </>
-      ) : null}      {!showQuantitySelector && stockSelectionBlocked ? (
+      ) : null}
+      {!showQuantitySelector && stockSelectionBlocked ? (
         <p className="mt-4 text-sm font-medium text-red-700">
-          Р’СЃРёС‡РєРё РЅР°Р»РёС‡РЅРё Р±СЂРѕР№РєРё РІРµС‡Рµ СЃР° РІ РєРѕР»РёС‡РєР°С‚Р°.
+          Всички налични бройки вече са в количката.
         </p>
       ) : null}
       <button
@@ -1209,7 +1210,11 @@ export function ProductDetailAddToCart({
             : "bg-boutique-sage-deep hover:bg-boutique-ink"
         }`}
       >
-        {added ? "вњ“ Р”РѕР±Р°РІРµРЅРѕ РІ РєРѕР»РёС‡РєР°С‚Р°" : "Р”РѕР±Р°РІРµС‚Рµ РІ РєРѕР»РёС‡РєР°С‚Р°"}
+        {added
+          ? "✓ Добавено в количката"
+          : usePreparedVariants
+            ? "Добавете избраните варианти в количката"
+            : "Добавете в количката"}
       </button>
 
       {upsellOffers.length ? (
