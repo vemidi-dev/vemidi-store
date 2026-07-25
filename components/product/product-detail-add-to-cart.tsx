@@ -68,6 +68,14 @@ function clampUpsellQuantity(value: number, maxQuantity: number) {
   return Math.min(maxQuantity, Math.max(1, Math.trunc(value)));
 }
 
+function clampProductQuantity(value: number, maxQuantity: number) {
+  if (!Number.isFinite(value)) {
+    return 1;
+  }
+
+  return Math.min(maxQuantity, Math.max(1, Math.trunc(value)));
+}
+
 export function ProductDetailAddToCart({
   product,
   upsellOffers = [],
@@ -167,6 +175,7 @@ export function ProductDetailAddToCart({
   const [optionSelections, setOptionSelections] =
     useState<ProductOptionSelection[]>(initialOptionSelections);
   const [estimatedUnitPrice, setEstimatedUnitPrice] = useState(product.price);
+  const [quantity, setQuantity] = useState(1);
   const [showMobileBar, setShowMobileBar] = useState(false);
   const [draftReady, setDraftReady] = useState(false);
   const colorFields = useMemo(() => product.colorFields ?? [], [product.colorFields]);
@@ -179,6 +188,29 @@ export function ProductDetailAddToCart({
     () => buildProductOptionDefaultsSignature(optionGroups),
     [optionGroups],
   );
+  const currentProductQuantityInCart = useMemo(
+    () =>
+      lines
+        .filter((line) => line.productId === product.id)
+        .reduce((total, line) => total + line.quantity, 0),
+    [lines, product.id],
+  );
+  const productStockLimit =
+    typeof product.maxCartQuantity === "number" &&
+    Number.isFinite(product.maxCartQuantity)
+      ? Math.max(0, Math.floor(product.maxCartQuantity))
+      : null;
+  const remainingStock =
+    productStockLimit === null
+      ? null
+      : Math.max(0, productStockLimit - currentProductQuantityInCart);
+  const maxSelectableQuantity =
+    remainingStock === null ? 99 : Math.max(1, remainingStock);
+  const stockSelectionBlocked = remainingStock !== null && remainingStock <= 0;
+
+  useEffect(() => {
+    setQuantity((current) => clampProductQuantity(current, maxSelectableQuantity));
+  }, [maxSelectableQuantity]);
 
   useEffect(() => {
     if (!cartReady) {
@@ -416,9 +448,11 @@ export function ProductDetailAddToCart({
     enabledOptionalFields,
   );
   const canAddToCart = validate() === null;
+  const canSubmitAddToCart = canAddToCart && !stockSelectionBlocked;
   const displayedUnitPrice = optionGroups.length
     ? estimatedUnitPrice
     : product.price + personalizationDelta;
+  const displayedLinePrice = displayedUnitPrice * quantity;
 
   useEffect(() => {
     if (!optionGroups.length) {
@@ -496,9 +530,14 @@ export function ProductDetailAddToCart({
       return;
     }
 
+    if (stockSelectionBlocked) {
+      setError("Вече сте добавили всички налични бройки от този продукт в количката.");
+      return;
+    }
+
     addProduct(
       product,
-      1,
+      quantity,
       personalization || undefined,
       filterSelectedColorsForOrder(flattenSelectedColors()) || undefined,
       personalizationFields,
@@ -875,10 +914,78 @@ export function ProductDetailAddToCart({
       ) : null}
 
       {error ? <p className="mt-5 text-sm font-medium text-red-700">{error}</p> : null}
+      <div className="mt-5 rounded-2xl border border-boutique-line bg-white/70 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <p className="text-sm font-semibold text-boutique-ink">Количество</p>
+            {remainingStock !== null ? (
+              <p className="mt-1 text-xs text-boutique-muted">
+                Налични за добавяне: {remainingStock} бр.
+              </p>
+            ) : (
+              <p className="mt-1 text-xs text-boutique-muted">
+                За продукти по поръчка максимумът е 99 бр.
+              </p>
+            )}
+          </div>
+          <div className="inline-flex items-center rounded-xl border border-boutique-line bg-boutique-paper">
+            <button
+              type="button"
+              aria-label="Намалете количеството"
+              disabled={quantity <= 1 || stockSelectionBlocked}
+              onClick={() =>
+                setQuantity((current) =>
+                  clampProductQuantity(current - 1, maxSelectableQuantity),
+                )
+              }
+              className="grid h-11 w-11 place-items-center text-xl text-boutique-muted transition hover:text-boutique-ink disabled:opacity-40"
+            >
+              −
+            </button>
+            <input
+              type="number"
+              min={1}
+              max={maxSelectableQuantity}
+              disabled={stockSelectionBlocked}
+              value={quantity}
+              onChange={(event) =>
+                setQuantity(
+                  clampProductQuantity(Number(event.target.value), maxSelectableQuantity),
+                )
+              }
+              className="h-11 w-16 border-x border-boutique-line bg-transparent text-center text-sm font-semibold text-boutique-ink outline-none disabled:opacity-50"
+            />
+            <button
+              type="button"
+              aria-label="Увеличете количеството"
+              disabled={quantity >= maxSelectableQuantity || stockSelectionBlocked}
+              onClick={() =>
+                setQuantity((current) =>
+                  clampProductQuantity(current + 1, maxSelectableQuantity),
+                )
+              }
+              className="grid h-11 w-11 place-items-center text-xl text-boutique-muted transition hover:text-boutique-ink disabled:opacity-40"
+            >
+              +
+            </button>
+          </div>
+        </div>
+        {quantity > 1 ? (
+          <p className="mt-3 text-sm text-boutique-muted">
+            Общо за {quantity} бр.:{" "}
+            <strong className="text-boutique-ink">{formatEur(displayedLinePrice)}</strong>
+          </p>
+        ) : null}
+        {stockSelectionBlocked ? (
+          <p className="mt-3 text-sm font-medium text-red-700">
+            Всички налични бройки вече са в количката.
+          </p>
+        ) : null}
+      </div>
       <button
         type="button"
         aria-live="polite"
-        disabled={!canAddToCart}
+        disabled={!canSubmitAddToCart}
         onClick={handleAddToCart}
         className={`mt-5 w-full rounded-xl px-8 py-3.5 text-sm font-semibold text-white transition duration-200 ease-out hover:-translate-y-1 hover:shadow-[0_16px_32px_-12px_rgb(44_40_37_/0.22)] active:translate-y-0 active:shadow-sm disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none motion-reduce:transition-none motion-reduce:hover:translate-y-0 ${
           added
@@ -1054,12 +1161,12 @@ export function ProductDetailAddToCart({
               Ориентировъчна цена
             </p>
             <p className="font-heading text-xl text-boutique-ink">
-              {formatEur(displayedUnitPrice)}
+              {quantity > 1 ? formatEur(displayedLinePrice) : formatEur(displayedUnitPrice)}
             </p>
           </div>
           <button
             type="button"
-            disabled={!canAddToCart}
+            disabled={!canSubmitAddToCart}
             onClick={handleAddToCart}
             className={`min-h-12 shrink-0 rounded-xl px-5 text-sm font-semibold text-white transition duration-200 ease-out hover:-translate-y-1 hover:shadow-[0_14px_28px_-10px_rgb(44_40_37_/0.2)] active:translate-y-0 active:shadow-sm disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none motion-reduce:transition-none motion-reduce:hover:translate-y-0 ${
               added
