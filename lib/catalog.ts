@@ -54,6 +54,8 @@ export type Product = {
   customizable?: boolean;
   /** When true, the product is shown as sold out and cannot be ordered. */
   soldOut?: boolean;
+  /** When true, customers can choose more than one item on the product page. */
+  allowQuantitySelector?: boolean;
   fulfillmentType: ProductFulfillmentType;
   /** Derived storefront label for availability messaging. */
   availabilityLabel: string;

@@ -182,6 +182,7 @@ export type ProductRow = {
   image_url: string | null;
   is_customizable: boolean;
   is_sold_out: boolean;
+  show_quantity_selector?: boolean;
   fulfillment_type?: ProductFulfillmentType;
   stock_quantity?: number | null;
   card_badge?: string | null;
@@ -318,6 +319,7 @@ export type ProductCreateDraft = {
   price: string;
   isCustomizable: boolean;
   isSoldOut: boolean;
+  showQuantitySelector: boolean;
   fulfillmentType: ProductFulfillmentType;
   stockQuantity: number | null;
   cardBadge: string;

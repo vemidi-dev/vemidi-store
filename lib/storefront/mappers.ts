@@ -72,6 +72,7 @@ export type ProductRow = {
   image_url: string | null;
   is_customizable: boolean;
   is_sold_out?: boolean;
+  show_quantity_selector?: boolean | null;
   fulfillment_type?: ProductFulfillmentType;
   stock_quantity?: number | null;
   card_badge?: string | null;
@@ -139,6 +140,7 @@ export function toProduct(
     og_description: row.og_description ?? null,
     customizable: row.is_customizable,
     soldOut: Boolean(row.is_sold_out),
+    allowQuantitySelector: Boolean(row.show_quantity_selector),
     fulfillmentType: row.fulfillment_type ?? "made_to_order",
     stockQuantity: row.stock_quantity ?? null,
     images:

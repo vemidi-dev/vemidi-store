@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -27,6 +27,7 @@ import type { SelectedProductColor } from "@/lib/product-colors";
 import {
   filterSelectedColorsForOrder,
   flattenSelectedColorsFromQuantities,
+  formatSelectedColorQuantityLabel,
   isQuantityColorField,
   validateColorQuantities,
 } from "@/lib/product-color-quantities";
@@ -60,7 +61,26 @@ type ProductDetailAddToCartProps = {
   layout?: "card" | "embedded";
 };
 
+type PreparedProductVariant = {
+  id: string;
+  quantity: number;
+  unitPrice: number;
+  personalization?: string;
+  selectedColors?: SelectedProductColor[];
+  personalizationFields?: ReturnType<typeof buildPersonalizationFieldValues>;
+  optionSelections?: ProductOptionSelection[];
+  summary: string[];
+};
+
 function clampUpsellQuantity(value: number, maxQuantity: number) {
+  if (!Number.isFinite(value)) {
+    return 1;
+  }
+
+  return Math.min(maxQuantity, Math.max(1, Math.trunc(value)));
+}
+
+function clampProductQuantity(value: number, maxQuantity: number) {
   if (!Number.isFinite(value)) {
     return 1;
   }
@@ -83,10 +103,10 @@ export function ProductDetailAddToCart({
     () => product.customizable && !(product.personalizationFields?.length)
       ? [{
           id: "legacy",
-          label: "Текст за персонализация",
+          label: "РўРµРєСЃС‚ Р·Р° РїРµСЂСЃРѕРЅР°Р»РёР·Р°С†РёСЏ",
           key: "personalization",
           type: "textarea",
-          placeholder: "Напишете име, дата или текст",
+          placeholder: "РќР°РїРёС€РµС‚Рµ РёРјРµ, РґР°С‚Р° РёР»Рё С‚РµРєСЃС‚",
           maxLength: 1000,
           priceDelta: 0,
           required: false,
@@ -167,6 +187,8 @@ export function ProductDetailAddToCart({
   const [optionSelections, setOptionSelections] =
     useState<ProductOptionSelection[]>(initialOptionSelections);
   const [estimatedUnitPrice, setEstimatedUnitPrice] = useState(product.price);
+  const [quantity, setQuantity] = useState(1);
+  const [preparedVariants, setPreparedVariants] = useState<PreparedProductVariant[]>([]);
   const [showMobileBar, setShowMobileBar] = useState(false);
   const [draftReady, setDraftReady] = useState(false);
   const colorFields = useMemo(() => product.colorFields ?? [], [product.colorFields]);
@@ -179,6 +201,58 @@ export function ProductDetailAddToCart({
     () => buildProductOptionDefaultsSignature(optionGroups),
     [optionGroups],
   );
+  const currentProductQuantityInCart = useMemo(
+    () =>
+      lines
+        .filter((line) => line.productId === product.id)
+        .reduce((total, line) => total + line.quantity, 0),
+    [lines, product.id],
+  );
+  const productStockLimit =
+    typeof product.maxCartQuantity === "number" &&
+    Number.isFinite(product.maxCartQuantity)
+      ? Math.max(0, Math.floor(product.maxCartQuantity))
+      : null;
+  const remainingStock =
+    productStockLimit === null
+      ? null
+      : Math.max(0, productStockLimit - currentProductQuantityInCart);
+  const showQuantitySelector = Boolean(product.allowQuantitySelector);
+  const usePreparedVariants =
+    showQuantitySelector && product.fulfillmentType === "stocked";
+  const preparedQuantityTotal = preparedVariants.reduce(
+    (total, variant) => total + variant.quantity,
+    0,
+  );
+  const remainingStockForSelection =
+    usePreparedVariants && remainingStock !== null
+      ? Math.max(0, remainingStock - preparedQuantityTotal)
+      : remainingStock;
+  const maxSelectableQuantity =
+    remainingStockForSelection === null ? 99 : Math.max(1, remainingStockForSelection);
+  const stockSelectionBlocked =
+    remainingStockForSelection !== null && remainingStockForSelection <= 0;
+
+  const handleOptionSelectionsChange = (nextSelections: ProductOptionSelection[]) => {
+    setOptionSelections(nextSelections);
+    if (showQuantitySelector) {
+      setQuantity(1);
+    }
+  };
+
+  useEffect(() => {
+    setQuantity((current) => clampProductQuantity(current, maxSelectableQuantity));
+  }, [maxSelectableQuantity]);
+
+  useEffect(() => {
+    if (!showQuantitySelector) {
+      setQuantity(1);
+    }
+  }, [showQuantitySelector]);
+
+  useEffect(() => {
+    setPreparedVariants([]);
+  }, [product.id]);
 
   useEffect(() => {
     if (!cartReady) {
@@ -360,7 +434,7 @@ export function ProductDetailAddToCart({
   const validate = () => {
     for (const field of fields) {
       if (field.required && !(values[field.id] ?? "").trim()) {
-        return `Попълнете полето „${field.label}“.`;
+        return `РџРѕРїСЉР»РЅРµС‚Рµ РїРѕР»РµС‚Рѕ вЂћ${field.label}вЂњ.`;
       }
     }
     for (const field of fields) {
@@ -369,7 +443,7 @@ export function ProductDetailAddToCart({
         enabledOptionalFields.has(field.id) &&
         !(values[field.id] ?? "").trim()
       ) {
-        return `Попълнете полето „${field.label}“ или изключете персонализацията.`;
+        return `РџРѕРїСЉР»РЅРµС‚Рµ РїРѕР»РµС‚Рѕ вЂћ${field.label}вЂњ РёР»Рё РёР·РєР»СЋС‡РµС‚Рµ РїРµСЂСЃРѕРЅР°Р»РёР·Р°С†РёСЏС‚Р°.`;
       }
     }
     for (const field of colorFields) {
@@ -386,7 +460,7 @@ export function ProductDetailAddToCart({
 
       const count = (selectedByGroup[field.id] ?? []).length;
       if (count < field.minSelect || count > field.maxSelect) {
-        return `Изберете ${field.minSelect === field.maxSelect ? field.minSelect : `${field.minSelect}–${field.maxSelect}`} цвята за „${field.label}“.`;
+        return `РР·Р±РµСЂРµС‚Рµ ${field.minSelect === field.maxSelect ? field.minSelect : `${field.minSelect}вЂ“${field.maxSelect}`} С†РІСЏС‚Р° Р·Р° вЂћ${field.label}вЂњ.`;
       }
     }
     const optionValidation = validateProductOptionSelections(
@@ -416,9 +490,15 @@ export function ProductDetailAddToCart({
     enabledOptionalFields,
   );
   const canAddToCart = validate() === null;
+  const canPrepareVariant = canAddToCart && !stockSelectionBlocked;
+  const canSubmitAddToCart = usePreparedVariants
+    ? preparedVariants.length > 0
+    : canPrepareVariant;
   const displayedUnitPrice = optionGroups.length
     ? estimatedUnitPrice
     : product.price + personalizationDelta;
+  const selectedQuantity = showQuantitySelector ? quantity : 1;
+  const displayedLinePrice = displayedUnitPrice * selectedQuantity;
 
   useEffect(() => {
     if (!optionGroups.length) {
@@ -486,7 +566,42 @@ export function ProductDetailAddToCart({
     setError(null);
   };
 
-  const handleAddToCart = () => {
+  const buildCurrentVariantSummary = (
+    colors: SelectedProductColor[],
+    options: ProductOptionSelection[],
+  ) => {
+    const rows: string[] = [];
+
+    options.forEach((selection) => {
+      const group = optionGroups.find((candidate) => candidate.id === selection.groupId);
+      if (!group) {
+        return;
+      }
+
+      const valueLabels = selection.valueIds
+        .map((valueId) => group.values.find((value) => value.id === valueId)?.label)
+        .filter((label): label is string => Boolean(label));
+      const textValue = selection.textValue?.trim();
+      const value = valueLabels.length ? valueLabels.join(", ") : textValue;
+      if (value) {
+        rows.push(`${group.name}: ${value}`);
+      }
+    });
+
+    const colorsByField = new Map<string, string[]>();
+    colors.forEach((color) => {
+      const labels = colorsByField.get(color.fieldLabel) ?? [];
+      labels.push(formatSelectedColorQuantityLabel(color));
+      colorsByField.set(color.fieldLabel, labels);
+    });
+    colorsByField.forEach((labels, fieldLabel) => {
+      rows.push(`${fieldLabel}: ${labels.join(", ")}`);
+    });
+
+    return rows.length ? rows : ["РћСЃРЅРѕРІРµРЅ РІР°СЂРёР°РЅС‚"];
+  };
+
+  const handlePrepareVariant = () => {
     const validationError = validate();
     if (validationError) {
       setError(validationError);
@@ -496,9 +611,82 @@ export function ProductDetailAddToCart({
       return;
     }
 
+    if (stockSelectionBlocked) {
+      setError("Р’СЃРёС‡РєРё РЅР°Р»РёС‡РЅРё Р±СЂРѕР№РєРё РІРµС‡Рµ СЃР° РґРѕР±Р°РІРµРЅРё РєСЉРј РёР·Р±СЂР°РЅРёС‚Рµ РІР°СЂРёР°РЅС‚Рё РёР»Рё РєРѕР»РёС‡РєР°С‚Р°.");
+      return;
+    }
+
+    const colors = filterSelectedColorsForOrder(flattenSelectedColors());
+    const options = optionSelections.map((selection) => ({
+      ...selection,
+      valueIds: [...selection.valueIds],
+    }));
+    const variant: PreparedProductVariant = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      quantity: selectedQuantity,
+      unitPrice: displayedUnitPrice,
+      personalization: personalization || undefined,
+      selectedColors: colors.length ? colors : undefined,
+      personalizationFields: personalizationFields.length
+        ? personalizationFields.map((field) => ({ ...field }))
+        : undefined,
+      optionSelections: options.length ? options : undefined,
+      summary: buildCurrentVariantSummary(colors, options),
+    };
+
+    setPreparedVariants((current) => [...current, variant]);
+    setQuantity(1);
+    setError(null);
+  };
+
+  const removePreparedVariant = (variantId: string) => {
+    setPreparedVariants((current) =>
+      current.filter((variant) => variant.id !== variantId),
+    );
+  };
+
+  const handleAddToCart = () => {
+    if (usePreparedVariants) {
+      if (preparedVariants.length === 0) {
+        setError("Р”РѕР±Р°РІРµС‚Рµ РїРѕРЅРµ РµРґРёРЅ РІР°СЂРёР°РЅС‚ РєСЉРј СЃРїРёСЃСЉРєР°.");
+        return;
+      }
+
+      preparedVariants.forEach((variant) => {
+        addProduct(
+          product,
+          variant.quantity,
+          variant.personalization,
+          variant.selectedColors,
+          variant.personalizationFields,
+          attribution,
+          variant.optionSelections,
+        );
+      });
+      setPreparedVariants([]);
+      setError(null);
+      setAdded(true);
+      setTimeout(() => setAdded(false), 2200);
+      return;
+    }
+
+    const validationError = validate();
+    if (validationError) {
+      setError(validationError);
+      document
+        .getElementById("product-configurator")
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+
+    if (stockSelectionBlocked) {
+      setError("Р’РµС‡Рµ СЃС‚Рµ РґРѕР±Р°РІРёР»Рё РІСЃРёС‡РєРё РЅР°Р»РёС‡РЅРё Р±СЂРѕР№РєРё РѕС‚ С‚РѕР·Рё РїСЂРѕРґСѓРєС‚ РІ РєРѕР»РёС‡РєР°С‚Р°.");
+      return;
+    }
+
     addProduct(
       product,
-      1,
+      selectedQuantity,
       personalization || undefined,
       filterSelectedColorsForOrder(flattenSelectedColors()) || undefined,
       personalizationFields,
@@ -542,10 +730,10 @@ export function ProductDetailAddToCart({
   if (!product.orderable) {
     const message =
       product.fulfillmentType === "unavailable"
-        ? "Този продукт временно не може да бъде поръчан."
-        : product.availabilityLabel === "Изчерпан"
-          ? "Този продукт временно не е наличен за поръчка. Можете да се свържете с нас за алтернатива или срок."
-          : "Този продукт не може да бъде поръчан в момента.";
+        ? "РўРѕР·Рё РїСЂРѕРґСѓРєС‚ РІСЂРµРјРµРЅРЅРѕ РЅРµ РјРѕР¶Рµ РґР° Р±СЉРґРµ РїРѕСЂСЉС‡Р°РЅ."
+        : product.availabilityLabel === "РР·С‡РµСЂРїР°РЅ"
+          ? "РўРѕР·Рё РїСЂРѕРґСѓРєС‚ РІСЂРµРјРµРЅРЅРѕ РЅРµ Рµ РЅР°Р»РёС‡РµРЅ Р·Р° РїРѕСЂСЉС‡РєР°. РњРѕР¶РµС‚Рµ РґР° СЃРµ СЃРІСЉСЂР¶РµС‚Рµ СЃ РЅР°СЃ Р·Р° Р°Р»С‚РµСЂРЅР°С‚РёРІР° РёР»Рё СЃСЂРѕРє."
+          : "РўРѕР·Рё РїСЂРѕРґСѓРєС‚ РЅРµ РјРѕР¶Рµ РґР° Р±СЉРґРµ РїРѕСЂСЉС‡Р°РЅ РІ РјРѕРјРµРЅС‚Р°.";
 
     return (
       <div
@@ -671,7 +859,7 @@ export function ProductDetailAddToCart({
                         {field.type === "textarea" ? (
                           <span className="mt-1 flex items-center justify-between gap-3 text-xs text-boutique-muted">
                             <span>
-                              {value.length}/{field.maxLength} знака
+                              {value.length}/{field.maxLength} Р·РЅР°РєР°
                             </span>
                             {field.allowsWishTemplates &&
                             (product.wishTemplates?.length ?? 0) > 0 ? (
@@ -680,7 +868,7 @@ export function ProductDetailAddToCart({
                                 onClick={() => setWishFieldId(field.id)}
                     className="rounded-full border border-boutique-rose/40 px-3 py-1 text-xs font-semibold text-boutique-rose-deep transition duration-200 ease-out hover:border-boutique-rose-deep hover:bg-boutique-blush motion-reduce:transition-none"
                               >
-                                ♡ Идеи за пожелание
+                                в™Ў РРґРµРё Р·Р° РїРѕР¶РµР»Р°РЅРёРµ
                               </button>
                             ) : null}
                           </span>
@@ -710,7 +898,7 @@ export function ProductDetailAddToCart({
                       onClick={() => setWishFieldId(field.id)}
                       className="rounded-full border border-boutique-rose/40 px-3 py-1 text-xs font-semibold text-boutique-rose-deep"
                     >
-                      ♡ Идеи за пожелание
+                      в™Ў РРґРµРё Р·Р° РїРѕР¶РµР»Р°РЅРёРµ
                     </button>
                   ) : null}
                 </span>
@@ -721,7 +909,7 @@ export function ProductDetailAddToCart({
                 )}
                 {field.type === "textarea" ? (
                   <span className="mt-1 block text-right text-xs text-boutique-muted">
-                    {value.length}/{field.maxLength} знака
+                    {value.length}/{field.maxLength} Р·РЅР°РєР°
                   </span>
                 ) : null}
               </label>
@@ -729,8 +917,8 @@ export function ProductDetailAddToCart({
           })}
           {fields.some((field) => field.allowsWishTemplates) ? (
             <p className="text-xs leading-5 text-boutique-muted">
-              Прегледайте и редактирайте избраното пожелание спрямо получателя – име, пол,
-              възраст и конкретен повод.
+              РџСЂРµРіР»РµРґР°Р№С‚Рµ Рё СЂРµРґР°РєС‚РёСЂР°Р№С‚Рµ РёР·Р±СЂР°РЅРѕС‚Рѕ РїРѕР¶РµР»Р°РЅРёРµ СЃРїСЂСЏРјРѕ РїРѕР»СѓС‡Р°С‚РµР»СЏ вЂ“ РёРјРµ, РїРѕР»,
+              РІСЉР·СЂР°СЃС‚ Рё РєРѕРЅРєСЂРµС‚РµРЅ РїРѕРІРѕРґ.
             </p>
           ) : null}
         </div>
@@ -742,16 +930,16 @@ export function ProductDetailAddToCart({
           variantDisplayBasePrice={product.price}
           groups={optionGroups}
           value={optionSelections}
-          onChange={setOptionSelections}
+          onChange={handleOptionSelectionsChange}
           onEstimatedPriceChange={setEstimatedUnitPrice}
         />
       ) : null}
 
       {!optionGroups.length && personalizationDelta > 0 ? (
         <p className="mt-5 text-sm text-boutique-muted">
-          Ориентировъчна цена:{" "}
+          РћСЂРёРµРЅС‚РёСЂРѕРІСЉС‡РЅР° С†РµРЅР°:{" "}
           <strong className="text-boutique-ink">
-            {(product.price + personalizationDelta).toFixed(2).replace(".", ",")} €
+            {(product.price + personalizationDelta).toFixed(2).replace(".", ",")} в‚¬
           </strong>
         </p>
       ) : null}
@@ -809,6 +997,9 @@ export function ProductDetailAddToCart({
                                   ? [...current, option.id].slice(0, field.maxSelect)
                                   : current.filter((id) => id !== option.id);
                               setSelectedByGroup((state) => ({ ...state, [field.id]: next }));
+                              if (showQuantitySelector) {
+                                setQuantity(1);
+                              }
                               setError(null);
                             }}
                           />
@@ -856,7 +1047,7 @@ export function ProductDetailAddToCart({
                     className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-boutique-line bg-white px-4 py-3 text-sm font-semibold text-boutique-ink transition duration-200 ease-out hover:-translate-y-1 hover:border-boutique-sage-deep hover:text-boutique-sage-deep hover:shadow-[0_12px_24px_-10px_rgb(44_40_37_/0.16)] active:translate-y-0 active:shadow-sm motion-reduce:transition-none motion-reduce:hover:translate-y-0"
                   >
                     {expandedColorFields.has(field.id)
-                      ? "Покажете по-малко"
+                      ? "Покажи по-малко"
                       : `Вижте всички цветове (${field.options.length})`}
                     <span
                       aria-hidden="true"
@@ -875,10 +1066,153 @@ export function ProductDetailAddToCart({
       ) : null}
 
       {error ? <p className="mt-5 text-sm font-medium text-red-700">{error}</p> : null}
+      {showQuantitySelector ? (
+      <div className="mt-5 rounded-2xl border border-boutique-line bg-white/70 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <p className="text-sm font-semibold text-boutique-ink">Количество</p>
+            {remainingStockForSelection !== null ? (
+              <p className="mt-1 text-xs text-boutique-muted">
+                Налични за добавяне: {remainingStockForSelection} бр.
+              </p>
+            ) : (
+              <p className="mt-1 text-xs text-boutique-muted">
+                За продукти по поръчка максимумът е 99 бр.
+              </p>
+            )}
+          </div>
+          <div className="inline-flex items-center rounded-xl border border-boutique-line bg-boutique-paper">
+            <button
+              type="button"
+              aria-label="Намалете количеството"
+              disabled={quantity <= 1 || stockSelectionBlocked}
+              onClick={() =>
+                setQuantity((current) =>
+                  clampProductQuantity(current - 1, maxSelectableQuantity),
+                )
+              }
+              className="grid h-11 w-11 place-items-center text-xl text-boutique-muted transition hover:text-boutique-ink disabled:opacity-40"
+            >
+              −
+            </button>
+            <input
+              type="number"
+              min={1}
+              max={maxSelectableQuantity}
+              disabled={stockSelectionBlocked}
+              value={quantity}
+              onChange={(event) =>
+                setQuantity(
+                  clampProductQuantity(Number(event.target.value), maxSelectableQuantity),
+                )
+              }
+              className="h-11 w-16 border-x border-boutique-line bg-transparent text-center text-sm font-semibold text-boutique-ink outline-none disabled:opacity-50"
+            />
+            <button
+              type="button"
+              aria-label="Увеличете количеството"
+              disabled={quantity >= maxSelectableQuantity || stockSelectionBlocked}
+              onClick={() =>
+                setQuantity((current) =>
+                  clampProductQuantity(current + 1, maxSelectableQuantity),
+                )
+              }
+              className="grid h-11 w-11 place-items-center text-xl text-boutique-muted transition hover:text-boutique-ink disabled:opacity-40"
+            >
+              +
+            </button>
+          </div>
+        </div>
+        {selectedQuantity > 1 ? (
+          <p className="mt-3 text-sm text-boutique-muted">
+            Общо за {selectedQuantity} бр.:{" "}
+            <strong className="text-boutique-ink">{formatEur(displayedLinePrice)}</strong>
+          </p>
+        ) : null}
+        {stockSelectionBlocked ? (
+          <p className="mt-3 text-sm font-medium text-red-700">
+            Всички налични бройки вече са добавени към избраните варианти или количката.
+          </p>
+        ) : null}
+      </div>
+      ) : null}
+      {usePreparedVariants ? (
+        <>
+          <button
+            type="button"
+            disabled={!canPrepareVariant}
+            onClick={handlePrepareVariant}
+            className="mt-5 w-full rounded-xl bg-boutique-ink px-8 py-3.5 text-sm font-semibold text-white transition duration-200 ease-out hover:-translate-y-1 hover:bg-boutique-sage-deep hover:shadow-[0_16px_32px_-12px_rgb(44_40_37_/0.22)] active:translate-y-0 active:shadow-sm disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+          >
+            Добави избора
+          </button>
+
+          <section className="mt-4 rounded-2xl border border-boutique-line bg-boutique-bg/60 p-4">
+            <div>
+              <h2 className="text-sm font-semibold text-boutique-ink">
+                Избрани варианти
+              </h2>
+              <p className="mt-1 text-xs leading-5 text-boutique-muted">
+                Добавете отделен ред за всяка комбинация от размер, материал, цвят и количество.
+              </p>
+            </div>
+
+            {preparedVariants.length ? (
+              <div className="mt-4 space-y-3">
+                {preparedVariants.map((variant, index) => (
+                  <article
+                    key={variant.id}
+                    className="rounded-xl border border-boutique-line bg-white px-3 py-3"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold text-boutique-ink">
+                          Вариант {index + 1} · {variant.quantity} бр. ·{" "}
+                          {formatEur(variant.unitPrice * variant.quantity)}
+                        </p>
+                        <div className="mt-1 space-y-0.5 text-xs leading-5 text-boutique-muted">
+                          {variant.summary.map((row) => (
+                            <p key={`${variant.id}-${row}`}>{row}</p>
+                          ))}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removePreparedVariant(variant.id)}
+                        className="shrink-0 text-xs font-semibold text-boutique-accent underline-offset-4 hover:text-boutique-ink hover:underline"
+                      >
+                        Премахни
+                      </button>
+                    </div>
+                  </article>
+                ))}
+                <p className="text-sm font-semibold text-boutique-ink">
+                  Общо избрани: {preparedQuantityTotal} бр. ·{" "}
+                  {formatEur(
+                    preparedVariants.reduce(
+                      (total, variant) => total + variant.unitPrice * variant.quantity,
+                      0,
+                    ),
+                  )}
+                </p>
+              </div>
+            ) : (
+              <p className="mt-4 rounded-xl border border-dashed border-boutique-line bg-white/70 px-3 py-3 text-sm text-boutique-muted">
+                Все още няма добавени варианти.
+              </p>
+            )}
+          </section>
+        </>
+      ) : null}
+      {!showQuantitySelector && stockSelectionBlocked ? (
+        <p className="mt-4 text-sm font-medium text-red-700">
+          Всички налични бройки вече са в количката.
+        </p>
+      ) : null}
       <button
         type="button"
         aria-live="polite"
-        disabled={!canAddToCart}
+        disabled={!canSubmitAddToCart}
         onClick={handleAddToCart}
         className={`mt-5 w-full rounded-xl px-8 py-3.5 text-sm font-semibold text-white transition duration-200 ease-out hover:-translate-y-1 hover:shadow-[0_16px_32px_-12px_rgb(44_40_37_/0.22)] active:translate-y-0 active:shadow-sm disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none motion-reduce:transition-none motion-reduce:hover:translate-y-0 ${
           added
@@ -886,7 +1220,11 @@ export function ProductDetailAddToCart({
             : "bg-boutique-sage-deep hover:bg-boutique-ink"
         }`}
       >
-        {added ? "✓ Добавено в количката" : "Добавете в количката"}
+        {added
+          ? "✓ Добавено в количката"
+          : usePreparedVariants
+            ? "Добавете избраните варианти в количката"
+            : "Добавете в количката"}
       </button>
 
       {upsellOffers.length ? (
@@ -895,13 +1233,13 @@ export function ProductDetailAddToCart({
           className="mt-4 rounded-2xl border border-boutique-line bg-boutique-bg/60 p-4"
         >
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-boutique-accent">
-            Специална оферта
+            РЎРїРµС†РёР°Р»РЅР° РѕС„РµСЂС‚Р°
           </p>
           <h2
             id="product-upsell-title"
             className="mt-1 font-heading text-2xl text-boutique-ink"
           >
-            {upsellSectionTitle?.trim() || "Добавете към подаръка"}
+            {upsellSectionTitle?.trim() || "Р”РѕР±Р°РІРµС‚Рµ РєСЉРј РїРѕРґР°СЂСЉРєР°"}
           </h2>
           <div className="mt-4 grid gap-3">
             {upsellOffers.map((offer) => {
@@ -925,7 +1263,7 @@ export function ProductDetailAddToCart({
                     type="checkbox"
                     checked={selected}
                     disabled={!offer.product.orderable}
-                    aria-label={`Добавете ${offer.product.title}`}
+                    aria-label={`Р”РѕР±Р°РІРµС‚Рµ ${offer.product.title}`}
                     onChange={(event) => {
                       setSelectedUpsellIds((current) => {
                         const next = new Set(current);
@@ -953,7 +1291,7 @@ export function ProductDetailAddToCart({
                       />
                     ) : (
                       <span className="grid h-full w-full place-items-center text-sm text-boutique-muted">
-                        ◇
+                        в—‡
                       </span>
                     )}
                   </Link>
@@ -981,7 +1319,7 @@ export function ProductDetailAddToCart({
                     <div className="mt-3 inline-flex items-center rounded-lg border border-boutique-line bg-boutique-paper">
                       <button
                         type="button"
-                        aria-label="Намалете количеството"
+                        aria-label="РќР°РјР°Р»РµС‚Рµ РєРѕР»РёС‡РµСЃС‚РІРѕС‚Рѕ"
                         disabled={!selected}
                         onClick={() =>
                           setUpsellQuantities((current) => ({
@@ -994,7 +1332,7 @@ export function ProductDetailAddToCart({
                         }
                         className="grid h-8 w-8 place-items-center text-lg text-boutique-muted transition hover:text-boutique-ink disabled:opacity-40"
                       >
-                        −
+                        в€’
                       </button>
                       <input
                         type="number"
@@ -1015,7 +1353,7 @@ export function ProductDetailAddToCart({
                       />
                       <button
                         type="button"
-                        aria-label="Увеличете количеството"
+                        aria-label="РЈРІРµР»РёС‡РµС‚Рµ РєРѕР»РёС‡РµСЃС‚РІРѕС‚Рѕ"
                         disabled={!selected || quantity >= offer.maxQuantity}
                         onClick={() =>
                           setUpsellQuantities((current) => ({
@@ -1032,7 +1370,7 @@ export function ProductDetailAddToCart({
                       </button>
                     </div>
                     <p className="mt-1 text-[11px] text-boutique-muted">
-                      Максимум {offer.maxQuantity} бр.
+                      РњР°РєСЃРёРјСѓРј {offer.maxQuantity} Р±СЂ.
                     </p>
                   </div>
                 </article>
@@ -1046,20 +1384,20 @@ export function ProductDetailAddToCart({
     {showMobileBar ? (
       <div
         className="fixed inset-x-0 bottom-0 z-50 border-t border-boutique-line bg-boutique-paper/95 px-4 py-3 shadow-[0_-10px_30px_-20px_rgb(44_40_37_/0.45)] backdrop-blur sm:hidden"
-        aria-label="Бързо добавяне в количката"
+        aria-label="Р‘СЉСЂР·Рѕ РґРѕР±Р°РІСЏРЅРµ РІ РєРѕР»РёС‡РєР°С‚Р°"
       >
         <div className="mx-auto flex max-w-xl items-center gap-3">
           <div className="min-w-0 flex-1">
             <p className="text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-boutique-muted">
-              Ориентировъчна цена
+              РћСЂРёРµРЅС‚РёСЂРѕРІСЉС‡РЅР° С†РµРЅР°
             </p>
             <p className="font-heading text-xl text-boutique-ink">
-              {formatEur(displayedUnitPrice)}
+              {selectedQuantity > 1 ? formatEur(displayedLinePrice) : formatEur(displayedUnitPrice)}
             </p>
           </div>
           <button
             type="button"
-            disabled={!canAddToCart}
+            disabled={!canSubmitAddToCart}
             onClick={handleAddToCart}
             className={`min-h-12 shrink-0 rounded-xl px-5 text-sm font-semibold text-white transition duration-200 ease-out hover:-translate-y-1 hover:shadow-[0_14px_28px_-10px_rgb(44_40_37_/0.2)] active:translate-y-0 active:shadow-sm disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none motion-reduce:transition-none motion-reduce:hover:translate-y-0 ${
               added
@@ -1077,7 +1415,7 @@ export function ProductDetailAddToCart({
           <div
             role="dialog"
             aria-modal="true"
-            aria-label="Избор на готово пожелание"
+            aria-label="РР·Р±РѕСЂ РЅР° РіРѕС‚РѕРІРѕ РїРѕР¶РµР»Р°РЅРёРµ"
             className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-boutique-ink/45 p-4 pt-[6vh] sm:p-6 sm:pt-[6vh]"
             onMouseDown={(event) => {
               if (event.target === event.currentTarget) {
@@ -1090,26 +1428,26 @@ export function ProductDetailAddToCart({
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <h2 className="font-heading text-3xl text-boutique-ink">
-                      Изберете готово пожелание
+                      РР·Р±РµСЂРµС‚Рµ РіРѕС‚РѕРІРѕ РїРѕР¶РµР»Р°РЅРёРµ
                     </h2>
                     <p className="mt-2 text-sm text-boutique-muted">
-                      След избора можете свободно да редактирате текста.
+                      РЎР»РµРґ РёР·Р±РѕСЂР° РјРѕР¶РµС‚Рµ СЃРІРѕР±РѕРґРЅРѕ РґР° СЂРµРґР°РєС‚РёСЂР°С‚Рµ С‚РµРєСЃС‚Р°.
                     </p>
                   </div>
                   <button
                     type="button"
-                    aria-label="Затвори"
+                    aria-label="Р—Р°С‚РІРѕСЂРё"
                     onClick={() => setWishFieldId(null)}
                     className="shrink-0 text-2xl leading-none text-boutique-muted transition hover:text-boutique-ink"
                   >
-                    ×
+                    Г—
                   </button>
                 </div>
                 {showWishOccasionFilters ? (
                   <div
                     className="mt-5 flex flex-wrap gap-2"
                     role="group"
-                    aria-label="Филтър по повод"
+                    aria-label="Р¤РёР»С‚СЉСЂ РїРѕ РїРѕРІРѕРґ"
                   >
                     <button
                       type="button"
@@ -1121,7 +1459,7 @@ export function ProductDetailAddToCart({
                           : "border-boutique-line bg-white text-boutique-ink hover:border-boutique-sage-deep/40 hover:text-boutique-sage-deep"
                       }`}
                     >
-                      Всички
+                      Р’СЃРёС‡РєРё
                     </button>
                     {wishOccasionFilters.map((occasion) => {
                       const isSelected = wishOccasionFilter === occasion.id;
@@ -1168,7 +1506,7 @@ export function ProductDetailAddToCart({
                         }}
                         className="mt-3 rounded-lg bg-boutique-sage-deep px-4 py-2 text-xs font-semibold text-white transition duration-200 ease-out hover:bg-boutique-ink motion-reduce:transition-none"
                       >
-                        Изберете текста
+                        РР·Р±РµСЂРµС‚Рµ С‚РµРєСЃС‚Р°
                       </button>
                     </article>
                   ))}

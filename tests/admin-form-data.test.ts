@@ -77,6 +77,7 @@ test("admin form field names stay aligned with product draft parsing", () => {
     price: "29.90",
     is_customizable: true,
     is_sold_out: false,
+    show_quantity_selector: false,
     fulfillment_type: "made_to_order",
     stock_quantity: "",
     card_badge: "",
