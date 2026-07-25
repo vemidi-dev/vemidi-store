@@ -233,6 +233,13 @@ export function ProductDetailAddToCart({
   const stockSelectionBlocked =
     remainingStockForSelection !== null && remainingStockForSelection <= 0;
 
+  const handleOptionSelectionsChange = (nextSelections: ProductOptionSelection[]) => {
+    setOptionSelections(nextSelections);
+    if (showQuantitySelector) {
+      setQuantity(1);
+    }
+  };
+
   useEffect(() => {
     setQuantity((current) => clampProductQuantity(current, maxSelectableQuantity));
   }, [maxSelectableQuantity]);
@@ -923,7 +930,7 @@ export function ProductDetailAddToCart({
           variantDisplayBasePrice={product.price}
           groups={optionGroups}
           value={optionSelections}
-          onChange={setOptionSelections}
+          onChange={handleOptionSelectionsChange}
           onEstimatedPriceChange={setEstimatedUnitPrice}
         />
       ) : null}
@@ -990,6 +997,9 @@ export function ProductDetailAddToCart({
                                   ? [...current, option.id].slice(0, field.maxSelect)
                                   : current.filter((id) => id !== option.id);
                               setSelectedByGroup((state) => ({ ...state, [field.id]: next }));
+                              if (showQuantitySelector) {
+                                setQuantity(1);
+                              }
                               setError(null);
                             }}
                           />
@@ -1006,7 +1016,7 @@ export function ProductDetailAddToCart({
                                 aria-hidden="true"
                                 className="grid h-5 w-5 place-items-center rounded-full bg-white/90 text-[0.65rem] font-bold text-boutique-sage-deep shadow-sm"
                               >
-                                вњ“
+                                ✓
                               </span>
                             ) : null}
                           </span>
@@ -1395,7 +1405,7 @@ export function ProductDetailAddToCart({
                 : "bg-boutique-sage-deep hover:bg-boutique-ink"
             }`}
           >
-            {added ? "вњ“ Р”РѕР±Р°РІРµРЅРѕ" : "Р”РѕР±Р°РІРµС‚Рµ"}
+            {added ? "✓ Добавено" : "Добавете"}
           </button>
         </div>
       </div>
