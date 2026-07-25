@@ -505,6 +505,21 @@ export function ProductCreatePanel({
             initialStockQuantity={activeDraft?.stockQuantity}
           />
 
+          <label className="inline-flex items-start gap-2 text-sm font-medium text-boutique-ink">
+            <input
+              name={adminFormFields.product.showQuantitySelector}
+              type="checkbox"
+              defaultChecked={activeDraft?.showQuantitySelector}
+              className="mt-1 h-4 w-4 rounded border-boutique-line text-boutique-accent"
+            />
+            <span>
+              Показвай избор на количество
+              <span className="mt-1 block text-xs font-normal leading-5 text-boutique-muted">
+                Включете за заготовки, материали и продукти, които клиентът може да поръча в повече от 1 брой.
+              </span>
+            </span>
+          </label>
+
           <label className="inline-flex items-center gap-2 text-sm font-medium text-boutique-ink">
             <input
               name={adminFormFields.product.isSoldOut}

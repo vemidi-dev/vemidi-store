@@ -70,6 +70,7 @@ export function parseProductCreateDraft(raw: string): ProductCreateDraft | null 
       price?: unknown;
       is_customizable?: unknown;
       is_sold_out?: unknown;
+      show_quantity_selector?: unknown;
       fulfillment_type?: unknown;
       stock_quantity?: unknown;
       card_badge?: unknown;
@@ -316,6 +317,7 @@ export function parseProductCreateDraft(raw: string): ProductCreateDraft | null 
       price: typeof parsed.price === "string" ? parsed.price : "",
       isCustomizable: parsed.is_customizable === true,
       isSoldOut: parsed.is_sold_out === true,
+      showQuantitySelector: parsed.show_quantity_selector === true,
       fulfillmentType:
         parsed.fulfillment_type === "stocked" || parsed.fulfillment_type === "unavailable"
           ? parsed.fulfillment_type

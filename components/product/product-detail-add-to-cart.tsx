@@ -207,10 +207,17 @@ export function ProductDetailAddToCart({
   const maxSelectableQuantity =
     remainingStock === null ? 99 : Math.max(1, remainingStock);
   const stockSelectionBlocked = remainingStock !== null && remainingStock <= 0;
+  const showQuantitySelector = Boolean(product.allowQuantitySelector);
 
   useEffect(() => {
     setQuantity((current) => clampProductQuantity(current, maxSelectableQuantity));
   }, [maxSelectableQuantity]);
+
+  useEffect(() => {
+    if (!showQuantitySelector) {
+      setQuantity(1);
+    }
+  }, [showQuantitySelector]);
 
   useEffect(() => {
     if (!cartReady) {
@@ -452,7 +459,8 @@ export function ProductDetailAddToCart({
   const displayedUnitPrice = optionGroups.length
     ? estimatedUnitPrice
     : product.price + personalizationDelta;
-  const displayedLinePrice = displayedUnitPrice * quantity;
+  const selectedQuantity = showQuantitySelector ? quantity : 1;
+  const displayedLinePrice = displayedUnitPrice * selectedQuantity;
 
   useEffect(() => {
     if (!optionGroups.length) {
@@ -537,7 +545,7 @@ export function ProductDetailAddToCart({
 
     addProduct(
       product,
-      quantity,
+      selectedQuantity,
       personalization || undefined,
       filterSelectedColorsForOrder(flattenSelectedColors()) || undefined,
       personalizationFields,
@@ -914,6 +922,7 @@ export function ProductDetailAddToCart({
       ) : null}
 
       {error ? <p className="mt-5 text-sm font-medium text-red-700">{error}</p> : null}
+      {showQuantitySelector ? (
       <div className="mt-5 rounded-2xl border border-boutique-line bg-white/70 p-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
@@ -970,9 +979,9 @@ export function ProductDetailAddToCart({
             </button>
           </div>
         </div>
-        {quantity > 1 ? (
+        {selectedQuantity > 1 ? (
           <p className="mt-3 text-sm text-boutique-muted">
-            Общо за {quantity} бр.:{" "}
+            Общо за {selectedQuantity} бр.:{" "}
             <strong className="text-boutique-ink">{formatEur(displayedLinePrice)}</strong>
           </p>
         ) : null}
@@ -982,6 +991,12 @@ export function ProductDetailAddToCart({
           </p>
         ) : null}
       </div>
+      ) : null}
+      {!showQuantitySelector && stockSelectionBlocked ? (
+        <p className="mt-4 text-sm font-medium text-red-700">
+          Всички налични бройки вече са в количката.
+        </p>
+      ) : null}
       <button
         type="button"
         aria-live="polite"
@@ -1161,7 +1176,7 @@ export function ProductDetailAddToCart({
               Ориентировъчна цена
             </p>
             <p className="font-heading text-xl text-boutique-ink">
-              {quantity > 1 ? formatEur(displayedLinePrice) : formatEur(displayedUnitPrice)}
+              {selectedQuantity > 1 ? formatEur(displayedLinePrice) : formatEur(displayedUnitPrice)}
             </p>
           </div>
           <button

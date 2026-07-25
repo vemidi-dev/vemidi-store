@@ -659,6 +659,10 @@ export async function createProduct(formData: FormData) {
   const fulfillmentNote = getOptionalString(formData, adminFormFields.product.fulfillmentNote);
   const isCustomizable = isChecked(formData, adminFormFields.product.isCustomizable);
   const isSoldOut = isChecked(formData, adminFormFields.product.isSoldOut);
+  const showQuantitySelector = isChecked(
+    formData,
+    adminFormFields.product.showQuantitySelector,
+  );
   const {
     fulfillmentType,
     stockQuantity,
@@ -779,7 +783,7 @@ export async function createProduct(formData: FormData) {
   const newProductId = String(productId);
   const { error: statusError } = await supabase
     .from("products")
-    .update({ status: "draft", visibility })
+    .update({ status: "draft", visibility, show_quantity_selector: showQuantitySelector })
     .eq("id", newProductId);
 
   if (statusError) {
@@ -904,6 +908,10 @@ export async function updateProduct(formData: FormData) {
   const faqItemIds = getProductFaqItemIds(formData);
   const isCustomizable = isChecked(formData, adminFormFields.product.isCustomizable);
   const isSoldOut = isChecked(formData, adminFormFields.product.isSoldOut);
+  const showQuantitySelector = isChecked(
+    formData,
+    adminFormFields.product.showQuantitySelector,
+  );
   const {
     fulfillmentType,
     stockQuantity,
@@ -1050,7 +1058,7 @@ export async function updateProduct(formData: FormData) {
 
   const { error: statusError } = await supabase
     .from("products")
-    .update({ status: publicationStatus, visibility })
+    .update({ status: publicationStatus, visibility, show_quantity_selector: showQuantitySelector })
     .eq("id", id);
 
   if (statusError) {

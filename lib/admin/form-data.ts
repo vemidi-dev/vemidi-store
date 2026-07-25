@@ -31,6 +31,7 @@ type CreateProductDraftPayload = {
   price: string;
   is_customizable: boolean;
   is_sold_out: boolean;
+  show_quantity_selector: boolean;
   fulfillment_type: string;
   stock_quantity: string;
   card_badge: string;
@@ -265,6 +266,7 @@ export function makeCreateProductDraft(formData: FormData) {
     price: getString(formData, adminFormFields.product.price),
     is_customizable: isChecked(formData, adminFormFields.product.isCustomizable),
     is_sold_out: isChecked(formData, adminFormFields.product.isSoldOut),
+    show_quantity_selector: isChecked(formData, adminFormFields.product.showQuantitySelector),
     fulfillment_type: getString(formData, adminFormFields.product.fulfillmentType) || "made_to_order",
     stock_quantity: getString(formData, adminFormFields.product.stockQuantity),
     card_badge: getString(formData, adminFormFields.product.cardBadge),
