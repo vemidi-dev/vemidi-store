@@ -27,6 +27,7 @@ import type { SelectedProductColor } from "@/lib/product-colors";
 import {
   filterSelectedColorsForOrder,
   flattenSelectedColorsFromQuantities,
+  formatSelectedColorQuantityLabel,
   isQuantityColorField,
   validateColorQuantities,
 } from "@/lib/product-color-quantities";
@@ -58,6 +59,17 @@ type ProductDetailAddToCartProps = {
   attribution?: CampaignAttribution;
   initialOptionSelections?: ProductOptionSelection[];
   layout?: "card" | "embedded";
+};
+
+type PreparedProductVariant = {
+  id: string;
+  quantity: number;
+  unitPrice: number;
+  personalization?: string;
+  selectedColors?: SelectedProductColor[];
+  personalizationFields?: ReturnType<typeof buildPersonalizationFieldValues>;
+  optionSelections?: ProductOptionSelection[];
+  summary: string[];
 };
 
 function clampUpsellQuantity(value: number, maxQuantity: number) {
@@ -176,6 +188,7 @@ export function ProductDetailAddToCart({
     useState<ProductOptionSelection[]>(initialOptionSelections);
   const [estimatedUnitPrice, setEstimatedUnitPrice] = useState(product.price);
   const [quantity, setQuantity] = useState(1);
+  const [preparedVariants, setPreparedVariants] = useState<PreparedProductVariant[]>([]);
   const [showMobileBar, setShowMobileBar] = useState(false);
   const [draftReady, setDraftReady] = useState(false);
   const colorFields = useMemo(() => product.colorFields ?? [], [product.colorFields]);
@@ -204,10 +217,21 @@ export function ProductDetailAddToCart({
     productStockLimit === null
       ? null
       : Math.max(0, productStockLimit - currentProductQuantityInCart);
-  const maxSelectableQuantity =
-    remainingStock === null ? 99 : Math.max(1, remainingStock);
-  const stockSelectionBlocked = remainingStock !== null && remainingStock <= 0;
   const showQuantitySelector = Boolean(product.allowQuantitySelector);
+  const usePreparedVariants =
+    showQuantitySelector && product.fulfillmentType === "stocked";
+  const preparedQuantityTotal = preparedVariants.reduce(
+    (total, variant) => total + variant.quantity,
+    0,
+  );
+  const remainingStockForSelection =
+    usePreparedVariants && remainingStock !== null
+      ? Math.max(0, remainingStock - preparedQuantityTotal)
+      : remainingStock;
+  const maxSelectableQuantity =
+    remainingStockForSelection === null ? 99 : Math.max(1, remainingStockForSelection);
+  const stockSelectionBlocked =
+    remainingStockForSelection !== null && remainingStockForSelection <= 0;
 
   useEffect(() => {
     setQuantity((current) => clampProductQuantity(current, maxSelectableQuantity));
@@ -218,6 +242,10 @@ export function ProductDetailAddToCart({
       setQuantity(1);
     }
   }, [showQuantitySelector]);
+
+  useEffect(() => {
+    setPreparedVariants([]);
+  }, [product.id]);
 
   useEffect(() => {
     if (!cartReady) {
@@ -455,7 +483,10 @@ export function ProductDetailAddToCart({
     enabledOptionalFields,
   );
   const canAddToCart = validate() === null;
-  const canSubmitAddToCart = canAddToCart && !stockSelectionBlocked;
+  const canPrepareVariant = canAddToCart && !stockSelectionBlocked;
+  const canSubmitAddToCart = usePreparedVariants
+    ? preparedVariants.length > 0
+    : canPrepareVariant;
   const displayedUnitPrice = optionGroups.length
     ? estimatedUnitPrice
     : product.price + personalizationDelta;
@@ -528,7 +559,110 @@ export function ProductDetailAddToCart({
     setError(null);
   };
 
+  const buildCurrentVariantSummary = (
+    colors: SelectedProductColor[],
+    options: ProductOptionSelection[],
+  ) => {
+    const rows: string[] = [];
+
+    options.forEach((selection) => {
+      const group = optionGroups.find((candidate) => candidate.id === selection.groupId);
+      if (!group) {
+        return;
+      }
+
+      const valueLabels = selection.valueIds
+        .map((valueId) => group.values.find((value) => value.id === valueId)?.label)
+        .filter((label): label is string => Boolean(label));
+      const textValue = selection.textValue?.trim();
+      const value = valueLabels.length ? valueLabels.join(", ") : textValue;
+      if (value) {
+        rows.push(`${group.name}: ${value}`);
+      }
+    });
+
+    const colorsByField = new Map<string, string[]>();
+    colors.forEach((color) => {
+      const labels = colorsByField.get(color.fieldLabel) ?? [];
+      labels.push(formatSelectedColorQuantityLabel(color));
+      colorsByField.set(color.fieldLabel, labels);
+    });
+    colorsByField.forEach((labels, fieldLabel) => {
+      rows.push(`${fieldLabel}: ${labels.join(", ")}`);
+    });
+
+    return rows.length ? rows : ["Основен вариант"];
+  };
+
+  const handlePrepareVariant = () => {
+    const validationError = validate();
+    if (validationError) {
+      setError(validationError);
+      document
+        .getElementById("product-configurator")
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+
+    if (stockSelectionBlocked) {
+      setError("Всички налични бройки вече са добавени към избраните варианти или количката.");
+      return;
+    }
+
+    const colors = filterSelectedColorsForOrder(flattenSelectedColors());
+    const options = optionSelections.map((selection) => ({
+      ...selection,
+      valueIds: [...selection.valueIds],
+    }));
+    const variant: PreparedProductVariant = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      quantity: selectedQuantity,
+      unitPrice: displayedUnitPrice,
+      personalization: personalization || undefined,
+      selectedColors: colors.length ? colors : undefined,
+      personalizationFields: personalizationFields.length
+        ? personalizationFields.map((field) => ({ ...field }))
+        : undefined,
+      optionSelections: options.length ? options : undefined,
+      summary: buildCurrentVariantSummary(colors, options),
+    };
+
+    setPreparedVariants((current) => [...current, variant]);
+    setQuantity(1);
+    setError(null);
+  };
+
+  const removePreparedVariant = (variantId: string) => {
+    setPreparedVariants((current) =>
+      current.filter((variant) => variant.id !== variantId),
+    );
+  };
+
   const handleAddToCart = () => {
+    if (usePreparedVariants) {
+      if (preparedVariants.length === 0) {
+        setError("Добавете поне един вариант към списъка.");
+        return;
+      }
+
+      preparedVariants.forEach((variant) => {
+        addProduct(
+          product,
+          variant.quantity,
+          variant.personalization,
+          variant.selectedColors,
+          variant.personalizationFields,
+          attribution,
+          variant.optionSelections,
+        );
+      });
+      setPreparedVariants([]);
+      setError(null);
+      setAdded(true);
+      setTimeout(() => setAdded(false), 2200);
+      return;
+    }
+
     const validationError = validate();
     if (validationError) {
       setError(validationError);
@@ -927,9 +1061,9 @@ export function ProductDetailAddToCart({
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <p className="text-sm font-semibold text-boutique-ink">Количество</p>
-            {remainingStock !== null ? (
+            {remainingStockForSelection !== null ? (
               <p className="mt-1 text-xs text-boutique-muted">
-                Налични за добавяне: {remainingStock} бр.
+                Налични за добавяне: {remainingStockForSelection} бр.
               </p>
             ) : (
               <p className="mt-1 text-xs text-boutique-muted">
@@ -991,6 +1125,73 @@ export function ProductDetailAddToCart({
           </p>
         ) : null}
       </div>
+      ) : null}
+      {usePreparedVariants ? (
+        <section className="mt-4 rounded-2xl border border-boutique-line bg-boutique-bg/60 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-sm font-semibold text-boutique-ink">
+                Избрани варианти
+              </h2>
+              <p className="mt-1 text-xs leading-5 text-boutique-muted">
+                Добавете отделен ред за всяка комбинация от размер, материал, цвят и количество.
+              </p>
+            </div>
+            <button
+              type="button"
+              disabled={!canPrepareVariant}
+              onClick={handlePrepareVariant}
+              className="rounded-xl border border-boutique-line bg-white px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-boutique-ink transition hover:border-boutique-sage-deep hover:text-boutique-sage-deep disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Добави вариант
+            </button>
+          </div>
+
+          {preparedVariants.length ? (
+            <div className="mt-4 space-y-3">
+              {preparedVariants.map((variant, index) => (
+                <article
+                  key={variant.id}
+                  className="rounded-xl border border-boutique-line bg-white px-3 py-3"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold text-boutique-ink">
+                        Вариант {index + 1} · {variant.quantity} бр. ·{" "}
+                        {formatEur(variant.unitPrice * variant.quantity)}
+                      </p>
+                      <div className="mt-1 space-y-0.5 text-xs leading-5 text-boutique-muted">
+                        {variant.summary.map((row) => (
+                          <p key={`${variant.id}-${row}`}>{row}</p>
+                        ))}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removePreparedVariant(variant.id)}
+                      className="shrink-0 text-xs font-semibold text-boutique-accent underline-offset-4 hover:text-boutique-ink hover:underline"
+                    >
+                      Премахни
+                    </button>
+                  </div>
+                </article>
+              ))}
+              <p className="text-sm font-semibold text-boutique-ink">
+                Общо избрани: {preparedQuantityTotal} бр. ·{" "}
+                {formatEur(
+                  preparedVariants.reduce(
+                    (total, variant) => total + variant.unitPrice * variant.quantity,
+                    0,
+                  ),
+                )}
+              </p>
+            </div>
+          ) : (
+            <p className="mt-4 rounded-xl border border-dashed border-boutique-line bg-white/70 px-3 py-3 text-sm text-boutique-muted">
+              Все още няма добавени варианти.
+            </p>
+          )}
+        </section>
       ) : null}
       {!showQuantitySelector && stockSelectionBlocked ? (
         <p className="mt-4 text-sm font-medium text-red-700">
