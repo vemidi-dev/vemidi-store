@@ -103,10 +103,10 @@ export function ProductDetailAddToCart({
     () => product.customizable && !(product.personalizationFields?.length)
       ? [{
           id: "legacy",
-          label: "РўРµРєСЃС‚ Р·Р° РїРµСЂСЃРѕРЅР°Р»РёР·Р°С†РёСЏ",
+          label: "Текст за персонализация",
           key: "personalization",
           type: "textarea",
-          placeholder: "РќР°РїРёС€РµС‚Рµ РёРјРµ, РґР°С‚Р° РёР»Рё С‚РµРєСЃС‚",
+          placeholder: "Напишете име, дата или текст",
           maxLength: 1000,
           priceDelta: 0,
           required: false,
@@ -434,7 +434,7 @@ export function ProductDetailAddToCart({
   const validate = () => {
     for (const field of fields) {
       if (field.required && !(values[field.id] ?? "").trim()) {
-        return `РџРѕРїСЉР»РЅРµС‚Рµ РїРѕР»РµС‚Рѕ вЂћ${field.label}вЂњ.`;
+        return `Попълнете полето „${field.label}“.`;
       }
     }
     for (const field of fields) {
@@ -443,7 +443,7 @@ export function ProductDetailAddToCart({
         enabledOptionalFields.has(field.id) &&
         !(values[field.id] ?? "").trim()
       ) {
-        return `РџРѕРїСЉР»РЅРµС‚Рµ РїРѕР»РµС‚Рѕ вЂћ${field.label}вЂњ РёР»Рё РёР·РєР»СЋС‡РµС‚Рµ РїРµСЂСЃРѕРЅР°Р»РёР·Р°С†РёСЏС‚Р°.`;
+        return `Попълнете полето „${field.label}“ или изключете персонализацията.`;
       }
     }
     for (const field of colorFields) {
@@ -460,7 +460,7 @@ export function ProductDetailAddToCart({
 
       const count = (selectedByGroup[field.id] ?? []).length;
       if (count < field.minSelect || count > field.maxSelect) {
-        return `РР·Р±РµСЂРµС‚Рµ ${field.minSelect === field.maxSelect ? field.minSelect : `${field.minSelect}вЂ“${field.maxSelect}`} С†РІСЏС‚Р° Р·Р° вЂћ${field.label}вЂњ.`;
+        return `Изберете ${field.minSelect === field.maxSelect ? field.minSelect : `${field.minSelect}–${field.maxSelect}`} цвята за „${field.label}“.`;
       }
     }
     const optionValidation = validateProductOptionSelections(
@@ -598,7 +598,7 @@ export function ProductDetailAddToCart({
       rows.push(`${fieldLabel}: ${labels.join(", ")}`);
     });
 
-    return rows.length ? rows : ["РћСЃРЅРѕРІРµРЅ РІР°СЂРёР°РЅС‚"];
+    return rows.length ? rows : ["Основен вариант"];
   };
 
   const handlePrepareVariant = () => {
@@ -612,7 +612,7 @@ export function ProductDetailAddToCart({
     }
 
     if (stockSelectionBlocked) {
-      setError("Р’СЃРёС‡РєРё РЅР°Р»РёС‡РЅРё Р±СЂРѕР№РєРё РІРµС‡Рµ СЃР° РґРѕР±Р°РІРµРЅРё РєСЉРј РёР·Р±СЂР°РЅРёС‚Рµ РІР°СЂРёР°РЅС‚Рё РёР»Рё РєРѕР»РёС‡РєР°С‚Р°.");
+      setError("Всички налични бройки вече са добавени към избраните варианти или количката.");
       return;
     }
 
@@ -648,7 +648,7 @@ export function ProductDetailAddToCart({
   const handleAddToCart = () => {
     if (usePreparedVariants) {
       if (preparedVariants.length === 0) {
-        setError("Р”РѕР±Р°РІРµС‚Рµ РїРѕРЅРµ РµРґРёРЅ РІР°СЂРёР°РЅС‚ РєСЉРј СЃРїРёСЃСЉРєР°.");
+        setError("Добавете поне един вариант към списъка.");
         return;
       }
 
@@ -680,7 +680,7 @@ export function ProductDetailAddToCart({
     }
 
     if (stockSelectionBlocked) {
-      setError("Р’РµС‡Рµ СЃС‚Рµ РґРѕР±Р°РІРёР»Рё РІСЃРёС‡РєРё РЅР°Р»РёС‡РЅРё Р±СЂРѕР№РєРё РѕС‚ С‚РѕР·Рё РїСЂРѕРґСѓРєС‚ РІ РєРѕР»РёС‡РєР°С‚Р°.");
+      setError("Вече сте добавили всички налични бройки от този продукт в количката.");
       return;
     }
 
@@ -730,10 +730,10 @@ export function ProductDetailAddToCart({
   if (!product.orderable) {
     const message =
       product.fulfillmentType === "unavailable"
-        ? "РўРѕР·Рё РїСЂРѕРґСѓРєС‚ РІСЂРµРјРµРЅРЅРѕ РЅРµ РјРѕР¶Рµ РґР° Р±СЉРґРµ РїРѕСЂСЉС‡Р°РЅ."
-        : product.availabilityLabel === "РР·С‡РµСЂРїР°РЅ"
-          ? "РўРѕР·Рё РїСЂРѕРґСѓРєС‚ РІСЂРµРјРµРЅРЅРѕ РЅРµ Рµ РЅР°Р»РёС‡РµРЅ Р·Р° РїРѕСЂСЉС‡РєР°. РњРѕР¶РµС‚Рµ РґР° СЃРµ СЃРІСЉСЂР¶РµС‚Рµ СЃ РЅР°СЃ Р·Р° Р°Р»С‚РµСЂРЅР°С‚РёРІР° РёР»Рё СЃСЂРѕРє."
-          : "РўРѕР·Рё РїСЂРѕРґСѓРєС‚ РЅРµ РјРѕР¶Рµ РґР° Р±СЉРґРµ РїРѕСЂСЉС‡Р°РЅ РІ РјРѕРјРµРЅС‚Р°.";
+        ? "Този продукт временно не може да бъде поръчан."
+        : product.availabilityLabel === "Изчерпан"
+          ? "Този продукт временно не е наличен за поръчка. Можете да се свържете с нас за алтернатива или срок."
+          : "Този продукт не може да бъде поръчан в момента.";
 
     return (
       <div
@@ -868,7 +868,7 @@ export function ProductDetailAddToCart({
                                 onClick={() => setWishFieldId(field.id)}
                     className="rounded-full border border-boutique-rose/40 px-3 py-1 text-xs font-semibold text-boutique-rose-deep transition duration-200 ease-out hover:border-boutique-rose-deep hover:bg-boutique-blush motion-reduce:transition-none"
                               >
-                                в™Ў РРґРµРё Р·Р° РїРѕР¶РµР»Р°РЅРёРµ
+                                ♡ Идеи за пожелание
                               </button>
                             ) : null}
                           </span>
@@ -898,7 +898,7 @@ export function ProductDetailAddToCart({
                       onClick={() => setWishFieldId(field.id)}
                       className="rounded-full border border-boutique-rose/40 px-3 py-1 text-xs font-semibold text-boutique-rose-deep"
                     >
-                      в™Ў РРґРµРё Р·Р° РїРѕР¶РµР»Р°РЅРёРµ
+                      ♡ Идеи за пожелание
                     </button>
                   ) : null}
                 </span>
@@ -917,8 +917,8 @@ export function ProductDetailAddToCart({
           })}
           {fields.some((field) => field.allowsWishTemplates) ? (
             <p className="text-xs leading-5 text-boutique-muted">
-              РџСЂРµРіР»РµРґР°Р№С‚Рµ Рё СЂРµРґР°РєС‚РёСЂР°Р№С‚Рµ РёР·Р±СЂР°РЅРѕС‚Рѕ РїРѕР¶РµР»Р°РЅРёРµ СЃРїСЂСЏРјРѕ РїРѕР»СѓС‡Р°С‚РµР»СЏ вЂ“ РёРјРµ, РїРѕР»,
-              РІСЉР·СЂР°СЃС‚ Рё РєРѕРЅРєСЂРµС‚РµРЅ РїРѕРІРѕРґ.
+              Прегледайте и редактирайте избраното пожелание спрямо получателя - име, пол,
+              възраст и конкретен повод.
             </p>
           ) : null}
         </div>
@@ -937,9 +937,9 @@ export function ProductDetailAddToCart({
 
       {!optionGroups.length && personalizationDelta > 0 ? (
         <p className="mt-5 text-sm text-boutique-muted">
-          РћСЂРёРµРЅС‚РёСЂРѕРІСЉС‡РЅР° С†РµРЅР°:{" "}
+          Ориентировъчна цена:{" "}
           <strong className="text-boutique-ink">
-            {(product.price + personalizationDelta).toFixed(2).replace(".", ",")} в‚¬
+            {(product.price + personalizationDelta).toFixed(2).replace(".", ",")} €
           </strong>
         </p>
       ) : null}
@@ -1233,13 +1233,13 @@ export function ProductDetailAddToCart({
           className="mt-4 rounded-2xl border border-boutique-line bg-boutique-bg/60 p-4"
         >
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-boutique-accent">
-            РЎРїРµС†РёР°Р»РЅР° РѕС„РµСЂС‚Р°
+            Специална оферта
           </p>
           <h2
             id="product-upsell-title"
             className="mt-1 font-heading text-2xl text-boutique-ink"
           >
-            {upsellSectionTitle?.trim() || "Р”РѕР±Р°РІРµС‚Рµ РєСЉРј РїРѕРґР°СЂСЉРєР°"}
+            {upsellSectionTitle?.trim() || "Добавете към подаръка"}
           </h2>
           <div className="mt-4 grid gap-3">
             {upsellOffers.map((offer) => {
@@ -1291,7 +1291,7 @@ export function ProductDetailAddToCart({
                       />
                     ) : (
                       <span className="grid h-full w-full place-items-center text-sm text-boutique-muted">
-                        в—‡
+                        ◇
                       </span>
                     )}
                   </Link>
@@ -1319,7 +1319,7 @@ export function ProductDetailAddToCart({
                     <div className="mt-3 inline-flex items-center rounded-lg border border-boutique-line bg-boutique-paper">
                       <button
                         type="button"
-                        aria-label="РќР°РјР°Р»РµС‚Рµ РєРѕР»РёС‡РµСЃС‚РІРѕС‚Рѕ"
+                        aria-label="Намалете количеството"
                         disabled={!selected}
                         onClick={() =>
                           setUpsellQuantities((current) => ({
@@ -1332,7 +1332,7 @@ export function ProductDetailAddToCart({
                         }
                         className="grid h-8 w-8 place-items-center text-lg text-boutique-muted transition hover:text-boutique-ink disabled:opacity-40"
                       >
-                        в€’
+                        −
                       </button>
                       <input
                         type="number"
@@ -1353,7 +1353,7 @@ export function ProductDetailAddToCart({
                       />
                       <button
                         type="button"
-                        aria-label="РЈРІРµР»РёС‡РµС‚Рµ РєРѕР»РёС‡РµСЃС‚РІРѕС‚Рѕ"
+                        aria-label="Увеличете количеството"
                         disabled={!selected || quantity >= offer.maxQuantity}
                         onClick={() =>
                           setUpsellQuantities((current) => ({
@@ -1370,7 +1370,7 @@ export function ProductDetailAddToCart({
                       </button>
                     </div>
                     <p className="mt-1 text-[11px] text-boutique-muted">
-                      РњР°РєСЃРёРјСѓРј {offer.maxQuantity} Р±СЂ.
+                      Максимум {offer.maxQuantity} бр.
                     </p>
                   </div>
                 </article>
@@ -1384,12 +1384,12 @@ export function ProductDetailAddToCart({
     {showMobileBar ? (
       <div
         className="fixed inset-x-0 bottom-0 z-50 border-t border-boutique-line bg-boutique-paper/95 px-4 py-3 shadow-[0_-10px_30px_-20px_rgb(44_40_37_/0.45)] backdrop-blur sm:hidden"
-        aria-label="Р‘СЉСЂР·Рѕ РґРѕР±Р°РІСЏРЅРµ РІ РєРѕР»РёС‡РєР°С‚Р°"
+        aria-label="Бързо добавяне в количката"
       >
         <div className="mx-auto flex max-w-xl items-center gap-3">
           <div className="min-w-0 flex-1">
             <p className="text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-boutique-muted">
-              РћСЂРёРµРЅС‚РёСЂРѕРІСЉС‡РЅР° С†РµРЅР°
+              Ориентировъчна цена
             </p>
             <p className="font-heading text-xl text-boutique-ink">
               {selectedQuantity > 1 ? formatEur(displayedLinePrice) : formatEur(displayedUnitPrice)}
@@ -1415,7 +1415,7 @@ export function ProductDetailAddToCart({
           <div
             role="dialog"
             aria-modal="true"
-            aria-label="РР·Р±РѕСЂ РЅР° РіРѕС‚РѕРІРѕ РїРѕР¶РµР»Р°РЅРёРµ"
+            aria-label="Избор на готово пожелание"
             className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-boutique-ink/45 p-4 pt-[6vh] sm:p-6 sm:pt-[6vh]"
             onMouseDown={(event) => {
               if (event.target === event.currentTarget) {
@@ -1428,10 +1428,10 @@ export function ProductDetailAddToCart({
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <h2 className="font-heading text-3xl text-boutique-ink">
-                      РР·Р±РµСЂРµС‚Рµ РіРѕС‚РѕРІРѕ РїРѕР¶РµР»Р°РЅРёРµ
+                      Изберете готово пожелание
                     </h2>
                     <p className="mt-2 text-sm text-boutique-muted">
-                      РЎР»РµРґ РёР·Р±РѕСЂР° РјРѕР¶РµС‚Рµ СЃРІРѕР±РѕРґРЅРѕ РґР° СЂРµРґР°РєС‚РёСЂР°С‚Рµ С‚РµРєСЃС‚Р°.
+                      След избора можете свободно да редактирате текста.
                     </p>
                   </div>
                   <button
@@ -1440,14 +1440,14 @@ export function ProductDetailAddToCart({
                     onClick={() => setWishFieldId(null)}
                     className="shrink-0 text-2xl leading-none text-boutique-muted transition hover:text-boutique-ink"
                   >
-                    Г—
+                    ×
                   </button>
                 </div>
                 {showWishOccasionFilters ? (
                   <div
                     className="mt-5 flex flex-wrap gap-2"
                     role="group"
-                    aria-label="Р¤РёР»С‚СЉСЂ РїРѕ РїРѕРІРѕРґ"
+                    aria-label="Филтър по повод"
                   >
                     <button
                       type="button"
@@ -1459,7 +1459,7 @@ export function ProductDetailAddToCart({
                           : "border-boutique-line bg-white text-boutique-ink hover:border-boutique-sage-deep/40 hover:text-boutique-sage-deep"
                       }`}
                     >
-                      Р’СЃРёС‡РєРё
+                      Всички
                     </button>
                     {wishOccasionFilters.map((occasion) => {
                       const isSelected = wishOccasionFilter === occasion.id;
@@ -1506,7 +1506,7 @@ export function ProductDetailAddToCart({
                         }}
                         className="mt-3 rounded-lg bg-boutique-sage-deep px-4 py-2 text-xs font-semibold text-white transition duration-200 ease-out hover:bg-boutique-ink motion-reduce:transition-none"
                       >
-                        РР·Р±РµСЂРµС‚Рµ С‚РµРєСЃС‚Р°
+                        Изберете текста
                       </button>
                     </article>
                   ))}

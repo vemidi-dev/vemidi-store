@@ -179,7 +179,7 @@ export function CartPanel({ content }: { content: CartPageContent }) {
                                       />
                                     ) : (
                                       <span className="grid h-full w-full place-items-center text-sm text-boutique-muted">
-                                        в—‡
+                                        ◇
                                       </span>
                                     )}
                                   </Link>
