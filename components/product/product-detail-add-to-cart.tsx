@@ -464,7 +464,7 @@ export function ProductDetailAddToCart({
 
       const count = (selectedByGroup[field.id] ?? []).length;
       if (count < field.minSelect || count > field.maxSelect) {
-        return `Изберете ${field.minSelect === field.maxSelect ? field.minSelect : `${field.minSelect}-${field.maxSelect}`} цвята за „${field.label}“.`;
+        return `Изберете ${field.minSelect === field.maxSelect ? field.minSelect : `${field.minSelect}–${field.maxSelect}`} цвята за „${field.label}“.`;
       }
     }
     const optionValidation = validateProductOptionSelections(
