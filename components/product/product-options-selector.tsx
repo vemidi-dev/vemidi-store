@@ -86,7 +86,7 @@ export function ProductOptionsSelector({
   }
 
   return (
-    <div className="mt-6 space-y-6">
+    <div className="mt-5 space-y-5">
       {visibleGroups.map((group) => {
         const selection = selectionByGroup.get(group.id) ?? {
           groupId: group.id,
@@ -106,7 +106,7 @@ export function ProductOptionsSelector({
                   {group.isRequired ? " *" : ""}
                 </legend>
                 <label
-                  className={`mt-2.5 flex items-center gap-3 rounded-xl border border-boutique-line bg-boutique-bg px-4 py-3 transition duration-200 ease-out hover:border-boutique-sage-deep/35 hover:bg-white motion-reduce:transition-none ${
+                  className={`mt-2 flex items-center gap-3 rounded-xl border border-boutique-line bg-boutique-bg px-3 py-2.5 transition duration-200 ease-out hover:border-boutique-sage-deep/35 hover:bg-white motion-reduce:transition-none ${
                     booleanValues.yes.isSoldOut
                       ? "cursor-not-allowed opacity-60"
                       : "cursor-pointer"
@@ -158,7 +158,7 @@ export function ProductOptionsSelector({
                 {group.name}
                 {group.isRequired ? " *" : ""}
               </legend>
-              <div className="mt-2.5 grid gap-2.5">
+              <div className="mt-2 grid gap-2 sm:grid-cols-2">
                 {group.values
                   .filter((option) => option.isActive)
                   .map((option) => {
@@ -171,7 +171,7 @@ export function ProductOptionsSelector({
                     return (
                       <label
                         key={option.id}
-                        className={`relative grid min-h-[4.5rem] cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 text-sm transition duration-200 ease-out motion-reduce:transition-none ${
+                        className={`relative grid min-h-[3.25rem] cursor-pointer items-center gap-2.5 rounded-xl border px-3 py-2.5 text-sm transition duration-200 ease-out motion-reduce:transition-none ${
                           priceLabel
                             ? "grid-cols-[auto_minmax(0,1fr)_auto]"
                             : "grid-cols-[auto_minmax(0,1fr)]"
@@ -215,7 +215,7 @@ export function ProductOptionsSelector({
                             </span>
                           ) : null}
                         {priceLabel ? (
-                          <span className="shrink-0 whitespace-nowrap text-base font-semibold text-boutique-ink">
+                          <span className="shrink-0 whitespace-nowrap text-sm font-semibold text-boutique-ink">
                             {priceLabel}
                           </span>
                         ) : null}
@@ -246,7 +246,7 @@ export function ProductOptionsSelector({
                 textValue: event.target.value.slice(0, group.maxLength ?? 1000),
               }),
             className:
-              "mt-2 w-full rounded-xl border border-boutique-line bg-white px-4 py-3 text-sm text-boutique-ink outline-none transition duration-200 ease-out focus:border-boutique-rose-deep focus:ring-2 focus:ring-boutique-rose/15 motion-reduce:transition-none",
+              "mt-2 w-full rounded-xl border border-boutique-line bg-white px-3 py-2.5 text-sm text-boutique-ink outline-none transition duration-200 ease-out focus:border-boutique-rose-deep focus:ring-2 focus:ring-boutique-rose/15 motion-reduce:transition-none",
           };
 
           return (
@@ -272,7 +272,7 @@ export function ProductOptionsSelector({
         return null;
       })}
 
-      <p className="rounded-xl bg-boutique-bg px-4 py-2.5 text-sm leading-5 text-boutique-muted">
+      <p className="rounded-xl bg-boutique-bg px-3 py-2 text-sm leading-5 text-boutique-muted">
         Ориентировъчна цена:{" "}
         <span className="font-semibold text-boutique-ink">
           {estimatedPrice.toFixed(2).replace(".", ",")} €

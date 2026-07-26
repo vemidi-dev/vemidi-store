@@ -511,6 +511,27 @@ export function ProductDetailAddToCart({
   const displayedLinePrice = displayedUnitPrice * selectedQuantity;
   const showQuantityPriceTiers =
     showQuantitySelector && hasQuantityPriceTiers(product.quantityPriceTiers);
+  const preparedPricingQuantity =
+    currentProductQuantityInCart + preparedQuantityTotal;
+  const getPreparedVariantUnitPrice = (variant: PreparedProductVariant) => {
+    const originalBaseUnitPrice = resolveQuantityUnitPrice(
+      product.price,
+      product.quantityPriceTiers,
+      variant.quantity,
+    );
+    const tierBaseUnitPrice = resolveQuantityUnitPrice(
+      product.price,
+      product.quantityPriceTiers,
+      Math.max(variant.quantity, preparedPricingQuantity),
+    );
+    const variantDelta = Math.max(0, variant.unitPrice - originalBaseUnitPrice);
+    return tierBaseUnitPrice + variantDelta;
+  };
+  const preparedVariantsTotalPrice = preparedVariants.reduce(
+    (total, variant) =>
+      total + getPreparedVariantUnitPrice(variant) * variant.quantity,
+    0,
+  );
 
   useEffect(() => {
     if (!optionGroups.length) {
@@ -617,9 +638,6 @@ export function ProductDetailAddToCart({
     const validationError = validate();
     if (validationError) {
       setError(validationError);
-      document
-        .getElementById("product-configurator")
-        ?.scrollIntoView({ behavior: "smooth", block: "start" });
       return;
     }
 
@@ -685,9 +703,6 @@ export function ProductDetailAddToCart({
     const validationError = validate();
     if (validationError) {
       setError(validationError);
-      document
-        .getElementById("product-configurator")
-        ?.scrollIntoView({ behavior: "smooth", block: "start" });
       return;
     }
 
@@ -775,7 +790,17 @@ export function ProductDetailAddToCart({
       }
     >
       {fields.length ? (
-        <div className="grid gap-4">
+        <details
+          className="rounded-2xl border border-boutique-line bg-white/70 p-3"
+          open={fields.some((field) => field.required)}
+        >
+          <summary className="cursor-pointer list-none text-sm font-semibold text-boutique-ink marker:hidden">
+            Персонализация по желание
+            <span className="ml-2 text-xs font-normal text-boutique-muted">
+              Гравиране, текст или готово пожелание
+            </span>
+          </summary>
+          <div className="mt-3 grid gap-3">
           {fields.map((field) => {
             const value = values[field.id] ?? "";
             const showInput = shouldShowPersonalizationInput(field, enabledOptionalFields);
@@ -933,7 +958,8 @@ export function ProductDetailAddToCart({
               възраст и конкретен повод.
             </p>
           ) : null}
-        </div>
+          </div>
+        </details>
       ) : null}
 
       {optionGroups.length ? (
@@ -982,7 +1008,7 @@ export function ProductDetailAddToCart({
       ) : null}
 
       {colorFields.length ? (
-        <div className={`mt-7 grid gap-6 ${!embedded && colorFields.length > 1 ? "lg:grid-cols-2" : ""}`}>
+        <div className={`mt-5 grid gap-4 ${!embedded && colorFields.length > 1 ? "lg:grid-cols-2" : ""}`}>
           {colorFields.map((field) =>
             isQuantityColorField(field) ? (
               <ProductColorQuantitySelector
@@ -997,19 +1023,19 @@ export function ProductDetailAddToCart({
             ) : (
               <fieldset
                 key={field.id}
-                className="rounded-2xl border border-boutique-line bg-white/60 p-4 transition-shadow duration-300 ease-out hover:shadow-boutique-sm motion-reduce:transition-none"
+                className="rounded-2xl border border-boutique-line bg-white/60 p-3 transition-shadow duration-300 ease-out hover:shadow-boutique-sm motion-reduce:transition-none"
               >
                 <legend className="px-1 text-sm font-semibold text-boutique-ink">
                   {field.label}
                 </legend>
                 <div
                   id={`color-options-${field.id}`}
-                  className={`mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4 ${embedded ? "lg:grid-cols-4" : "lg:grid-cols-6"}`}
+                  className={`mt-3 grid grid-cols-4 gap-2 sm:grid-cols-6 ${embedded ? "lg:grid-cols-4 xl:grid-cols-6" : "lg:grid-cols-6"}`}
                 >
                   {field.options
                     .filter((option, index) =>
                       expandedColorFields.has(field.id) ||
-                      index < 8 ||
+                      index < 12 ||
                       (selectedByGroup[field.id] ?? []).includes(option.id),
                     )
                     .map((option) => {
@@ -1017,7 +1043,7 @@ export function ProductDetailAddToCart({
                       return (
                         <label
                           key={option.id}
-                          className="group cursor-pointer rounded-2xl p-2 text-center text-xs text-boutique-muted transition duration-200 ease-out hover:bg-boutique-bg motion-reduce:transition-none"
+                          className="group cursor-pointer rounded-xl p-1.5 text-center text-xs text-boutique-muted transition duration-200 ease-out hover:bg-boutique-bg motion-reduce:transition-none"
                         >
                           <input
                             className="peer sr-only"
@@ -1041,7 +1067,7 @@ export function ProductDetailAddToCart({
                             }}
                           />
                           <span
-                            className={`relative mx-auto grid h-12 w-12 place-items-center rounded-full border-4 border-white shadow-sm ring-1 transition duration-200 ease-out group-hover:scale-[1.04] peer-focus-visible:ring-2 peer-focus-visible:ring-boutique-sage-deep motion-reduce:transition-none motion-reduce:group-hover:scale-100 ${
+                            className={`relative mx-auto grid h-10 w-10 place-items-center rounded-full border-[3px] border-white shadow-sm ring-1 transition duration-200 ease-out group-hover:scale-[1.04] peer-focus-visible:ring-2 peer-focus-visible:ring-boutique-sage-deep motion-reduce:transition-none motion-reduce:group-hover:scale-100 ${
                               selected
                                 ? "ring-2 ring-boutique-sage-deep"
                                 : "ring-boutique-line"
@@ -1068,7 +1094,7 @@ export function ProductDetailAddToCart({
                       );
                     })}
                 </div>
-                {field.options.length > 8 ? (
+                {field.options.length > 12 ? (
                   <button
                     type="button"
                     aria-expanded={expandedColorFields.has(field.id)}
@@ -1104,7 +1130,7 @@ export function ProductDetailAddToCart({
 
       {error ? <p className="mt-5 text-sm font-medium text-red-700">{error}</p> : null}
       {showQuantitySelector ? (
-      <div className="mt-5 rounded-2xl border border-boutique-line bg-white/70 p-4">
+      <div className="mt-5 rounded-2xl border border-boutique-line bg-white/70 p-3">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <p className="text-sm font-semibold text-boutique-ink">Количество</p>
@@ -1205,7 +1231,7 @@ export function ProductDetailAddToCart({
                       <div>
                         <p className="text-sm font-semibold text-boutique-ink">
                           Вариант {index + 1} · {variant.quantity} бр. ·{" "}
-                          {formatEur(variant.unitPrice * variant.quantity)}
+                          {formatEur(getPreparedVariantUnitPrice(variant) * variant.quantity)}
                         </p>
                         <div className="mt-1 space-y-0.5 text-xs leading-5 text-boutique-muted">
                           {variant.summary.map((row) => (
@@ -1225,12 +1251,7 @@ export function ProductDetailAddToCart({
                 ))}
                 <p className="text-sm font-semibold text-boutique-ink">
                   Общо избрани: {preparedQuantityTotal} бр. ·{" "}
-                  {formatEur(
-                    preparedVariants.reduce(
-                      (total, variant) => total + variant.unitPrice * variant.quantity,
-                      0,
-                    ),
-                  )}
+                  {formatEur(preparedVariantsTotalPrice)}
                 </p>
               </div>
             ) : (
@@ -1260,7 +1281,9 @@ export function ProductDetailAddToCart({
         {added
           ? "✓ Добавено в количката"
           : usePreparedVariants
-            ? "Добавете избраните варианти в количката"
+            ? preparedQuantityTotal > 0
+              ? `Добави ${preparedQuantityTotal} бр. в количката`
+              : "Добави в количката"
             : "Добавете в количката"}
       </button>
 

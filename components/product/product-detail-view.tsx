@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
@@ -75,6 +76,7 @@ export function ProductDetailView({
         : null,
   });
   const schemaDescription = buildProductSchemaDescription(product, productSeoContext);
+  const featuredRelatedProduct = relatedProducts[0] ?? null;
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -183,6 +185,39 @@ export function ProductDetailView({
                 >
                   Разгледайте още от „{primaryCategory.name}“
                   <span aria-hidden="true">→</span>
+                </Link>
+              ) : null}
+
+              {featuredRelatedProduct ? (
+                <Link
+                  href={getProductPath(featuredRelatedProduct.slug)}
+                  className="mt-5 flex items-center gap-3 rounded-2xl border border-boutique-line bg-white/75 p-3 transition duration-200 ease-out hover:border-boutique-sage-deep/45 hover:shadow-boutique-sm motion-reduce:transition-none"
+                >
+                  <span className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-boutique-line bg-boutique-bg">
+                    {featuredRelatedProduct.images[0]?.src ? (
+                      <Image
+                        src={featuredRelatedProduct.images[0].src}
+                        alt={featuredRelatedProduct.images[0].alt || featuredRelatedProduct.title}
+                        fill
+                        sizes="64px"
+                        className="object-cover"
+                      />
+                    ) : null}
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-xs font-semibold uppercase tracking-[0.14em] text-boutique-accent">
+                      Вижте готов вариант
+                    </span>
+                    <span className="mt-1 block text-sm font-semibold leading-5 text-boutique-ink">
+                      {featuredRelatedProduct.title}
+                    </span>
+                  </span>
+                  <span
+                    aria-hidden="true"
+                    className="ml-auto shrink-0 text-lg text-boutique-sage-deep"
+                  >
+                    →
+                  </span>
                 </Link>
               ) : null}
 

@@ -28,21 +28,24 @@ export function ProductDetailContentSections(props: ProductDetailContentSections
   }
 
   return (
-    <div className="flex w-full flex-col gap-6">
+    <div className="flex w-full flex-col gap-3">
       {sections.map((section, index) => (
-        <section
+        <details
           key={section.id}
-          aria-labelledby={`product-${section.id}-heading`}
-          className={index > 0 ? "border-t border-boutique-line/70 pt-6" : undefined}
+          className="group rounded-xl border border-boutique-line bg-boutique-paper/75 px-4 py-3"
+          open={index === 0 ? false : undefined}
         >
-          <h2
-            id={`product-${section.id}-heading`}
-            className="font-heading text-xl leading-snug text-boutique-ink md:text-[1.35rem]"
-          >
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-semibold text-boutique-ink marker:hidden">
             {section.heading}
-          </h2>
+            <span
+              aria-hidden="true"
+              className="text-lg leading-none text-boutique-muted transition group-open:rotate-180"
+            >
+              ⌄
+            </span>
+          </summary>
           <div className={withPlainTextClass(bodyClassName)}>{section.content}</div>
-        </section>
+        </details>
       ))}
     </div>
   );
@@ -110,7 +113,7 @@ export function ProductDetailGalleryAside({
       <div
         className={
           hasContent
-            ? "mt-6 border-t border-boutique-line/70 pt-6"
+            ? "mt-4 border-t border-boutique-line/70 pt-4"
             : undefined
         }
       >

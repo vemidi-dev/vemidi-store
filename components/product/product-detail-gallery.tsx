@@ -109,6 +109,33 @@ function GalleryImageCounter({
   );
 }
 
+function scrollThumbIntoView(list: HTMLUListElement, element: HTMLElement) {
+  const listRect = list.getBoundingClientRect();
+  const elementRect = element.getBoundingClientRect();
+
+  if (list.scrollHeight > list.clientHeight) {
+    const above = elementRect.top < listRect.top;
+    const below = elementRect.bottom > listRect.bottom;
+    if (above || below) {
+      list.scrollTo({
+        top: element.offsetTop - list.clientHeight / 2 + element.offsetHeight / 2,
+        behavior: "smooth",
+      });
+    }
+  }
+
+  if (list.scrollWidth > list.clientWidth) {
+    const left = elementRect.left < listRect.left;
+    const right = elementRect.right > listRect.right;
+    if (left || right) {
+      list.scrollTo({
+        left: element.offsetLeft - list.clientWidth / 2 + element.offsetWidth / 2,
+        behavior: "smooth",
+      });
+    }
+  }
+}
+
 export function ProductDetailGallery({
   images,
   className,
@@ -169,11 +196,10 @@ export function ProductDetailGallery({
 
     const selector = `[data-gallery-thumb="${safeIndex}"]`;
     for (const list of [desktopThumbsRef.current, mobileThumbsRef.current]) {
-      list?.querySelector<HTMLElement>(selector)?.scrollIntoView({
-        block: "nearest",
-        inline: "nearest",
-        behavior: "smooth",
-      });
+      const thumb = list?.querySelector<HTMLElement>(selector);
+      if (list && thumb) {
+        scrollThumbIntoView(list, thumb);
+      }
     }
   }, [hasMultipleImages, safeIndex]);
 
