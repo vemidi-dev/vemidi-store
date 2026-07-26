@@ -7,11 +7,14 @@ import { makeCartLineId } from "@/lib/cart-line-id";
 import { buildCartLineDisplaySnapshot } from "@/lib/cart/build-cart-line-display";
 import { normalizePersonalization } from "@/lib/cart-storage";
 import { normalizeCartQuantityWithLimit } from "@/lib/cart/quantity-limits";
+import { applyQuantityTierPricesForProduct } from "@/lib/cart/update-cart-line-quantity";
 import type { CartLine, CartLineUpsell } from "@/lib/cart-types";
 import type { Product } from "@/lib/catalog";
 import {
   calculateEstimatedUnitPrice,
+  calculateOptionDelta,
 } from "@/lib/product-option-pricing";
+import { resolveQuantityUnitPrice } from "@/lib/product-quantity-pricing";
 import type { ProductOptionSelection } from "@/lib/product-options";
 import type { SelectedProductColor } from "@/lib/product-colors";
 import type { ProductPersonalizationValue } from "@/lib/product-personalization";
@@ -63,21 +66,29 @@ export function prepareCartLineInput(
     ? input.optionSelections
     : undefined;
   const storedAttribution = buildCampaignAttribution(input.attribution ?? {});
+  const quantityBasePrice = resolveQuantityUnitPrice(
+    input.product.price,
+    input.product.quantityPriceTiers,
+    normalizedQuantity,
+  );
+  const optionDelta = input.product.optionGroups?.length
+    ? calculateOptionDelta(input.product.optionGroups, storedOptionSelections ?? [])
+    : 0;
+  const personalizationDelta = calculatePersonalizationDelta(
+    input.product.personalizationFields,
+    storedPersonalizationFields,
+  );
   const optionPrice = input.product.optionGroups?.length
     ? calculateEstimatedUnitPrice(
-        input.product.price,
+        quantityBasePrice,
         input.product.optionGroups,
         storedOptionSelections ?? [],
       )
-    : input.product.price;
+    : quantityBasePrice;
   const estimatedPrice =
     input.unitPriceOverride !== undefined
       ? Math.max(0, input.unitPriceOverride)
-      : optionPrice +
-        calculatePersonalizationDelta(
-          input.product.personalizationFields,
-          storedPersonalizationFields,
-        );
+      : optionPrice + personalizationDelta;
   const lineId = makeCartLineId(
     input.product.id,
     storedPersonalization,
@@ -107,6 +118,10 @@ export function prepareCartLineInput(
       title: input.product.title,
       imageSrc: input.product.images.find((image) => image.src)?.src,
       price: estimatedPrice,
+      baseUnitPrice: input.product.price,
+      optionDelta,
+      personalizationDelta,
+      quantityPriceTiers: input.product.quantityPriceTiers,
       quantity: normalizedQuantity,
       maxCartQuantity: input.maxCartQuantityOverride ?? input.product.maxCartQuantity,
       campaign: storedAttribution?.campaign,
@@ -128,7 +143,10 @@ export function mergeCartLineForAdd(
 ): CartLine[] {
   const existing = existingLines.find((line) => line.lineId === prepared.lineId);
   if (!existing) {
-    return [...existingLines, prepared.line];
+    return applyQuantityTierPricesForProduct(
+      [...existingLines, prepared.line],
+      prepared.line.productId,
+    );
   }
 
   const mergedAttribution = mergeCampaignAttribution(
@@ -140,22 +158,24 @@ export function mergeCartLineForAdd(
     prepared.storedAttribution,
   );
 
-  return existingLines.map((line) => {
+  return applyQuantityTierPricesForProduct(existingLines.map((line) => {
     if (line.lineId !== prepared.lineId) {
       return line;
     }
+
+    const nextQuantity = normalizeCartQuantityWithLimit(
+      line.quantity + prepared.normalizedQuantity,
+      line.maxCartQuantity ?? prepared.line.maxCartQuantity,
+    );
 
     return {
       ...line,
       campaign: mergedAttribution?.campaign ?? line.campaign,
       source: mergedAttribution?.source ?? line.source,
       landingUrl: mergedAttribution?.landingUrl ?? line.landingUrl,
-      quantity: normalizeCartQuantityWithLimit(
-        line.quantity + prepared.normalizedQuantity,
-        line.maxCartQuantity ?? prepared.line.maxCartQuantity,
-      ),
+      quantity: nextQuantity,
     };
-  });
+  }), prepared.line.productId);
 }
 
 export function mergeCartLineForCampaignHandoff(

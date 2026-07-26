@@ -218,11 +218,14 @@ export function ProductDetailView({
             <div className="flex items-end justify-between gap-4">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-boutique-accent">
-                  Още идеи
+                  Свързани продукти
                 </p>
                 <h2 className="mt-2 font-heading text-3xl text-boutique-ink">
-                  Може да ви харесат
+                  Вижте готови изделия
                 </h2>
+                <p className="mt-2 max-w-2xl text-sm leading-relaxed text-boutique-muted">
+                  Ако искате да видите как изглежда тази заготовка в завършен продукт, разгледайте примерите.
+                </p>
               </div>
               <Link
                 href="/produkti"

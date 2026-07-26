@@ -1,6 +1,48 @@
 import type { CartLine } from "@/lib/cart-types";
 import { normalizeCartQuantityWithLimit } from "@/lib/cart/quantity-limits";
 import { removeCartLineWithLinkedUpsells } from "@/lib/cart/remove-cart-line";
+import { resolveQuantityUnitPrice } from "@/lib/product-quantity-pricing";
+
+function applyQuantityTierPrice(
+  line: CartLine,
+  quantity: number,
+  tierQuantity = quantity,
+): CartLine {
+  if (line.upsell || !line.quantityPriceTiers?.length) {
+    return { ...line, quantity };
+  }
+
+  const baseUnitPrice = line.baseUnitPrice ?? line.price;
+  const optionDelta = line.optionDelta ?? 0;
+  const personalizationDelta = line.personalizationDelta ?? 0;
+  return {
+    ...line,
+    quantity,
+    price:
+      resolveQuantityUnitPrice(baseUnitPrice, line.quantityPriceTiers, tierQuantity) +
+      optionDelta +
+      personalizationDelta,
+  };
+}
+
+export function applyQuantityTierPricesForProduct(
+  lines: CartLine[],
+  productId: string,
+): CartLine[] {
+  const totalQuantity = lines
+    .filter((line) => line.productId === productId && !line.upsell)
+    .reduce((total, line) => total + line.quantity, 0);
+
+  if (totalQuantity <= 0) {
+    return lines;
+  }
+
+  return lines.map((line) =>
+    line.productId === productId && !line.upsell
+      ? applyQuantityTierPrice(line, line.quantity, totalQuantity)
+      : line,
+  );
+}
 
 function resolveUpsellMaxQuantityPerSource(
   line: CartLine,
@@ -35,16 +77,19 @@ export function updateCartLineQuantityWithLinkedUpsells(
   }
 
   if (!line || line.upsell) {
-    return lines.map((entry) =>
-      entry.lineId === lineId ? { ...entry, quantity: nextQuantity } : entry,
+    const updatedLines = lines.map((entry) =>
+      entry.lineId === lineId ? applyQuantityTierPrice(entry, nextQuantity) : entry,
     );
+    return line
+      ? applyQuantityTierPricesForProduct(updatedLines, line.productId)
+      : updatedLines;
   }
 
   const previousSourceQuantity = Math.max(1, line.quantity);
 
-  return lines.map((entry) => {
+  return applyQuantityTierPricesForProduct(lines.map((entry) => {
     if (entry.lineId === lineId) {
-      return { ...entry, quantity: nextQuantity };
+      return applyQuantityTierPrice(entry, nextQuantity);
     }
 
     if (entry.upsell?.sourceProductId !== line.productId) {
@@ -72,5 +117,5 @@ export function updateCartLineQuantityWithLinkedUpsells(
         nextMaxCartQuantity,
       ),
     };
-  });
+  }), line.productId);
 }

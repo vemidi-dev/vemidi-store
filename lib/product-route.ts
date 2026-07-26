@@ -30,7 +30,7 @@ export type ProductRouteResolution =
     };
 
 const productListColumns =
-  "id,slug,product_code,name,heading_subtitle,subtitle,description,additional_info,fulfillment_note,personalization_info,dimensions_materials,ordering_info,price,image_url,is_customizable,is_sold_out,fulfillment_type,stock_quantity,card_badge,status,visibility";
+  "id,slug,product_code,name,heading_subtitle,subtitle,description,additional_info,fulfillment_note,personalization_info,dimensions_materials,ordering_info,price,image_url,is_customizable,is_sold_out,show_quantity_selector,quantity_price_tiers,fulfillment_type,stock_quantity,card_badge,status,visibility";
 
 async function loadProductRowById(supabase: SupabaseClient, productId: string) {
   const { data, error } = await supabase

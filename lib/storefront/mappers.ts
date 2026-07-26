@@ -11,6 +11,7 @@ import {
   resolveProductPricing,
   type ProductPromotionRow,
 } from "@/lib/product-pricing";
+import { normalizeQuantityPriceTiers } from "@/lib/product-quantity-pricing";
 import { resolveCategoryCardImage } from "@/lib/category-image-resolution";
 import type { CategoryRow } from "@/lib/admin/types";
 import type { ShopCategory } from "@/lib/shop-categories";
@@ -73,6 +74,7 @@ export type ProductRow = {
   is_customizable: boolean;
   is_sold_out?: boolean;
   show_quantity_selector?: boolean | null;
+  quantity_price_tiers?: unknown;
   fulfillment_type?: ProductFulfillmentType;
   stock_quantity?: number | null;
   card_badge?: string | null;
@@ -141,6 +143,7 @@ export function toProduct(
     customizable: row.is_customizable,
     soldOut: Boolean(row.is_sold_out),
     allowQuantitySelector: Boolean(row.show_quantity_selector),
+    quantityPriceTiers: normalizeQuantityPriceTiers(row.quantity_price_tiers),
     fulfillmentType: row.fulfillment_type ?? "made_to_order",
     stockQuantity: row.stock_quantity ?? null,
     images:

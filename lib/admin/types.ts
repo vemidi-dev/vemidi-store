@@ -1,6 +1,7 @@
 import type { ProductFulfillmentType } from "@/lib/product-fulfillment";
 import type { ProductPublicationStatus } from "@/lib/product-publication";
 import type { ProductVisibility } from "@/lib/product-visibility";
+import type { ProductQuantityPriceTier } from "@/lib/product-quantity-pricing";
 
 export type AdminTab =
   | "products"
@@ -183,6 +184,7 @@ export type ProductRow = {
   is_customizable: boolean;
   is_sold_out: boolean;
   show_quantity_selector?: boolean;
+  quantity_price_tiers?: ProductQuantityPriceTier[] | null;
   fulfillment_type?: ProductFulfillmentType;
   stock_quantity?: number | null;
   card_badge?: string | null;
@@ -320,6 +322,7 @@ export type ProductCreateDraft = {
   isCustomizable: boolean;
   isSoldOut: boolean;
   showQuantitySelector: boolean;
+  quantityPriceTiers: ProductQuantityPriceTier[];
   fulfillmentType: ProductFulfillmentType;
   stockQuantity: number | null;
   cardBadge: string;

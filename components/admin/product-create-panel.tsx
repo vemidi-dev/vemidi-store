@@ -14,6 +14,7 @@ import { ProductOptionGroupsEditor } from "@/components/admin/product-option-gro
 import { ProductPersonalizationFieldsEditor } from "@/components/admin/product-personalization-fields-editor";
 import { ProductPublicationStatusField } from "@/components/admin/product-publication-status-field";
 import { ProductFulfillmentFields } from "@/components/admin/product-fulfillment-fields";
+import { ProductQuantityPriceTiersEditor } from "@/components/admin/product-quantity-price-tiers-editor";
 import { ProductVisibilityField } from "@/components/admin/product-visibility-field";
 import { ProductCardBadgeField } from "@/components/admin/product-card-badge-field";
 import { ProductContentSeoFields } from "@/components/admin/product-content-seo-fields";
@@ -503,6 +504,12 @@ export function ProductCreatePanel({
           <ProductFulfillmentFields
             initialFulfillmentType={activeDraft?.fulfillmentType}
             initialStockQuantity={activeDraft?.stockQuantity}
+          />
+
+          <ProductQuantityPriceTiersEditor
+            initialTiers={activeDraft?.quantityPriceTiers}
+            fieldClassName={adminFieldClass}
+            helperClassName={adminHelperClass}
           />
 
           <label className="inline-flex items-start gap-2 text-sm font-medium text-boutique-ink">

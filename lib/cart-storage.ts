@@ -11,6 +11,7 @@ import type { CartLine, CartLineUpsell } from "@/lib/cart-types";
 import { sanitizeOptionSelectionsInput } from "@/lib/product-option-validation";
 import type { SelectedProductColor } from "@/lib/product-colors";
 import type { ProductPersonalizationValue } from "@/lib/product-personalization";
+import { normalizeQuantityPriceTiers } from "@/lib/product-quantity-pricing";
 
 export const MAX_CART_QUANTITY = 99;
 export const PERSONALIZATION_MAX_LENGTH = 1000;
@@ -227,6 +228,25 @@ export function parseStoredCart(raw: string | null): CartLine[] {
         : undefined;
       const displaySnapshot = parseCartLineDisplaySnapshot(value.displaySnapshot);
       const upsell = parseCartLineUpsell(value.upsell);
+      const baseUnitPrice =
+        typeof value.baseUnitPrice === "number" &&
+        Number.isFinite(value.baseUnitPrice) &&
+        value.baseUnitPrice >= 0
+          ? value.baseUnitPrice
+          : undefined;
+      const optionDelta =
+        typeof value.optionDelta === "number" &&
+        Number.isFinite(value.optionDelta) &&
+        value.optionDelta >= 0
+          ? value.optionDelta
+          : undefined;
+      const personalizationDelta =
+        typeof value.personalizationDelta === "number" &&
+        Number.isFinite(value.personalizationDelta) &&
+        value.personalizationDelta >= 0
+          ? value.personalizationDelta
+          : undefined;
+      const quantityPriceTiers = normalizeQuantityPriceTiers(value.quantityPriceTiers);
 
       lines.push({
         lineId: makeCartLineId(
@@ -247,6 +267,10 @@ export function parseStoredCart(raw: string | null): CartLine[] {
         title,
         imageSrc,
         price,
+        ...(baseUnitPrice !== undefined ? { baseUnitPrice } : {}),
+        ...(optionDelta !== undefined ? { optionDelta } : {}),
+        ...(personalizationDelta !== undefined ? { personalizationDelta } : {}),
+        ...(quantityPriceTiers.length ? { quantityPriceTiers } : {}),
         quantity: cappedQuantity,
         ...(maxCartQuantity !== undefined ? { maxCartQuantity } : {}),
         campaign,

@@ -33,6 +33,10 @@ import {
 } from "@/lib/product-color-quantities";
 import type { ColorQuantitiesByOptionId } from "@/lib/product-color-quantities";
 import { formatPriceDelta } from "@/lib/product-option-pricing";
+import {
+  hasQuantityPriceTiers,
+  resolveQuantityUnitPrice,
+} from "@/lib/product-quantity-pricing";
 import { formatEur } from "@/lib/format-eur";
 import { getProductPath } from "@/lib/product-url";
 import type { ProductPersonalizationField } from "@/lib/product-personalization";
@@ -494,11 +498,19 @@ export function ProductDetailAddToCart({
   const canSubmitAddToCart = usePreparedVariants
     ? preparedVariants.length > 0
     : canPrepareVariant;
-  const displayedUnitPrice = optionGroups.length
-    ? estimatedUnitPrice
-    : product.price + personalizationDelta;
   const selectedQuantity = showQuantitySelector ? quantity : 1;
+  const quantityBasePrice = resolveQuantityUnitPrice(
+    product.price,
+    product.quantityPriceTiers,
+    selectedQuantity,
+  );
+  const optionDelta = optionGroups.length
+    ? Math.max(0, estimatedUnitPrice - product.price - personalizationDelta)
+    : 0;
+  const displayedUnitPrice = quantityBasePrice + optionDelta + personalizationDelta;
   const displayedLinePrice = displayedUnitPrice * selectedQuantity;
+  const showQuantityPriceTiers =
+    showQuantitySelector && hasQuantityPriceTiers(product.quantityPriceTiers);
 
   useEffect(() => {
     if (!optionGroups.length) {
@@ -859,7 +871,7 @@ export function ProductDetailAddToCart({
                         {field.type === "textarea" ? (
                           <span className="mt-1 flex items-center justify-between gap-3 text-xs text-boutique-muted">
                             <span>
-                              {value.length}/{field.maxLength} Р·РЅР°РєР°
+                              {value.length}/{field.maxLength} знака
                             </span>
                             {field.allowsWishTemplates &&
                             (product.wishTemplates?.length ?? 0) > 0 ? (
@@ -909,7 +921,7 @@ export function ProductDetailAddToCart({
                 )}
                 {field.type === "textarea" ? (
                   <span className="mt-1 block text-right text-xs text-boutique-muted">
-                    {value.length}/{field.maxLength} Р·РЅР°РєР°
+                    {value.length}/{field.maxLength} знака
                   </span>
                 ) : null}
               </label>
@@ -942,6 +954,31 @@ export function ProductDetailAddToCart({
             {(product.price + personalizationDelta).toFixed(2).replace(".", ",")} €
           </strong>
         </p>
+      ) : null}
+
+      {showQuantityPriceTiers ? (
+        <section className="mt-5 rounded-2xl border border-boutique-line bg-white/70 p-4">
+          <h2 className="text-sm font-semibold text-boutique-ink">
+            Цена според количество
+          </h2>
+          <div className="mt-3 grid gap-2 text-sm text-boutique-muted">
+            {product.quantityPriceTiers?.map((tier) => (
+              <div
+                key={`${tier.minQuantity}-${tier.maxQuantity ?? "plus"}`}
+                className="flex items-center justify-between gap-4 rounded-xl bg-boutique-bg px-3 py-2"
+              >
+                <span>
+                  {tier.maxQuantity === null
+                    ? `от ${tier.minQuantity} бр.`
+                    : `${tier.minQuantity}-${tier.maxQuantity} бр.`}
+                </span>
+                <strong className="text-boutique-ink">
+                  {formatEur(tier.unitPrice)} / бр.
+                </strong>
+              </div>
+            ))}
+          </div>
+        </section>
       ) : null}
 
       {colorFields.length ? (
