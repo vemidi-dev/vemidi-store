@@ -50,6 +50,7 @@ import {
 } from "@/lib/admin/product-upsell-admin";
 import { adminFormFields } from "@/lib/admin/form-fields";
 import { normalizeProductCardBadge } from "@/lib/product-card";
+import { normalizeQuantityPriceTiers } from "@/lib/product-quantity-pricing";
 import {
   detectDuplicateOptionWarnings,
   hasProductOptionGroupsPayload,
@@ -111,6 +112,16 @@ const ADMIN_PATH = "/admin";
 const ADMIN_LOGIN_PATH = "/admin/login";
 const MAX_DRAFT_QUERY_LENGTH = 6000;
 const CATEGORY_TYPES = ["product", "occasion", "material"] as const;
+
+function getQuantityPriceTiers(formData: FormData) {
+  try {
+    return normalizeQuantityPriceTiers(
+      JSON.parse(getString(formData, adminFormFields.product.quantityPriceTiers) || "[]"),
+    );
+  } catch {
+    return [];
+  }
+}
 
 function isCategoryType(value: string): value is (typeof CATEGORY_TYPES)[number] {
   return CATEGORY_TYPES.includes(value as (typeof CATEGORY_TYPES)[number]);
@@ -663,6 +674,7 @@ export async function createProduct(formData: FormData) {
     formData,
     adminFormFields.product.showQuantitySelector,
   );
+  const quantityPriceTiers = getQuantityPriceTiers(formData);
   const {
     fulfillmentType,
     stockQuantity,
@@ -783,7 +795,12 @@ export async function createProduct(formData: FormData) {
   const newProductId = String(productId);
   const { error: statusError } = await supabase
     .from("products")
-    .update({ status: "draft", visibility, show_quantity_selector: showQuantitySelector })
+    .update({
+      status: "draft",
+      visibility,
+      show_quantity_selector: showQuantitySelector,
+      quantity_price_tiers: quantityPriceTiers,
+    })
     .eq("id", newProductId);
 
   if (statusError) {
@@ -912,6 +929,7 @@ export async function updateProduct(formData: FormData) {
     formData,
     adminFormFields.product.showQuantitySelector,
   );
+  const quantityPriceTiers = getQuantityPriceTiers(formData);
   const {
     fulfillmentType,
     stockQuantity,
@@ -1058,7 +1076,12 @@ export async function updateProduct(formData: FormData) {
 
   const { error: statusError } = await supabase
     .from("products")
-    .update({ status: publicationStatus, visibility, show_quantity_selector: showQuantitySelector })
+    .update({
+      status: publicationStatus,
+      visibility,
+      show_quantity_selector: showQuantitySelector,
+      quantity_price_tiers: quantityPriceTiers,
+    })
     .eq("id", id);
 
   if (statusError) {

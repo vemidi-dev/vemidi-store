@@ -3,6 +3,7 @@ import type { ProductOptionSelection } from "@/lib/product-options";
 import type { SelectedProductColor } from "@/lib/product-colors";
 import type { ProductPersonalizationValue } from "@/lib/product-personalization";
 import type { CartLineDisplaySnapshot } from "@/lib/cart/build-cart-line-display";
+import type { ProductQuantityPriceTier } from "@/lib/product-quantity-pricing";
 
 export type CartLineUpsell = {
   offerId: string;
@@ -22,6 +23,10 @@ export type CartLine = {
   title: string;
   imageSrc?: string;
   price: number;
+  baseUnitPrice?: number;
+  optionDelta?: number;
+  personalizationDelta?: number;
+  quantityPriceTiers?: ProductQuantityPriceTier[];
   quantity: number;
   campaign?: string;
   source?: string;

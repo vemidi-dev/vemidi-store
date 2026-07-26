@@ -4,6 +4,7 @@ import type { ProductPersonalizationField, WishTemplate } from "@/lib/product-pe
 import type { ProductFulfillmentType } from "@/lib/product-fulfillment";
 import type { ProductPromotionSnapshot } from "@/lib/product-pricing";
 import type { ProductVisibility } from "@/lib/product-visibility";
+import type { ProductQuantityPriceTier } from "@/lib/product-quantity-pricing";
 
 export type ProductImage = {
   src: string;
@@ -56,6 +57,8 @@ export type Product = {
   soldOut?: boolean;
   /** When true, customers can choose more than one item on the product page. */
   allowQuantitySelector?: boolean;
+  /** Optional unit-price tiers selected by total line quantity. */
+  quantityPriceTiers?: ProductQuantityPriceTier[];
   fulfillmentType: ProductFulfillmentType;
   /** Derived storefront label for availability messaging. */
   availabilityLabel: string;

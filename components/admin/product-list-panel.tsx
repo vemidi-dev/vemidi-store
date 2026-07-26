@@ -34,6 +34,7 @@ import { ProductGalleryAddForm } from "@/components/admin/product-gallery-add-fo
 import { ProductGalleryReplaceForm } from "@/components/admin/product-gallery-replace-form";
 import { ProductImageFileInput } from "@/components/admin/product-image-file-input";
 import { ProductFulfillmentFields } from "@/components/admin/product-fulfillment-fields";
+import { ProductQuantityPriceTiersEditor } from "@/components/admin/product-quantity-price-tiers-editor";
 import { ProductVisibilityField } from "@/components/admin/product-visibility-field";
 import { ProductCardBadgeField } from "@/components/admin/product-card-badge-field";
 import { ProductUpsellOffersEditor } from "@/components/admin/product-upsell-offers-editor";
@@ -888,6 +889,14 @@ export function ProductListPanel({
                       <ProductFulfillmentFields
                         initialFulfillmentType={product.fulfillment_type ?? "made_to_order"}
                         initialStockQuantity={product.stock_quantity ?? null}
+                      />
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <ProductQuantityPriceTiersEditor
+                        initialTiers={product.quantity_price_tiers ?? []}
+                        fieldClassName={adminFieldClass}
+                        helperClassName={adminHelperClass}
                       />
                     </div>
 

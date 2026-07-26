@@ -65,12 +65,11 @@ export function ProductMerchandisingFields({
       <div className="rounded-xl border border-boutique-line bg-boutique-bg p-4">
         <p className="text-sm font-medium text-boutique-ink">Свързани продукти</p>
         <p className="mt-1 text-xs leading-relaxed text-boutique-muted">
-          Изберете продуктите, които да се покажат в зададения тук ред.
+          Изберете готови или свързани продукти, които да се показват като линкове на продуктовата страница.
         </p>
 
         <p className="mt-2 text-xs leading-relaxed text-boutique-muted">
-          За бърз избор филтрирайте по категория или повод и използвайте bulk
-          бутона за всички продукти от текущия филтър.
+          За бърз избор филтрирайте по категория или повод и използвайте bulk бутона за всички продукти от текущия филтър.
         </p>
 
         <div className="mt-3">

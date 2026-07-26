@@ -7,6 +7,7 @@ import type {
 } from "@/lib/admin/types";
 import { normalizeProductPublicationStatus } from "@/lib/product-publication";
 import { normalizeProductVisibility } from "@/lib/product-visibility";
+import { normalizeQuantityPriceTiers } from "@/lib/product-quantity-pricing";
 
 export function firstValue(value: string | string[] | undefined) {
   if (!value) {
@@ -71,6 +72,7 @@ export function parseProductCreateDraft(raw: string): ProductCreateDraft | null 
       is_customizable?: unknown;
       is_sold_out?: unknown;
       show_quantity_selector?: unknown;
+      quantity_price_tiers?: unknown;
       fulfillment_type?: unknown;
       stock_quantity?: unknown;
       card_badge?: unknown;
@@ -318,6 +320,7 @@ export function parseProductCreateDraft(raw: string): ProductCreateDraft | null 
       isCustomizable: parsed.is_customizable === true,
       isSoldOut: parsed.is_sold_out === true,
       showQuantitySelector: parsed.show_quantity_selector === true,
+      quantityPriceTiers: normalizeQuantityPriceTiers(parsed.quantity_price_tiers),
       fulfillmentType:
         parsed.fulfillment_type === "stocked" || parsed.fulfillment_type === "unavailable"
           ? parsed.fulfillment_type

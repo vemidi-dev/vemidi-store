@@ -16,6 +16,7 @@ import {
   type ProductVisibility,
 } from "@/lib/product-visibility";
 import { parseProductOptionGroups } from "@/lib/admin/parse-option-groups";
+import { normalizeQuantityPriceTiers } from "@/lib/product-quantity-pricing";
 
 type CreateProductDraftPayload = {
   name: string;
@@ -32,6 +33,7 @@ type CreateProductDraftPayload = {
   is_customizable: boolean;
   is_sold_out: boolean;
   show_quantity_selector: boolean;
+  quantity_price_tiers: unknown;
   fulfillment_type: string;
   stock_quantity: string;
   card_badge: string;
@@ -92,6 +94,16 @@ export function parseProductVisibility(formData: FormData): ProductVisibility {
 
 export function getString(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
+}
+
+function getQuantityPriceTiers(formData: FormData) {
+  try {
+    return normalizeQuantityPriceTiers(
+      JSON.parse(getString(formData, adminFormFields.product.quantityPriceTiers) || "[]"),
+    );
+  } catch {
+    return [];
+  }
 }
 
 export function getOptionalString(formData: FormData, key: string) {
@@ -267,6 +279,7 @@ export function makeCreateProductDraft(formData: FormData) {
     is_customizable: isChecked(formData, adminFormFields.product.isCustomizable),
     is_sold_out: isChecked(formData, adminFormFields.product.isSoldOut),
     show_quantity_selector: isChecked(formData, adminFormFields.product.showQuantitySelector),
+    quantity_price_tiers: getQuantityPriceTiers(formData),
     fulfillment_type: getString(formData, adminFormFields.product.fulfillmentType) || "made_to_order",
     stock_quantity: getString(formData, adminFormFields.product.stockQuantity),
     card_badge: getString(formData, adminFormFields.product.cardBadge),
