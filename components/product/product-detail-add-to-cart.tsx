@@ -5,7 +5,10 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
-import { ProductColorQuantitySelector } from "@/components/product/product-color-quantity-selector";
+import {
+  ProductDetailColorFields,
+  PRODUCT_LEFT_COLORS_SLOT_ID,
+} from "@/components/product/product-detail-color-fields";
 import { useCart } from "@/components/cart/cart-provider";
 import { ProductOptionsSelector } from "@/components/product/product-options-selector";
 import type { CampaignAttribution } from "@/lib/campaign-attribution";
@@ -64,6 +67,7 @@ type ProductDetailAddToCartProps = {
   attribution?: CampaignAttribution;
   initialOptionSelections?: ProductOptionSelection[];
   layout?: "card" | "embedded";
+  usesMaterialStockLayout?: boolean;
 };
 
 type PreparedProductVariant = {
@@ -100,6 +104,7 @@ export function ProductDetailAddToCart({
   attribution,
   initialOptionSelections = [],
   layout = "card",
+  usesMaterialStockLayout = false,
 }: ProductDetailAddToCartProps) {
   const embedded = layout === "embedded";
   const { addProduct, lines, ready: cartReady } = useCart();
@@ -199,9 +204,10 @@ export function ProductDetailAddToCart({
   const colorFields = useMemo(() => product.colorFields ?? [], [product.colorFields]);
   const optionGroups = useMemo(() => product.optionGroups ?? [], [product.optionGroups]);
   const useMaterialCards = useMemo(
-    () => shouldUseMaterialOptionCards(product, optionGroups),
-    [optionGroups, product],
+    () => usesMaterialStockLayout || shouldUseMaterialOptionCards(product, optionGroups),
+    [optionGroups, product, usesMaterialStockLayout],
   );
+  const [leftColorsSlot, setLeftColorsSlot] = useState<HTMLElement | null>(null);
   const defaultOptionSelections = useMemo(
     () => buildDefaultOptionSelections(optionGroups),
     [optionGroups],
@@ -539,6 +545,15 @@ export function ProductDetailAddToCart({
   );
 
   useEffect(() => {
+    if (!useMaterialCards) {
+      setLeftColorsSlot(null);
+      return;
+    }
+
+    setLeftColorsSlot(document.getElementById(PRODUCT_LEFT_COLORS_SLOT_ID));
+  }, [product.id, useMaterialCards]);
+
+  useEffect(() => {
     if (!optionGroups.length || useMaterialCards) {
       return;
     }
@@ -783,6 +798,26 @@ export function ProductDetailAddToCart({
     );
   }
 
+  const colorFieldsSection = colorFields.length ? (
+    <ProductDetailColorFields
+      colorFields={colorFields}
+      selectedByGroup={selectedByGroup}
+      onSelectedByGroupChange={setSelectedByGroup}
+      quantitiesByField={quantitiesByField}
+      onQuantitiesByFieldChange={setQuantitiesByField}
+      expandedColorFields={expandedColorFields}
+      onExpandedColorFieldsChange={setExpandedColorFields}
+      embedded={embedded}
+      variant={useMaterialCards ? "sidebar" : "default"}
+      onColorSelectionChange={() => setError(null)}
+      onQuantityReset={() => {
+        if (showQuantitySelector) {
+          setQuantity(1);
+        }
+      }}
+    />
+  ) : null;
+
   return (
     <>
     <div
@@ -794,9 +829,10 @@ export function ProductDetailAddToCart({
           : "scroll-mt-28 rounded-2xl border border-boutique-line bg-boutique-paper p-4 transition-shadow duration-300 ease-out hover:shadow-boutique-sm motion-reduce:transition-none sm:p-5"
       }
     >
+      <div className="flex flex-col">
       {fields.length ? (
         <details
-          className="rounded-2xl border border-boutique-line bg-white/70 p-3"
+          className={`rounded-2xl border border-boutique-line bg-white/70 p-3 ${useMaterialCards ? "order-30" : "order-10"}`}
           open={fields.some((field) => field.required)}
         >
           <summary className="cursor-pointer list-none text-sm font-semibold text-boutique-ink marker:hidden">
@@ -968,6 +1004,7 @@ export function ProductDetailAddToCart({
       ) : null}
 
       {optionGroups.length ? (
+        <div className={useMaterialCards ? "order-10" : "order-20"}>
         <ProductOptionsSelector
           basePrice={product.price + personalizationDelta}
           variantDisplayBasePrice={product.price}
@@ -977,10 +1014,11 @@ export function ProductDetailAddToCart({
           onEstimatedPriceChange={setEstimatedUnitPrice}
           useMaterialCards={useMaterialCards}
         />
+        </div>
       ) : null}
 
       {!optionGroups.length && personalizationDelta > 0 ? (
-        <p className="mt-5 text-sm text-boutique-muted">
+        <p className={`mt-5 text-sm text-boutique-muted ${useMaterialCards ? "order-25" : "order-25"}`}>
           Ориентировъчна цена:{" "}
           <strong className="text-boutique-ink">
             {(product.price + personalizationDelta).toFixed(2).replace(".", ",")} €
@@ -989,7 +1027,7 @@ export function ProductDetailAddToCart({
       ) : null}
 
       {showQuantityPriceTiers ? (
-        <section className="mt-5 rounded-2xl border border-boutique-line bg-white/70 p-4">
+        <section className={`mt-5 rounded-2xl border border-boutique-line bg-white/70 p-4 ${useMaterialCards ? "order-20" : "order-30"}`}>
           <h2 className="text-sm font-semibold text-boutique-ink">
             Цена според количество
           </h2>
@@ -1013,130 +1051,17 @@ export function ProductDetailAddToCart({
         </section>
       ) : null}
 
-      {colorFields.length ? (
-        <div className={`mt-5 grid gap-4 ${!embedded && colorFields.length > 1 ? "lg:grid-cols-2" : ""}`}>
-          {colorFields.map((field) =>
-            isQuantityColorField(field) ? (
-              <ProductColorQuantitySelector
-                key={field.id}
-                field={field}
-                quantities={quantitiesByField[field.id] ?? {}}
-                onChange={(quantities) => {
-                  setQuantitiesByField((state) => ({ ...state, [field.id]: quantities }));
-                  setError(null);
-                }}
-              />
-            ) : (
-              <fieldset
-                key={field.id}
-                className="rounded-2xl border border-boutique-line bg-white/60 p-3 transition-shadow duration-300 ease-out hover:shadow-boutique-sm motion-reduce:transition-none"
-              >
-                <legend className="px-1 text-sm font-semibold text-boutique-ink">
-                  {field.label}
-                </legend>
-                <div
-                  id={`color-options-${field.id}`}
-                  className={`mt-3 grid grid-cols-4 gap-2 sm:grid-cols-6 ${embedded ? "lg:grid-cols-4 xl:grid-cols-6" : "lg:grid-cols-6"}`}
-                >
-                  {field.options
-                    .filter((option, index) =>
-                      expandedColorFields.has(field.id) ||
-                      index < 12 ||
-                      (selectedByGroup[field.id] ?? []).includes(option.id),
-                    )
-                    .map((option) => {
-                      const selected = (selectedByGroup[field.id] ?? []).includes(option.id);
-                      return (
-                        <label
-                          key={option.id}
-                          className="group cursor-pointer rounded-xl p-1.5 text-center text-xs text-boutique-muted transition duration-200 ease-out hover:bg-boutique-bg motion-reduce:transition-none"
-                        >
-                          <input
-                            className="peer sr-only"
-                            type={field.maxSelect <= 1 ? "radio" : "checkbox"}
-                            name={`color-${field.id}`}
-                            checked={selected}
-                            onChange={(event) => {
-                              const current = selectedByGroup[field.id] ?? [];
-                              const next = field.maxSelect <= 1
-                                ? event.target.checked
-                                  ? [option.id]
-                                  : []
-                                : event.target.checked
-                                  ? [...current, option.id].slice(0, field.maxSelect)
-                                  : current.filter((id) => id !== option.id);
-                              setSelectedByGroup((state) => ({ ...state, [field.id]: next }));
-                              if (showQuantitySelector) {
-                                setQuantity(1);
-                              }
-                              setError(null);
-                            }}
-                          />
-                          <span
-                            className={`relative mx-auto grid h-10 w-10 place-items-center rounded-full border-[3px] border-white shadow-sm ring-1 transition duration-200 ease-out group-hover:scale-[1.04] peer-focus-visible:ring-2 peer-focus-visible:ring-boutique-sage-deep motion-reduce:transition-none motion-reduce:group-hover:scale-100 ${
-                              selected
-                                ? "ring-2 ring-boutique-sage-deep"
-                                : "ring-boutique-line"
-                            }`}
-                            style={{ backgroundColor: option.hex ?? "#eee8df" }}
-                          >
-                            {selected ? (
-                              <span
-                                aria-hidden="true"
-                                className="grid h-5 w-5 place-items-center rounded-full bg-white/90 text-[0.65rem] font-bold text-boutique-sage-deep shadow-sm"
-                              >
-                                ✓
-                              </span>
-                            ) : null}
-                          </span>
-                          <span
-                            className={`mt-2 block leading-4 ${
-                              selected ? "font-semibold text-boutique-ink" : ""
-                            }`}
-                          >
-                            {option.name}
-                          </span>
-                        </label>
-                      );
-                    })}
-                </div>
-                {field.options.length > 12 ? (
-                  <button
-                    type="button"
-                    aria-expanded={expandedColorFields.has(field.id)}
-                    aria-controls={`color-options-${field.id}`}
-                    onClick={() => {
-                      setExpandedColorFields((current) => {
-                        const next = new Set(current);
-                        if (next.has(field.id)) next.delete(field.id);
-                        else next.add(field.id);
-                        return next;
-                      });
-                    }}
-                    className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-boutique-line bg-white px-4 py-3 text-sm font-semibold text-boutique-ink transition duration-200 ease-out hover:-translate-y-1 hover:border-boutique-sage-deep hover:text-boutique-sage-deep hover:shadow-[0_12px_24px_-10px_rgb(44_40_37_/0.16)] active:translate-y-0 active:shadow-sm motion-reduce:transition-none motion-reduce:hover:translate-y-0"
-                  >
-                    {expandedColorFields.has(field.id)
-                      ? "Покажи по-малко"
-                      : `Вижте всички цветове (${field.options.length})`}
-                    <span
-                      aria-hidden="true"
-                      className={`transition motion-reduce:transition-none ${
-                        expandedColorFields.has(field.id) ? "rotate-180" : ""
-                      }`}
-                    >
-                      ⌄
-                    </span>
-                  </button>
-                ) : null}
-              </fieldset>
-            ),
-          )}
-        </div>
+      {!useMaterialCards && colorFieldsSection ? (
+        <div className="order-40">{colorFieldsSection}</div>
       ) : null}
 
-      {error ? <p className="mt-5 text-sm font-medium text-red-700">{error}</p> : null}
+      {error ? (
+        <p className={`mt-5 text-sm font-medium text-red-700 ${useMaterialCards ? "order-50" : "order-50"}`}>
+          {error}
+        </p>
+      ) : null}
       {showQuantitySelector ? (
-      <div className="mt-5 rounded-2xl border border-boutique-line bg-white/70 p-3">
+      <div className={`mt-5 rounded-2xl border border-boutique-line bg-white/70 p-3 ${useMaterialCards ? "order-60" : "order-60"}`}>
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <p className="text-sm font-semibold text-boutique-ink">Количество</p>
@@ -1206,7 +1131,7 @@ export function ProductDetailAddToCart({
       </div>
       ) : null}
       {usePreparedVariants ? (
-        <>
+        <div className={useMaterialCards ? "order-70" : "order-70"}>
           <button
             type="button"
             disabled={!canPrepareVariant}
@@ -1266,10 +1191,10 @@ export function ProductDetailAddToCart({
               </p>
             )}
           </section>
-        </>
+        </div>
       ) : null}
       {!showQuantitySelector && stockSelectionBlocked ? (
-        <p className="mt-4 text-sm font-medium text-red-700">
+        <p className={`mt-4 text-sm font-medium text-red-700 ${useMaterialCards ? "order-75" : "order-75"}`}>
           Всички налични бройки вече са в количката.
         </p>
       ) : null}
@@ -1278,7 +1203,7 @@ export function ProductDetailAddToCart({
         aria-live="polite"
         disabled={!canSubmitAddToCart}
         onClick={handleAddToCart}
-        className={`mt-5 w-full rounded-xl px-8 py-3.5 text-sm font-semibold text-white transition duration-200 ease-out hover:-translate-y-1 hover:shadow-[0_16px_32px_-12px_rgb(44_40_37_/0.22)] active:translate-y-0 active:shadow-sm disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none motion-reduce:transition-none motion-reduce:hover:translate-y-0 ${
+        className={`mt-5 w-full rounded-xl px-8 py-3.5 text-sm font-semibold text-white transition duration-200 ease-out hover:-translate-y-1 hover:shadow-[0_16px_32px_-12px_rgb(44_40_37_/0.22)] active:translate-y-0 active:shadow-sm disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none motion-reduce:transition-none motion-reduce:hover:translate-y-0 ${useMaterialCards ? "order-80" : "order-80"} ${
           added
             ? "bg-boutique-sage shadow-boutique-sm"
             : "bg-boutique-sage-deep hover:bg-boutique-ink"
@@ -1296,7 +1221,7 @@ export function ProductDetailAddToCart({
       {upsellOffers.length ? (
         <section
           aria-labelledby="product-upsell-title"
-          className="mt-4 rounded-2xl border border-boutique-line bg-boutique-bg/60 p-4"
+          className={`mt-4 rounded-2xl border border-boutique-line bg-boutique-bg/60 p-4 ${useMaterialCards ? "order-90" : "order-90"}`}
         >
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-boutique-accent">
             Специална оферта
@@ -1446,7 +1371,11 @@ export function ProductDetailAddToCart({
         </section>
       ) : null}
 
+      </div>
     </div>
+    {useMaterialCards && leftColorsSlot && colorFieldsSection
+      ? createPortal(colorFieldsSection, leftColorsSlot)
+      : null}
     {showMobileBar ? (
       <div
         className="fixed inset-x-0 bottom-0 z-50 border-t border-boutique-line bg-boutique-paper/95 px-4 py-3 shadow-[0_-10px_30px_-20px_rgb(44_40_37_/0.45)] backdrop-blur sm:hidden"

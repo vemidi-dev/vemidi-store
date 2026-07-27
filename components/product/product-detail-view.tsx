@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { ProductDetailAddToCart } from "@/components/product/product-detail-add-to-cart";
+import { PRODUCT_LEFT_COLORS_SLOT_ID } from "@/components/product/product-detail-color-fields";
 import { MetaPixelViewContentBridge } from "@/components/consent/meta-pixel-view-content-bridge";
 import { ProductDetailGalleryAside } from "@/components/product/product-detail-content-sections";
 import { ProductDetailGallery } from "@/components/product/product-detail-gallery";
@@ -134,19 +135,135 @@ export function ProductDetailView({
         <PageContainer className="py-10 md:py-14 lg:py-16">
           <VisibleBreadcrumbs items={breadcrumbItems} />
 
+          {usesMaterialStockLayout ? (
+            <div className="mt-8 flex flex-col gap-8 lg:mt-10 lg:grid lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:items-start lg:gap-x-16 xl:gap-x-20">
+              <div className="order-1 flex min-w-0 flex-col gap-0 lg:sticky lg:top-28 lg:z-0 lg:max-h-[calc(100vh-7rem)] lg:self-start lg:overflow-y-auto lg:overscroll-contain [scrollbar-gutter:stable]">
+                <ProductDetailGallery
+                  images={product.images}
+                  syncKey={product.id}
+                  syncOptionImages={false}
+                />
+                <div id={PRODUCT_LEFT_COLORS_SLOT_ID} className="min-w-0" />
+                <ProductDetailGalleryAside
+                  className="mt-5"
+                  description={product.description}
+                  personalizationInfo={product.personalizationInfo}
+                  dimensionsMaterials={product.dimensionsMaterials}
+                  orderingInfo={product.orderingInfo}
+                  additionalInfo={product.additionalInfo}
+                  faqIdPrefix={`product-faq-${product.id}`}
+                  faqItems={productFaqItems}
+                />
+              </div>
+
+              <div className="order-2 flex min-w-0 flex-col lg:col-start-2 lg:row-start-1">
+                <div className="space-y-6">
+                  {product.cardBadge ? (
+                    <p className="text-[0.7rem] font-semibold uppercase tracking-[0.28em] text-boutique-accent">
+                      {product.cardBadge}
+                    </p>
+                  ) : null}
+
+                  <div>
+                    <h1 className="font-heading text-4xl leading-[1.12] tracking-tight text-boutique-ink sm:text-5xl lg:text-[2.75rem]">
+                      {product.title}
+                    </h1>
+                    {product.headingSubtitle ? (
+                      <h2 className="mt-4 max-w-xl text-xl font-medium leading-relaxed text-boutique-ink/80 sm:text-2xl">
+                        {product.headingSubtitle}
+                      </h2>
+                    ) : null}
+                  </div>
+
+                  <ProductDetailOccasionTags occasions={productOccasions} />
+
+                  <div className="flex flex-wrap items-center gap-3">
+                    <ProductPrice product={product} size="lg" />
+                    {product.promotion ? (
+                      <span className="rounded-full bg-boutique-accent/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-boutique-accent">
+                        {product.promotion.label}
+                      </span>
+                    ) : null}
+                    {product.availabilityLabel !== "В наличност" ? (
+                      <span className="rounded-full border border-boutique-line bg-boutique-muted/10 px-2.5 py-0.5 text-[0.68rem] font-semibold tracking-[0.06em] text-boutique-muted">
+                        {product.fulfillmentType === "made_to_order"
+                          ? "По поръчка"
+                          : product.availabilityLabel}
+                      </span>
+                    ) : null}
+                  </div>
+
+                  {product.subtitle ? (
+                    <p className="max-w-xl text-base leading-relaxed text-boutique-muted md:text-lg">
+                      {product.subtitle}
+                    </p>
+                  ) : null}
+                </div>
+
+                {showCategoryLink && primaryCategory ? (
+                  <Link
+                    href={getCategoryListingHref(primaryCategory)}
+                    className="mt-5 inline-flex w-fit items-center gap-2 text-sm font-semibold text-boutique-sage-deep underline-offset-4 transition hover:text-boutique-ink hover:underline"
+                  >
+                    Разгледайте още от „{primaryCategory.name}“
+                    <span aria-hidden="true">→</span>
+                  </Link>
+                ) : null}
+
+                {featuredRelatedProduct ? (
+                  <Link
+                    href={getProductPath(featuredRelatedProduct.slug)}
+                    className="mt-5 flex items-center gap-3 rounded-2xl border border-boutique-line bg-white/75 p-3 transition duration-200 ease-out hover:border-boutique-sage-deep/45 hover:shadow-boutique-sm motion-reduce:transition-none"
+                  >
+                    <span className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-boutique-line bg-boutique-bg">
+                      {featuredRelatedProduct.images[0]?.src ? (
+                        <Image
+                          src={featuredRelatedProduct.images[0].src}
+                          alt={featuredRelatedProduct.images[0].alt || featuredRelatedProduct.title}
+                          fill
+                          sizes="64px"
+                          className="object-cover"
+                        />
+                      ) : null}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-xs font-semibold uppercase tracking-[0.14em] text-boutique-accent">
+                        Вижте готов вариант
+                      </span>
+                      <span className="mt-1 block text-sm font-semibold leading-5 text-boutique-ink">
+                        {featuredRelatedProduct.title}
+                      </span>
+                    </span>
+                    <span
+                      aria-hidden="true"
+                      className="ml-auto shrink-0 text-lg text-boutique-sage-deep"
+                    >
+                      →
+                    </span>
+                  </Link>
+                ) : null}
+
+                <ProductDetailAddToCart
+                  attribution={attribution}
+                  initialOptionSelections={initialOptionSelections}
+                  layout="embedded"
+                  product={product}
+                  upsellOffers={upsellOffers}
+                  upsellSectionTitle={upsellSectionTitle}
+                  usesMaterialStockLayout
+                />
+
+                <ProductLandingPageCta landingPage={primaryLandingPage} />
+              </div>
+            </div>
+          ) : (
           <div className="mt-8 flex flex-col gap-8 lg:mt-10 lg:grid lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:items-start lg:gap-x-16 xl:gap-x-20">
-            <div
-              className={
-                usesMaterialStockLayout
-                  ? "contents lg:sticky lg:top-28 lg:z-0 lg:flex lg:flex-col lg:self-start"
-                  : "contents lg:flex lg:flex-col"
-              }
-            >
+            <div className="contents lg:flex lg:flex-col">
               <div className="order-1 min-w-0">
                 <ProductDetailGallery
                   images={product.images}
                   syncKey={product.id}
-                  syncOptionImages={!usesMaterialStockLayout}
+                  syncOptionImages
                 />
               </div>
               <ProductDetailGalleryAside
@@ -260,6 +377,7 @@ export function ProductDetailView({
               <ProductLandingPageCta landingPage={primaryLandingPage} />
             </div>
           </div>
+          )}
         </PageContainer>
       </section>
 

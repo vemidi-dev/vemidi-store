@@ -23,6 +23,7 @@ import {
   productUsesStockConfiguratorLayout,
   shouldUseMaterialOptionCards,
 } from "@/lib/product-option-layout";
+import { buildSelectedColorLabel } from "@/lib/product-selected-color-label";
 import {
   calculateEstimatedUnitPrice,
   calculateOptionFinalPrice,
@@ -677,5 +678,31 @@ test("material stock layout is enabled for stocked products or material variants
   assert.equal(
     optionValueSupportsMaterialCard(groupsWithMaterial[0]!.values[0]!),
     true,
+  );
+});
+
+test("selected color label summarizes choice and quantity fields", () => {
+  const colorField = {
+    id: "color-field-1",
+    label: "Цвят",
+    key: "color",
+    groupId: "group-1",
+    groupLabel: "Цвят",
+    minSelect: 1,
+    maxSelect: 1,
+    selectionMode: "choice" as const,
+    options: [
+      { id: "opt-red", name: "Червен", hex: "#c00", sortOrder: 0 },
+      { id: "opt-blue", name: "Син", hex: "#00c", sortOrder: 1 },
+    ],
+  };
+
+  assert.equal(
+    buildSelectedColorLabel([colorField], { "color-field-1": ["opt-red"] }, {}),
+    "Червен",
+  );
+  assert.equal(
+    buildSelectedColorLabel([colorField], { "color-field-1": [] }, {}),
+    null,
   );
 });

@@ -50,13 +50,12 @@ function MaterialOptionCard({
 
   return (
     <label
-      key={option.id}
-      className={`relative flex cursor-pointer items-start gap-3 overflow-hidden rounded-xl border bg-white p-2.5 text-left transition duration-200 ease-out motion-reduce:transition-none sm:p-3 ${
+      className={`relative flex cursor-pointer items-center gap-2 overflow-hidden rounded-lg border bg-white p-2 text-left transition duration-200 ease-out motion-reduce:transition-none ${
         option.isSoldOut
           ? "cursor-not-allowed border-boutique-line/60 opacity-60"
           : selected
             ? "border-boutique-sage-deep shadow-boutique-sm ring-2 ring-boutique-sage/25"
-            : "border-boutique-line hover:border-boutique-sage-deep/55 hover:shadow-[0_10px_20px_-12px_rgb(44_40_37_/0.12)]"
+            : "border-boutique-line hover:border-boutique-sage-deep/55"
       }`}
     >
       <input
@@ -81,7 +80,7 @@ function MaterialOptionCard({
           });
         }}
       />
-      <span className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border border-boutique-line/70 bg-boutique-bg sm:h-20 sm:w-20">
+      <span className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md border border-boutique-line/70 bg-boutique-bg sm:h-14 sm:w-14 sm:rounded-lg">
         {material?.imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -90,34 +89,34 @@ function MaterialOptionCard({
             className="h-full w-full object-cover"
           />
         ) : (
-          <span className="flex h-full items-center justify-center px-1 text-center text-[10px] font-medium leading-tight text-boutique-muted">
-            {title}
+          <span className="flex h-full items-center justify-center px-1 text-center text-[9px] font-medium leading-tight text-boutique-muted">
+            {title.slice(0, 2)}
           </span>
         )}
       </span>
-      <span className="min-w-0 flex-1 pr-7">
-        <span className="block text-sm font-semibold leading-5 text-boutique-ink">
+      <span className="min-w-0 flex-1 pr-5">
+        <span className="block text-xs font-semibold leading-4 text-boutique-ink sm:text-sm sm:leading-5">
           {title}
         </span>
         {description ? (
-          <span className="mt-0.5 line-clamp-2 block text-xs leading-5 text-boutique-muted">
+          <span className="mt-0.5 line-clamp-2 block text-[11px] leading-4 text-boutique-muted">
             {description}
           </span>
         ) : null}
-        <span className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
-          {priceLabel ? (
-            <span className="text-sm font-semibold text-boutique-ink">{priceLabel}</span>
-          ) : null}
-          {option.isSoldOut ? (
-            <span className="text-[0.65rem] font-semibold uppercase tracking-wide text-boutique-muted">
-              изчерпано
-            </span>
-          ) : null}
-        </span>
+        {priceLabel ? (
+          <span className="mt-1 block text-xs font-semibold text-boutique-ink sm:text-sm">
+            {priceLabel}
+          </span>
+        ) : null}
+        {option.isSoldOut ? (
+          <span className="mt-0.5 block text-[0.6rem] font-semibold uppercase tracking-wide text-boutique-muted">
+            изчерпано
+          </span>
+        ) : null}
       </span>
       {selected ? (
         <span
-          className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-boutique-sage-deep text-xs font-bold text-white shadow-sm"
+          className="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-boutique-sage-deep text-[10px] font-bold text-white shadow-sm"
           aria-hidden
         >
           ✓
@@ -341,7 +340,7 @@ export function ProductOptionsSelector({
                 {group.isRequired ? " *" : ""}
               </legend>
               {materialValues.length ? (
-                <div className="mt-2 grid gap-2">
+                <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
                   {materialValues.map((option) => {
                     const selected = selection.valueIds.includes(option.id);
                     const priceLabel = formatOptionChoicePrice(
