@@ -51,12 +51,12 @@ function MaterialOptionCard({
   return (
     <label
       key={option.id}
-      className={`relative flex cursor-pointer flex-col overflow-hidden rounded-xl border bg-white text-left transition duration-200 ease-out motion-reduce:transition-none ${
+      className={`relative flex cursor-pointer items-start gap-3 overflow-hidden rounded-xl border bg-white p-2.5 text-left transition duration-200 ease-out motion-reduce:transition-none sm:p-3 ${
         option.isSoldOut
           ? "cursor-not-allowed border-boutique-line/60 opacity-60"
           : selected
             ? "border-boutique-sage-deep shadow-boutique-sm ring-2 ring-boutique-sage/25"
-            : "border-boutique-line hover:-translate-y-0.5 hover:border-boutique-sage-deep/55 hover:shadow-[0_12px_24px_-10px_rgb(44_40_37_/0.14)] motion-reduce:hover:translate-y-0"
+            : "border-boutique-line hover:border-boutique-sage-deep/55 hover:shadow-[0_10px_20px_-12px_rgb(44_40_37_/0.12)]"
       }`}
     >
       <input
@@ -81,45 +81,48 @@ function MaterialOptionCard({
           });
         }}
       />
+      <span className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border border-boutique-line/70 bg-boutique-bg sm:h-20 sm:w-20">
+        {material?.imageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={material.imageUrl}
+            alt=""
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <span className="flex h-full items-center justify-center px-1 text-center text-[10px] font-medium leading-tight text-boutique-muted">
+            {title}
+          </span>
+        )}
+      </span>
+      <span className="min-w-0 flex-1 pr-7">
+        <span className="block text-sm font-semibold leading-5 text-boutique-ink">
+          {title}
+        </span>
+        {description ? (
+          <span className="mt-0.5 line-clamp-2 block text-xs leading-5 text-boutique-muted">
+            {description}
+          </span>
+        ) : null}
+        <span className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
+          {priceLabel ? (
+            <span className="text-sm font-semibold text-boutique-ink">{priceLabel}</span>
+          ) : null}
+          {option.isSoldOut ? (
+            <span className="text-[0.65rem] font-semibold uppercase tracking-wide text-boutique-muted">
+              изчерпано
+            </span>
+          ) : null}
+        </span>
+      </span>
       {selected ? (
         <span
-          className="absolute right-2 top-2 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-boutique-sage-deep text-xs font-bold text-white shadow-sm"
+          className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-boutique-sage-deep text-xs font-bold text-white shadow-sm"
           aria-hidden
         >
           ✓
         </span>
       ) : null}
-      <div className="relative aspect-[4/3] w-full bg-boutique-bg">
-        {material?.imageUrl ? (
-          <img
-            src={material.imageUrl}
-            alt={title}
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          <div className="flex h-full items-center justify-center px-3 text-center text-xs font-medium text-boutique-muted">
-            {title}
-          </div>
-        )}
-        {option.isSoldOut ? (
-          <span className="absolute left-2 top-2 rounded-full bg-white/90 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide text-boutique-muted">
-            изчерпано
-          </span>
-        ) : null}
-      </div>
-      <div className="flex flex-1 flex-col gap-1 p-3">
-        <span className="text-sm font-semibold leading-5 text-boutique-ink">{title}</span>
-        {description ? (
-          <span className="line-clamp-2 text-xs leading-5 text-boutique-muted">
-            {description}
-          </span>
-        ) : null}
-        {priceLabel ? (
-          <span className="mt-auto pt-1 text-sm font-semibold text-boutique-ink">
-            {priceLabel}
-          </span>
-        ) : null}
-      </div>
     </label>
   );
 }
@@ -338,7 +341,7 @@ export function ProductOptionsSelector({
                 {group.isRequired ? " *" : ""}
               </legend>
               {materialValues.length ? (
-                <div className="mt-2 grid gap-3 sm:grid-cols-2">
+                <div className="mt-2 grid gap-2">
                   {materialValues.map((option) => {
                     const selected = selection.valueIds.includes(option.id);
                     const priceLabel = formatOptionChoicePrice(

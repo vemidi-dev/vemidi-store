@@ -136,12 +136,22 @@ function redirectWith(
   message: string,
   tab: AdminTab = "products",
   draft?: string,
+  extraParams?: Record<string, string>,
 ): never {
   const params = new URLSearchParams({ [kind]: message, tab });
   params.set("_refresh", Date.now().toString());
   if (draft && encodeURIComponent(draft).length <= MAX_DRAFT_QUERY_LENGTH) {
     params.set("draft", draft);
   }
+  if (extraParams) {
+    for (const [key, value] of Object.entries(extraParams)) {
+      if (value) {
+        params.set(key, value);
+      }
+    }
+  }
+  revalidatePath(ADMIN_PATH);
+  revalidatePath(ADMIN_PATH, "layout");
   redirect(`${ADMIN_PATH}?${params.toString()}`);
 }
 
@@ -1949,7 +1959,9 @@ export async function createCategory(formData: FormData) {
   }
 
   revalidateCategoryPaths();
-  redirectWith("success", "Категорията е добавена.", activeTab);
+  redirectWith("success", "Категорията е добавена.", activeTab, undefined, {
+    categoryType: isCategoryType(categoryType) ? categoryType : "product",
+  });
 }
 
 export async function updateCategory(formData: FormData) {
@@ -2131,7 +2143,9 @@ export async function updateCategory(formData: FormData) {
   }
 
   revalidateCategoryPaths();
-  redirectWith("success", "Категорията е обновена.", activeTab);
+  redirectWith("success", "Категорията е обновена.", activeTab, undefined, {
+    categoryType: isCategoryType(categoryType) ? categoryType : "product",
+  });
 }
 
 export async function moveCategory(formData: FormData) {

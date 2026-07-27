@@ -20,7 +20,13 @@ const IMAGE_PROFILE = "category" as const;
 
 function done(kind: "success" | "error", message: string): never {
   revalidatePath("/admin");
-  redirect(`/admin?tab=materials&${kind}=${encodeURIComponent(message)}`);
+  revalidatePath("/admin", "layout");
+  const params = new URLSearchParams({
+    tab: "materials",
+    [kind]: message,
+    _refresh: Date.now().toString(),
+  });
+  redirect(`/admin?${params.toString()}`);
 }
 
 async function getAuthorizedClient() {

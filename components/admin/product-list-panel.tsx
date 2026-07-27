@@ -266,6 +266,15 @@ export function ProductListPanel({
                 })),
               },
               {
+                key: "material",
+                label: "Заготовки и материали",
+                dataAttribute: "materialCats",
+                options: materialCategories.map((category) => ({
+                  value: category.id,
+                  label: getCategoryDisplayLabel(categories, category),
+                })),
+              },
+              {
                 key: "occasion",
                 label: "Повод",
                 dataAttribute: "occasionCats",
@@ -404,6 +413,18 @@ export function ProductListPanel({
             const occasionCategoryIds = assignedCategories
               .filter((category) => category.category_type === "occasion")
               .map((category) => category.id);
+            const materialCategoryFilterIds = Array.from(
+              new Set([
+                ...assignedCategories
+                  .filter((category) => category.category_type === "material")
+                  .map((category) => category.id),
+                ...assignedCategories.flatMap((category) =>
+                  category.category_type === "material" && category.parent_id
+                    ? [category.parent_id]
+                    : [],
+                ),
+              ]),
+            );
             const galleryImageCount =
               productImages.length > 0
                 ? productImages.length
@@ -453,6 +474,7 @@ export function ProductListPanel({
                   .join(" ")}
                 data-publication-status={publicationStatus}
                 data-product-cats={productCategoryFilterIds.join(" ")}
+                data-material-cats={materialCategoryFilterIds.join(" ")}
                 data-occasion-cats={occasionCategoryIds.join(" ")}
                 data-sort-name={product.name}
                 data-sort-price={product.price}
@@ -738,8 +760,9 @@ export function ProductListPanel({
                         </div>
                       )}
                       <p className={`${adminHelperClass} mt-2`}>
-                        Отметнете категориите на продукта. При продуктовите категории или заготовките маркирайте
-                        една категория като „Основна“ за breadcrumb и SEO.
+                        Отметнете категориите на продукта. Може да е само в „Заготовки и материали“
+                        без обикновена продуктова категория. Маркирайте една категория като „Основна“
+                        за breadcrumb и SEO.
                       </p>
                     </fieldset>
 

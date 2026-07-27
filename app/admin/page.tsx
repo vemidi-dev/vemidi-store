@@ -775,6 +775,14 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               productCountByCategoryId={buildProductCountByCategoryId(
                 data.categoryIdsByProductId,
               )}
+              initialCategoryType={(() => {
+                const categoryType = firstValue(params.categoryType);
+                return categoryType === "material" ||
+                  categoryType === "occasion" ||
+                  categoryType === "product"
+                  ? categoryType
+                  : undefined;
+              })()}
             />
           ) : (
             <>

@@ -136,20 +136,32 @@ export function ProductDetailView({
 
           <div className="mt-8 flex flex-col gap-8 lg:mt-10 lg:grid lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:items-start lg:gap-x-16 xl:gap-x-20">
             <div
-              className={`order-1 min-w-0 lg:col-start-1 lg:row-start-1 ${
+              className={
                 usesMaterialStockLayout
-                  ? "lg:sticky lg:top-28 lg:max-h-[calc(100vh-7rem)] lg:self-start"
-                  : ""
-              }`}
+                  ? "contents lg:sticky lg:top-28 lg:z-0 lg:flex lg:flex-col lg:self-start"
+                  : "contents lg:flex lg:flex-col"
+              }
             >
-              <ProductDetailGallery
-                images={product.images}
-                syncKey={product.id}
-                syncOptionImages={!usesMaterialStockLayout}
+              <div className="order-1 min-w-0">
+                <ProductDetailGallery
+                  images={product.images}
+                  syncKey={product.id}
+                  syncOptionImages={!usesMaterialStockLayout}
+                />
+              </div>
+              <ProductDetailGalleryAside
+                className="order-3"
+                description={product.description}
+                personalizationInfo={product.personalizationInfo}
+                dimensionsMaterials={product.dimensionsMaterials}
+                orderingInfo={product.orderingInfo}
+                additionalInfo={product.additionalInfo}
+                faqIdPrefix={`product-faq-${product.id}`}
+                faqItems={productFaqItems}
               />
             </div>
 
-            <div className="order-2 flex min-w-0 flex-col lg:col-start-2 lg:row-start-1 lg:row-span-2">
+            <div className="order-2 flex min-w-0 flex-col lg:col-start-2 lg:row-start-1">
               <div className="space-y-6">
                 {product.cardBadge ? (
                   <p className="text-[0.7rem] font-semibold uppercase tracking-[0.28em] text-boutique-accent">
@@ -247,17 +259,6 @@ export function ProductDetailView({
 
               <ProductLandingPageCta landingPage={primaryLandingPage} />
             </div>
-
-            <ProductDetailGalleryAside
-              className="order-3 lg:col-start-1 lg:row-start-2"
-              description={product.description}
-              personalizationInfo={product.personalizationInfo}
-              dimensionsMaterials={product.dimensionsMaterials}
-              orderingInfo={product.orderingInfo}
-              additionalInfo={product.additionalInfo}
-              faqIdPrefix={`product-faq-${product.id}`}
-              faqItems={productFaqItems}
-            />
           </div>
         </PageContainer>
       </section>
