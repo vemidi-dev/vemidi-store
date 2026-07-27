@@ -13,6 +13,7 @@ import type {
   ProductOptionGroupRow,
   ProductOptionValueRow,
   ProductPersonalizationFieldRow,
+  ProductMaterialRow,
   RelatedProductRow,
   CategoryRelatedCategoryRow,
   ProductWishTemplateRow,
@@ -53,6 +54,7 @@ export type AdminData = {
   personalizationFieldsByProductId: Map<string, ProductPersonalizationFieldRow[]>;
   optionGroupsByProductId: Map<string, ProductOptionGroupRow[]>;
   optionValuesByGroupId: Map<string, ProductOptionValueRow[]>;
+  materials: ProductMaterialRow[];
   wishTemplates: WishTemplateRow[];
   wishTemplateOccasions: WishTemplateOccasionRow[];
   wishTemplateIdsByProductId: Map<string, string[]>;
@@ -92,6 +94,7 @@ export type AdminData = {
     categoryRelatedCategories: QueryError;
     optionGroups: QueryError;
     optionValues: QueryError;
+    materials: QueryError;
     landingPages: QueryError;
   };
 };
@@ -117,6 +120,7 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
     categoryRelatedCategoriesResult,
     optionGroupsResult,
     optionValuesResult,
+    materialsResult,
     landingPagesResult,
     faqGroupsResult,
     faqItemsResult,
@@ -196,9 +200,16 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
     supabase
       .from("product_option_values")
       .select(
-        "id,group_id,label,key,price_delta,is_default,is_active,is_sold_out,image_url,sku,sort_order",
+        "id,group_id,label,key,price_delta,is_default,is_active,is_sold_out,image_url,material_id,sku,sort_order",
       )
       .order("sort_order", { ascending: true }),
+    supabase
+      .from("product_materials")
+      .select(
+        "id,name,description,image_url,is_active,sort_order,created_at,updated_at",
+      )
+      .order("sort_order", { ascending: true })
+      .order("name", { ascending: true }),
     supabase
       .from("product_landing_pages")
       .select(
@@ -256,6 +267,9 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
     []) as CategoryRelatedCategoryRow[];
   const optionGroups = (optionGroupsResult.data ?? []) as ProductOptionGroupRow[];
   const optionValues = (optionValuesResult.data ?? []) as ProductOptionValueRow[];
+  const materials = materialsResult.error
+    ? []
+    : ((materialsResult.data ?? []) as ProductMaterialRow[]);
   const landingPagesMigrationMissing = isProductLandingPagesMigrationMissing(
     landingPagesResult.error,
   );
@@ -397,6 +411,7 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
     personalizationFieldsByProductId,
     optionGroupsByProductId,
     optionValuesByGroupId,
+    materials,
     wishTemplates,
     wishTemplateOccasions,
     wishTemplateIdsByProductId,
@@ -436,6 +451,7 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
       categoryRelatedCategories: categoryRelatedCategoriesResult.error,
       optionGroups: optionGroupsResult.error,
       optionValues: optionValuesResult.error,
+      materials: materialsResult.error,
       landingPages: landingPagesMigrationMissing ? null : landingPagesResult.error,
     },
   };

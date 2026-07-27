@@ -591,7 +591,7 @@ async function loadProductDetails(
       supabase
         .from("product_option_values")
         .select(
-          "id,group_id,label,key,price_delta,is_default,is_active,is_sold_out,image_url,sku,sort_order",
+          "id,group_id,label,key,price_delta,is_default,is_active,is_sold_out,image_url,material_id,sku,sort_order",
         )
         .eq("is_active", true)
         .order("sort_order"),
@@ -607,9 +607,35 @@ async function loadProductDetails(
   const filteredValues = (optionValuesResult.data ?? []).filter((value) =>
     groupIds.includes(String(value.group_id)),
   );
+  const materialIds = [
+    ...new Set(
+      filteredValues
+        .map((value) => (value.material_id ? String(value.material_id) : null))
+        .filter((id): id is string => Boolean(id)),
+    ),
+  ];
+  const materialsById = new Map<
+    string,
+    { id: string; name: string; description: string | null; image_url: string | null }
+  >();
+  if (materialIds.length) {
+    const { data: materialsData } = await supabase
+      .from("product_materials")
+      .select("id,name,description,image_url")
+      .in("id", materialIds);
+    for (const material of materialsData ?? []) {
+      materialsById.set(String(material.id), {
+        id: String(material.id),
+        name: String(material.name),
+        description: material.description ? String(material.description) : null,
+        image_url: material.image_url ? String(material.image_url) : null,
+      });
+    }
+  }
   product.optionGroups = mapProductOptionGroups(
     optionGroupsResult.data ?? [],
     filteredValues,
+    materialsById,
   );
   product.hasUniversalOptions = (product.optionGroups?.length ?? 0) > 0;
   product.personalizationFields = (personalizationResult.data ?? []).map(

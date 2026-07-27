@@ -164,6 +164,7 @@ export function getAdminTab(formData: FormData, fallback: AdminTab): AdminTab {
   const raw = getString(formData, adminFormFields.common.tab);
   return raw === "categories" ||
     raw === "colors" ||
+    raw === "materials" ||
     raw === "promotions" ||
     raw === "products" ||
     raw === "orders" ||

@@ -33,6 +33,7 @@ import {
 } from "@/lib/product-color-quantities";
 import type { ColorQuantitiesByOptionId } from "@/lib/product-color-quantities";
 import { formatPriceDelta } from "@/lib/product-option-pricing";
+import { shouldUseMaterialOptionCards } from "@/lib/product-option-layout";
 import {
   hasQuantityPriceTiers,
   resolveQuantityUnitPrice,
@@ -197,6 +198,10 @@ export function ProductDetailAddToCart({
   const [draftReady, setDraftReady] = useState(false);
   const colorFields = useMemo(() => product.colorFields ?? [], [product.colorFields]);
   const optionGroups = useMemo(() => product.optionGroups ?? [], [product.optionGroups]);
+  const useMaterialCards = useMemo(
+    () => shouldUseMaterialOptionCards(product, optionGroups),
+    [optionGroups, product],
+  );
   const defaultOptionSelections = useMemo(
     () => buildDefaultOptionSelections(optionGroups),
     [optionGroups],
@@ -534,7 +539,7 @@ export function ProductDetailAddToCart({
   );
 
   useEffect(() => {
-    if (!optionGroups.length) {
+    if (!optionGroups.length || useMaterialCards) {
       return;
     }
 
@@ -552,7 +557,7 @@ export function ProductDetailAddToCart({
         detail: { productId: product.id, imageUrl: selectedImageUrl },
       }),
     );
-  }, [optionGroups, optionSelections, product.id]);
+  }, [optionGroups, optionSelections, product.id, useMaterialCards]);
 
   useEffect(() => {
     const configurator = configuratorRef.current;
@@ -970,6 +975,7 @@ export function ProductDetailAddToCart({
           value={optionSelections}
           onChange={handleOptionSelectionsChange}
           onEstimatedPriceChange={setEstimatedUnitPrice}
+          useMaterialCards={useMaterialCards}
         />
       ) : null}
 

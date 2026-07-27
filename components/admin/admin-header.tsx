@@ -6,6 +6,7 @@ const managementTabs: Array<{ tab: AdminTab; label: string }> = [
   { tab: "products", label: "Продукти" },
   { tab: "categories", label: "Категории" },
   { tab: "colors", label: "Цветове" },
+  { tab: "materials", label: "Материали" },
   { tab: "promotions", label: "Промоции" },
   { tab: "blog", label: "Блог" },
   { tab: "events", label: "Събития" },

@@ -18,6 +18,12 @@ import {
   type ProductOptionGroup,
 } from "@/lib/product-options";
 import {
+  optionValueSupportsMaterialCard,
+  productHasMaterialOptionValues,
+  productUsesStockConfiguratorLayout,
+  shouldUseMaterialOptionCards,
+} from "@/lib/product-option-layout";
+import {
   calculateEstimatedUnitPrice,
   calculateOptionFinalPrice,
   calculateOptionDelta,
@@ -612,4 +618,64 @@ test("cart storage migrates legacy uuid slug lines to productId identity", () =>
   assert.equal(lines[0]?.productId, productId);
   assert.equal(lines[0]?.slug, productId);
   assert.equal(CART_STORAGE_KEY.includes("v10"), true);
+});
+
+test("material stock layout is enabled for stocked products or material variants", () => {
+  const stockedProduct = {
+    ...baseProduct,
+    fulfillmentType: "stocked" as const,
+    allowQuantitySelector: true,
+  };
+  assert.equal(
+    shouldUseMaterialOptionCards(stockedProduct, []),
+    true,
+  );
+  assert.equal(
+    productUsesStockConfiguratorLayout(stockedProduct),
+    true,
+  );
+
+  const personalizedProduct = {
+    ...baseProduct,
+    fulfillmentType: "made_to_order" as const,
+    allowQuantitySelector: false,
+  };
+  const groupsWithMaterial: ProductOptionGroup[] = [
+    makeGroup({
+      values: [
+        {
+          id: valueSmallId,
+          label: "Плат",
+          key: "fabric",
+          priceDelta: 0,
+          isDefault: true,
+          isActive: true,
+          isSoldOut: false,
+          sortOrder: 0,
+          material: {
+            id: "88888888-8888-4888-8888-888888888888",
+            name: "Лен",
+            description: "Естествен плат",
+            imageUrl: "https://example.com/linen.jpg",
+          },
+        },
+      ],
+    }),
+  ];
+  assert.equal(
+    productHasMaterialOptionValues(groupsWithMaterial),
+    true,
+  );
+  assert.equal(
+    shouldUseMaterialOptionCards(personalizedProduct, groupsWithMaterial),
+    true,
+  );
+  assert.equal(
+    shouldUseMaterialOptionCards(personalizedProduct, [makeGroup()]),
+    false,
+  );
+  assert.equal(
+    optionValueSupportsMaterialCard(groupsWithMaterial[0]!.values[0]!),
+    true,
+  );
 });

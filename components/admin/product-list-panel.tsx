@@ -367,6 +367,7 @@ export function ProductListPanel({
                 isActive: value.is_active,
                 isSoldOut: value.is_sold_out,
                 imageUrl: value.image_url,
+                materialId: value.material_id ?? null,
                 sku: value.sku,
                 sortOrder: value.sort_order,
               })),
@@ -756,6 +757,7 @@ export function ProductListPanel({
                       <ProductOptionGroupsEditor
                         initialGroups={initialOptionGroups}
                         allDependencyOptions={productDependencyOptions}
+                        materials={data.materials}
                         productImages={[
                           ...new Map(
                             [

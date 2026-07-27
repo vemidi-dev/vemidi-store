@@ -11,6 +11,8 @@ type ProductDetailGalleryProps = {
   images: ProductImage[];
   className?: string;
   syncKey?: string;
+  /** When false, option selections do not swap the main gallery image. */
+  syncOptionImages?: boolean;
 };
 
 function GalleryMainImage({
@@ -109,37 +111,11 @@ function GalleryImageCounter({
   );
 }
 
-function scrollThumbIntoView(list: HTMLUListElement, element: HTMLElement) {
-  const listRect = list.getBoundingClientRect();
-  const elementRect = element.getBoundingClientRect();
-
-  if (list.scrollHeight > list.clientHeight) {
-    const above = elementRect.top < listRect.top;
-    const below = elementRect.bottom > listRect.bottom;
-    if (above || below) {
-      list.scrollTo({
-        top: element.offsetTop - list.clientHeight / 2 + element.offsetHeight / 2,
-        behavior: "smooth",
-      });
-    }
-  }
-
-  if (list.scrollWidth > list.clientWidth) {
-    const left = elementRect.left < listRect.left;
-    const right = elementRect.right > listRect.right;
-    if (left || right) {
-      list.scrollTo({
-        left: element.offsetLeft - list.clientWidth / 2 + element.offsetWidth / 2,
-        behavior: "smooth",
-      });
-    }
-  }
-}
-
 export function ProductDetailGallery({
   images,
   className,
   syncKey,
+  syncOptionImages = true,
 }: ProductDetailGalleryProps) {
   const [active, setActive] = useState(0);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
@@ -161,7 +137,7 @@ export function ProductDetailGallery({
   const showNextImage = () => showImage(safeIndex + 1);
 
   useEffect(() => {
-    if (!syncKey) {
+    if (!syncKey || !syncOptionImages) {
       return;
     }
 
@@ -187,21 +163,7 @@ export function ProductDetailGallery({
     window.addEventListener("vemidi:product-option-image", handleOptionImageChange);
     return () =>
       window.removeEventListener("vemidi:product-option-image", handleOptionImageChange);
-  }, [images, syncKey]);
-
-  useEffect(() => {
-    if (!hasMultipleImages) {
-      return;
-    }
-
-    const selector = `[data-gallery-thumb="${safeIndex}"]`;
-    for (const list of [desktopThumbsRef.current, mobileThumbsRef.current]) {
-      const thumb = list?.querySelector<HTMLElement>(selector);
-      if (list && thumb) {
-        scrollThumbIntoView(list, thumb);
-      }
-    }
-  }, [hasMultipleImages, safeIndex]);
+  }, [images, syncKey, syncOptionImages]);
 
   const handleTouchEnd = (event: TouchEvent<HTMLDivElement>) => {
     if (!hasMultipleImages || !touchStartRef.current) {

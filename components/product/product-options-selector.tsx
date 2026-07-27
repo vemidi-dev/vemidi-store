@@ -7,7 +7,10 @@ import {
   formatOptionChoicePrice,
   formatPriceDelta,
 } from "@/lib/product-option-pricing";
-import type { ProductOptionGroup, ProductOptionSelection } from "@/lib/product-options";
+import {
+  optionValueSupportsMaterialCard,
+} from "@/lib/product-option-layout";
+import type { ProductOptionGroup, ProductOptionSelection, ProductOptionValue } from "@/lib/product-options";
 import {
   buildDefaultOptionSelections,
   getBooleanOptionValues,
@@ -23,7 +26,174 @@ type ProductOptionsSelectorProps = {
   value: ProductOptionSelection[];
   onChange: (selections: ProductOptionSelection[]) => void;
   onEstimatedPriceChange?: (price: number) => void;
+  useMaterialCards?: boolean;
 };
+
+function MaterialOptionCard({
+  option,
+  group,
+  selected,
+  priceLabel,
+  selection,
+  updateSelection,
+}: {
+  option: ProductOptionValue;
+  group: ProductOptionGroup;
+  selected: boolean;
+  priceLabel: string | null;
+  selection: ProductOptionSelection;
+  updateSelection: (groupId: string, next: ProductOptionSelection) => void;
+}) {
+  const material = option.material;
+  const title = material?.name?.trim() || option.label;
+  const description = material?.description?.trim() || null;
+
+  return (
+    <label
+      key={option.id}
+      className={`relative flex cursor-pointer flex-col overflow-hidden rounded-xl border bg-white text-left transition duration-200 ease-out motion-reduce:transition-none ${
+        option.isSoldOut
+          ? "cursor-not-allowed border-boutique-line/60 opacity-60"
+          : selected
+            ? "border-boutique-sage-deep shadow-boutique-sm ring-2 ring-boutique-sage/25"
+            : "border-boutique-line hover:-translate-y-0.5 hover:border-boutique-sage-deep/55 hover:shadow-[0_12px_24px_-10px_rgb(44_40_37_/0.14)] motion-reduce:hover:translate-y-0"
+      }`}
+    >
+      <input
+        className="sr-only"
+        type={group.inputType === "single" ? "radio" : "checkbox"}
+        name={`option-${group.id}`}
+        checked={selected}
+        disabled={option.isSoldOut}
+        onChange={(event) => {
+          const current = selection.valueIds;
+          let nextIds: string[];
+          if (group.inputType === "single") {
+            nextIds = event.target.checked ? [option.id] : [];
+          } else {
+            nextIds = event.target.checked
+              ? [...current, option.id].slice(0, group.maxSelect)
+              : current.filter((id) => id !== option.id);
+          }
+          updateSelection(group.id, {
+            groupId: group.id,
+            valueIds: nextIds,
+          });
+        }}
+      />
+      {selected ? (
+        <span
+          className="absolute right-2 top-2 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-boutique-sage-deep text-xs font-bold text-white shadow-sm"
+          aria-hidden
+        >
+          ✓
+        </span>
+      ) : null}
+      <div className="relative aspect-[4/3] w-full bg-boutique-bg">
+        {material?.imageUrl ? (
+          <img
+            src={material.imageUrl}
+            alt={title}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center px-3 text-center text-xs font-medium text-boutique-muted">
+            {title}
+          </div>
+        )}
+        {option.isSoldOut ? (
+          <span className="absolute left-2 top-2 rounded-full bg-white/90 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide text-boutique-muted">
+            изчерпано
+          </span>
+        ) : null}
+      </div>
+      <div className="flex flex-1 flex-col gap-1 p-3">
+        <span className="text-sm font-semibold leading-5 text-boutique-ink">{title}</span>
+        {description ? (
+          <span className="line-clamp-2 text-xs leading-5 text-boutique-muted">
+            {description}
+          </span>
+        ) : null}
+        {priceLabel ? (
+          <span className="mt-auto pt-1 text-sm font-semibold text-boutique-ink">
+            {priceLabel}
+          </span>
+        ) : null}
+      </div>
+    </label>
+  );
+}
+
+function CompactOptionChoice({
+  option,
+  group,
+  selected,
+  priceLabel,
+  selection,
+  updateSelection,
+}: {
+  option: ProductOptionValue;
+  group: ProductOptionGroup;
+  selected: boolean;
+  priceLabel: string | null;
+  selection: ProductOptionSelection;
+  updateSelection: (groupId: string, next: ProductOptionSelection) => void;
+}) {
+  return (
+    <label
+      key={option.id}
+      className={`relative grid min-h-[3.25rem] cursor-pointer items-center gap-2.5 rounded-xl border px-3 py-2.5 text-sm transition duration-200 ease-out motion-reduce:transition-none ${
+        priceLabel
+          ? "grid-cols-[auto_minmax(0,1fr)_auto]"
+          : "grid-cols-[auto_minmax(0,1fr)]"
+      } ${
+        option.isSoldOut
+          ? "cursor-not-allowed border-boutique-line/60 bg-boutique-bg text-boutique-muted opacity-60"
+          : selected
+            ? "border-boutique-sage-deep bg-boutique-sage/10 shadow-boutique-sm"
+            : "border-boutique-line bg-white hover:-translate-y-1 hover:border-boutique-sage-deep/55 hover:shadow-[0_12px_24px_-10px_rgb(44_40_37_/0.14)] motion-reduce:hover:translate-y-0"
+      }`}
+    >
+      <input
+        className="h-4 w-4 shrink-0 accent-boutique-sage-deep"
+        type={group.inputType === "single" ? "radio" : "checkbox"}
+        name={`option-${group.id}`}
+        checked={selected}
+        disabled={option.isSoldOut}
+        onChange={(event) => {
+          const current = selection.valueIds;
+          let nextIds: string[];
+          if (group.inputType === "single") {
+            nextIds = event.target.checked ? [option.id] : [];
+          } else {
+            nextIds = event.target.checked
+              ? [...current, option.id].slice(0, group.maxSelect)
+              : current.filter((id) => id !== option.id);
+          }
+          updateSelection(group.id, {
+            groupId: group.id,
+            valueIds: nextIds,
+          });
+        }}
+      />
+      <span className="contents">
+        <span className="min-w-0 font-semibold leading-5 text-boutique-ink">
+          {option.label}
+        </span>
+        {option.isSoldOut ? (
+          <span className="absolute right-4 top-2 text-[0.65rem] font-semibold uppercase tracking-wide text-boutique-muted">
+            (изчерпано)
+          </span>
+        ) : null}
+        {priceLabel ? (
+          <span className="shrink-0 whitespace-nowrap text-sm font-semibold text-boutique-ink">
+            {priceLabel}
+          </span>
+        ) : null}
+      </span>
+    </label>
+  );
+}
 
 export function ProductOptionsSelector({
   basePrice,
@@ -32,6 +202,7 @@ export function ProductOptionsSelector({
   value,
   onChange,
   onEstimatedPriceChange,
+  useMaterialCards = false,
 }: ProductOptionsSelectorProps) {
   const [initialized, setInitialized] = useState(false);
 
@@ -152,16 +323,23 @@ export function ProductOptionsSelector({
             );
           }
 
+          const activeValues = group.values.filter((option) => option.isActive);
+          const materialValues = useMaterialCards
+            ? activeValues.filter((option) => optionValueSupportsMaterialCard(option))
+            : [];
+          const compactValues = useMaterialCards
+            ? activeValues.filter((option) => !optionValueSupportsMaterialCard(option))
+            : activeValues;
+
           return (
             <fieldset key={group.id}>
               <legend className="text-sm font-semibold text-boutique-ink">
                 {group.name}
                 {group.isRequired ? " *" : ""}
               </legend>
-              <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                {group.values
-                  .filter((option) => option.isActive)
-                  .map((option) => {
+              {materialValues.length ? (
+                <div className="mt-2 grid gap-3 sm:grid-cols-2">
+                  {materialValues.map((option) => {
                     const selected = selection.valueIds.includes(option.id);
                     const priceLabel = formatOptionChoicePrice(
                       variantDisplayBasePrice,
@@ -169,61 +347,46 @@ export function ProductOptionsSelector({
                       false,
                     );
                     return (
-                      <label
+                      <MaterialOptionCard
                         key={option.id}
-                        className={`relative grid min-h-[3.25rem] cursor-pointer items-center gap-2.5 rounded-xl border px-3 py-2.5 text-sm transition duration-200 ease-out motion-reduce:transition-none ${
-                          priceLabel
-                            ? "grid-cols-[auto_minmax(0,1fr)_auto]"
-                            : "grid-cols-[auto_minmax(0,1fr)]"
-                        } ${
-                          option.isSoldOut
-                            ? "cursor-not-allowed border-boutique-line/60 bg-boutique-bg text-boutique-muted opacity-60"
-                            : selected
-                              ? "border-boutique-sage-deep bg-boutique-sage/10 shadow-boutique-sm"
-                              : "border-boutique-line bg-white hover:-translate-y-1 hover:border-boutique-sage-deep/55 hover:shadow-[0_12px_24px_-10px_rgb(44_40_37_/0.14)] motion-reduce:hover:translate-y-0"
-                        }`}
-                      >
-                        <input
-                          className="h-4 w-4 shrink-0 accent-boutique-sage-deep"
-                          type={group.inputType === "single" ? "radio" : "checkbox"}
-                          name={`option-${group.id}`}
-                          checked={selected}
-                          disabled={option.isSoldOut}
-                          onChange={(event) => {
-                            const current = selection.valueIds;
-                            let nextIds: string[];
-                            if (group.inputType === "single") {
-                              nextIds = event.target.checked ? [option.id] : [];
-                            } else {
-                              nextIds = event.target.checked
-                                ? [...current, option.id].slice(0, group.maxSelect)
-                                : current.filter((id) => id !== option.id);
-                            }
-                            updateSelection(group.id, {
-                              groupId: group.id,
-                              valueIds: nextIds,
-                            });
-                          }}
-                        />
-                        <span className="contents">
-                          <span className="min-w-0 font-semibold leading-5 text-boutique-ink">
-                            {option.label}
-                          </span>
-                          {option.isSoldOut ? (
-                            <span className="absolute right-4 top-2 text-[0.65rem] font-semibold uppercase tracking-wide text-boutique-muted">
-                              (изчерпано)
-                            </span>
-                          ) : null}
-                        {priceLabel ? (
-                          <span className="shrink-0 whitespace-nowrap text-sm font-semibold text-boutique-ink">
-                            {priceLabel}
-                          </span>
-                        ) : null}
-                        </span>
-                      </label>
+                        option={option}
+                        group={group}
+                        selected={selected}
+                        priceLabel={priceLabel}
+                        selection={selection}
+                        updateSelection={updateSelection}
+                      />
                     );
                   })}
-              </div>
+                </div>
+              ) : null}
+              {compactValues.length ? (
+                <div
+                  className={`grid gap-2 sm:grid-cols-2 ${
+                    materialValues.length ? "mt-3" : "mt-2"
+                  }`}
+                >
+                  {compactValues.map((option) => {
+                    const selected = selection.valueIds.includes(option.id);
+                    const priceLabel = formatOptionChoicePrice(
+                      variantDisplayBasePrice,
+                      option.priceDelta,
+                      false,
+                    );
+                    return (
+                      <CompactOptionChoice
+                        key={option.id}
+                        option={option}
+                        group={group}
+                        selected={selected}
+                        priceLabel={priceLabel}
+                        selection={selection}
+                        updateSelection={updateSelection}
+                      />
+                    );
+                  })}
+                </div>
+              ) : null}
             </fieldset>
           );
         }

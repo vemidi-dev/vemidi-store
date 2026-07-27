@@ -101,6 +101,14 @@ export const adminFormFields = {
     hex: "hex",
     direction: "direction",
   },
+  material: {
+    id: "material_id",
+    name: "material_name",
+    description: "material_description",
+    imageFile: "material_image_file",
+    isActive: "material_is_active",
+    direction: "direction",
+  },
   colorField: {
     labels: "color_field_label[]",
     groupIds: "color_field_group_id[]",

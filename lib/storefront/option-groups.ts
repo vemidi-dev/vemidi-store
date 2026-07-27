@@ -27,13 +27,22 @@ type OptionValueRow = {
   is_active: boolean;
   is_sold_out: boolean;
   image_url?: string | null;
+  material_id?: string | null;
   sku: string | null;
   sort_order: number;
+};
+
+type MaterialRow = {
+  id: string;
+  name: string;
+  description: string | null;
+  image_url: string | null;
 };
 
 export function mapProductOptionGroups(
   groups: OptionGroupRow[],
   values: OptionValueRow[],
+  materialsById: Map<string, MaterialRow> = new Map(),
 ): ProductOptionGroup[] {
   const valuesByGroup = new Map<string, OptionValueRow[]>();
   values.forEach((value) => {
@@ -63,17 +72,30 @@ export function mapProductOptionGroups(
       values: (valuesByGroup.get(group.id) ?? [])
         .filter((value) => value.is_active)
         .sort((a, b) => a.sort_order - b.sort_order || a.label.localeCompare(b.label, "bg"))
-        .map((value) => ({
-          id: value.id,
-          label: value.label,
-          key: value.key,
-          priceDelta: Number(value.price_delta) || 0,
-          isDefault: value.is_default,
-          isActive: value.is_active,
-          isSoldOut: value.is_sold_out,
-          imageUrl: value.image_url ?? null,
-          sku: value.sku,
-          sortOrder: value.sort_order,
-        })),
+        .map((value) => {
+          const materialId = value.material_id ?? null;
+          const materialRow = materialId ? materialsById.get(materialId) : undefined;
+          return {
+            id: value.id,
+            label: value.label,
+            key: value.key,
+            priceDelta: Number(value.price_delta) || 0,
+            isDefault: value.is_default,
+            isActive: value.is_active,
+            isSoldOut: value.is_sold_out,
+            imageUrl: value.image_url ?? null,
+            materialId,
+            material: materialRow
+              ? {
+                  id: materialRow.id,
+                  name: materialRow.name,
+                  description: materialRow.description,
+                  imageUrl: materialRow.image_url,
+                }
+              : null,
+            sku: value.sku,
+            sortOrder: value.sort_order,
+          };
+        }),
     }));
 }

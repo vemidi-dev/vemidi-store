@@ -49,6 +49,7 @@ import type {
   ColorGroupRow,
   ColorOptionRow,
   ProductCreateDraft,
+  ProductMaterialRow,
   WishTemplateOccasionRow,
   WishTemplateRow,
 } from "@/lib/admin/types";
@@ -58,6 +59,7 @@ type ProductCreatePanelProps = {
   categories: CategoryRow[];
   colorGroups: ColorGroupRow[];
   colorOptions: ColorOptionRow[];
+  materials: ProductMaterialRow[];
   wishes: WishTemplateRow[];
   wishOccasionLinks: WishTemplateOccasionRow[];
   faqProductGroups: FaqGroupRow[];
@@ -90,6 +92,7 @@ export function ProductCreatePanel({
   categories,
   colorGroups,
   colorOptions,
+  materials,
   wishes,
   wishOccasionLinks,
   faqProductGroups,
@@ -565,6 +568,7 @@ export function ProductCreatePanel({
           <ProductOptionGroupsEditor
             initialGroups={activeDraft?.optionGroups}
             allDependencyOptions={[]}
+            materials={materials}
             productImages={[]}
             basePrice={Number(activeDraft?.price) || 0}
             helperClassName={adminHelperClass}

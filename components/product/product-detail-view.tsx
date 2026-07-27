@@ -17,6 +17,7 @@ import type { Product } from "@/lib/catalog";
 import type { CampaignAttribution } from "@/lib/campaign-attribution";
 import { getCategoryListingHref } from "@/lib/category-url";
 import type { ProductOptionSelection } from "@/lib/product-options";
+import { shouldUseMaterialOptionCards } from "@/lib/product-option-layout";
 import type { StorefrontCategory } from "@/lib/storefront/types";
 import { isProductOnPromotion } from "@/lib/product-pricing";
 import type { ProductLandingPage } from "@/lib/product-landing/types";
@@ -77,6 +78,10 @@ export function ProductDetailView({
   });
   const schemaDescription = buildProductSchemaDescription(product, productSeoContext);
   const featuredRelatedProduct = relatedProducts[0] ?? null;
+  const usesMaterialStockLayout = shouldUseMaterialOptionCards(
+    product,
+    product.optionGroups ?? [],
+  );
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -130,8 +135,18 @@ export function ProductDetailView({
           <VisibleBreadcrumbs items={breadcrumbItems} />
 
           <div className="mt-8 flex flex-col gap-8 lg:mt-10 lg:grid lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:items-start lg:gap-x-16 xl:gap-x-20">
-            <div className="order-1 min-w-0 lg:col-start-1 lg:row-start-1">
-              <ProductDetailGallery images={product.images} syncKey={product.id} />
+            <div
+              className={`order-1 min-w-0 lg:col-start-1 lg:row-start-1 ${
+                usesMaterialStockLayout
+                  ? "lg:sticky lg:top-28 lg:max-h-[calc(100vh-7rem)] lg:self-start"
+                  : ""
+              }`}
+            >
+              <ProductDetailGallery
+                images={product.images}
+                syncKey={product.id}
+                syncOptionImages={!usesMaterialStockLayout}
+              />
             </div>
 
             <div className="order-2 flex min-w-0 flex-col lg:col-start-2 lg:row-start-1 lg:row-span-2">

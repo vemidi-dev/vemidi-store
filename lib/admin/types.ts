@@ -7,6 +7,7 @@ export type AdminTab =
   | "products"
   | "categories"
   | "colors"
+  | "materials"
   | "promotions"
   | "orders"
   | "withdrawals"
@@ -268,6 +269,17 @@ export type ColorOptionRow = {
   is_active: boolean;
 };
 
+export type ProductMaterialRow = {
+  id: string;
+  name: string;
+  description: string | null;
+  image_url: string | null;
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+};
+
 export type ProductColorFieldRow = {
   id: string;
   product_id: string;
@@ -380,6 +392,7 @@ export type ProductOptionValueRow = {
   is_active: boolean;
   is_sold_out: boolean;
   image_url: string | null;
+  material_id?: string | null;
   sku: string | null;
   sort_order: number;
 };
@@ -393,6 +406,7 @@ export type ParsedOptionValue = {
   isActive: boolean;
   isSoldOut: boolean;
   imageUrl?: string | null;
+  materialId?: string | null;
   sku: string | null;
   sortOrder: number;
 };
