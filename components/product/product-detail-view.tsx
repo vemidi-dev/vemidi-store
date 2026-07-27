@@ -6,6 +6,7 @@ import { ProductDetailAddToCart } from "@/components/product/product-detail-add-
 import { PRODUCT_LEFT_COLORS_SLOT_ID } from "@/components/product/product-detail-color-fields";
 import { MetaPixelViewContentBridge } from "@/components/consent/meta-pixel-view-content-bridge";
 import { ProductDetailGalleryAside } from "@/components/product/product-detail-content-sections";
+import { FaqSection } from "@/components/faq/faq-section";
 import { ProductDetailGallery } from "@/components/product/product-detail-gallery";
 import { ProductServiceBlocks } from "@/components/product/product-service-blocks";
 import { ProductDetailOccasionTags } from "@/components/product/product-detail-occasion-tags";
@@ -164,7 +165,7 @@ export function ProductDetailView({
           {usesMaterialStockLayout ? (
             <>
             <div className="mt-8 flex flex-col gap-8 lg:mt-10 lg:grid lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:items-start lg:gap-x-16 xl:gap-x-20">
-              <div className="order-1 flex min-w-0 flex-col gap-0 lg:sticky lg:top-28 lg:z-0 lg:max-h-[calc(100vh-7rem)] lg:self-start lg:overflow-y-auto lg:overscroll-contain lg:[scrollbar-width:none] lg:[-ms-overflow-style:none] lg:[&::-webkit-scrollbar]:hidden">
+              <div className="order-1 flex min-w-0 flex-col gap-0 lg:sticky lg:top-28 lg:z-0 lg:self-start">
                 <ProductDetailGallery
                   images={product.images}
                   syncKey={product.id}
@@ -178,9 +179,6 @@ export function ProductDetailView({
                   dimensionsMaterials={product.dimensionsMaterials}
                   orderingInfo={product.orderingInfo}
                   additionalInfo={product.additionalInfo}
-                  faqIdPrefix={`product-faq-${product.id}`}
-                  faqItems={productFaqItems}
-                  serviceBlocks={productPageCopy.serviceBlocks}
                   showFulfillmentInfo={false}
                 />
               </div>
@@ -288,18 +286,11 @@ export function ProductDetailView({
                 <ProductLandingPageCta landingPage={primaryLandingPage} />
               </div>
             </div>
-
-            {productPageCopy.serviceBlocks.length ? (
-              <ProductServiceBlocks
-                blocks={productPageCopy.serviceBlocks}
-                className="mt-8"
-              />
-            ) : null}
             </>
           ) : (
           <div className="mt-8 flex flex-col gap-8 lg:mt-10 lg:grid lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:items-start lg:gap-x-16 xl:gap-x-20">
-            <div className="contents lg:flex lg:flex-col">
-              <div className="order-1 min-w-0">
+            <div className="order-1 flex min-w-0 flex-col gap-0 lg:sticky lg:top-28 lg:self-start">
+              <div className="min-w-0">
                 <ProductDetailGallery
                   images={product.images}
                   syncKey={product.id}
@@ -307,15 +298,13 @@ export function ProductDetailView({
                 />
               </div>
               <ProductDetailGalleryAside
-                className="order-3"
+                className="mt-5"
                 description={product.description}
                 personalizationInfo={product.personalizationInfo}
                 dimensionsMaterials={product.dimensionsMaterials}
                 orderingInfo={product.orderingInfo}
                 additionalInfo={product.additionalInfo}
-                faqIdPrefix={`product-faq-${product.id}`}
-                faqItems={productFaqItems}
-                serviceBlocks={productPageCopy.serviceBlocks}
+                showFulfillmentInfo={false}
               />
             </div>
 
@@ -422,6 +411,19 @@ export function ProductDetailView({
             </div>
           </div>
           )}
+          {productPageCopy.serviceBlocks.length ? (
+            <ProductServiceBlocks
+              blocks={productPageCopy.serviceBlocks}
+              className="mt-8"
+            />
+          ) : null}
+          {productFaqItems.length ? (
+            <FaqSection
+              idPrefix={`product-faq-${product.id}`}
+              items={productFaqItems}
+              variant="product"
+            />
+          ) : null}
         </PageContainer>
       </section>
 
