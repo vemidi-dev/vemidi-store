@@ -12,7 +12,7 @@ test("resolveProductPageCopy maps service blocks and price labels", () => {
   const copy = resolveProductPageCopy(siteContentDefaults);
 
   assert.equal(copy.priceSummaryLabel, "Ориентировъчна цена");
-  assert.equal(copy.priceSummaryLabelStock, "Цена за избрания вариант");
+  assert.equal(copy.priceSummaryLabelStock, "Цена за този продукт");
   assert.equal(copy.serviceBlocks.length, 3);
   assert.equal(copy.serviceBlocks[0]?.id, "production");
   assert.equal(copy.serviceBlocks[0]?.title, "Изработка");
@@ -25,7 +25,7 @@ test("getPriceSummaryLabel falls back to stock default", () => {
     "product.price_summary_label_stock": "   ",
   });
 
-  assert.equal(getPriceSummaryLabel(copy, true), "Цена за избрания вариант");
+  assert.equal(getPriceSummaryLabel(copy, true), "Цена за този продукт");
   assert.equal(getPriceSummaryNote(copy, true), null);
   assert.equal(
     getPriceSummaryNote(copy, false),

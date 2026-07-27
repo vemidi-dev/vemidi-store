@@ -260,7 +260,7 @@ export const siteContentDefaults = {
   "cookies.contact_title": "Контакт",
   "cookies.contact_text": "При въпроси пишете на",
   "product.price_summary_label": "Ориентировъчна цена",
-  "product.price_summary_label_stock": "Цена за избрания вариант",
+  "product.price_summary_label_stock": "Цена за този продукт",
   "product.price_summary_note": "(окончателната се потвърждава при поръчка)",
   "product.service.production.title": "Изработка",
   "product.service.production.text":

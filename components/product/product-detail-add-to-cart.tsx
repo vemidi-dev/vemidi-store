@@ -531,13 +531,13 @@ export function ProductDetailAddToCart({
     showQuantitySelector && hasQuantityPriceTiers(product.quantityPriceTiers);
   const personalizationSectionOrder = showQuantityPriceTiers
     ? useMaterialCards
-      ? "order-30"
+      ? "order-40"
       : "order-35"
     : useMaterialCards
-      ? "order-30"
+      ? "order-40"
       : "order-10";
-  const quantityTiersSectionOrder = useMaterialCards ? "order-20" : "order-30";
-  const quantitySelectorOrder = useMaterialCards ? "order-40" : "order-60";
+  const quantityTiersSectionOrder = "order-30";
+  const quantitySelectorOrder = useMaterialCards ? "order-20" : "order-60";
   const quantityDiscountPerItem = Math.max(0, product.price - quantityBasePrice);
   const preparedPricingQuantity =
     currentProductQuantityInCart + preparedQuantityTotal;
@@ -877,10 +877,10 @@ export function ProductDetailAddToCart({
           className={`mt-3 rounded-xl border border-boutique-line bg-white/70 p-3 ${quantityTiersSectionOrder}`}
         >
           <h2 className="text-sm font-semibold text-boutique-ink">
-            Отстъпки за избрания вариант
+            Отстъпки за количества
           </h2>
           <p className="mt-1 text-xs text-boutique-muted">
-            Цените по-долу се обновяват при промяна на опциите или персонализацията.
+            Цените се обновяват според избрания размер, материал и персонализация.
           </p>
           <div className="mt-2 grid gap-1.5 text-sm text-boutique-muted">
             {product.quantityPriceTiers?.map((tier) => {
@@ -919,9 +919,9 @@ export function ProductDetailAddToCart({
           }
         >
           <summary className="cursor-pointer list-none text-sm font-semibold text-boutique-ink marker:hidden">
-            Персонализация по желание
+            Персонализация
             <span className="ml-2 text-xs font-normal text-boutique-muted">
-              Гравиране, текст или готово пожелание
+              Добавете личен текст, име или друга информация според продукта
             </span>
           </summary>
           <div className="mt-3 grid gap-3">

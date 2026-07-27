@@ -113,7 +113,7 @@ export function getPriceSummaryLabel(
     return trimmed;
   }
 
-  return usesStockLayout ? "Цена за избрания вариант" : "Ориентировъчна цена";
+  return usesStockLayout ? "Цена за този продукт" : "Ориентировъчна цена";
 }
 
 export function getPriceSummaryNote(
