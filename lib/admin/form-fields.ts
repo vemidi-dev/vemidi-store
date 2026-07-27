@@ -45,6 +45,7 @@ export const adminFormFields = {
     upsellSpecialPrices: "upsell_special_price[]",
     upsellSuggestedQuantities: "upsell_suggested_quantity[]",
     upsellMaxQuantities: "upsell_max_quantity[]",
+    personalizationOpenByDefault: "personalization_open_by_default",
   },
   category: {
     name: "name",
@@ -80,6 +81,9 @@ export const adminFormFields = {
     isFeatured: "is_featured",
     homeSortOrder: "home_sort_order",
     relatedProductIds: "related_product_ids",
+    showReadyProductCta: "show_ready_product_cta",
+    readyProductCtaLabel: "ready_product_cta_label",
+    readyProductCtaProductId: "ready_product_cta_product_id",
   },
   blog: {
     productIds: "blog_product_ids",

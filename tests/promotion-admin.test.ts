@@ -35,6 +35,7 @@ const products: PromotionProductOption[] = [
     price: 40,
     imageUrl: null,
     productCategoryIds: ["cat-product"],
+    materialCategoryIds: ["cat-material"],
     occasionCategoryIds: ["cat-occasion"],
     categorySummary: "Кутии, Сватба",
     isSoldOut: false,
@@ -46,6 +47,7 @@ const products: PromotionProductOption[] = [
     price: 25,
     imageUrl: null,
     productCategoryIds: ["cat-product"],
+    materialCategoryIds: [],
     occasionCategoryIds: [],
     categorySummary: "Кутии",
     isSoldOut: true,
@@ -187,6 +189,20 @@ test("filterPromotionProducts keeps selected products out of browse-only filters
     onlyIds: new Set(["product-2"]),
   });
   assert.deepEqual(selectedOnly.map((product) => product.id), ["product-2"]);
+});
+
+test("filterPromotionProducts matches material category filter", () => {
+  const withMaterial: PromotionProductOption = {
+    ...products[0],
+    id: "product-material",
+    materialCategoryIds: ["cat-material"],
+    categorySummary: "Заготовки",
+  };
+
+  const filtered = filterPromotionProducts([withMaterial], {
+    materialCategoryId: "cat-material",
+  });
+  assert.deepEqual(filtered.map((entry) => entry.id), ["product-material"]);
 });
 
 test("filterPromotionProducts matches slug and onlySelected mode", () => {

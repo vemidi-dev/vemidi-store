@@ -196,6 +196,10 @@ export type ProductRow = {
   og_description?: string | null;
   status?: ProductPublicationStatus;
   visibility?: ProductVisibility;
+  show_ready_product_cta?: boolean;
+  ready_product_cta_label?: string | null;
+  ready_product_cta_product_id?: string | null;
+  personalization_open_by_default?: boolean | null;
 };
 
 export type ProductImageRow = {

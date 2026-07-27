@@ -259,6 +259,25 @@ export const siteContentDefaults = {
     "Можете да промените или оттеглите съгласието си по всяко време чрез „Настройки на бисквитките“ в долната част на сайта (секция „Информация“). Отваря се панел с настройки, без да напускате текущата страница.",
   "cookies.contact_title": "Контакт",
   "cookies.contact_text": "При въпроси пишете на",
+  "product.price_summary_label": "Ориентировъчна цена",
+  "product.price_summary_label_stock": "Цена за избрания вариант",
+  "product.price_summary_note": "(окончателната се потвърждава при поръчка)",
+  "product.service.production.title": "Изработка",
+  "product.service.production.text":
+    "1-5 работни дни в зависимост от натоварването. Ако ви е нужен друг срок,",
+  "product.service.production.link_label": "свържете се с нас",
+  "product.service.production.link_href": "/kontakti",
+  "product.service.production.icon": "clock",
+  "product.service.delivery.title": "Доставка",
+  "product.service.delivery.text": "Еконт или Спиди - наложен платеж.",
+  "product.service.delivery.link_label": "Вижте условията",
+  "product.service.delivery.link_href": "/delivery",
+  "product.service.delivery.icon": "truck",
+  "product.service.returns.title": "Връщане",
+  "product.service.returns.text": "14 дни за неперсонализирани продукти.",
+  "product.service.returns.link_label": "Условия за връщане",
+  "product.service.returns.link_href": "/returns",
+  "product.service.returns.icon": "return",
 } as const;
 
 export type SiteContentKey = keyof typeof siteContentDefaults;

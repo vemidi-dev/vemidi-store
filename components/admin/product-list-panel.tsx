@@ -51,6 +51,7 @@ import {
   getCategoryDisplayLabel,
   sortCategoriesForDisplay,
 } from "@/lib/category-hierarchy";
+import { getAdminCategoryGroupLabel } from "@/lib/admin/category-groups";
 import { ProductWishSelector } from "@/components/admin/product-wish-selector";
 import { ProductFaqFields } from "@/components/admin/product-faq-fields";
 import {
@@ -717,7 +718,7 @@ export function ProductListPanel({
                           ] as const).map(([categoryType, groupedCategories]) => (
                             <div key={categoryType}>
                               <p className="text-xs font-semibold uppercase tracking-wider text-boutique-muted">
-                                {categoryType === "product" ? "Продукти" : categoryType === "material" ? "Заготовки и материали" : "Поводи"}
+                                {getAdminCategoryGroupLabel(categoryType)}
                               </p>
                               <div className="mt-2 grid gap-2 sm:grid-cols-2">
                                 {groupedCategories
@@ -827,6 +828,27 @@ export function ProductListPanel({
                       <legend className="px-1 text-sm font-medium text-boutique-ink">
                         Персонализация
                       </legend>
+                      <label className="block text-sm font-medium text-boutique-ink">
+                        Отваряне на секцията по подразбиране
+                        <select
+                          name={adminFormFields.product.personalizationOpenByDefault}
+                          defaultValue={
+                            product.personalization_open_by_default == null
+                              ? ""
+                              : product.personalization_open_by_default
+                                ? "true"
+                                : "false"
+                          }
+                          className={`${adminFieldClass} mt-2`}
+                        >
+                          <option value="">Автоматично</option>
+                          <option value="true">Отворена</option>
+                          <option value="false">Затворена</option>
+                        </select>
+                        <span className={adminHelperClass}>
+                          При „Автоматично“ material/stock продуктите започват затворени; останалите — отворени, ако има задължителни полета.
+                        </span>
+                      </label>
                       <ProductPersonalizationFieldsEditor
                         initialFields={initialPersonalizationFields}
                         helperClassName={adminHelperClass}
@@ -1198,6 +1220,11 @@ export function ProductListPanel({
                       isFeatured={featuredProductById.has(product.id)}
                       homeSortOrder={
                         featuredProductById.get(product.id)?.sort_order ?? 0
+                      }
+                      showReadyProductCta={Boolean(product.show_ready_product_cta)}
+                      readyProductCtaLabel={product.ready_product_cta_label ?? ""}
+                      readyProductCtaProductId={
+                        product.ready_product_cta_product_id ?? null
                       }
                     />
                     <button

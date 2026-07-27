@@ -4,6 +4,10 @@ import { useEffect, useMemo, useState } from "react";
 
 import { adminFieldClass } from "@/components/admin/styles";
 import { adminFormFields } from "@/lib/admin/form-fields";
+import {
+  filterCategoriesByType,
+  getAdminCategoryFilterLabel,
+} from "@/lib/admin/category-groups";
 import type { CategoryType } from "@/lib/admin/types";
 import {
   filterPromotionProducts,
@@ -38,6 +42,7 @@ export function RelatedProductPicker({
   );
   const [query, setQuery] = useState("");
   const [productCategoryId, setProductCategoryId] = useState("all");
+  const [materialCategoryId, setMaterialCategoryId] = useState("all");
   const [occasionCategoryId, setOccasionCategoryId] = useState("all");
   const [onlySelected, setOnlySelected] = useState(false);
   const [visibleLimit, setVisibleLimit] = useState(pageSize);
@@ -46,12 +51,9 @@ export function RelatedProductPicker({
     setSelectedIds(new Set(selectedRelatedIds));
   }, [selectedRelatedIds]);
 
-  const productCategories = categories.filter(
-    (category) => category.categoryType === "product",
-  );
-  const occasionCategories = categories.filter(
-    (category) => category.categoryType === "occasion",
-  );
+  const productCategories = filterCategoriesByType(categories, "product");
+  const materialCategories = filterCategoriesByType(categories, "material");
+  const occasionCategories = filterCategoriesByType(categories, "occasion");
 
   const candidateProducts = useMemo(
     () => products.filter((product) => product.id !== excludeProductId),
@@ -63,6 +65,7 @@ export function RelatedProductPicker({
       filterPromotionProducts(candidateProducts, {
         query,
         productCategoryId,
+        materialCategoryId,
         occasionCategoryId,
         status: "all",
         onlySelected,
@@ -70,6 +73,7 @@ export function RelatedProductPicker({
       }),
     [
       candidateProducts,
+      materialCategoryId,
       occasionCategoryId,
       onlySelected,
       productCategoryId,
@@ -88,6 +92,10 @@ export function RelatedProductPicker({
       ? productCategories.find((category) => category.id === productCategoryId)
           ?.name
       : null,
+    materialCategoryId !== "all"
+      ? materialCategories.find((category) => category.id === materialCategoryId)
+          ?.name
+      : null,
     occasionCategoryId !== "all"
       ? occasionCategories.find((category) => category.id === occasionCategoryId)
           ?.name
@@ -101,7 +109,7 @@ export function RelatedProductPicker({
 
   useEffect(() => {
     setVisibleLimit(pageSize);
-  }, [occasionCategoryId, onlySelected, pageSize, productCategoryId, query]);
+  }, [materialCategoryId, occasionCategoryId, onlySelected, pageSize, productCategoryId, query]);
 
   function toggleProduct(productId: string) {
     setSelectedIds((current) => {
@@ -153,7 +161,7 @@ export function RelatedProductPicker({
           />
         </label>
         <label className="text-xs font-semibold uppercase tracking-wider text-boutique-muted">
-          Категория
+          {getAdminCategoryFilterLabel("product")}
           <select
             value={productCategoryId}
             onChange={(event) => setProductCategoryId(event.target.value)}
@@ -168,7 +176,22 @@ export function RelatedProductPicker({
           </select>
         </label>
         <label className="text-xs font-semibold uppercase tracking-wider text-boutique-muted">
-          Повод
+          {getAdminCategoryFilterLabel("material")}
+          <select
+            value={materialCategoryId}
+            onChange={(event) => setMaterialCategoryId(event.target.value)}
+            className={`${adminFieldClass} !mt-1.5`}
+          >
+            <option value="all">Всички</option>
+            {materialCategories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="text-xs font-semibold uppercase tracking-wider text-boutique-muted">
+          {getAdminCategoryFilterLabel("occasion")}
           <select
             value={occasionCategoryId}
             onChange={(event) => setOccasionCategoryId(event.target.value)}

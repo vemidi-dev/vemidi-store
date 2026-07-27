@@ -7,6 +7,7 @@ import { PRODUCT_LEFT_COLORS_SLOT_ID } from "@/components/product/product-detail
 import { MetaPixelViewContentBridge } from "@/components/consent/meta-pixel-view-content-bridge";
 import { ProductDetailGalleryAside } from "@/components/product/product-detail-content-sections";
 import { ProductDetailGallery } from "@/components/product/product-detail-gallery";
+import { ProductServiceBlocks } from "@/components/product/product-service-blocks";
 import { ProductDetailOccasionTags } from "@/components/product/product-detail-occasion-tags";
 import { ProductLandingPageCta } from "@/components/product/product-landing-page-cta";
 import { PageContainer } from "@/components/layout/page-container";
@@ -30,6 +31,13 @@ import { buildBreadcrumbListSchema, type BreadcrumbItem } from "@/lib/seo/breadc
 import { buildProductSchemaDescription } from "@/lib/seo/product-description-seo";
 import type { ProductSeoContext } from "@/lib/seo/product-description-seo";
 import type { ProductUpsellOffer } from "@/lib/storefront/product-upsells";
+import type { ProductPageCopy } from "@/lib/content/product-page-copy";
+import {
+  getPriceSummaryLabel,
+  getPriceSummaryNote,
+} from "@/lib/content/product-page-copy";
+import type { ReadyProductCta } from "@/lib/product-ready-cta";
+import { resolvePersonalizationDetailsOpen } from "@/lib/product-personalization-default";
 
 type ProductDetailViewProps = {
   product: Product;
@@ -45,6 +53,8 @@ type ProductDetailViewProps = {
   attribution?: CampaignAttribution;
   initialOptionSelections?: ProductOptionSelection[];
   productSeoContext: ProductSeoContext;
+  productPageCopy: ProductPageCopy;
+  readyProductCta?: ReadyProductCta | null;
   previewBanner?: ReactNode;
   includeStructuredData?: boolean;
 };
@@ -63,6 +73,8 @@ export function ProductDetailView({
   attribution,
   initialOptionSelections = [],
   productSeoContext,
+  productPageCopy,
+  readyProductCta = null,
   previewBanner,
   includeStructuredData = true,
 }: ProductDetailViewProps) {
@@ -78,10 +90,24 @@ export function ProductDetailView({
         : null,
   });
   const schemaDescription = buildProductSchemaDescription(product, productSeoContext);
-  const featuredRelatedProduct = relatedProducts[0] ?? null;
+  const featuredRelatedProduct = readyProductCta?.product ?? null;
+  const readyProductCtaLabel = readyProductCta?.label ?? null;
   const usesMaterialStockLayout = shouldUseMaterialOptionCards(
     product,
     product.optionGroups ?? [],
+  );
+  const priceSummaryLabel = getPriceSummaryLabel(
+    productPageCopy,
+    usesMaterialStockLayout,
+  );
+  const priceSummaryNote = getPriceSummaryNote(
+    productPageCopy,
+    usesMaterialStockLayout,
+  );
+  const personalizationDetailsOpen = resolvePersonalizationDetailsOpen(
+    product.personalizationOpenByDefault ?? null,
+    usesMaterialStockLayout,
+    Boolean(product.personalizationFields?.some((field) => field.required)),
   );
   const structuredData = {
     "@context": "https://schema.org",
@@ -136,8 +162,9 @@ export function ProductDetailView({
           <VisibleBreadcrumbs items={breadcrumbItems} />
 
           {usesMaterialStockLayout ? (
+            <>
             <div className="mt-8 flex flex-col gap-8 lg:mt-10 lg:grid lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:items-start lg:gap-x-16 xl:gap-x-20">
-              <div className="order-1 flex min-w-0 flex-col gap-0 lg:sticky lg:top-28 lg:z-0 lg:max-h-[calc(100vh-7rem)] lg:self-start lg:overflow-y-auto lg:overscroll-contain [scrollbar-gutter:stable]">
+              <div className="order-1 flex min-w-0 flex-col gap-0 lg:sticky lg:top-28 lg:z-0 lg:max-h-[calc(100vh-7rem)] lg:self-start lg:overflow-y-auto lg:overscroll-contain lg:[scrollbar-width:none] lg:[-ms-overflow-style:none] lg:[&::-webkit-scrollbar]:hidden">
                 <ProductDetailGallery
                   images={product.images}
                   syncKey={product.id}
@@ -153,6 +180,8 @@ export function ProductDetailView({
                   additionalInfo={product.additionalInfo}
                   faqIdPrefix={`product-faq-${product.id}`}
                   faqItems={productFaqItems}
+                  serviceBlocks={productPageCopy.serviceBlocks}
+                  showFulfillmentInfo={false}
                 />
               </div>
 
@@ -210,7 +239,7 @@ export function ProductDetailView({
                   </Link>
                 ) : null}
 
-                {featuredRelatedProduct ? (
+                {featuredRelatedProduct && readyProductCtaLabel ? (
                   <Link
                     href={getProductPath(featuredRelatedProduct.slug)}
                     className="mt-5 flex items-center gap-3 rounded-2xl border border-boutique-line bg-white/75 p-3 transition duration-200 ease-out hover:border-boutique-sage-deep/45 hover:shadow-boutique-sm motion-reduce:transition-none"
@@ -228,7 +257,7 @@ export function ProductDetailView({
                     </span>
                     <span className="min-w-0">
                       <span className="block text-xs font-semibold uppercase tracking-[0.14em] text-boutique-accent">
-                        Вижте готов вариант
+                        {readyProductCtaLabel}
                       </span>
                       <span className="mt-1 block text-sm font-semibold leading-5 text-boutique-ink">
                         {featuredRelatedProduct.title}
@@ -247,6 +276,9 @@ export function ProductDetailView({
                   attribution={attribution}
                   initialOptionSelections={initialOptionSelections}
                   layout="embedded"
+                  personalizationDetailsOpen={personalizationDetailsOpen}
+                  priceSummaryLabel={priceSummaryLabel}
+                  priceSummaryNote={priceSummaryNote}
                   product={product}
                   upsellOffers={upsellOffers}
                   upsellSectionTitle={upsellSectionTitle}
@@ -256,6 +288,14 @@ export function ProductDetailView({
                 <ProductLandingPageCta landingPage={primaryLandingPage} />
               </div>
             </div>
+
+            {productPageCopy.serviceBlocks.length ? (
+              <ProductServiceBlocks
+                blocks={productPageCopy.serviceBlocks}
+                className="mt-8"
+              />
+            ) : null}
+            </>
           ) : (
           <div className="mt-8 flex flex-col gap-8 lg:mt-10 lg:grid lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:items-start lg:gap-x-16 xl:gap-x-20">
             <div className="contents lg:flex lg:flex-col">
@@ -275,6 +315,7 @@ export function ProductDetailView({
                 additionalInfo={product.additionalInfo}
                 faqIdPrefix={`product-faq-${product.id}`}
                 faqItems={productFaqItems}
+                serviceBlocks={productPageCopy.serviceBlocks}
               />
             </div>
 
@@ -332,7 +373,7 @@ export function ProductDetailView({
                 </Link>
               ) : null}
 
-              {featuredRelatedProduct ? (
+              {featuredRelatedProduct && readyProductCtaLabel ? (
                 <Link
                   href={getProductPath(featuredRelatedProduct.slug)}
                   className="mt-5 flex items-center gap-3 rounded-2xl border border-boutique-line bg-white/75 p-3 transition duration-200 ease-out hover:border-boutique-sage-deep/45 hover:shadow-boutique-sm motion-reduce:transition-none"
@@ -350,7 +391,7 @@ export function ProductDetailView({
                   </span>
                   <span className="min-w-0">
                     <span className="block text-xs font-semibold uppercase tracking-[0.14em] text-boutique-accent">
-                      Вижте готов вариант
+                      {readyProductCtaLabel}
                     </span>
                     <span className="mt-1 block text-sm font-semibold leading-5 text-boutique-ink">
                       {featuredRelatedProduct.title}
@@ -369,6 +410,9 @@ export function ProductDetailView({
                 attribution={attribution}
                 initialOptionSelections={initialOptionSelections}
                 layout="embedded"
+                personalizationDetailsOpen={personalizationDetailsOpen}
+                priceSummaryLabel={priceSummaryLabel}
+                priceSummaryNote={priceSummaryNote}
                 product={product}
                 upsellOffers={upsellOffers}
                 upsellSectionTitle={upsellSectionTitle}

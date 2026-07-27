@@ -114,7 +114,7 @@ export async function getActiveProductUpsellOffers(
     supabase
       .from("products")
       .select(
-        "id,slug,product_code,name,heading_subtitle,subtitle,description,additional_info,fulfillment_note,personalization_info,dimensions_materials,ordering_info,price,image_url,is_customizable,is_sold_out,show_quantity_selector,quantity_price_tiers,fulfillment_type,stock_quantity,card_badge,status,visibility",
+        "id,slug,product_code,name,heading_subtitle,subtitle,description,additional_info,fulfillment_note,personalization_info,dimensions_materials,ordering_info,price,image_url,is_customizable,is_sold_out,show_quantity_selector,quantity_price_tiers,fulfillment_type,stock_quantity,card_badge,status,visibility,show_ready_product_cta,ready_product_cta_label,ready_product_cta_product_id,personalization_open_by_default",
       )
       .in("id", productIds),
     supabase

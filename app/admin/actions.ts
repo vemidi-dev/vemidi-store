@@ -26,6 +26,7 @@ import {
   parseProductFulfillmentFromFormData,
   parseProductPublicationStatus,
   parseProductVisibility,
+  parsePersonalizationOpenByDefault,
   parseSelectLimit,
 } from "@/lib/admin/form-data";
 import {
@@ -667,6 +668,7 @@ export async function createProduct(formData: FormData) {
   const draft = makeCreateProductDraft(formData);
   const publicationStatus = parseProductPublicationStatus(formData, "draft");
   const visibility = parseProductVisibility(formData);
+  const personalizationOpenByDefault = parsePersonalizationOpenByDefault(formData);
 
   const name = getString(formData, adminFormFields.product.name);
   const subtitle = getOptionalString(formData, adminFormFields.product.subtitle);
@@ -810,6 +812,7 @@ export async function createProduct(formData: FormData) {
       visibility,
       show_quantity_selector: showQuantitySelector,
       quantity_price_tiers: quantityPriceTiers,
+      personalization_open_by_default: personalizationOpenByDefault,
     })
     .eq("id", newProductId);
 
@@ -917,6 +920,7 @@ export async function updateProduct(formData: FormData) {
 
   const id = getString(formData, adminFormFields.common.id);
   const visibility = parseProductVisibility(formData);
+  const personalizationOpenByDefault = parsePersonalizationOpenByDefault(formData);
   const name = getString(formData, adminFormFields.product.name);
   const subtitle = getOptionalString(formData, adminFormFields.product.subtitle);
   const headingSubtitle = getOptionalString(formData, adminFormFields.product.headingSubtitle);
@@ -1091,6 +1095,7 @@ export async function updateProduct(formData: FormData) {
       visibility,
       show_quantity_selector: showQuantitySelector,
       quantity_price_tiers: quantityPriceTiers,
+      personalization_open_by_default: personalizationOpenByDefault,
     })
     .eq("id", id);
 
@@ -1449,6 +1454,18 @@ export async function updateProductMerchandising(formData: FormData) {
         .filter((value) => value && value !== id),
     ),
   ).slice(0, 8);
+  const showReadyProductCta = isChecked(
+    formData,
+    adminFormFields.merchandising.showReadyProductCta,
+  );
+  const readyProductCtaLabel = getOptionalString(
+    formData,
+    adminFormFields.merchandising.readyProductCtaLabel,
+  );
+  const readyProductCtaProductId = getOptionalString(
+    formData,
+    adminFormFields.merchandising.readyProductCtaProductId,
+  );
 
   if (!id) {
     redirectWith("error", "Липсва продукт за настройване.", "products");
@@ -1473,6 +1490,28 @@ export async function updateProductMerchandising(formData: FormData) {
       migrationMissing
         ? "Липсва миграцията product_merchandising.sql в Supabase."
         : `Настройките не бяха запазени: ${error.message}`,
+      id,
+    );
+  }
+
+  const { error: ctaError } = await supabase
+    .from("products")
+    .update({
+      show_ready_product_cta: showReadyProductCta,
+      ready_product_cta_label: showReadyProductCta
+        ? readyProductCtaLabel || null
+        : null,
+      ready_product_cta_product_id:
+        showReadyProductCta && readyProductCtaProductId
+          ? readyProductCtaProductId
+          : null,
+    })
+    .eq("id", id);
+
+  if (ctaError) {
+    redirectWithProductEdit(
+      "error",
+      "Свързаните продукти са запазени, но CTA настройките не бяха обновени. Изпълнете product_page_cta_and_personalization.sql.",
       id,
     );
   }

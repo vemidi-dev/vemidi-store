@@ -190,10 +190,13 @@ export function ProductDetailColorFields({
         ),
       )}
       {isSidebar ? (
-        <p className="text-xs text-boutique-muted" aria-live="polite">
+        <p
+          className="rounded-lg bg-boutique-sage/10 px-3 py-2 text-center text-sm text-boutique-ink"
+          aria-live="polite"
+        >
           Избран цвят:{" "}
-          <span className="font-semibold text-boutique-ink">
-            {selectedColorLabel ?? "—"}
+          <span className="font-semibold text-boutique-sage-deep">
+            {selectedColorLabel ?? "-"}
           </span>
         </p>
       ) : null}

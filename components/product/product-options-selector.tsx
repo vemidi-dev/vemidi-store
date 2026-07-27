@@ -27,6 +27,8 @@ type ProductOptionsSelectorProps = {
   onChange: (selections: ProductOptionSelection[]) => void;
   onEstimatedPriceChange?: (price: number) => void;
   useMaterialCards?: boolean;
+  priceSummaryLabel?: string;
+  priceSummaryNote?: string | null;
 };
 
 function MaterialOptionCard({
@@ -205,6 +207,8 @@ export function ProductOptionsSelector({
   onChange,
   onEstimatedPriceChange,
   useMaterialCards = false,
+  priceSummaryLabel = "Ориентировъчна цена",
+  priceSummaryNote = "(окончателната се потвърждава при поръчка)",
 }: ProductOptionsSelectorProps) {
   const [initialized, setInitialized] = useState(false);
 
@@ -438,11 +442,13 @@ export function ProductOptionsSelector({
       })}
 
       <p className="rounded-xl bg-boutique-bg px-3 py-2 text-sm leading-5 text-boutique-muted">
-        Ориентировъчна цена:{" "}
+        {priceSummaryLabel}:{" "}
         <span className="font-semibold text-boutique-ink">
           {estimatedPrice.toFixed(2).replace(".", ",")} €
         </span>
-        <span className="ml-2 text-xs">(окончателната се потвърждава при поръчка)</span>
+        {priceSummaryNote ? (
+          <span className="ml-2 text-xs">{priceSummaryNote}</span>
+        ) : null}
       </p>
     </div>
   );
