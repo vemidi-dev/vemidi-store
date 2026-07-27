@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 import { RelatedProductPicker } from "@/components/admin/related-product-picker";
 import { adminHelperClass } from "@/components/admin/styles";
 import { adminFormFields } from "@/lib/admin/form-fields";
@@ -36,7 +38,7 @@ export function ProductMerchandisingFields({
   readyProductCtaLabel,
   readyProductCtaProductId,
 }: ProductMerchandisingFieldsProps) {
-  const readyProductOptions = products.filter((entry) => entry.id !== excludeProductId);
+  const [readyCtaEnabled, setReadyCtaEnabled] = useState(showReadyProductCta);
 
   return (
     <div className="grid gap-5 lg:grid-cols-[minmax(0,0.7fr)_minmax(0,1.3fr)]">
@@ -72,19 +74,49 @@ export function ProductMerchandisingFields({
             </span>
           </label>
         </div>
+      </div>
+
+      <div className="space-y-5">
+        <div className="rounded-xl border border-boutique-line bg-boutique-bg p-4">
+          <p className="text-sm font-medium text-boutique-ink">Свързани продукти</p>
+          <p className="mt-1 text-xs leading-relaxed text-boutique-muted">
+            Изберете готови или свързани продукти, които да се показват като линкове на
+            продуктовата страница.
+          </p>
+          <p className="mt-2 text-xs leading-relaxed text-boutique-muted">
+            Филтрирайте по категория, заготовки/материали или повод и използвайте bulk
+            бутона за всички продукти от текущия филтър.
+          </p>
+
+          <div className="mt-3">
+            <RelatedProductPicker
+              products={products}
+              categories={categories}
+              excludeProductId={excludeProductId}
+              selectedRelatedIds={selectedRelatedIds}
+            />
+          </div>
+        </div>
 
         <div className="rounded-xl border border-boutique-line bg-boutique-bg p-4">
-          <label className="flex items-start gap-3 text-sm font-medium text-boutique-ink">
+          <p className="text-sm font-medium text-boutique-ink">Готов вариант</p>
+          <p className="mt-1 text-xs leading-relaxed text-boutique-muted">
+            Настройте CTA бутона „Виж готов вариант“ и изберете целевия продукт.
+          </p>
+
+          <label className="mt-4 flex items-start gap-3 text-sm font-medium text-boutique-ink">
             <input
               name={adminFormFields.merchandising.showReadyProductCta}
               type="checkbox"
               defaultChecked={showReadyProductCta}
+              onChange={(event) => setReadyCtaEnabled(event.target.checked)}
               className="mt-0.5 h-4 w-4 rounded border-boutique-line text-boutique-accent focus-visible:ring-2 focus-visible:ring-boutique-accent/30"
             />
             <span>
               Покажи CTA „Виж готов вариант“
               <span className="mt-1 block text-xs font-normal leading-relaxed text-boutique-muted">
-                По подразбиране е изключено. Включете го само когато искате да насочите към готов продукт.
+                По подразбиране е изключено. Включете го само когато искате да насочите към
+                готов продукт.
               </span>
             </span>
           </label>
@@ -96,48 +128,28 @@ export function ProductMerchandisingFields({
               type="text"
               defaultValue={readyProductCtaLabel || DEFAULT_READY_PRODUCT_CTA_LABEL}
               placeholder={DEFAULT_READY_PRODUCT_CTA_LABEL}
-              className="mt-2 w-full rounded-lg border border-boutique-line bg-white px-3 py-2 focus-visible:ring-2 focus-visible:ring-boutique-accent/20"
+              disabled={!readyCtaEnabled}
+              className="mt-2 w-full rounded-lg border border-boutique-line bg-white px-3 py-2 focus-visible:ring-2 focus-visible:ring-boutique-accent/20 disabled:opacity-50"
             />
           </label>
 
-          <label className="mt-4 block text-sm font-medium text-boutique-ink">
-            Целеви продукт
-            <select
-              name={adminFormFields.merchandising.readyProductCtaProductId}
-              defaultValue={readyProductCtaProductId ?? ""}
-              className="mt-2 w-full rounded-lg border border-boutique-line bg-white px-3 py-2 focus-visible:ring-2 focus-visible:ring-boutique-accent/20"
-            >
-              <option value="">Първи свързан продукт</option>
-              {readyProductOptions.map((entry) => (
-                <option key={entry.id} value={entry.id}>
-                  {entry.name}
-                </option>
-              ))}
-            </select>
-            <span className={adminHelperClass}>
+          <div className="mt-4">
+            <p className="text-sm font-medium text-boutique-ink">Целеви продукт</p>
+            <p className={adminHelperClass}>
               Ако не изберете конкретен продукт, се използва първият от свързаните.
-            </span>
-          </label>
-        </div>
-      </div>
-
-      <div className="rounded-xl border border-boutique-line bg-boutique-bg p-4">
-        <p className="text-sm font-medium text-boutique-ink">Свързани продукти</p>
-        <p className="mt-1 text-xs leading-relaxed text-boutique-muted">
-          Изберете готови или свързани продукти, които да се показват като линкове на продуктовата страница.
-        </p>
-
-        <p className="mt-2 text-xs leading-relaxed text-boutique-muted">
-          Филтрирайте по категория, заготовки/материали или повод и използвайте bulk бутона за всички продукти от текущия филтър.
-        </p>
-
-        <div className="mt-3">
-          <RelatedProductPicker
-            products={products}
-            categories={categories}
-            excludeProductId={excludeProductId}
-            selectedRelatedIds={selectedRelatedIds}
-          />
+            </p>
+            <div className="mt-3">
+              <RelatedProductPicker
+                mode="single"
+                products={products}
+                categories={categories}
+                excludeProductId={excludeProductId}
+                selectedProductId={readyProductCtaProductId}
+                hiddenFieldName={adminFormFields.merchandising.readyProductCtaProductId}
+                disabled={!readyCtaEnabled}
+              />
+            </div>
+          </div>
         </div>
       </div>
     </div>

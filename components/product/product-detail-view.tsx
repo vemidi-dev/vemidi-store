@@ -227,16 +227,6 @@ export function ProductDetailView({
                   ) : null}
                 </div>
 
-                {showCategoryLink && primaryCategory ? (
-                  <Link
-                    href={getCategoryListingHref(primaryCategory)}
-                    className="mt-5 inline-flex w-fit items-center gap-2 text-sm font-semibold text-boutique-sage-deep underline-offset-4 transition hover:text-boutique-ink hover:underline"
-                  >
-                    Разгледайте още от „{primaryCategory.name}“
-                    <span aria-hidden="true">→</span>
-                  </Link>
-                ) : null}
-
                 {featuredRelatedProduct && readyProductCtaLabel ? (
                   <Link
                     href={getProductPath(featuredRelatedProduct.slug)}
@@ -352,16 +342,6 @@ export function ProductDetailView({
                 ) : null}
               </div>
 
-              {showCategoryLink && primaryCategory ? (
-                <Link
-                  href={getCategoryListingHref(primaryCategory)}
-                  className="mt-5 inline-flex w-fit items-center gap-2 text-sm font-semibold text-boutique-sage-deep underline-offset-4 transition hover:text-boutique-ink hover:underline"
-                >
-                  Разгледайте още от „{primaryCategory.name}“
-                  <span aria-hidden="true">→</span>
-                </Link>
-              ) : null}
-
               {featuredRelatedProduct && readyProductCtaLabel ? (
                 <Link
                   href={getProductPath(featuredRelatedProduct.slug)}
@@ -433,22 +413,31 @@ export function ProductDetailView({
             <div className="flex items-end justify-between gap-4">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-boutique-accent">
-                  Свързани продукти
+                  Може да харесате
                 </p>
                 <h2 className="mt-2 font-heading text-3xl text-boutique-ink">
-                  Вижте готови изделия
+                  Вижте още продукти
                 </h2>
                 <p className="mt-2 max-w-2xl text-sm leading-relaxed text-boutique-muted">
-                  Ако искате да видите как изглежда тази заготовка в завършен продукт, разгледайте примерите.
+                  Подбрахме още идеи, които се комбинират добре с този продукт.
                 </p>
               </div>
               <Link
                 href="/produkti"
                 className="hidden text-sm font-semibold text-boutique-sage-deep underline-offset-4 hover:underline sm:inline-flex"
               >
-                Вижте всички
+                Вижте всички продукти
               </Link>
             </div>
+            {showCategoryLink && primaryCategory ? (
+              <Link
+                href={getCategoryListingHref(primaryCategory)}
+                className="mt-5 inline-flex w-fit items-center gap-1.5 text-sm text-boutique-muted underline-offset-4 transition hover:text-boutique-sage-deep hover:underline"
+              >
+                Разгледайте още от „{primaryCategory.name}“
+                <span aria-hidden="true">→</span>
+              </Link>
+            ) : null}
             <div className="mt-7 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
               {relatedProducts.map((related) => (
                 <ProductCard

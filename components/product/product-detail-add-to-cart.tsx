@@ -39,6 +39,7 @@ import { formatPriceDelta } from "@/lib/product-option-pricing";
 import { shouldUseMaterialOptionCards } from "@/lib/product-option-layout";
 import {
   hasQuantityPriceTiers,
+  resolveQuantityTierDisplayUnitPrice,
   resolveQuantityUnitPrice,
 } from "@/lib/product-quantity-pricing";
 import { formatEur } from "@/lib/format-eur";
@@ -528,6 +529,15 @@ export function ProductDetailAddToCart({
   const displayedLinePrice = displayedUnitPrice * selectedQuantity;
   const showQuantityPriceTiers =
     showQuantitySelector && hasQuantityPriceTiers(product.quantityPriceTiers);
+  const personalizationSectionOrder = showQuantityPriceTiers
+    ? useMaterialCards
+      ? "order-30"
+      : "order-35"
+    : useMaterialCards
+      ? "order-30"
+      : "order-10";
+  const quantityTiersSectionOrder = useMaterialCards ? "order-20" : "order-30";
+  const quantitySelectorOrder = useMaterialCards ? "order-40" : "order-60";
   const quantityDiscountPerItem = Math.max(0, product.price - quantityBasePrice);
   const preparedPricingQuantity =
     currentProductQuantityInCart + preparedQuantityTotal;
@@ -837,9 +847,72 @@ export function ProductDetailAddToCart({
       }
     >
       <div className="flex flex-col">
+      {optionGroups.length ? (
+        <div className={useMaterialCards ? "order-10" : "order-20"}>
+        <ProductOptionsSelector
+          basePrice={product.price + personalizationDelta}
+          variantDisplayBasePrice={product.price}
+          groups={optionGroups}
+          value={optionSelections}
+          onChange={handleOptionSelectionsChange}
+          onEstimatedPriceChange={setEstimatedUnitPrice}
+          priceSummaryLabel={priceSummaryLabel}
+          priceSummaryNote={priceSummaryNote}
+          useMaterialCards={useMaterialCards}
+        />
+        </div>
+      ) : null}
+
+      {!optionGroups.length && personalizationDelta > 0 ? (
+        <p className={`mt-5 text-sm text-boutique-muted ${useMaterialCards ? "order-25" : "order-25"}`}>
+          {priceSummaryLabel}:{" "}
+          <strong className="text-boutique-ink">
+            {(product.price + personalizationDelta).toFixed(2).replace(".", ",")} €
+          </strong>
+        </p>
+      ) : null}
+
+      {showQuantityPriceTiers ? (
+        <section
+          className={`mt-3 rounded-xl border border-boutique-line bg-white/70 p-3 ${quantityTiersSectionOrder}`}
+        >
+          <h2 className="text-sm font-semibold text-boutique-ink">
+            Отстъпки за избрания вариант
+          </h2>
+          <p className="mt-1 text-xs text-boutique-muted">
+            Цените по-долу се обновяват при промяна на опциите или персонализацията.
+          </p>
+          <div className="mt-2 grid gap-1.5 text-sm text-boutique-muted">
+            {product.quantityPriceTiers?.map((tier) => {
+              const tierDisplayPrice = resolveQuantityTierDisplayUnitPrice(
+                tier.unitPrice,
+                optionDelta,
+                personalizationDelta,
+              );
+
+              return (
+                <div
+                  key={`${tier.minQuantity}-${tier.maxQuantity ?? "plus"}`}
+                  className="flex items-center justify-between gap-4 rounded-lg bg-boutique-bg px-3 py-1.5"
+                >
+                  <span>
+                    {tier.maxQuantity === null
+                      ? `от ${tier.minQuantity} бр.`
+                      : `${tier.minQuantity}-${tier.maxQuantity} бр.`}
+                  </span>
+                  <strong className="text-boutique-ink">
+                    {formatEur(tierDisplayPrice)} / бр.
+                  </strong>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      ) : null}
+
       {fields.length ? (
         <details
-          className={`rounded-2xl border border-boutique-line bg-white/70 p-3 ${useMaterialCards ? "order-30" : "order-10"}`}
+          className={`rounded-2xl border border-boutique-line bg-white/70 p-3 ${personalizationSectionOrder}`}
           open={
             personalizationDetailsOpen ??
             fields.some((field) => field.required)
@@ -1013,56 +1086,6 @@ export function ProductDetailAddToCart({
         </details>
       ) : null}
 
-      {optionGroups.length ? (
-        <div className={useMaterialCards ? "order-10" : "order-20"}>
-        <ProductOptionsSelector
-          basePrice={product.price + personalizationDelta}
-          variantDisplayBasePrice={product.price}
-          groups={optionGroups}
-          value={optionSelections}
-          onChange={handleOptionSelectionsChange}
-          onEstimatedPriceChange={setEstimatedUnitPrice}
-          priceSummaryLabel={priceSummaryLabel}
-          priceSummaryNote={priceSummaryNote}
-          useMaterialCards={useMaterialCards}
-        />
-        </div>
-      ) : null}
-
-      {!optionGroups.length && personalizationDelta > 0 ? (
-        <p className={`mt-5 text-sm text-boutique-muted ${useMaterialCards ? "order-25" : "order-25"}`}>
-          {priceSummaryLabel}:{" "}
-          <strong className="text-boutique-ink">
-            {(product.price + personalizationDelta).toFixed(2).replace(".", ",")} €
-          </strong>
-        </p>
-      ) : null}
-
-      {showQuantityPriceTiers ? (
-        <section className={`mt-3 rounded-xl border border-boutique-line bg-white/70 p-3 ${useMaterialCards ? "order-30" : "order-30"}`}>
-          <h2 className="text-sm font-semibold text-boutique-ink">
-            Цена според количество
-          </h2>
-          <div className="mt-2 grid gap-1.5 text-sm text-boutique-muted">
-            {product.quantityPriceTiers?.map((tier) => (
-              <div
-                key={`${tier.minQuantity}-${tier.maxQuantity ?? "plus"}`}
-                className="flex items-center justify-between gap-4 rounded-lg bg-boutique-bg px-3 py-1.5"
-              >
-                <span>
-                  {tier.maxQuantity === null
-                    ? `от ${tier.minQuantity} бр.`
-                    : `${tier.minQuantity}-${tier.maxQuantity} бр.`}
-                </span>
-                <strong className="text-boutique-ink">
-                  {formatEur(tier.unitPrice)} / бр.
-                </strong>
-              </div>
-            ))}
-          </div>
-        </section>
-      ) : null}
-
       {!useMaterialCards && colorFieldsSection ? (
         <div className="order-40">{colorFieldsSection}</div>
       ) : null}
@@ -1073,7 +1096,7 @@ export function ProductDetailAddToCart({
         </p>
       ) : null}
       {showQuantitySelector ? (
-      <div className={`mt-3 rounded-xl border border-boutique-line bg-white/70 p-3 ${useMaterialCards ? "order-20" : "order-60"}`}>
+      <div className={`mt-3 rounded-xl border border-boutique-line bg-white/70 p-3 ${quantitySelectorOrder}`}>
         <div className="grid gap-3 sm:grid-cols-[auto_1fr] sm:items-center">
           <div className="sm:col-span-2">
             <p className="text-sm font-semibold text-boutique-ink">Количество</p>

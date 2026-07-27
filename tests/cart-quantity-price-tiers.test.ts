@@ -5,6 +5,7 @@ import { prepareCartLineInput } from "@/lib/cart/prepare-cart-line";
 import { mergeCartLineForAdd } from "@/lib/cart/prepare-cart-line";
 import { updateCartLineQuantityWithLinkedUpsells } from "@/lib/cart/update-cart-line-quantity";
 import type { Product } from "@/lib/catalog";
+import { resolveQuantityTierDisplayUnitPrice } from "@/lib/product-quantity-pricing";
 
 const product: Product = {
   id: "11111111-1111-4111-8111-111111111111",
@@ -90,4 +91,10 @@ test("cart uses total product quantity for tier price across separate lines", ()
     lines.map((line) => line.price),
     [8, 8],
   );
+});
+
+test("resolveQuantityTierDisplayUnitPrice adds option and personalization deltas", () => {
+  assert.equal(resolveQuantityTierDisplayUnitPrice(8, 2, 1.5), 11.5);
+  assert.equal(resolveQuantityTierDisplayUnitPrice(10, 0, 0), 10);
+  assert.equal(resolveQuantityTierDisplayUnitPrice(7.33, 1.11, 0.56), 9);
 });

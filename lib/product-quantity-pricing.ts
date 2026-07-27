@@ -67,3 +67,17 @@ export function hasQuantityPriceTiers(
 ) {
   return Boolean(tiers?.length);
 }
+
+export function resolveQuantityTierDisplayUnitPrice(
+  tierUnitPrice: number,
+  optionDelta: number,
+  personalizationDelta: number,
+) {
+  const safeTier = Number.isFinite(tierUnitPrice) ? Math.max(0, tierUnitPrice) : 0;
+  const safeOption = Number.isFinite(optionDelta) ? Math.max(0, optionDelta) : 0;
+  const safePersonalization = Number.isFinite(personalizationDelta)
+    ? Math.max(0, personalizationDelta)
+    : 0;
+
+  return Math.round((safeTier + safeOption + safePersonalization) * 100) / 100;
+}
