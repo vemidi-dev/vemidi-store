@@ -41,16 +41,16 @@ export function FaqSection({ items, variant, idPrefix }: FaqSectionProps) {
   return (
     <section
       aria-labelledby={`${idPrefix ?? "product-faq"}-heading`}
-      className="mt-6 border-t border-boutique-line/70 pt-6"
+      className="mt-8 border-t border-boutique-line/70 pt-8"
     >
       <h2
         id={`${idPrefix ?? "product-faq"}-heading`}
-        className="font-heading text-xl leading-snug text-boutique-ink md:text-[1.35rem]"
+        className="font-heading text-2xl leading-snug text-boutique-ink md:text-3xl"
       >
         {sectionTitle}
       </h2>
       <FaqAccordion
-        className="mt-2"
+        className="mt-4"
         idPrefix={idPrefix ?? "product-faq"}
         items={items}
       />

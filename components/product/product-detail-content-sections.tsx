@@ -1,6 +1,6 @@
-import Link from "next/link";
-
 import { FaqSection } from "@/components/faq/faq-section";
+import { ProductServiceBlocks } from "@/components/product/product-service-blocks";
+import type { ProductServiceBlock } from "@/lib/content/product-page-copy";
 import {
   getProductPageContentSections,
   hasProductPageContent,
@@ -15,10 +15,42 @@ type ProductDetailGalleryAsideProps = ProductDetailContentSectionsProps & {
   className?: string;
   faqItems?: FaqItem[];
   faqIdPrefix?: string;
+  serviceBlocks?: ProductServiceBlock[];
+  showFulfillmentInfo?: boolean;
 };
 
 const bodyClassName =
   "mt-2.5 text-base leading-7 text-boutique-muted md:leading-[1.75]";
+
+function getSectionPreview(content: string) {
+  const normalized = content.replace(/\s+/g, " ").trim();
+  return normalized.length > 92 ? `${normalized.slice(0, 89)}...` : normalized;
+}
+
+function SectionIcon({ index }: { index: number }) {
+  const paths = [
+    "M12 3.5c2.2 2 4.5 4.7 4.5 7.7A4.5 4.5 0 0 1 12 15.7a4.5 4.5 0 0 1-4.5-4.5c0-3 2.3-5.7 4.5-7.7Zm0 12.2v4.8m-3 0h6",
+    "M8 4.5h8m-8 0v15h8v-15m-10 4h12m-9 4h6m-6 4h6",
+    "m6 6 12 12m0-12L6 18m2-10 2-2m6 2 2-2M8 16l-2 2m10-2 2 2",
+    "M12 8v5l3 2m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z",
+    "M5 10h14v10H5V10Zm2-4h10v4H7V6Zm3 7h4m-4 3h4",
+  ];
+
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-6 w-6 text-boutique-muted"
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="1.7"
+      viewBox="0 0 24 24"
+    >
+      <path d={paths[index % paths.length]} />
+    </svg>
+  );
+}
 
 export function ProductDetailContentSections(props: ProductDetailContentSectionsProps) {
   const sections = getProductPageContentSections(props);
@@ -28,78 +60,58 @@ export function ProductDetailContentSections(props: ProductDetailContentSections
   }
 
   return (
-    <div className="flex w-full flex-col gap-6">
+    <div className="w-full overflow-hidden rounded-2xl border border-boutique-line bg-white/75">
       {sections.map((section, index) => (
-        <section
+        <details
           key={section.id}
-          aria-labelledby={`product-${section.id}-heading`}
-          className={index > 0 ? "border-t border-boutique-line/70 pt-6" : undefined}
+          className="group border-b border-boutique-line last:border-b-0"
+          open={index === 0 ? false : undefined}
         >
-          <h2
-            id={`product-${section.id}-heading`}
-            className="font-heading text-xl leading-snug text-boutique-ink md:text-[1.35rem]"
-          >
-            {section.heading}
-          </h2>
-          <div className={withPlainTextClass(bodyClassName)}>{section.content}</div>
-        </section>
+          <summary className="grid cursor-pointer list-none grid-cols-[2rem_minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 marker:hidden">
+            <SectionIcon index={index} />
+            <span className="min-w-0">
+              <span className="block text-sm font-semibold text-boutique-ink">
+                {section.heading}
+              </span>
+              <span className="mt-0.5 block truncate text-xs leading-5 text-boutique-muted">
+                {getSectionPreview(section.content)}
+              </span>
+            </span>
+            <span
+              aria-hidden="true"
+              className="text-lg leading-none text-boutique-muted transition group-open:rotate-180"
+            >
+              ⌄
+            </span>
+          </summary>
+          <div className={withPlainTextClass(`${bodyClassName} px-4 pb-4 pl-14 pt-0`)}>
+            {section.content}
+          </div>
+        </details>
       ))}
     </div>
   );
 }
 
-export function ProductDetailFulfillmentInfo() {
-  return (
-    <div className="flex flex-col gap-5 text-sm">
-      <div>
-        <p className="font-semibold text-boutique-ink">Изработка</p>
-        <p className="mt-1.5 leading-6 text-boutique-muted">
-          1–5 работни дни в зависимост от натоварването. Ако ви е нужен друг срок,
-          <Link
-            href="/kontakti"
-            className="ml-1 font-semibold text-boutique-sage-deep underline-offset-4 hover:underline"
-          >
-            свържете се с нас
-          </Link>
-          .
-        </p>
-      </div>
-      <div className="border-t border-boutique-line/70 pt-5">
-        <p className="font-semibold text-boutique-ink">Доставка</p>
-        <p className="mt-1.5 leading-6 text-boutique-muted">
-          Еконт или Спиди · наложен платеж.
-          <Link
-            href="/delivery"
-            className="ml-1 font-semibold text-boutique-sage-deep underline-offset-4 hover:underline"
-          >
-            Вижте условията
-          </Link>
-        </p>
-      </div>
-      <div className="border-t border-boutique-line/70 pt-5">
-        <p className="font-semibold text-boutique-ink">Връщане</p>
-        <p className="mt-1.5 leading-6 text-boutique-muted">
-          14 дни за неперсонализирани продукти.
-          <Link
-            href="/returns"
-            className="ml-1 font-semibold text-boutique-sage-deep underline-offset-4 hover:underline"
-          >
-            Условия за връщане
-          </Link>
-        </p>
-      </div>
-    </div>
-  );
+export function ProductDetailFulfillmentInfo({
+  serviceBlocks,
+}: {
+  serviceBlocks: ProductServiceBlock[];
+}) {
+  return <ProductServiceBlocks blocks={serviceBlocks} />;
 }
 
 export function ProductDetailGalleryAside({
   className,
   faqItems = [],
   faqIdPrefix,
+  serviceBlocks = [],
+  showFulfillmentInfo = true,
   ...props
 }: ProductDetailGalleryAsideProps) {
   const hasContent = hasProductPageContent(props);
   const hasFaq = faqItems.length > 0;
+  const showServiceBlocks = showFulfillmentInfo && serviceBlocks.length > 0;
 
   return (
     <aside
@@ -107,15 +119,11 @@ export function ProductDetailGalleryAside({
       className={`mt-6 w-full min-w-0 lg:mt-5${className ? ` ${className}` : ""}`}
     >
       {hasContent ? <ProductDetailContentSections {...props} /> : null}
-      <div
-        className={
-          hasContent
-            ? "mt-6 border-t border-boutique-line/70 pt-6"
-            : undefined
-        }
-      >
-        <ProductDetailFulfillmentInfo />
-      </div>
+      {showServiceBlocks ? (
+        <div className={hasContent ? "mt-4" : undefined}>
+          <ProductDetailFulfillmentInfo serviceBlocks={serviceBlocks} />
+        </div>
+      ) : null}
       {hasFaq ? (
         <FaqSection
           idPrefix={faqIdPrefix}

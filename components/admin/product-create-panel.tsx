@@ -49,6 +49,7 @@ import type {
   ColorGroupRow,
   ColorOptionRow,
   ProductCreateDraft,
+  ProductMaterialRow,
   WishTemplateOccasionRow,
   WishTemplateRow,
 } from "@/lib/admin/types";
@@ -58,6 +59,7 @@ type ProductCreatePanelProps = {
   categories: CategoryRow[];
   colorGroups: ColorGroupRow[];
   colorOptions: ColorOptionRow[];
+  materials: ProductMaterialRow[];
   wishes: WishTemplateRow[];
   wishOccasionLinks: WishTemplateOccasionRow[];
   faqProductGroups: FaqGroupRow[];
@@ -90,6 +92,7 @@ export function ProductCreatePanel({
   categories,
   colorGroups,
   colorOptions,
+  materials,
   wishes,
   wishOccasionLinks,
   faqProductGroups,
@@ -436,8 +439,9 @@ export function ProductCreatePanel({
                 </div>
               )}
               <p className={adminHelperClass}>
-                Отметнете категориите на продукта. При продуктовите категории или заготовките маркирайте една
-                категория като „Основна“ за breadcrumb и SEO.
+                Отметнете категориите на продукта. Може да е само в „Заготовки и материали“ без
+                обикновена продуктова категория. Маркирайте една категория като „Основна“ за
+                breadcrumb и SEO.
               </p>
             </fieldset>
           </div>
@@ -565,6 +569,7 @@ export function ProductCreatePanel({
           <ProductOptionGroupsEditor
             initialGroups={activeDraft?.optionGroups}
             allDependencyOptions={[]}
+            materials={materials}
             productImages={[]}
             basePrice={Number(activeDraft?.price) || 0}
             helperClassName={adminHelperClass}

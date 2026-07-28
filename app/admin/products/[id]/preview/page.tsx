@@ -15,6 +15,9 @@ import {
   isProductCategoryIndexable,
 } from "@/lib/seo/category-indexability";
 import { resolveProductPageSeo } from "@/lib/seo/product-page-seo";
+import { resolveProductPageCopy } from "@/lib/content/product-page-copy";
+import { getSiteContent } from "@/lib/content/site-content";
+import { resolveReadyProductCta } from "@/lib/product-ready-cta";
 import { checkIsAdmin } from "@/lib/supabase/admin-auth";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -99,11 +102,14 @@ export default async function AdminProductPreviewPage({
     "draft",
   );
 
-  const [primaryLandingPage, productFaqItems, catalog] = await Promise.all([
+  const [primaryLandingPage, productFaqItems, catalog, siteContent] =
+    await Promise.all([
     getPrimaryActiveProductLandingPage(supabase, product.id),
     getProductFaqItems(product.id, supabase),
     getStorefrontCatalog(),
+    getSiteContent(),
   ]);
+  const productPageCopy = resolveProductPageCopy(siteContent);
 
   const productById = new Map(
     catalog.products.map((catalogProduct) => [catalogProduct.id, catalogProduct]),
@@ -116,6 +122,11 @@ export default async function AdminProductPreviewPage({
       (related): related is (typeof catalog.products)[number] => Boolean(related),
     )
     .slice(0, 4);
+  const readyProductCta = resolveReadyProductCta(
+    product,
+    relatedProducts,
+    productById,
+  );
 
   const {
     primaryCategory,
@@ -151,6 +162,8 @@ export default async function AdminProductPreviewPage({
       primaryLandingPage={primaryLandingPage}
       productFaqItems={productFaqItems}
       productSeoContext={productSeoContext}
+      productPageCopy={productPageCopy}
+      readyProductCta={readyProductCta}
       includeStructuredData={false}
       previewBanner={<ProductDetailPreviewBanner status={publicationStatus} />}
     />

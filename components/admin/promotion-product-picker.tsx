@@ -4,6 +4,10 @@ import { useMemo, useState } from "react";
 
 import { adminFieldClass } from "@/components/admin/styles";
 import { adminFormFields } from "@/lib/admin/form-fields";
+import {
+  filterCategoriesByType,
+  getAdminCategoryFilterLabel,
+} from "@/lib/admin/category-groups";
 import type { CategoryType } from "@/lib/admin/types";
 import { formatEur } from "@/lib/format-eur";
 import {
@@ -36,27 +40,34 @@ export function PromotionProductPicker({
 }: PromotionProductPickerProps) {
   const [query, setQuery] = useState("");
   const [productCategoryId, setProductCategoryId] = useState("all");
+  const [materialCategoryId, setMaterialCategoryId] = useState("all");
   const [occasionCategoryId, setOccasionCategoryId] = useState("all");
   const [status, setStatus] = useState<"all" | "active" | "sold-out">("all");
   const [visibleLimit, setVisibleLimit] = useState(pageSize);
 
-  const productCategories = categories.filter(
-    (category) => category.categoryType === "product",
-  );
-  const occasionCategories = categories.filter(
-    (category) => category.categoryType === "occasion",
-  );
+  const productCategories = filterCategoriesByType(categories, "product");
+  const materialCategories = filterCategoriesByType(categories, "material");
+  const occasionCategories = filterCategoriesByType(categories, "occasion");
 
   const browseProducts = useMemo(
     () =>
       filterPromotionProducts(products, {
         query,
         productCategoryId,
+        materialCategoryId,
         occasionCategoryId,
         status,
         excludeIds: selectedIds,
       }),
-    [occasionCategoryId, productCategoryId, products, query, selectedIds, status],
+    [
+      materialCategoryId,
+      occasionCategoryId,
+      productCategoryId,
+      products,
+      query,
+      selectedIds,
+      status,
+    ],
   );
 
   const selectedProducts = useMemo(
@@ -110,7 +121,7 @@ export function PromotionProductPicker({
             />
           </label>
           <label className="text-xs font-semibold uppercase tracking-wider text-boutique-muted">
-            Категория
+            {getAdminCategoryFilterLabel("product")}
             <select
               value={productCategoryId}
               onChange={(event) => {
@@ -128,7 +139,25 @@ export function PromotionProductPicker({
             </select>
           </label>
           <label className="text-xs font-semibold uppercase tracking-wider text-boutique-muted">
-            Повод
+            {getAdminCategoryFilterLabel("material")}
+            <select
+              value={materialCategoryId}
+              onChange={(event) => {
+                setMaterialCategoryId(event.target.value);
+                setVisibleLimit(pageSize);
+              }}
+              className={`${adminFieldClass} !mt-1.5`}
+            >
+              <option value="all">Всички</option>
+              {materialCategories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="text-xs font-semibold uppercase tracking-wider text-boutique-muted">
+            {getAdminCategoryFilterLabel("occasion")}
             <select
               value={occasionCategoryId}
               onChange={(event) => {

@@ -15,10 +15,12 @@ export function CategoryManagementPanel({
   categories,
   productCountByCategoryId,
   relatedCategoryIdsByCategoryId,
+  initialCategoryType,
 }: {
   categories: CategoryRow[];
   productCountByCategoryId: Map<string, number>;
   relatedCategoryIdsByCategoryId: Map<string, string[]>;
+  initialCategoryType?: CategoryRow["category_type"];
 }) {
   const parentCategories = categories
     .filter(
@@ -205,6 +207,7 @@ export function CategoryManagementPanel({
           categories={categories}
           productCountByCategoryId={productCountByCategoryId}
           relatedCategoryIdsByCategoryId={relatedCategoryIdsByCategoryId}
+          initialCategoryType={initialCategoryType}
         />
       )}
     </article>

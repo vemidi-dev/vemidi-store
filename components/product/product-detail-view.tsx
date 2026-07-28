@@ -1,10 +1,14 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { ProductDetailAddToCart } from "@/components/product/product-detail-add-to-cart";
+import { PRODUCT_LEFT_COLORS_SLOT_ID } from "@/components/product/product-detail-color-fields";
 import { MetaPixelViewContentBridge } from "@/components/consent/meta-pixel-view-content-bridge";
 import { ProductDetailGalleryAside } from "@/components/product/product-detail-content-sections";
+import { FaqSection } from "@/components/faq/faq-section";
 import { ProductDetailGallery } from "@/components/product/product-detail-gallery";
+import { ProductServiceBlocks } from "@/components/product/product-service-blocks";
 import { ProductDetailOccasionTags } from "@/components/product/product-detail-occasion-tags";
 import { ProductLandingPageCta } from "@/components/product/product-landing-page-cta";
 import { PageContainer } from "@/components/layout/page-container";
@@ -16,6 +20,7 @@ import type { Product } from "@/lib/catalog";
 import type { CampaignAttribution } from "@/lib/campaign-attribution";
 import { getCategoryListingHref } from "@/lib/category-url";
 import type { ProductOptionSelection } from "@/lib/product-options";
+import { shouldUseMaterialOptionCards } from "@/lib/product-option-layout";
 import type { StorefrontCategory } from "@/lib/storefront/types";
 import { isProductOnPromotion } from "@/lib/product-pricing";
 import type { ProductLandingPage } from "@/lib/product-landing/types";
@@ -27,6 +32,13 @@ import { buildBreadcrumbListSchema, type BreadcrumbItem } from "@/lib/seo/breadc
 import { buildProductSchemaDescription } from "@/lib/seo/product-description-seo";
 import type { ProductSeoContext } from "@/lib/seo/product-description-seo";
 import type { ProductUpsellOffer } from "@/lib/storefront/product-upsells";
+import type { ProductPageCopy } from "@/lib/content/product-page-copy";
+import {
+  getPriceSummaryLabel,
+  getPriceSummaryNote,
+} from "@/lib/content/product-page-copy";
+import type { ReadyProductCta } from "@/lib/product-ready-cta";
+import { resolvePersonalizationDetailsOpen } from "@/lib/product-personalization-default";
 
 type ProductDetailViewProps = {
   product: Product;
@@ -42,6 +54,8 @@ type ProductDetailViewProps = {
   attribution?: CampaignAttribution;
   initialOptionSelections?: ProductOptionSelection[];
   productSeoContext: ProductSeoContext;
+  productPageCopy: ProductPageCopy;
+  readyProductCta?: ReadyProductCta | null;
   previewBanner?: ReactNode;
   includeStructuredData?: boolean;
 };
@@ -60,6 +74,8 @@ export function ProductDetailView({
   attribution,
   initialOptionSelections = [],
   productSeoContext,
+  productPageCopy,
+  readyProductCta = null,
   previewBanner,
   includeStructuredData = true,
 }: ProductDetailViewProps) {
@@ -75,6 +91,25 @@ export function ProductDetailView({
         : null,
   });
   const schemaDescription = buildProductSchemaDescription(product, productSeoContext);
+  const featuredRelatedProduct = readyProductCta?.product ?? null;
+  const readyProductCtaLabel = readyProductCta?.label ?? null;
+  const usesMaterialStockLayout = shouldUseMaterialOptionCards(
+    product,
+    product.optionGroups ?? [],
+  );
+  const priceSummaryLabel = getPriceSummaryLabel(
+    productPageCopy,
+    usesMaterialStockLayout,
+  );
+  const priceSummaryNote = getPriceSummaryNote(
+    productPageCopy,
+    usesMaterialStockLayout,
+  );
+  const personalizationDetailsOpen = resolvePersonalizationDetailsOpen(
+    product.personalizationOpenByDefault ?? null,
+    usesMaterialStockLayout,
+    Boolean(product.personalizationFields?.some((field) => field.required)),
+  );
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -111,7 +146,7 @@ export function ProductDetailView({
   const breadcrumbSchema = buildBreadcrumbListSchema(breadcrumbItems, getSiteUrl());
 
   return (
-    <div className="min-h-screen bg-boutique-bg">
+    <div className="min-h-screen bg-boutique-bg pb-24 lg:pb-0">
       {previewBanner}
       {includeStructuredData ? (
         <JsonLd data={[structuredData, breadcrumbSchema]} />
@@ -127,12 +162,153 @@ export function ProductDetailView({
         <PageContainer className="py-10 md:py-14 lg:py-16">
           <VisibleBreadcrumbs items={breadcrumbItems} />
 
+          {usesMaterialStockLayout ? (
+            <>
+            <div className="mt-8 flex flex-col gap-8 lg:mt-10 lg:grid lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:items-start lg:gap-x-16 xl:gap-x-20">
+              <div className="order-1 flex min-w-0 flex-col gap-0 lg:sticky lg:top-28 lg:z-0 lg:self-start">
+                <ProductDetailGallery
+                  images={product.images}
+                  syncKey={product.id}
+                  syncOptionImages={false}
+                />
+                <div id={PRODUCT_LEFT_COLORS_SLOT_ID} className="hidden min-w-0 lg:block" />
+                <ProductDetailGalleryAside
+                  className="mt-5 hidden lg:block"
+                  description={product.description}
+                  personalizationInfo={product.personalizationInfo}
+                  dimensionsMaterials={product.dimensionsMaterials}
+                  orderingInfo={product.orderingInfo}
+                  additionalInfo={product.additionalInfo}
+                  showFulfillmentInfo={false}
+                />
+              </div>
+
+              <div className="order-2 flex min-w-0 flex-col lg:col-start-2 lg:row-start-1">
+                <div className="space-y-6">
+                  {product.cardBadge ? (
+                    <p className="text-[0.7rem] font-semibold uppercase tracking-[0.28em] text-boutique-accent">
+                      {product.cardBadge}
+                    </p>
+                  ) : null}
+
+                  <div>
+                    <h1 className="font-heading text-4xl leading-[1.12] tracking-tight text-boutique-ink sm:text-5xl lg:text-[2.75rem]">
+                      {product.title}
+                    </h1>
+                    {product.headingSubtitle ? (
+                      <h2 className="mt-4 max-w-xl text-xl font-medium leading-relaxed text-boutique-ink/80 sm:text-2xl">
+                        {product.headingSubtitle}
+                      </h2>
+                    ) : null}
+                  </div>
+
+                  <ProductDetailOccasionTags occasions={productOccasions} />
+
+                  <div className="flex flex-wrap items-center gap-3">
+                    <ProductPrice product={product} size="lg" />
+                    {product.promotion ? (
+                      <span className="rounded-full bg-boutique-accent/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-boutique-accent">
+                        {product.promotion.label}
+                      </span>
+                    ) : null}
+                    {product.availabilityLabel !== "В наличност" ? (
+                      <span className="rounded-full border border-boutique-line bg-boutique-muted/10 px-2.5 py-0.5 text-[0.68rem] font-semibold tracking-[0.06em] text-boutique-muted">
+                        {product.fulfillmentType === "made_to_order"
+                          ? "По поръчка"
+                          : product.availabilityLabel}
+                      </span>
+                    ) : null}
+                  </div>
+
+                  {product.subtitle ? (
+                    <p className="max-w-xl text-base leading-relaxed text-boutique-muted md:text-lg">
+                      {product.subtitle}
+                    </p>
+                  ) : null}
+                </div>
+
+                {featuredRelatedProduct && readyProductCtaLabel ? (
+                  <Link
+                    href={getProductPath(featuredRelatedProduct.slug)}
+                    className="mt-5 flex items-center gap-3 rounded-2xl border border-boutique-line bg-white/75 p-3 transition duration-200 ease-out hover:border-boutique-sage-deep/45 hover:shadow-boutique-sm motion-reduce:transition-none"
+                  >
+                    <span className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-boutique-line bg-boutique-bg">
+                      {featuredRelatedProduct.images[0]?.src ? (
+                        <Image
+                          src={featuredRelatedProduct.images[0].src}
+                          alt={featuredRelatedProduct.images[0].alt || featuredRelatedProduct.title}
+                          fill
+                          sizes="64px"
+                          className="object-cover"
+                        />
+                      ) : null}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-xs font-semibold uppercase tracking-[0.14em] text-boutique-accent">
+                        {readyProductCtaLabel}
+                      </span>
+                      <span className="mt-1 block text-sm font-semibold leading-5 text-boutique-ink">
+                        {featuredRelatedProduct.title}
+                      </span>
+                    </span>
+                    <span
+                      aria-hidden="true"
+                      className="ml-auto shrink-0 text-lg text-boutique-sage-deep"
+                    >
+                      →
+                    </span>
+                  </Link>
+                ) : null}
+
+                <ProductDetailGalleryAside
+                  className="mt-5 lg:hidden"
+                  description={product.description}
+                  personalizationInfo={product.personalizationInfo}
+                  dimensionsMaterials={product.dimensionsMaterials}
+                  orderingInfo={product.orderingInfo}
+                  additionalInfo={product.additionalInfo}
+                  showFulfillmentInfo={false}
+                />
+
+                <ProductDetailAddToCart
+                  attribution={attribution}
+                  initialOptionSelections={initialOptionSelections}
+                  layout="embedded"
+                  personalizationDetailsOpen={personalizationDetailsOpen}
+                  priceSummaryLabel={priceSummaryLabel}
+                  priceSummaryNote={priceSummaryNote}
+                  product={product}
+                  upsellOffers={upsellOffers}
+                  upsellSectionTitle={upsellSectionTitle}
+                  usesMaterialStockLayout
+                />
+
+                <ProductLandingPageCta landingPage={primaryLandingPage} />
+              </div>
+            </div>
+            </>
+          ) : (
           <div className="mt-8 flex flex-col gap-8 lg:mt-10 lg:grid lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:items-start lg:gap-x-16 xl:gap-x-20">
-            <div className="order-1 min-w-0 lg:col-start-1 lg:row-start-1">
-              <ProductDetailGallery images={product.images} syncKey={product.id} />
+            <div className="order-1 flex min-w-0 flex-col gap-0 lg:sticky lg:top-28 lg:self-start">
+              <div className="min-w-0">
+                <ProductDetailGallery
+                  images={product.images}
+                  syncKey={product.id}
+                  syncOptionImages
+                />
+              </div>
+              <ProductDetailGalleryAside
+                className="mt-5 hidden lg:block"
+                description={product.description}
+                personalizationInfo={product.personalizationInfo}
+                dimensionsMaterials={product.dimensionsMaterials}
+                orderingInfo={product.orderingInfo}
+                additionalInfo={product.additionalInfo}
+                showFulfillmentInfo={false}
+              />
             </div>
 
-            <div className="order-2 flex min-w-0 flex-col lg:col-start-2 lg:row-start-1 lg:row-span-2">
+            <div className="order-2 flex min-w-0 flex-col lg:col-start-2 lg:row-start-1">
               <div className="space-y-6">
                 {product.cardBadge ? (
                   <p className="text-[0.7rem] font-semibold uppercase tracking-[0.28em] text-boutique-accent">
@@ -176,20 +352,56 @@ export function ProductDetailView({
                 ) : null}
               </div>
 
-              {showCategoryLink && primaryCategory ? (
+              {featuredRelatedProduct && readyProductCtaLabel ? (
                 <Link
-                  href={getCategoryListingHref(primaryCategory)}
-                  className="mt-5 inline-flex w-fit items-center gap-2 text-sm font-semibold text-boutique-sage-deep underline-offset-4 transition hover:text-boutique-ink hover:underline"
+                  href={getProductPath(featuredRelatedProduct.slug)}
+                  className="mt-5 flex items-center gap-3 rounded-2xl border border-boutique-line bg-white/75 p-3 transition duration-200 ease-out hover:border-boutique-sage-deep/45 hover:shadow-boutique-sm motion-reduce:transition-none"
                 >
-                  Разгледайте още от „{primaryCategory.name}“
-                  <span aria-hidden="true">→</span>
+                  <span className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-boutique-line bg-boutique-bg">
+                    {featuredRelatedProduct.images[0]?.src ? (
+                      <Image
+                        src={featuredRelatedProduct.images[0].src}
+                        alt={featuredRelatedProduct.images[0].alt || featuredRelatedProduct.title}
+                        fill
+                        sizes="64px"
+                        className="object-cover"
+                      />
+                    ) : null}
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-xs font-semibold uppercase tracking-[0.14em] text-boutique-accent">
+                      {readyProductCtaLabel}
+                    </span>
+                    <span className="mt-1 block text-sm font-semibold leading-5 text-boutique-ink">
+                      {featuredRelatedProduct.title}
+                    </span>
+                  </span>
+                  <span
+                    aria-hidden="true"
+                    className="ml-auto shrink-0 text-lg text-boutique-sage-deep"
+                  >
+                    →
+                  </span>
                 </Link>
               ) : null}
+
+              <ProductDetailGalleryAside
+                className="mt-5 lg:hidden"
+                description={product.description}
+                personalizationInfo={product.personalizationInfo}
+                dimensionsMaterials={product.dimensionsMaterials}
+                orderingInfo={product.orderingInfo}
+                additionalInfo={product.additionalInfo}
+                showFulfillmentInfo={false}
+              />
 
               <ProductDetailAddToCart
                 attribution={attribution}
                 initialOptionSelections={initialOptionSelections}
                 layout="embedded"
+                personalizationDetailsOpen={personalizationDetailsOpen}
+                priceSummaryLabel={priceSummaryLabel}
+                priceSummaryNote={priceSummaryNote}
                 product={product}
                 upsellOffers={upsellOffers}
                 upsellSectionTitle={upsellSectionTitle}
@@ -197,18 +409,21 @@ export function ProductDetailView({
 
               <ProductLandingPageCta landingPage={primaryLandingPage} />
             </div>
-
-            <ProductDetailGalleryAside
-              className="order-3 lg:col-start-1 lg:row-start-2"
-              description={product.description}
-              personalizationInfo={product.personalizationInfo}
-              dimensionsMaterials={product.dimensionsMaterials}
-              orderingInfo={product.orderingInfo}
-              additionalInfo={product.additionalInfo}
-              faqIdPrefix={`product-faq-${product.id}`}
-              faqItems={productFaqItems}
-            />
           </div>
+          )}
+          {productPageCopy.serviceBlocks.length ? (
+            <ProductServiceBlocks
+              blocks={productPageCopy.serviceBlocks}
+              className="mt-8"
+            />
+          ) : null}
+          {productFaqItems.length ? (
+            <FaqSection
+              idPrefix={`product-faq-${product.id}`}
+              items={productFaqItems}
+              variant="product"
+            />
+          ) : null}
         </PageContainer>
       </section>
 
@@ -218,22 +433,31 @@ export function ProductDetailView({
             <div className="flex items-end justify-between gap-4">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-boutique-accent">
-                  Свързани продукти
+                  Може да харесате
                 </p>
                 <h2 className="mt-2 font-heading text-3xl text-boutique-ink">
-                  Вижте готови изделия
+                  Вижте още продукти
                 </h2>
                 <p className="mt-2 max-w-2xl text-sm leading-relaxed text-boutique-muted">
-                  Ако искате да видите как изглежда тази заготовка в завършен продукт, разгледайте примерите.
+                  Подбрахме още идеи, които се комбинират добре с този продукт.
                 </p>
               </div>
               <Link
                 href="/produkti"
                 className="hidden text-sm font-semibold text-boutique-sage-deep underline-offset-4 hover:underline sm:inline-flex"
               >
-                Вижте всички
+                Вижте всички продукти
               </Link>
             </div>
+            {showCategoryLink && primaryCategory ? (
+              <Link
+                href={getCategoryListingHref(primaryCategory)}
+                className="mt-5 inline-flex w-fit items-center gap-1.5 text-sm text-boutique-muted underline-offset-4 transition hover:text-boutique-sage-deep hover:underline"
+              >
+                Разгледайте още от „{primaryCategory.name}“
+                <span aria-hidden="true">→</span>
+              </Link>
+            ) : null}
             <div className="mt-7 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
               {relatedProducts.map((related) => (
                 <ProductCard

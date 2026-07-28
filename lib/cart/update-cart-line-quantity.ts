@@ -1,7 +1,11 @@
 import type { CartLine } from "@/lib/cart-types";
 import { normalizeCartQuantityWithLimit } from "@/lib/cart/quantity-limits";
+import {
+  getCartLineQuantityTierGroupKey,
+  sumQuantityTierGroupTotals,
+} from "@/lib/cart/quantity-tier-group";
 import { removeCartLineWithLinkedUpsells } from "@/lib/cart/remove-cart-line";
-import { resolveQuantityUnitPrice } from "@/lib/product-quantity-pricing";
+import { resolveCartLineUnitPrice } from "@/lib/product-quantity-pricing";
 
 function applyQuantityTierPrice(
   line: CartLine,
@@ -12,16 +16,28 @@ function applyQuantityTierPrice(
     return { ...line, quantity };
   }
 
-  const baseUnitPrice = line.baseUnitPrice ?? line.price;
+  // Without a stored product base price, applying absolute tier prices would
+  // wipe selected option/personalization deltas from an already-final line.price.
+  if (
+    typeof line.baseUnitPrice !== "number" ||
+    !Number.isFinite(line.baseUnitPrice) ||
+    line.baseUnitPrice < 0
+  ) {
+    return { ...line, quantity };
+  }
+
   const optionDelta = line.optionDelta ?? 0;
   const personalizationDelta = line.personalizationDelta ?? 0;
   return {
     ...line,
     quantity,
-    price:
-      resolveQuantityUnitPrice(baseUnitPrice, line.quantityPriceTiers, tierQuantity) +
-      optionDelta +
+    price: resolveCartLineUnitPrice(
+      line.baseUnitPrice,
+      line.quantityPriceTiers,
+      tierQuantity,
+      optionDelta,
       personalizationDelta,
+    ),
   };
 }
 
@@ -29,19 +45,28 @@ export function applyQuantityTierPricesForProduct(
   lines: CartLine[],
   productId: string,
 ): CartLine[] {
-  const totalQuantity = lines
-    .filter((line) => line.productId === productId && !line.upsell)
-    .reduce((total, line) => total + line.quantity, 0);
-
-  if (totalQuantity <= 0) {
+  const productLines = lines.filter(
+    (line) => line.productId === productId && !line.upsell,
+  );
+  if (productLines.length === 0) {
     return lines;
   }
 
-  return lines.map((line) =>
-    line.productId === productId && !line.upsell
-      ? applyQuantityTierPrice(line, line.quantity, totalQuantity)
-      : line,
-  );
+  const groupTotals = sumQuantityTierGroupTotals(productLines);
+
+  return lines.map((line) => {
+    if (line.productId !== productId || line.upsell) {
+      return line;
+    }
+
+    const groupKey = getCartLineQuantityTierGroupKey(line);
+    if (!groupKey) {
+      return line;
+    }
+
+    const tierQuantity = groupTotals.get(groupKey) ?? line.quantity;
+    return applyQuantityTierPrice(line, line.quantity, tierQuantity);
+  });
 }
 
 function resolveUpsellMaxQuantityPerSource(

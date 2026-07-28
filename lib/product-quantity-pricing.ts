@@ -67,3 +67,33 @@ export function hasQuantityPriceTiers(
 ) {
   return Boolean(tiers?.length);
 }
+
+export function resolveQuantityTierDisplayUnitPrice(
+  tierUnitPrice: number,
+  optionDelta: number,
+  personalizationDelta: number,
+) {
+  const safeTier = Number.isFinite(tierUnitPrice) ? Math.max(0, tierUnitPrice) : 0;
+  const safeOption = Number.isFinite(optionDelta) ? Math.max(0, optionDelta) : 0;
+  const safePersonalization = Number.isFinite(personalizationDelta)
+    ? Math.max(0, personalizationDelta)
+    : 0;
+
+  return Math.round((safeTier + safeOption + safePersonalization) * 100) / 100;
+}
+
+/** Cart/checkout unit price: quantity tier base + option + personalization deltas. */
+export function resolveCartLineUnitPrice(
+  baseUnitPrice: number,
+  tiers: ProductQuantityPriceTier[] | undefined,
+  quantity: number,
+  optionDelta = 0,
+  personalizationDelta = 0,
+) {
+  return resolveQuantityTierDisplayUnitPrice(
+    resolveQuantityUnitPrice(baseUnitPrice, tiers, quantity),
+    optionDelta,
+    personalizationDelta,
+  );
+}
+

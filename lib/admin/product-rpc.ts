@@ -75,6 +75,7 @@ function toOptionGroupsPayload(groups: ParsedOptionGroup[]) {
       is_active: value.isActive,
       is_sold_out: value.isSoldOut,
       image_url: value.imageUrl ?? null,
+      material_id: value.materialId ?? null,
       sku: value.sku,
       sort_order: value.sortOrder,
     })),

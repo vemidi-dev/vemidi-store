@@ -167,6 +167,13 @@ export function parseProductOptionGroups(formData: FormData): {
             isActive: row.isActive !== false,
             isSoldOut: Boolean(row.isSoldOut),
             imageUrl: typeof row.imageUrl === "string" ? row.imageUrl.trim() || null : null,
+            materialId:
+              typeof row.materialId === "string" &&
+              /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+                row.materialId.trim(),
+              )
+                ? row.materialId.trim()
+                : null,
             sku: typeof row.sku === "string" ? row.sku.trim() || null : null,
             sortOrder: Number(row.sortOrder) || valueIndex,
           }];

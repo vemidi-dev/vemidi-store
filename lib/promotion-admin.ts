@@ -24,6 +24,7 @@ export type PromotionProductOption = {
   price: number;
   imageUrl: string | null;
   productCategoryIds: string[];
+  materialCategoryIds: string[];
   occasionCategoryIds: string[];
   categorySummary: string;
   isSoldOut: boolean;
@@ -268,6 +269,9 @@ export function buildPromotionProductOptions(
     const productCategoryIds = assigned.filter(
       (categoryId) => categoryTypeById.get(categoryId) === "product",
     );
+    const materialCategoryIds = assigned.filter(
+      (categoryId) => categoryTypeById.get(categoryId) === "material",
+    );
     const occasionCategoryIds = assigned.filter(
       (categoryId) => categoryTypeById.get(categoryId) === "occasion",
     );
@@ -289,6 +293,7 @@ export function buildPromotionProductOptions(
       price: Number(product.price),
       imageUrl: product.image_url,
       productCategoryIds,
+      materialCategoryIds,
       occasionCategoryIds,
       categorySummary,
       isSoldOut: Boolean(product.is_sold_out),
@@ -301,6 +306,7 @@ export function filterPromotionProducts(
   options: {
     query?: string;
     productCategoryId?: string;
+    materialCategoryId?: string;
     occasionCategoryId?: string;
     status?: "all" | "active" | "sold-out";
     excludeIds?: Set<string>;
@@ -336,6 +342,14 @@ export function filterPromotionProducts(
       options.productCategoryId &&
       options.productCategoryId !== "all" &&
       !product.productCategoryIds.includes(options.productCategoryId)
+    ) {
+      return false;
+    }
+
+    if (
+      options.materialCategoryId &&
+      options.materialCategoryId !== "all" &&
+      !product.materialCategoryIds.includes(options.materialCategoryId)
     ) {
       return false;
     }

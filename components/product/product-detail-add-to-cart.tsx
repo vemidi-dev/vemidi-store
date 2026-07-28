@@ -5,7 +5,10 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
-import { ProductColorQuantitySelector } from "@/components/product/product-color-quantity-selector";
+import {
+  ProductDetailColorFields,
+  PRODUCT_LEFT_COLORS_SLOT_ID,
+} from "@/components/product/product-detail-color-fields";
 import { useCart } from "@/components/cart/cart-provider";
 import { ProductOptionsSelector } from "@/components/product/product-options-selector";
 import type { CampaignAttribution } from "@/lib/campaign-attribution";
@@ -33,10 +36,17 @@ import {
 } from "@/lib/product-color-quantities";
 import type { ColorQuantitiesByOptionId } from "@/lib/product-color-quantities";
 import { formatPriceDelta } from "@/lib/product-option-pricing";
+import { shouldUseMaterialOptionCards } from "@/lib/product-option-layout";
 import {
   hasQuantityPriceTiers,
+  resolveQuantityTierDisplayUnitPrice,
   resolveQuantityUnitPrice,
 } from "@/lib/product-quantity-pricing";
+import {
+  resolvePreparedVariantsUnitPrices,
+  resolvePreparedVariantUnitPrice,
+  resolvePreparedVariantsTotalPrice,
+} from "@/lib/product-prepared-variants";
 import { formatEur } from "@/lib/format-eur";
 import { getProductPath } from "@/lib/product-url";
 import type { ProductPersonalizationField } from "@/lib/product-personalization";
@@ -63,18 +73,26 @@ type ProductDetailAddToCartProps = {
   attribution?: CampaignAttribution;
   initialOptionSelections?: ProductOptionSelection[];
   layout?: "card" | "embedded";
+  usesMaterialStockLayout?: boolean;
+  priceSummaryLabel?: string;
+  priceSummaryNote?: string | null;
+  personalizationDetailsOpen?: boolean;
 };
 
 type PreparedProductVariant = {
   id: string;
   quantity: number;
   unitPrice: number;
+  optionDelta?: number;
+  personalizationDelta?: number;
   personalization?: string;
   selectedColors?: SelectedProductColor[];
   personalizationFields?: ReturnType<typeof buildPersonalizationFieldValues>;
   optionSelections?: ProductOptionSelection[];
   summary: string[];
 };
+
+type ColorFieldsPlacement = "inline" | "desktop-sidebar";
 
 function clampUpsellQuantity(value: number, maxQuantity: number) {
   if (!Number.isFinite(value)) {
@@ -99,6 +117,10 @@ export function ProductDetailAddToCart({
   attribution,
   initialOptionSelections = [],
   layout = "card",
+  usesMaterialStockLayout = false,
+  priceSummaryLabel = "Ориентировъчна цена",
+  priceSummaryNote = "(окончателната се потвърждава при поръчка)",
+  personalizationDetailsOpen,
 }: ProductDetailAddToCartProps) {
   const embedded = layout === "embedded";
   const { addProduct, lines, ready: cartReady } = useCart();
@@ -192,11 +214,18 @@ export function ProductDetailAddToCart({
     useState<ProductOptionSelection[]>(initialOptionSelections);
   const [estimatedUnitPrice, setEstimatedUnitPrice] = useState(product.price);
   const [quantity, setQuantity] = useState(1);
+  const [quantityInput, setQuantityInput] = useState("1");
   const [preparedVariants, setPreparedVariants] = useState<PreparedProductVariant[]>([]);
   const [showMobileBar, setShowMobileBar] = useState(false);
   const [draftReady, setDraftReady] = useState(false);
   const colorFields = useMemo(() => product.colorFields ?? [], [product.colorFields]);
   const optionGroups = useMemo(() => product.optionGroups ?? [], [product.optionGroups]);
+  const useMaterialCards = useMemo(
+    () => usesMaterialStockLayout || shouldUseMaterialOptionCards(product, optionGroups),
+    [optionGroups, product, usesMaterialStockLayout],
+  );
+  const [leftColorsSlot, setLeftColorsSlot] = useState<HTMLElement | null>(null);
+  const [desktopColorPortalActive, setDesktopColorPortalActive] = useState(false);
   const defaultOptionSelections = useMemo(
     () => buildDefaultOptionSelections(optionGroups),
     [optionGroups],
@@ -247,6 +276,10 @@ export function ProductDetailAddToCart({
   useEffect(() => {
     setQuantity((current) => clampProductQuantity(current, maxSelectableQuantity));
   }, [maxSelectableQuantity]);
+
+  useEffect(() => {
+    setQuantityInput(String(quantity));
+  }, [quantity]);
 
   useEffect(() => {
     if (!showQuantitySelector) {
@@ -511,9 +544,62 @@ export function ProductDetailAddToCart({
   const displayedLinePrice = displayedUnitPrice * selectedQuantity;
   const showQuantityPriceTiers =
     showQuantitySelector && hasQuantityPriceTiers(product.quantityPriceTiers);
+  const personalizationSectionOrder = showQuantityPriceTiers
+    ? useMaterialCards
+      ? "order-50 lg:order-40"
+      : "order-50 lg:order-35"
+    : useMaterialCards
+      ? "order-50 lg:order-40"
+      : "order-50 lg:order-10";
+  const quantityTiersSectionOrder = "order-40 lg:order-30";
+  const quantitySelectorOrder = useMaterialCards ? "order-30 lg:order-20" : "order-30 lg:order-60";
+  const quantityDiscountPerItem = Math.max(0, product.price - quantityBasePrice);
+  const preparedVariantUnitPrices = resolvePreparedVariantsUnitPrices(
+    product.price,
+    product.quantityPriceTiers,
+    preparedVariants,
+  );
+  const getPreparedVariantUnitPrice = (
+    variant: PreparedProductVariant,
+    index: number,
+  ) =>
+    preparedVariantUnitPrices[index] ??
+    resolvePreparedVariantUnitPrice(
+      product.price,
+      product.quantityPriceTiers,
+      variant,
+    );
+  const preparedVariantsTotalPrice = resolvePreparedVariantsTotalPrice(
+    product.price,
+    product.quantityPriceTiers,
+    preparedVariants,
+  );
 
   useEffect(() => {
-    if (!optionGroups.length) {
+    if (!useMaterialCards) {
+      setLeftColorsSlot(null);
+      return;
+    }
+
+    setLeftColorsSlot(document.getElementById(PRODUCT_LEFT_COLORS_SLOT_ID));
+  }, [product.id, useMaterialCards]);
+
+  useEffect(() => {
+    if (!useMaterialCards) {
+      setDesktopColorPortalActive(false);
+      return;
+    }
+
+    const mediaQuery = window.matchMedia("(min-width: 1024px)");
+    const sync = () => setDesktopColorPortalActive(mediaQuery.matches);
+
+    sync();
+    mediaQuery.addEventListener("change", sync);
+    return () => mediaQuery.removeEventListener("change", sync);
+  }, [useMaterialCards]);
+
+  useEffect(() => {
+    if (!optionGroups.length || useMaterialCards) {
       return;
     }
 
@@ -531,7 +617,7 @@ export function ProductDetailAddToCart({
         detail: { productId: product.id, imageUrl: selectedImageUrl },
       }),
     );
-  }, [optionGroups, optionSelections, product.id]);
+  }, [optionGroups, optionSelections, product.id, useMaterialCards]);
 
   useEffect(() => {
     const configurator = configuratorRef.current;
@@ -617,9 +703,6 @@ export function ProductDetailAddToCart({
     const validationError = validate();
     if (validationError) {
       setError(validationError);
-      document
-        .getElementById("product-configurator")
-        ?.scrollIntoView({ behavior: "smooth", block: "start" });
       return;
     }
 
@@ -637,6 +720,8 @@ export function ProductDetailAddToCart({
       id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
       quantity: selectedQuantity,
       unitPrice: displayedUnitPrice,
+      optionDelta,
+      personalizationDelta,
       personalization: personalization || undefined,
       selectedColors: colors.length ? colors : undefined,
       personalizationFields: personalizationFields.length
@@ -657,6 +742,37 @@ export function ProductDetailAddToCart({
     );
   };
 
+  const commitQuantityInput = (rawValue: string) => {
+    const trimmed = rawValue.trim();
+    if (!trimmed) {
+      setQuantityInput(String(quantity));
+      return;
+    }
+
+    const nextQuantity = clampProductQuantity(Number(trimmed), maxSelectableQuantity);
+    setQuantity(nextQuantity);
+  };
+
+  const renderColorFields = (placement: ColorFieldsPlacement) => (
+    <ProductDetailColorFields
+      colorFields={colorFields}
+      selectedByGroup={selectedByGroup}
+      onSelectedByGroupChange={setSelectedByGroup}
+      quantitiesByField={quantitiesByField}
+      onQuantitiesByFieldChange={setQuantitiesByField}
+      expandedColorFields={expandedColorFields}
+      onExpandedColorFieldsChange={setExpandedColorFields}
+      embedded={embedded}
+      variant={placement === "desktop-sidebar" ? "sidebar" : "default"}
+      onColorSelectionChange={() => setError(null)}
+      onQuantityReset={() => {
+        if (showQuantitySelector) {
+          setQuantity(1);
+        }
+      }}
+    />
+  );
+
   const handleAddToCart = () => {
     if (usePreparedVariants) {
       if (preparedVariants.length === 0) {
@@ -673,6 +789,7 @@ export function ProductDetailAddToCart({
           variant.personalizationFields,
           attribution,
           variant.optionSelections,
+          { unitPrice: variant.unitPrice },
         );
       });
       setPreparedVariants([]);
@@ -685,9 +802,6 @@ export function ProductDetailAddToCart({
     const validationError = validate();
     if (validationError) {
       setError(validationError);
-      document
-        .getElementById("product-configurator")
-        ?.scrollIntoView({ behavior: "smooth", block: "start" });
       return;
     }
 
@@ -704,6 +818,7 @@ export function ProductDetailAddToCart({
       personalizationFields,
       attribution,
       optionSelections.length ? optionSelections : undefined,
+      { unitPrice: displayedUnitPrice },
     );
     upsellOffers
       .filter((offer) => selectedUpsellIds.has(offer.id) && offer.product.orderable)
@@ -763,6 +878,33 @@ export function ProductDetailAddToCart({
     );
   }
 
+  const mobileColorFieldsSection = colorFields.length ? (
+    <div className="order-15 lg:hidden">
+      {renderColorFields("inline")}
+    </div>
+  ) : null;
+  const desktopInlineColorFieldsSection = colorFields.length && !useMaterialCards ? (
+    <div className="order-40 hidden lg:block">{renderColorFields("inline")}</div>
+  ) : null;
+  const desktopSidebarColorFieldsSection = colorFields.length && useMaterialCards
+    ? renderColorFields("desktop-sidebar")
+    : null;
+  const stickyActionLabel = usePreparedVariants
+    ? preparedQuantityTotal > 0
+      ? `Добави ${preparedQuantityTotal} бр. в количката`
+      : "Добави избора"
+    : "Добави в количката";
+  const stickyActionHandler = usePreparedVariants
+    ? preparedQuantityTotal > 0
+      ? handleAddToCart
+      : handlePrepareVariant
+    : handleAddToCart;
+  const stickyActionDisabled = usePreparedVariants
+    ? preparedQuantityTotal > 0
+      ? !canSubmitAddToCart
+      : stockSelectionBlocked
+    : stockSelectionBlocked;
+
   return (
     <>
     <div
@@ -770,12 +912,92 @@ export function ProductDetailAddToCart({
       ref={configuratorRef}
       className={
         embedded
-          ? "scroll-mt-28 mt-6 w-full"
-          : "scroll-mt-28 rounded-2xl border border-boutique-line bg-boutique-paper p-4 transition-shadow duration-300 ease-out hover:shadow-boutique-sm motion-reduce:transition-none sm:p-5"
+          ? "scroll-mt-28 mt-6 w-full pb-24 lg:pb-0"
+          : "scroll-mt-28 rounded-2xl border border-boutique-line bg-boutique-paper p-4 pb-24 transition-shadow duration-300 ease-out hover:shadow-boutique-sm motion-reduce:transition-none sm:p-5 lg:pb-5"
       }
     >
+      <div className="flex flex-col">
+      {mobileColorFieldsSection}
+      {optionGroups.length ? (
+        <div className={useMaterialCards ? "order-20" : "order-20"}>
+        <ProductOptionsSelector
+          basePrice={product.price + personalizationDelta}
+          variantDisplayBasePrice={product.price}
+          groups={optionGroups}
+          value={optionSelections}
+          onChange={handleOptionSelectionsChange}
+          onEstimatedPriceChange={setEstimatedUnitPrice}
+          priceSummaryLabel={priceSummaryLabel}
+          priceSummaryNote={priceSummaryNote}
+          useMaterialCards={useMaterialCards}
+        />
+        </div>
+      ) : null}
+
+      {!optionGroups.length && personalizationDelta > 0 ? (
+        <p className={`mt-5 text-sm text-boutique-muted ${useMaterialCards ? "order-25" : "order-25"}`}>
+          {priceSummaryLabel}:{" "}
+          <strong className="text-boutique-ink">
+            {(product.price + personalizationDelta).toFixed(2).replace(".", ",")} €
+          </strong>
+        </p>
+      ) : null}
+
+      {showQuantityPriceTiers ? (
+        <section
+          className={`mt-3 rounded-xl border border-boutique-line bg-white/70 p-3 ${quantityTiersSectionOrder}`}
+        >
+          <h2 className="text-sm font-semibold text-boutique-ink">
+            Отстъпки за количества
+          </h2>
+          <p className="mt-1 text-xs text-boutique-muted">
+            Цените се обновяват според избрания размер, материал и персонализация.
+          </p>
+          <div className="mt-2 grid gap-1.5 text-sm text-boutique-muted">
+            {product.quantityPriceTiers?.map((tier) => {
+              const tierDisplayPrice = resolveQuantityTierDisplayUnitPrice(
+                tier.unitPrice,
+                optionDelta,
+                personalizationDelta,
+              );
+
+              return (
+                <div
+                  key={`${tier.minQuantity}-${tier.maxQuantity ?? "plus"}`}
+                  className="flex items-center justify-between gap-4 rounded-lg bg-boutique-bg px-3 py-1.5"
+                >
+                  <span>
+                    {tier.maxQuantity === null
+                      ? `от ${tier.minQuantity} бр.`
+                      : `${tier.minQuantity}-${tier.maxQuantity} бр.`}
+                  </span>
+                  <strong className="text-boutique-ink">
+                    {formatEur(tierDisplayPrice)} / бр.
+                  </strong>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      ) : null}
+
+      {desktopInlineColorFieldsSection}
+
       {fields.length ? (
-        <div className="grid gap-4">
+        <details
+          className={`rounded-2xl border border-boutique-line bg-white/70 p-3 ${personalizationSectionOrder}`}
+          open={
+            personalizationDetailsOpen ??
+            fields.some((field) => field.required)
+          }
+        >
+          <summary className="cursor-pointer list-none text-sm font-semibold text-boutique-ink marker:hidden">
+            Персонализация
+            <span className="ml-2 text-xs font-normal text-boutique-muted">
+              Добавете личен текст, име или друга информация според продукта
+            </span>
+          </summary>
+          <div className="mt-3 grid gap-3">
           {fields.map((field) => {
             const value = values[field.id] ?? "";
             const showInput = shouldShowPersonalizationInput(field, enabledOptionalFields);
@@ -933,180 +1155,19 @@ export function ProductDetailAddToCart({
               възраст и конкретен повод.
             </p>
           ) : null}
-        </div>
+          </div>
+        </details>
       ) : null}
 
-      {optionGroups.length ? (
-        <ProductOptionsSelector
-          basePrice={product.price + personalizationDelta}
-          variantDisplayBasePrice={product.price}
-          groups={optionGroups}
-          value={optionSelections}
-          onChange={handleOptionSelectionsChange}
-          onEstimatedPriceChange={setEstimatedUnitPrice}
-        />
-      ) : null}
-
-      {!optionGroups.length && personalizationDelta > 0 ? (
-        <p className="mt-5 text-sm text-boutique-muted">
-          Ориентировъчна цена:{" "}
-          <strong className="text-boutique-ink">
-            {(product.price + personalizationDelta).toFixed(2).replace(".", ",")} €
-          </strong>
+      {error ? (
+        <p className={`mt-5 text-sm font-medium text-red-700 ${useMaterialCards ? "order-50" : "order-50"}`}>
+          {error}
         </p>
       ) : null}
-
-      {showQuantityPriceTiers ? (
-        <section className="mt-5 rounded-2xl border border-boutique-line bg-white/70 p-4">
-          <h2 className="text-sm font-semibold text-boutique-ink">
-            Цена според количество
-          </h2>
-          <div className="mt-3 grid gap-2 text-sm text-boutique-muted">
-            {product.quantityPriceTiers?.map((tier) => (
-              <div
-                key={`${tier.minQuantity}-${tier.maxQuantity ?? "plus"}`}
-                className="flex items-center justify-between gap-4 rounded-xl bg-boutique-bg px-3 py-2"
-              >
-                <span>
-                  {tier.maxQuantity === null
-                    ? `от ${tier.minQuantity} бр.`
-                    : `${tier.minQuantity}-${tier.maxQuantity} бр.`}
-                </span>
-                <strong className="text-boutique-ink">
-                  {formatEur(tier.unitPrice)} / бр.
-                </strong>
-              </div>
-            ))}
-          </div>
-        </section>
-      ) : null}
-
-      {colorFields.length ? (
-        <div className={`mt-7 grid gap-6 ${!embedded && colorFields.length > 1 ? "lg:grid-cols-2" : ""}`}>
-          {colorFields.map((field) =>
-            isQuantityColorField(field) ? (
-              <ProductColorQuantitySelector
-                key={field.id}
-                field={field}
-                quantities={quantitiesByField[field.id] ?? {}}
-                onChange={(quantities) => {
-                  setQuantitiesByField((state) => ({ ...state, [field.id]: quantities }));
-                  setError(null);
-                }}
-              />
-            ) : (
-              <fieldset
-                key={field.id}
-                className="rounded-2xl border border-boutique-line bg-white/60 p-4 transition-shadow duration-300 ease-out hover:shadow-boutique-sm motion-reduce:transition-none"
-              >
-                <legend className="px-1 text-sm font-semibold text-boutique-ink">
-                  {field.label}
-                </legend>
-                <div
-                  id={`color-options-${field.id}`}
-                  className={`mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4 ${embedded ? "lg:grid-cols-4" : "lg:grid-cols-6"}`}
-                >
-                  {field.options
-                    .filter((option, index) =>
-                      expandedColorFields.has(field.id) ||
-                      index < 8 ||
-                      (selectedByGroup[field.id] ?? []).includes(option.id),
-                    )
-                    .map((option) => {
-                      const selected = (selectedByGroup[field.id] ?? []).includes(option.id);
-                      return (
-                        <label
-                          key={option.id}
-                          className="group cursor-pointer rounded-2xl p-2 text-center text-xs text-boutique-muted transition duration-200 ease-out hover:bg-boutique-bg motion-reduce:transition-none"
-                        >
-                          <input
-                            className="peer sr-only"
-                            type={field.maxSelect <= 1 ? "radio" : "checkbox"}
-                            name={`color-${field.id}`}
-                            checked={selected}
-                            onChange={(event) => {
-                              const current = selectedByGroup[field.id] ?? [];
-                              const next = field.maxSelect <= 1
-                                ? event.target.checked
-                                  ? [option.id]
-                                  : []
-                                : event.target.checked
-                                  ? [...current, option.id].slice(0, field.maxSelect)
-                                  : current.filter((id) => id !== option.id);
-                              setSelectedByGroup((state) => ({ ...state, [field.id]: next }));
-                              if (showQuantitySelector) {
-                                setQuantity(1);
-                              }
-                              setError(null);
-                            }}
-                          />
-                          <span
-                            className={`relative mx-auto grid h-12 w-12 place-items-center rounded-full border-4 border-white shadow-sm ring-1 transition duration-200 ease-out group-hover:scale-[1.04] peer-focus-visible:ring-2 peer-focus-visible:ring-boutique-sage-deep motion-reduce:transition-none motion-reduce:group-hover:scale-100 ${
-                              selected
-                                ? "ring-2 ring-boutique-sage-deep"
-                                : "ring-boutique-line"
-                            }`}
-                            style={{ backgroundColor: option.hex ?? "#eee8df" }}
-                          >
-                            {selected ? (
-                              <span
-                                aria-hidden="true"
-                                className="grid h-5 w-5 place-items-center rounded-full bg-white/90 text-[0.65rem] font-bold text-boutique-sage-deep shadow-sm"
-                              >
-                                ✓
-                              </span>
-                            ) : null}
-                          </span>
-                          <span
-                            className={`mt-2 block leading-4 ${
-                              selected ? "font-semibold text-boutique-ink" : ""
-                            }`}
-                          >
-                            {option.name}
-                          </span>
-                        </label>
-                      );
-                    })}
-                </div>
-                {field.options.length > 8 ? (
-                  <button
-                    type="button"
-                    aria-expanded={expandedColorFields.has(field.id)}
-                    aria-controls={`color-options-${field.id}`}
-                    onClick={() => {
-                      setExpandedColorFields((current) => {
-                        const next = new Set(current);
-                        if (next.has(field.id)) next.delete(field.id);
-                        else next.add(field.id);
-                        return next;
-                      });
-                    }}
-                    className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-boutique-line bg-white px-4 py-3 text-sm font-semibold text-boutique-ink transition duration-200 ease-out hover:-translate-y-1 hover:border-boutique-sage-deep hover:text-boutique-sage-deep hover:shadow-[0_12px_24px_-10px_rgb(44_40_37_/0.16)] active:translate-y-0 active:shadow-sm motion-reduce:transition-none motion-reduce:hover:translate-y-0"
-                  >
-                    {expandedColorFields.has(field.id)
-                      ? "Покажи по-малко"
-                      : `Вижте всички цветове (${field.options.length})`}
-                    <span
-                      aria-hidden="true"
-                      className={`transition motion-reduce:transition-none ${
-                        expandedColorFields.has(field.id) ? "rotate-180" : ""
-                      }`}
-                    >
-                      ⌄
-                    </span>
-                  </button>
-                ) : null}
-              </fieldset>
-            ),
-          )}
-        </div>
-      ) : null}
-
-      {error ? <p className="mt-5 text-sm font-medium text-red-700">{error}</p> : null}
       {showQuantitySelector ? (
-      <div className="mt-5 rounded-2xl border border-boutique-line bg-white/70 p-4">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
+      <div className={`mt-3 rounded-xl border border-boutique-line bg-white/70 p-3 ${quantitySelectorOrder}`}>
+        <div className="grid gap-3 sm:grid-cols-[auto_1fr] sm:items-center">
+          <div className="sm:col-span-2">
             <p className="text-sm font-semibold text-boutique-ink">Количество</p>
             {remainingStockForSelection !== null ? (
               <p className="mt-1 text-xs text-boutique-muted">
@@ -1118,7 +1179,7 @@ export function ProductDetailAddToCart({
               </p>
             )}
           </div>
-          <div className="inline-flex items-center rounded-xl border border-boutique-line bg-boutique-paper">
+          <div className="inline-flex w-fit items-center rounded-xl border border-boutique-line bg-boutique-paper">
             <button
               type="button"
               aria-label="Намалете количеството"
@@ -1137,12 +1198,25 @@ export function ProductDetailAddToCart({
               min={1}
               max={maxSelectableQuantity}
               disabled={stockSelectionBlocked}
-              value={quantity}
-              onChange={(event) =>
-                setQuantity(
-                  clampProductQuantity(Number(event.target.value), maxSelectableQuantity),
-                )
-              }
+                value={quantityInput}
+                onChange={(event) => {
+                  const nextValue = event.target.value;
+                  setQuantityInput(nextValue);
+
+                  if (!nextValue.trim()) {
+                    return;
+                  }
+
+                  const nextQuantity = Number(nextValue);
+                  if (!Number.isFinite(nextQuantity)) {
+                    return;
+                  }
+
+                  setQuantity(
+                    clampProductQuantity(nextQuantity, maxSelectableQuantity),
+                  );
+                }}
+                onBlur={(event) => commitQuantityInput(event.target.value)}
               className="h-11 w-16 border-x border-boutique-line bg-transparent text-center text-sm font-semibold text-boutique-ink outline-none disabled:opacity-50"
             />
             <button
@@ -1159,6 +1233,16 @@ export function ProductDetailAddToCart({
               +
             </button>
           </div>
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            <strong className="text-boutique-ink">
+              {formatEur(displayedUnitPrice)} / бр.
+            </strong>
+            {quantityDiscountPerItem > 0 ? (
+              <span className="rounded-full bg-boutique-sage/10 px-3 py-1 text-xs font-semibold text-boutique-sage-deep">
+                -{formatEur(quantityDiscountPerItem)} отстъпка
+              </span>
+            ) : null}
+          </div>
         </div>
         {selectedQuantity > 1 ? (
           <p className="mt-3 text-sm text-boutique-muted">
@@ -1174,7 +1258,7 @@ export function ProductDetailAddToCart({
       </div>
       ) : null}
       {usePreparedVariants ? (
-        <>
+        <div className={useMaterialCards ? "order-70" : "order-70"}>
           <button
             type="button"
             disabled={!canPrepareVariant}
@@ -1205,7 +1289,7 @@ export function ProductDetailAddToCart({
                       <div>
                         <p className="text-sm font-semibold text-boutique-ink">
                           Вариант {index + 1} · {variant.quantity} бр. ·{" "}
-                          {formatEur(variant.unitPrice * variant.quantity)}
+                          {formatEur(getPreparedVariantUnitPrice(variant, index) * variant.quantity)}
                         </p>
                         <div className="mt-1 space-y-0.5 text-xs leading-5 text-boutique-muted">
                           {variant.summary.map((row) => (
@@ -1225,12 +1309,7 @@ export function ProductDetailAddToCart({
                 ))}
                 <p className="text-sm font-semibold text-boutique-ink">
                   Общо избрани: {preparedQuantityTotal} бр. ·{" "}
-                  {formatEur(
-                    preparedVariants.reduce(
-                      (total, variant) => total + variant.unitPrice * variant.quantity,
-                      0,
-                    ),
-                  )}
+                  {formatEur(preparedVariantsTotalPrice)}
                 </p>
               </div>
             ) : (
@@ -1239,10 +1318,10 @@ export function ProductDetailAddToCart({
               </p>
             )}
           </section>
-        </>
+        </div>
       ) : null}
       {!showQuantitySelector && stockSelectionBlocked ? (
-        <p className="mt-4 text-sm font-medium text-red-700">
+        <p className={`mt-4 text-sm font-medium text-red-700 ${useMaterialCards ? "order-75" : "order-75"}`}>
           Всички налични бройки вече са в количката.
         </p>
       ) : null}
@@ -1251,7 +1330,7 @@ export function ProductDetailAddToCart({
         aria-live="polite"
         disabled={!canSubmitAddToCart}
         onClick={handleAddToCart}
-        className={`mt-5 w-full rounded-xl px-8 py-3.5 text-sm font-semibold text-white transition duration-200 ease-out hover:-translate-y-1 hover:shadow-[0_16px_32px_-12px_rgb(44_40_37_/0.22)] active:translate-y-0 active:shadow-sm disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none motion-reduce:transition-none motion-reduce:hover:translate-y-0 ${
+        className={`mt-5 w-full rounded-xl px-8 py-3.5 text-sm font-semibold text-white transition duration-200 ease-out hover:-translate-y-1 hover:shadow-[0_16px_32px_-12px_rgb(44_40_37_/0.22)] active:translate-y-0 active:shadow-sm disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none motion-reduce:transition-none motion-reduce:hover:translate-y-0 ${useMaterialCards ? "order-80" : "order-80"} ${
           added
             ? "bg-boutique-sage shadow-boutique-sm"
             : "bg-boutique-sage-deep hover:bg-boutique-ink"
@@ -1260,14 +1339,16 @@ export function ProductDetailAddToCart({
         {added
           ? "✓ Добавено в количката"
           : usePreparedVariants
-            ? "Добавете избраните варианти в количката"
+            ? preparedQuantityTotal > 0
+              ? `Добави ${preparedQuantityTotal} бр. в количката`
+              : "Добави в количката"
             : "Добавете в количката"}
       </button>
 
       {upsellOffers.length ? (
         <section
           aria-labelledby="product-upsell-title"
-          className="mt-4 rounded-2xl border border-boutique-line bg-boutique-bg/60 p-4"
+          className={`mt-4 rounded-2xl border border-boutique-line bg-boutique-bg/60 p-4 ${useMaterialCards ? "order-90" : "order-90"}`}
         >
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-boutique-accent">
             Специална оферта
@@ -1417,32 +1498,44 @@ export function ProductDetailAddToCart({
         </section>
       ) : null}
 
+      </div>
     </div>
+      {useMaterialCards && desktopColorPortalActive && leftColorsSlot && desktopSidebarColorFieldsSection
+      ? createPortal(desktopSidebarColorFieldsSection, leftColorsSlot)
+      : null}
     {showMobileBar ? (
       <div
-        className="fixed inset-x-0 bottom-0 z-50 border-t border-boutique-line bg-boutique-paper/95 px-4 py-3 shadow-[0_-10px_30px_-20px_rgb(44_40_37_/0.45)] backdrop-blur sm:hidden"
+        className="fixed inset-x-0 bottom-0 z-50 border-t border-boutique-line bg-boutique-paper/95 px-4 py-3 shadow-[0_-10px_30px_-20px_rgb(44_40_37_/0.45)] backdrop-blur lg:hidden"
         aria-label="Бързо добавяне в количката"
       >
         <div className="mx-auto flex max-w-xl items-center gap-3">
           <div className="min-w-0 flex-1">
             <p className="text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-boutique-muted">
-              Ориентировъчна цена
+              {priceSummaryLabel}
             </p>
             <p className="font-heading text-xl text-boutique-ink">
-              {selectedQuantity > 1 ? formatEur(displayedLinePrice) : formatEur(displayedUnitPrice)}
+              {usePreparedVariants
+                ? preparedQuantityTotal > 0
+                  ? formatEur(preparedVariantsTotalPrice)
+                  : selectedQuantity > 1
+                    ? formatEur(displayedLinePrice)
+                    : formatEur(displayedUnitPrice)
+                : selectedQuantity > 1
+                  ? formatEur(displayedLinePrice)
+                  : formatEur(displayedUnitPrice)}
             </p>
           </div>
           <button
             type="button"
-            disabled={!canSubmitAddToCart}
-            onClick={handleAddToCart}
+            disabled={stickyActionDisabled}
+            onClick={stickyActionHandler}
             className={`min-h-12 shrink-0 rounded-xl px-5 text-sm font-semibold text-white transition duration-200 ease-out hover:-translate-y-1 hover:shadow-[0_14px_28px_-10px_rgb(44_40_37_/0.2)] active:translate-y-0 active:shadow-sm disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none motion-reduce:transition-none motion-reduce:hover:translate-y-0 ${
               added
                 ? "bg-boutique-sage shadow-boutique-sm"
                 : "bg-boutique-sage-deep hover:bg-boutique-ink"
             }`}
           >
-            {added ? "✓ Добавено" : "Добавете"}
+            {added ? "✓ Добавено" : stickyActionLabel}
           </button>
         </div>
       </div>
@@ -1473,7 +1566,7 @@ export function ProductDetailAddToCart({
                   </div>
                   <button
                     type="button"
-                    aria-label="Р—Р°С‚РІРѕСЂРё"
+                    aria-label="Затвори"
                     onClick={() => setWishFieldId(null)}
                     className="shrink-0 text-2xl leading-none text-boutique-muted transition hover:text-boutique-ink"
                   >

@@ -10,11 +10,12 @@ import { normalizeCartQuantityWithLimit } from "@/lib/cart/quantity-limits";
 import { applyQuantityTierPricesForProduct } from "@/lib/cart/update-cart-line-quantity";
 import type { CartLine, CartLineUpsell } from "@/lib/cart-types";
 import type { Product } from "@/lib/catalog";
+import { calculateOptionDelta } from "@/lib/product-option-pricing";
 import {
-  calculateEstimatedUnitPrice,
-  calculateOptionDelta,
-} from "@/lib/product-option-pricing";
-import { resolveQuantityUnitPrice } from "@/lib/product-quantity-pricing";
+  normalizeQuantityPriceTiers,
+  resolveCartLineUnitPrice,
+  resolveQuantityUnitPrice,
+} from "@/lib/product-quantity-pricing";
 import type { ProductOptionSelection } from "@/lib/product-options";
 import type { SelectedProductColor } from "@/lib/product-colors";
 import type { ProductPersonalizationValue } from "@/lib/product-personalization";
@@ -39,6 +40,10 @@ export type PreparedCartLine = {
   normalizedQuantity: number;
   storedAttribution?: CampaignAttribution;
 };
+
+function roundMoney(value: number) {
+  return Math.round(value * 100) / 100;
+}
 
 export function prepareCartLineInput(
   input: PrepareCartLineInput,
@@ -66,29 +71,46 @@ export function prepareCartLineInput(
     ? input.optionSelections
     : undefined;
   const storedAttribution = buildCampaignAttribution(input.attribution ?? {});
-  const quantityBasePrice = resolveQuantityUnitPrice(
-    input.product.price,
+  const quantityPriceTiers = normalizeQuantityPriceTiers(
     input.product.quantityPriceTiers,
+  );
+  const baseUnitPrice = input.product.price;
+  const quantityBasePrice = resolveQuantityUnitPrice(
+    baseUnitPrice,
+    quantityPriceTiers,
     normalizedQuantity,
   );
-  const optionDelta = input.product.optionGroups?.length
+  const computedOptionDelta = input.product.optionGroups?.length
     ? calculateOptionDelta(input.product.optionGroups, storedOptionSelections ?? [])
     : 0;
   const personalizationDelta = calculatePersonalizationDelta(
     input.product.personalizationFields,
     storedPersonalizationFields,
   );
-  const optionPrice = input.product.optionGroups?.length
-    ? calculateEstimatedUnitPrice(
-        quantityBasePrice,
-        input.product.optionGroups,
-        storedOptionSelections ?? [],
-      )
-    : quantityBasePrice;
+
+  // Prefer the UI/prepared unit price so selected material/variant deltas stay
+  // aligned even if option group lookup fails for any reason.
+  const optionDelta =
+    input.unitPriceOverride !== undefined && !input.upsell
+      ? Math.max(
+          0,
+          roundMoney(
+            input.unitPriceOverride - quantityBasePrice - personalizationDelta,
+          ),
+        )
+      : computedOptionDelta;
+
   const estimatedPrice =
-    input.unitPriceOverride !== undefined
+    input.upsell && input.unitPriceOverride !== undefined
       ? Math.max(0, input.unitPriceOverride)
-      : optionPrice + personalizationDelta;
+      : resolveCartLineUnitPrice(
+          baseUnitPrice,
+          quantityPriceTiers,
+          normalizedQuantity,
+          optionDelta,
+          personalizationDelta,
+        );
+
   const lineId = makeCartLineId(
     input.product.id,
     storedPersonalization,
@@ -118,10 +140,10 @@ export function prepareCartLineInput(
       title: input.product.title,
       imageSrc: input.product.images.find((image) => image.src)?.src,
       price: estimatedPrice,
-      baseUnitPrice: input.product.price,
+      baseUnitPrice,
       optionDelta,
       personalizationDelta,
-      quantityPriceTiers: input.product.quantityPriceTiers,
+      quantityPriceTiers,
       quantity: normalizedQuantity,
       maxCartQuantity: input.maxCartQuantityOverride ?? input.product.maxCartQuantity,
       campaign: storedAttribution?.campaign,
@@ -170,6 +192,13 @@ export function mergeCartLineForAdd(
 
     return {
       ...line,
+      // Refresh pricing metadata from the newest add so tier recalculation stays accurate.
+      baseUnitPrice: prepared.line.baseUnitPrice ?? line.baseUnitPrice,
+      optionDelta: prepared.line.optionDelta ?? line.optionDelta,
+      personalizationDelta:
+        prepared.line.personalizationDelta ?? line.personalizationDelta,
+      quantityPriceTiers:
+        prepared.line.quantityPriceTiers ?? line.quantityPriceTiers,
       campaign: mergedAttribution?.campaign ?? line.campaign,
       source: mergedAttribution?.source ?? line.source,
       landingUrl: mergedAttribution?.landingUrl ?? line.landingUrl,

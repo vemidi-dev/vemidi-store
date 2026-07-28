@@ -5,6 +5,13 @@ export type ProductOptionInputType =
   | "textarea"
   | "date";
 
+export type ProductOptionMaterial = {
+  id: string;
+  name: string;
+  description: string | null;
+  imageUrl: string | null;
+};
+
 export type ProductOptionValue = {
   id: string;
   label: string;
@@ -14,6 +21,8 @@ export type ProductOptionValue = {
   isActive: boolean;
   isSoldOut: boolean;
   imageUrl?: string | null;
+  materialId?: string | null;
+  material?: ProductOptionMaterial | null;
   sku?: string | null;
   sortOrder: number;
 };

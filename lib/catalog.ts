@@ -66,6 +66,12 @@ export type Product = {
   orderable: boolean;
   /** Client-side cart cap for stocked products; not shown on product pages. */
   maxCartQuantity?: number;
+  /** Admin: show ready-product CTA on storefront. */
+  showReadyProductCta?: boolean;
+  readyProductCtaLabel?: string | null;
+  readyProductCtaProductId?: string | null;
+  /** Admin override for personalization accordion default open state. */
+  personalizationOpenByDefault?: boolean | null;
   /** Optional color configuration grouped by material/type. */
   colorFields?: ProductColorField[];
   optionGroups?: ProductOptionGroup[];

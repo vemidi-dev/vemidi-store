@@ -18,6 +18,13 @@ import {
   type ProductOptionGroup,
 } from "@/lib/product-options";
 import {
+  optionValueSupportsMaterialCard,
+  productHasMaterialOptionValues,
+  productUsesStockConfiguratorLayout,
+  shouldUseMaterialOptionCards,
+} from "@/lib/product-option-layout";
+import { buildSelectedColorLabel } from "@/lib/product-selected-color-label";
+import {
   calculateEstimatedUnitPrice,
   calculateOptionFinalPrice,
   calculateOptionDelta,
@@ -612,4 +619,90 @@ test("cart storage migrates legacy uuid slug lines to productId identity", () =>
   assert.equal(lines[0]?.productId, productId);
   assert.equal(lines[0]?.slug, productId);
   assert.equal(CART_STORAGE_KEY.includes("v10"), true);
+});
+
+test("material stock layout is enabled for stocked products or material variants", () => {
+  const stockedProduct = {
+    ...baseProduct,
+    fulfillmentType: "stocked" as const,
+    allowQuantitySelector: true,
+  };
+  assert.equal(
+    shouldUseMaterialOptionCards(stockedProduct, []),
+    true,
+  );
+  assert.equal(
+    productUsesStockConfiguratorLayout(stockedProduct),
+    true,
+  );
+
+  const personalizedProduct = {
+    ...baseProduct,
+    fulfillmentType: "made_to_order" as const,
+    allowQuantitySelector: false,
+  };
+  const groupsWithMaterial: ProductOptionGroup[] = [
+    makeGroup({
+      values: [
+        {
+          id: valueSmallId,
+          label: "Плат",
+          key: "fabric",
+          priceDelta: 0,
+          isDefault: true,
+          isActive: true,
+          isSoldOut: false,
+          sortOrder: 0,
+          material: {
+            id: "88888888-8888-4888-8888-888888888888",
+            name: "Лен",
+            description: "Естествен плат",
+            imageUrl: "https://example.com/linen.jpg",
+          },
+        },
+      ],
+    }),
+  ];
+  assert.equal(
+    productHasMaterialOptionValues(groupsWithMaterial),
+    true,
+  );
+  assert.equal(
+    shouldUseMaterialOptionCards(personalizedProduct, groupsWithMaterial),
+    true,
+  );
+  assert.equal(
+    shouldUseMaterialOptionCards(personalizedProduct, [makeGroup()]),
+    false,
+  );
+  assert.equal(
+    optionValueSupportsMaterialCard(groupsWithMaterial[0]!.values[0]!),
+    true,
+  );
+});
+
+test("selected color label summarizes choice and quantity fields", () => {
+  const colorField = {
+    id: "color-field-1",
+    label: "Цвят",
+    key: "color",
+    groupId: "group-1",
+    groupLabel: "Цвят",
+    minSelect: 1,
+    maxSelect: 1,
+    selectionMode: "choice" as const,
+    options: [
+      { id: "opt-red", name: "Червен", hex: "#c00", sortOrder: 0 },
+      { id: "opt-blue", name: "Син", hex: "#00c", sortOrder: 1 },
+    ],
+  };
+
+  assert.equal(
+    buildSelectedColorLabel([colorField], { "color-field-1": ["opt-red"] }, {}),
+    "Червен",
+  );
+  assert.equal(
+    buildSelectedColorLabel([colorField], { "color-field-1": [] }, {}),
+    null,
+  );
 });

@@ -20,6 +20,7 @@ export function normalizeAdminTab(value: string): AdminTab {
   if (
     value === "categories" ||
     value === "colors" ||
+    value === "materials" ||
     value === "promotions" ||
     value === "orders" ||
     value === "withdrawals" ||

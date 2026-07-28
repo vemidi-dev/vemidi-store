@@ -11,6 +11,8 @@ type ProductDetailGalleryProps = {
   images: ProductImage[];
   className?: string;
   syncKey?: string;
+  /** When false, option selections do not swap the main gallery image. */
+  syncOptionImages?: boolean;
 };
 
 function GalleryMainImage({
@@ -113,6 +115,7 @@ export function ProductDetailGallery({
   images,
   className,
   syncKey,
+  syncOptionImages = true,
 }: ProductDetailGalleryProps) {
   const [active, setActive] = useState(0);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
@@ -134,7 +137,7 @@ export function ProductDetailGallery({
   const showNextImage = () => showImage(safeIndex + 1);
 
   useEffect(() => {
-    if (!syncKey) {
+    if (!syncKey || !syncOptionImages) {
       return;
     }
 
@@ -160,22 +163,7 @@ export function ProductDetailGallery({
     window.addEventListener("vemidi:product-option-image", handleOptionImageChange);
     return () =>
       window.removeEventListener("vemidi:product-option-image", handleOptionImageChange);
-  }, [images, syncKey]);
-
-  useEffect(() => {
-    if (!hasMultipleImages) {
-      return;
-    }
-
-    const selector = `[data-gallery-thumb="${safeIndex}"]`;
-    for (const list of [desktopThumbsRef.current, mobileThumbsRef.current]) {
-      list?.querySelector<HTMLElement>(selector)?.scrollIntoView({
-        block: "nearest",
-        inline: "nearest",
-        behavior: "smooth",
-      });
-    }
-  }, [hasMultipleImages, safeIndex]);
+  }, [images, syncKey, syncOptionImages]);
 
   const handleTouchEnd = (event: TouchEvent<HTMLDivElement>) => {
     if (!hasMultipleImages || !touchStartRef.current) {

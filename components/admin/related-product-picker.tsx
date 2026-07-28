@@ -4,7 +4,12 @@ import { useEffect, useMemo, useState } from "react";
 
 import { adminFieldClass } from "@/components/admin/styles";
 import { adminFormFields } from "@/lib/admin/form-fields";
+import {
+  filterCategoriesByType,
+  getAdminCategoryFilterLabel,
+} from "@/lib/admin/category-groups";
 import type { CategoryType } from "@/lib/admin/types";
+import { formatEur } from "@/lib/format-eur";
 import {
   filterPromotionProducts,
   type PromotionProductOption,
@@ -16,42 +21,81 @@ type RelatedProductCategoryOption = {
   categoryType: CategoryType;
 };
 
-type RelatedProductPickerProps = {
+type RelatedProductPickerBaseProps = {
   products: PromotionProductOption[];
   categories: RelatedProductCategoryOption[];
   excludeProductId: string;
-  selectedRelatedIds: string[];
   hiddenFieldName?: string;
   pageSize?: number;
+  disabled?: boolean;
 };
 
-export function RelatedProductPicker({
-  products,
-  categories,
-  excludeProductId,
-  selectedRelatedIds,
-  hiddenFieldName = adminFormFields.merchandising.relatedProductIds,
-  pageSize = 40,
-}: RelatedProductPickerProps) {
+type RelatedProductPickerMultipleProps = RelatedProductPickerBaseProps & {
+  mode?: "multiple";
+  selectedRelatedIds: string[];
+  selectedProductId?: never;
+};
+
+type RelatedProductPickerSingleProps = RelatedProductPickerBaseProps & {
+  mode: "single";
+  selectedProductId: string | null;
+  selectedRelatedIds?: never;
+};
+
+type RelatedProductPickerProps =
+  | RelatedProductPickerMultipleProps
+  | RelatedProductPickerSingleProps;
+
+export function RelatedProductPicker(props: RelatedProductPickerProps) {
+  const {
+    products,
+    categories,
+    excludeProductId,
+    pageSize = 40,
+    disabled = false,
+  } = props;
+  const mode = props.mode ?? "multiple";
+  const selectedRelatedIds =
+    mode === "multiple" ? props.selectedRelatedIds : undefined;
+  const selectedProductIdProp =
+    mode === "single" ? props.selectedProductId : null;
+  const hiddenFieldName =
+    props.hiddenFieldName ??
+    (mode === "single"
+      ? adminFormFields.merchandising.readyProductCtaProductId
+      : adminFormFields.merchandising.relatedProductIds);
+
+  const initialSelectedIds =
+    mode === "single"
+      ? selectedProductIdProp
+        ? [selectedProductIdProp]
+        : []
+      : selectedRelatedIds ?? [];
+
   const [selectedIds, setSelectedIds] = useState(
-    () => new Set(selectedRelatedIds),
+    () => new Set(initialSelectedIds),
   );
   const [query, setQuery] = useState("");
   const [productCategoryId, setProductCategoryId] = useState("all");
+  const [materialCategoryId, setMaterialCategoryId] = useState("all");
   const [occasionCategoryId, setOccasionCategoryId] = useState("all");
   const [onlySelected, setOnlySelected] = useState(false);
   const [visibleLimit, setVisibleLimit] = useState(pageSize);
 
   useEffect(() => {
-    setSelectedIds(new Set(selectedRelatedIds));
-  }, [selectedRelatedIds]);
+    if (mode === "single") {
+      setSelectedIds(
+        selectedProductIdProp ? new Set([selectedProductIdProp]) : new Set(),
+      );
+      return;
+    }
 
-  const productCategories = categories.filter(
-    (category) => category.categoryType === "product",
-  );
-  const occasionCategories = categories.filter(
-    (category) => category.categoryType === "occasion",
-  );
+    setSelectedIds(new Set(selectedRelatedIds ?? []));
+  }, [mode, selectedProductIdProp, selectedRelatedIds]);
+
+  const productCategories = filterCategoriesByType(categories, "product");
+  const materialCategories = filterCategoriesByType(categories, "material");
+  const occasionCategories = filterCategoriesByType(categories, "occasion");
 
   const candidateProducts = useMemo(
     () => products.filter((product) => product.id !== excludeProductId),
@@ -63,13 +107,16 @@ export function RelatedProductPicker({
       filterPromotionProducts(candidateProducts, {
         query,
         productCategoryId,
+        materialCategoryId,
         occasionCategoryId,
         status: "all",
-        onlySelected,
+        onlySelected: mode === "single" ? false : onlySelected,
         selectedIds,
       }),
     [
       candidateProducts,
+      materialCategoryId,
+      mode,
       occasionCategoryId,
       onlySelected,
       productCategoryId,
@@ -88,12 +135,16 @@ export function RelatedProductPicker({
       ? productCategories.find((category) => category.id === productCategoryId)
           ?.name
       : null,
+    materialCategoryId !== "all"
+      ? materialCategories.find((category) => category.id === materialCategoryId)
+          ?.name
+      : null,
     occasionCategoryId !== "all"
       ? occasionCategories.find((category) => category.id === occasionCategoryId)
           ?.name
       : null,
     query.trim() ? `търсене: ${query.trim()}` : null,
-    onlySelected ? "само избрани" : null,
+    mode === "multiple" && onlySelected ? "само избрани" : null,
   ].filter(Boolean);
   const activeFilterLabel = activeFilterParts.length
     ? activeFilterParts.join(" · ")
@@ -101,10 +152,18 @@ export function RelatedProductPicker({
 
   useEffect(() => {
     setVisibleLimit(pageSize);
-  }, [occasionCategoryId, onlySelected, pageSize, productCategoryId, query]);
+  }, [materialCategoryId, occasionCategoryId, onlySelected, pageSize, productCategoryId, query]);
 
   function toggleProduct(productId: string) {
+    if (disabled) {
+      return;
+    }
+
     setSelectedIds((current) => {
+      if (mode === "single") {
+        return current.has(productId) ? new Set() : new Set([productId]);
+      }
+
       const next = new Set(current);
       if (next.has(productId)) {
         next.delete(productId);
@@ -130,16 +189,27 @@ export function RelatedProductPicker({
     );
   }
 
+  const selectedProductId =
+    mode === "single" ? [...selectedIds][0] ?? "" : "";
+
   return (
-    <div>
-      {[...selectedIds].map((productId) => (
+    <div className={disabled ? "pointer-events-none opacity-50" : undefined}>
+      {mode === "single" ? (
         <input
-          key={productId}
           type="hidden"
           name={hiddenFieldName}
-          value={productId}
+          value={selectedProductId}
         />
-      ))}
+      ) : (
+        [...selectedIds].map((productId) => (
+          <input
+            key={productId}
+            type="hidden"
+            name={hiddenFieldName}
+            value={productId}
+          />
+        ))
+      )}
 
       <div className="grid gap-2 sm:grid-cols-2">
         <label className="text-xs font-semibold uppercase tracking-wider text-boutique-muted sm:col-span-2">
@@ -147,15 +217,17 @@ export function RelatedProductPicker({
           <input
             type="search"
             value={query}
+            disabled={disabled}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Име или slug..."
             className={`${adminFieldClass} !mt-1.5`}
           />
         </label>
         <label className="text-xs font-semibold uppercase tracking-wider text-boutique-muted">
-          Категория
+          {getAdminCategoryFilterLabel("product")}
           <select
             value={productCategoryId}
+            disabled={disabled}
             onChange={(event) => setProductCategoryId(event.target.value)}
             className={`${adminFieldClass} !mt-1.5`}
           >
@@ -168,9 +240,26 @@ export function RelatedProductPicker({
           </select>
         </label>
         <label className="text-xs font-semibold uppercase tracking-wider text-boutique-muted">
-          Повод
+          {getAdminCategoryFilterLabel("material")}
+          <select
+            value={materialCategoryId}
+            disabled={disabled}
+            onChange={(event) => setMaterialCategoryId(event.target.value)}
+            className={`${adminFieldClass} !mt-1.5`}
+          >
+            <option value="all">Всички</option>
+            {materialCategories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="text-xs font-semibold uppercase tracking-wider text-boutique-muted">
+          {getAdminCategoryFilterLabel("occasion")}
           <select
             value={occasionCategoryId}
+            disabled={disabled}
             onChange={(event) => setOccasionCategoryId(event.target.value)}
             className={`${adminFieldClass} !mt-1.5`}
           >
@@ -182,48 +271,64 @@ export function RelatedProductPicker({
             ))}
           </select>
         </label>
-        <label className="flex items-center gap-2 text-sm font-medium text-boutique-ink sm:col-span-2">
-          <input
-            type="checkbox"
-            checked={onlySelected}
-            onChange={(event) => setOnlySelected(event.target.checked)}
-            className="h-4 w-4 rounded border-boutique-line text-boutique-accent focus-visible:ring-2 focus-visible:ring-boutique-accent/30"
-          />
-          Само избрани
-        </label>
+        {mode === "multiple" ? (
+          <label className="flex items-center gap-2 text-sm font-medium text-boutique-ink sm:col-span-2">
+            <input
+              type="checkbox"
+              checked={onlySelected}
+              disabled={disabled}
+              onChange={(event) => setOnlySelected(event.target.checked)}
+              className="h-4 w-4 rounded border-boutique-line text-boutique-accent focus-visible:ring-2 focus-visible:ring-boutique-accent/30"
+            />
+            Само избрани
+          </label>
+        ) : null}
       </div>
 
-      <div className="mt-3 rounded-lg border border-boutique-line bg-boutique-paper/70 px-3 py-2 text-xs leading-relaxed text-boutique-muted">
-        <span className="font-semibold text-boutique-ink">Bulk избор:</span>{" "}
-        текущ филтър: {activeFilterLabel}. Във филтъра са избрани{" "}
-        {selectedInFilterCount} от {filteredProducts.length}
-        {unselectedInFilterCount > 0
-          ? `, могат да се добавят още ${unselectedInFilterCount}`
-          : ""}.
-      </div>
+      {mode === "multiple" ? (
+        <>
+          <div className="mt-3 rounded-lg border border-boutique-line bg-boutique-paper/70 px-3 py-2 text-xs leading-relaxed text-boutique-muted">
+            <span className="font-semibold text-boutique-ink">Bulk избор:</span>{" "}
+            текущ филтър: {activeFilterLabel}. Във филтъра са избрани{" "}
+            {selectedInFilterCount} от {filteredProducts.length}
+            {unselectedInFilterCount > 0
+              ? `, могат да се добавят още ${unselectedInFilterCount}`
+              : ""}.
+          </div>
 
-      <div className="mt-3 flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={selectAllFiltered}
-          disabled={filteredProducts.length === 0}
-          className="rounded-full border border-boutique-line px-3 py-1.5 text-xs font-semibold hover:border-boutique-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-boutique-accent/30 disabled:opacity-40"
-        >
-          Избор на всички филтрирани
-        </button>
-        <button
-          type="button"
-          onClick={removeAllFiltered}
-          disabled={selectedInFilterCount === 0}
-          className="rounded-full border border-boutique-line px-3 py-1.5 text-xs font-semibold hover:border-boutique-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-boutique-accent/30 disabled:opacity-40"
-        >
-          Премахване на всички филтрирани
-        </button>
-      </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={selectAllFiltered}
+              disabled={disabled || filteredProducts.length === 0}
+              className="rounded-full border border-boutique-line px-3 py-1.5 text-xs font-semibold hover:border-boutique-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-boutique-accent/30 disabled:opacity-40"
+            >
+              Избор на всички филтрирани
+            </button>
+            <button
+              type="button"
+              onClick={removeAllFiltered}
+              disabled={disabled || selectedInFilterCount === 0}
+              className="rounded-full border border-boutique-line px-3 py-1.5 text-xs font-semibold hover:border-boutique-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-boutique-accent/30 disabled:opacity-40"
+            >
+              Премахване на всички филтрирани
+            </button>
+          </div>
+        </>
+      ) : (
+        <p className="mt-3 text-xs leading-relaxed text-boutique-muted">
+          Текущ филтър: {activeFilterLabel}. Изберете един готов продукт за CTA
+          бутона. Ако не изберете, се използва първият свързан продукт.
+        </p>
+      )}
 
       <p className="mt-2 text-xs text-boutique-muted">
-        Показани {visibleProducts.length} · Избрани {selectedIds.size} · От
-        филтъра избрани {selectedInFilterCount} от {filteredProducts.length}
+        Показани {visibleProducts.length}
+        {mode === "multiple"
+          ? ` · Избрани ${selectedIds.size} · От филтъра избрани ${selectedInFilterCount} от ${filteredProducts.length}`
+          : selectedProductId
+            ? " · Избран 1 продукт"
+            : " · Няма избран продукт"}
       </p>
 
       <div className="mt-2 max-h-80 space-y-1 overflow-y-auto rounded-xl border border-boutique-line bg-white p-2">
@@ -244,10 +349,16 @@ export function RelatedProductPicker({
                 }`}
               >
                 <input
-                  type="checkbox"
+                  type={mode === "single" ? "radio" : "checkbox"}
+                  name={
+                    mode === "single"
+                      ? `${hiddenFieldName}-picker`
+                      : undefined
+                  }
                   checked={isSelected}
+                  disabled={disabled}
                   onChange={() => toggleProduct(product.id)}
-                  className="h-4 w-4 shrink-0 rounded border-boutique-line text-boutique-accent focus-visible:ring-2 focus-visible:ring-boutique-accent/30"
+                  className="h-4 w-4 shrink-0 border-boutique-line text-boutique-accent focus-visible:ring-2 focus-visible:ring-boutique-accent/30"
                 />
                 <ProductPickerThumb imageUrl={product.imageUrl} name={product.name} />
                 <span className="min-w-0 flex-1">
@@ -267,6 +378,9 @@ export function RelatedProductPicker({
                     </span>
                   ) : null}
                 </span>
+                <span className="shrink-0 text-xs font-semibold text-boutique-ink">
+                  {formatEur(product.price)}
+                </span>
               </label>
             );
           })
@@ -276,8 +390,9 @@ export function RelatedProductPicker({
       {visibleProducts.length < filteredProducts.length ? (
         <button
           type="button"
+          disabled={disabled}
           onClick={() => setVisibleLimit((current) => current + pageSize)}
-          className="mt-2 rounded-full border border-boutique-sage-deep/30 px-4 py-1.5 text-xs font-semibold text-boutique-sage-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-boutique-accent/30"
+          className="mt-2 rounded-full border border-boutique-sage-deep/30 px-4 py-1.5 text-xs font-semibold text-boutique-sage-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-boutique-accent/30 disabled:opacity-40"
         >
           Покажи още {Math.min(pageSize, filteredProducts.length - visibleProducts.length)}
         </button>

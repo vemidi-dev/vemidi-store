@@ -20,6 +20,9 @@ import {
 } from "@/lib/seo/category-indexability";
 import { buildProductPageMetadata } from "@/lib/seo/product-metadata";
 import { resolveProductPageSeo } from "@/lib/seo/product-page-seo";
+import { resolveProductPageCopy } from "@/lib/content/product-page-copy";
+import { getSiteContent } from "@/lib/content/site-content";
+import { resolveReadyProductCta } from "@/lib/product-ready-cta";
 import { createClient } from "@/lib/supabase/server";
 import {
   getStorefrontCatalog,
@@ -87,12 +90,15 @@ export default async function ProductDetailPage({
     productFaqItems,
     upsellOffers,
     upsellSectionTitle,
+    siteContent,
   ] = await Promise.all([
     supabase ? getPrimaryActiveProductLandingPage(supabase, product.id) : null,
     getProductFaqItems(product.id, supabase),
     supabase ? getActiveProductUpsellOffers(supabase, product.id) : [],
     supabase ? getProductUpsellSectionTitle(supabase, product.id) : null,
+    getSiteContent(),
   ]);
+  const productPageCopy = resolveProductPageCopy(siteContent);
   const attribution = buildCampaignAttribution({
     campaign: Array.isArray(query.campaign) ? query.campaign[0] : query.campaign,
     source: Array.isArray(query.source) ? query.source[0] : query.source,
@@ -115,6 +121,11 @@ export default async function ProductDetailPage({
         Boolean(related),
     )
     .slice(0, 4);
+  const readyProductCta = resolveReadyProductCta(
+    product,
+    relatedProducts,
+    productById,
+  );
   const {
     primaryCategory,
     breadcrumbItems,
@@ -153,6 +164,8 @@ export default async function ProductDetailPage({
       attribution={attribution}
       initialOptionSelections={initialOptionSelections}
       productSeoContext={productSeoContext}
+      productPageCopy={productPageCopy}
+      readyProductCta={readyProductCta}
     />
   );
 }

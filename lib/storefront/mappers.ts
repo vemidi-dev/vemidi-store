@@ -85,6 +85,10 @@ export type ProductRow = {
   og_description?: string | null;
   status?: ProductPublicationStatus;
   visibility?: ProductVisibility | null;
+  show_ready_product_cta?: boolean | null;
+  ready_product_cta_label?: string | null;
+  ready_product_cta_product_id?: string | null;
+  personalization_open_by_default?: boolean | null;
   created_at?: string | null;
   updated_at?: string | null;
 };
@@ -146,6 +150,10 @@ export function toProduct(
     quantityPriceTiers: normalizeQuantityPriceTiers(row.quantity_price_tiers),
     fulfillmentType: row.fulfillment_type ?? "made_to_order",
     stockQuantity: row.stock_quantity ?? null,
+    showReadyProductCta: Boolean(row.show_ready_product_cta),
+    readyProductCtaLabel: row.ready_product_cta_label ?? null,
+    readyProductCtaProductId: row.ready_product_cta_product_id ?? null,
+    personalizationOpenByDefault: row.personalization_open_by_default ?? null,
     images:
       images.length > 0
         ? images

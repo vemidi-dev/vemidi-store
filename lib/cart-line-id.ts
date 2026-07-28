@@ -22,6 +22,12 @@ function serializeOptionSelections(optionSelections?: ProductOptionSelection[]) 
     .join("|");
 }
 
+export function serializeOptionSelectionsForCartLine(
+  optionSelections?: ProductOptionSelection[],
+) {
+  return serializeOptionSelections(optionSelections);
+}
+
 function serializeColors(selectedColors?: SelectedProductColor[]) {
   if (!selectedColors || selectedColors.length === 0) {
     return "";

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   deleteCategory,
@@ -23,6 +23,7 @@ type CategoryManagementViewProps = {
   categories: CategoryRow[];
   productCountByCategoryId: Map<string, number>;
   relatedCategoryIdsByCategoryId: Map<string, string[]>;
+  initialCategoryType?: CategoryType;
 };
 
 type CategoryTab = CategoryType;
@@ -49,9 +50,20 @@ export function CategoryManagementView({
   categories,
   productCountByCategoryId,
   relatedCategoryIdsByCategoryId,
+  initialCategoryType = "product",
 }: CategoryManagementViewProps) {
-  const [activeTab, setActiveTab] = useState<CategoryTab>("product");
+  const [activeTab, setActiveTab] = useState<CategoryTab>(() =>
+    categoryTabs.includes(initialCategoryType as CategoryTab)
+      ? (initialCategoryType as CategoryTab)
+      : "product",
+  );
   const [query, setQuery] = useState("");
+
+  useEffect(() => {
+    if (categoryTabs.includes(initialCategoryType as CategoryTab)) {
+      setActiveTab(initialCategoryType as CategoryTab);
+    }
+  }, [initialCategoryType]);
 
   const sortedCategories = useMemo(() => {
     const byOrder = (left: CategoryRow, right: CategoryRow) => {

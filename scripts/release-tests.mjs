@@ -7,10 +7,38 @@ const tsxCmd = process.platform === "win32" ? "tsx.cmd" : "tsx";
 
 const releaseTestGroups = [
   {
+    label: "Pricing, cart & quantity tiers",
+    files: [
+      "tests/cart-quantity-price-tiers.test.ts",
+      "tests/product-prepared-variants.test.ts",
+      "tests/cart-storage.test.ts",
+      "tests/cart-line-summary.test.ts",
+      "tests/cart-upsell-quantity-sync.test.ts",
+      "tests/cart-upsell-remove.test.ts",
+      "tests/product-options.test.ts",
+      "tests/product-personalization.test.ts",
+    ],
+  },
+  {
+    label: "Product page UX & copy",
+    files: [
+      "tests/product-page-ux-regression.test.ts",
+      "tests/product-page-copy.test.ts",
+      "tests/product-page-content.test.ts",
+      "tests/product-wish-template-regression.test.ts",
+    ],
+  },
+  {
+    label: "Admin merchandising & category filters",
+    files: [
+      "tests/admin-category-groups-and-product-settings.test.ts",
+      "tests/admin-form-data.test.ts",
+      "tests/promotion-admin.test.ts",
+    ],
+  },
+  {
     label: "Admin & product lifecycle",
     files: [
-      "tests/admin-form-data.test.ts",
-      "tests/product-wish-template-regression.test.ts",
       "tests/product-wish-templates.test.ts",
       "tests/product-publish-validation.test.ts",
       "tests/product-publication.test.ts",
@@ -21,7 +49,9 @@ const releaseTestGroups = [
     label: "Checkout & orders",
     files: [
       "tests/checkout-edge-cases.test.ts",
+      "tests/checkout-personalization-restore.test.ts",
       "tests/order-confirmation.test.ts",
+      "tests/order-item-display.test.ts",
     ],
   },
   {
@@ -78,7 +108,11 @@ function runStep(label, command, args) {
 }
 
 console.log("VeMiDi Crafts release test suite");
-console.log(unitOnly ? "Mode: unit tests only" : "Mode: typecheck + targeted unit tests");
+console.log(
+  unitOnly
+    ? "Mode: unit tests only"
+    : "Mode: typecheck + targeted unit/regression tests (no full build)",
+);
 
 if (!unitOnly) {
   runStep("Typecheck", npmCmd, ["run", "typecheck"]);
@@ -89,3 +123,4 @@ for (const group of releaseTestGroups) {
 }
 
 console.log("\nRelease test suite passed.");
+console.log("Pre-production command: npm run test:release");

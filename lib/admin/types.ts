@@ -7,6 +7,7 @@ export type AdminTab =
   | "products"
   | "categories"
   | "colors"
+  | "materials"
   | "promotions"
   | "orders"
   | "withdrawals"
@@ -195,6 +196,10 @@ export type ProductRow = {
   og_description?: string | null;
   status?: ProductPublicationStatus;
   visibility?: ProductVisibility;
+  show_ready_product_cta?: boolean;
+  ready_product_cta_label?: string | null;
+  ready_product_cta_product_id?: string | null;
+  personalization_open_by_default?: boolean | null;
 };
 
 export type ProductImageRow = {
@@ -266,6 +271,17 @@ export type ColorOptionRow = {
   hex: string | null;
   sort_order: number | null;
   is_active: boolean;
+};
+
+export type ProductMaterialRow = {
+  id: string;
+  name: string;
+  description: string | null;
+  image_url: string | null;
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
 };
 
 export type ProductColorFieldRow = {
@@ -380,6 +396,7 @@ export type ProductOptionValueRow = {
   is_active: boolean;
   is_sold_out: boolean;
   image_url: string | null;
+  material_id?: string | null;
   sku: string | null;
   sort_order: number;
 };
@@ -393,6 +410,7 @@ export type ParsedOptionValue = {
   isActive: boolean;
   isSoldOut: boolean;
   imageUrl?: string | null;
+  materialId?: string | null;
   sku: string | null;
   sortOrder: number;
 };

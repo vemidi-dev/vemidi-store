@@ -13,6 +13,9 @@ export const IMAGE_ACCEPTED_MIME_TYPES = [
 /** Fixed scope for site-wide hero/hub images managed in admin. */
 export const SITE_MEDIA_SCOPE_ID = "site-media";
 
+/** Fixed UUID scope for reusable product material texture library. */
+export const PRODUCT_MATERIALS_SCOPE_ID = "11111111-1111-4111-8111-111111111111";
+
 /** Fixed scope for the flat public events gallery (no per-event rows). */
 export const EVENT_GALLERY_SCOPE_ID = "gallery";
 

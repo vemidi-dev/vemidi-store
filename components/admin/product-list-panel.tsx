@@ -51,6 +51,7 @@ import {
   getCategoryDisplayLabel,
   sortCategoriesForDisplay,
 } from "@/lib/category-hierarchy";
+import { getAdminCategoryGroupLabel } from "@/lib/admin/category-groups";
 import { ProductWishSelector } from "@/components/admin/product-wish-selector";
 import { ProductFaqFields } from "@/components/admin/product-faq-fields";
 import {
@@ -266,6 +267,15 @@ export function ProductListPanel({
                 })),
               },
               {
+                key: "material",
+                label: "Заготовки и материали",
+                dataAttribute: "materialCats",
+                options: materialCategories.map((category) => ({
+                  value: category.id,
+                  label: getCategoryDisplayLabel(categories, category),
+                })),
+              },
+              {
                 key: "occasion",
                 label: "Повод",
                 dataAttribute: "occasionCats",
@@ -367,6 +377,7 @@ export function ProductListPanel({
                 isActive: value.is_active,
                 isSoldOut: value.is_sold_out,
                 imageUrl: value.image_url,
+                materialId: value.material_id ?? null,
                 sku: value.sku,
                 sortOrder: value.sort_order,
               })),
@@ -403,6 +414,18 @@ export function ProductListPanel({
             const occasionCategoryIds = assignedCategories
               .filter((category) => category.category_type === "occasion")
               .map((category) => category.id);
+            const materialCategoryFilterIds = Array.from(
+              new Set([
+                ...assignedCategories
+                  .filter((category) => category.category_type === "material")
+                  .map((category) => category.id),
+                ...assignedCategories.flatMap((category) =>
+                  category.category_type === "material" && category.parent_id
+                    ? [category.parent_id]
+                    : [],
+                ),
+              ]),
+            );
             const galleryImageCount =
               productImages.length > 0
                 ? productImages.length
@@ -452,6 +475,7 @@ export function ProductListPanel({
                   .join(" ")}
                 data-publication-status={publicationStatus}
                 data-product-cats={productCategoryFilterIds.join(" ")}
+                data-material-cats={materialCategoryFilterIds.join(" ")}
                 data-occasion-cats={occasionCategoryIds.join(" ")}
                 data-sort-name={product.name}
                 data-sort-price={product.price}
@@ -694,7 +718,7 @@ export function ProductListPanel({
                           ] as const).map(([categoryType, groupedCategories]) => (
                             <div key={categoryType}>
                               <p className="text-xs font-semibold uppercase tracking-wider text-boutique-muted">
-                                {categoryType === "product" ? "Продукти" : categoryType === "material" ? "Заготовки и материали" : "Поводи"}
+                                {getAdminCategoryGroupLabel(categoryType)}
                               </p>
                               <div className="mt-2 grid gap-2 sm:grid-cols-2">
                                 {groupedCategories
@@ -737,8 +761,9 @@ export function ProductListPanel({
                         </div>
                       )}
                       <p className={`${adminHelperClass} mt-2`}>
-                        Отметнете категориите на продукта. При продуктовите категории или заготовките маркирайте
-                        една категория като „Основна“ за breadcrumb и SEO.
+                        Отметнете категориите на продукта. Може да е само в „Заготовки и материали“
+                        без обикновена продуктова категория. Маркирайте една категория като „Основна“
+                        за breadcrumb и SEO.
                       </p>
                     </fieldset>
 
@@ -756,6 +781,7 @@ export function ProductListPanel({
                       <ProductOptionGroupsEditor
                         initialGroups={initialOptionGroups}
                         allDependencyOptions={productDependencyOptions}
+                        materials={data.materials}
                         productImages={[
                           ...new Map(
                             [
@@ -802,6 +828,27 @@ export function ProductListPanel({
                       <legend className="px-1 text-sm font-medium text-boutique-ink">
                         Персонализация
                       </legend>
+                      <label className="block text-sm font-medium text-boutique-ink">
+                        Отваряне на секцията по подразбиране
+                        <select
+                          name={adminFormFields.product.personalizationOpenByDefault}
+                          defaultValue={
+                            product.personalization_open_by_default == null
+                              ? ""
+                              : product.personalization_open_by_default
+                                ? "true"
+                                : "false"
+                          }
+                          className={`${adminFieldClass} mt-2`}
+                        >
+                          <option value="">Автоматично</option>
+                          <option value="true">Отворена</option>
+                          <option value="false">Затворена</option>
+                        </select>
+                        <span className={adminHelperClass}>
+                          При „Автоматично“ material/stock продуктите започват затворени; останалите — отворени, ако има задължителни полета.
+                        </span>
+                      </label>
                       <ProductPersonalizationFieldsEditor
                         initialFields={initialPersonalizationFields}
                         helperClassName={adminHelperClass}
@@ -1173,6 +1220,11 @@ export function ProductListPanel({
                       isFeatured={featuredProductById.has(product.id)}
                       homeSortOrder={
                         featuredProductById.get(product.id)?.sort_order ?? 0
+                      }
+                      showReadyProductCta={Boolean(product.show_ready_product_cta)}
+                      readyProductCtaLabel={product.ready_product_cta_label ?? ""}
+                      readyProductCtaProductId={
+                        product.ready_product_cta_product_id ?? null
                       }
                     />
                     <button

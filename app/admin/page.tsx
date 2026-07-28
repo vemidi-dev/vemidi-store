@@ -8,6 +8,7 @@ import { AdminHeader } from "@/components/admin/admin-header";
 import { AdminNotices } from "@/components/admin/admin-notices";
 import { CategoryManagementPanel } from "@/components/admin/category-management-panel";
 import { ColorManagementPanel } from "@/components/admin/color-management-panel";
+import { MaterialManagementPanel } from "@/components/admin/material-management-panel";
 import { ProductCreatePanel } from "@/components/admin/product-create-panel";
 import { ProductListPanel } from "@/components/admin/product-list-panel";
 import { OrdersPanel } from "@/components/admin/orders-panel";
@@ -557,6 +558,45 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     );
   }
 
+  if (activeTab === "materials") {
+    const materialsResult = await supabase
+      .from("product_materials")
+      .select("id,name,description,image_url,is_active,sort_order,created_at,updated_at")
+      .order("sort_order", { ascending: true })
+      .order("name", { ascending: true });
+
+    const loadError = materialsResult.error
+      ? "Материалите не могат да бъдат заредени. Изпълнете product_materials.sql."
+      : null;
+
+    return (
+      <section className="pb-24 pt-10">
+        <PageContainer>
+          <div className="mx-auto max-w-6xl space-y-8">
+            <AdminHeader activeTab={activeTab} />
+            {success || error ? (
+              <div
+                className={`rounded-xl border px-4 py-3 text-sm ${
+                  error
+                    ? "border-red-200 bg-red-50 text-red-700"
+                    : "border-emerald-200 bg-emerald-50 text-emerald-700"
+                }`}
+              >
+                {error || success}
+              </div>
+            ) : null}
+            <MaterialManagementPanel
+              materials={
+                (materialsResult.data ?? []) as import("@/lib/admin/types").ProductMaterialRow[]
+              }
+              loadError={loadError}
+            />
+          </div>
+        </PageContainer>
+      </section>
+    );
+  }
+
   if (activeTab === "blog" || activeTab === "events") {
     const table = activeTab === "blog" ? "blog_posts" : "events";
     const orderColumn = activeTab === "blog" ? "created_at" : "starts_at";
@@ -735,6 +775,14 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               productCountByCategoryId={buildProductCountByCategoryId(
                 data.categoryIdsByProductId,
               )}
+              initialCategoryType={(() => {
+                const categoryType = firstValue(params.categoryType);
+                return categoryType === "material" ||
+                  categoryType === "occasion" ||
+                  categoryType === "product"
+                  ? categoryType
+                  : undefined;
+              })()}
             />
           ) : (
             <>
@@ -742,6 +790,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                 categories={data.categories}
                 colorGroups={data.colorGroups}
                 colorOptions={data.colorOptions}
+                materials={data.materials}
                 wishes={data.wishTemplates}
                 wishOccasionLinks={data.wishTemplateOccasions}
                 faqProductGroups={data.faqProductGroups}

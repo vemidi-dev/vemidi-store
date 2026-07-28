@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { adminFormFields } from "@/lib/admin/form-fields";
-import type { ParsedOptionGroup, ParsedOptionValue } from "@/lib/admin/types";
+import type { ParsedOptionGroup, ParsedOptionValue, ProductMaterialRow } from "@/lib/admin/types";
 import {
   calculateOptionFinalPrice,
   formatPriceDelta,
@@ -25,6 +25,7 @@ type ProductOptionGroupsEditorProps = {
   initialGroups?: InitialOptionGroup[];
   allDependencyOptions: Array<{ id: string; label: string; groupName: string }>;
   productImages?: Array<{ src: string; label: string }>;
+  materials?: ProductMaterialRow[];
   basePrice: number;
   helperClassName: string;
   fieldClassName: string;
@@ -72,6 +73,7 @@ function makeEmptyValue(sortOrder: number, basePrice: number): LocalValue {
     isActive: true,
     isSoldOut: false,
     imageUrl: null,
+    materialId: null,
     sku: null,
     sortOrder,
   };
@@ -229,6 +231,7 @@ export function ProductOptionGroupsEditor({
   initialGroups = [],
   allDependencyOptions,
   productImages = [],
+  materials = [],
   basePrice: initialBasePrice,
   helperClassName,
   fieldClassName,
@@ -782,6 +785,76 @@ export function ProductOptionGroupsEditor({
                           )}
                           <span className="mt-1 block text-xs font-normal text-boutique-muted">
                             При избор на този вариант клиентът ще види тази снимка като основна.
+                          </span>
+                        </div>
+                        <div className="text-sm font-medium text-boutique-ink md:col-span-3">
+                          <span>Материал</span>
+                          <div className="mt-2 flex flex-wrap items-start gap-3">
+                            <label className="min-w-[min(100%,16rem)] flex-1">
+                              <span className="sr-only">Материал</span>
+                              <select
+                                className={fieldClassName}
+                                value={value.materialId ?? ""}
+                                onChange={(event) => {
+                                  const nextId = event.target.value || null;
+                                  const nextValues = group.values.map((item) =>
+                                    item.uid === value.uid
+                                      ? { ...item, materialId: nextId }
+                                      : item,
+                                  );
+                                  updateGroup(group.uid, { values: nextValues });
+                                }}
+                              >
+                                <option value="">Без материал</option>
+                                {materials
+                                  .filter(
+                                    (material) =>
+                                      material.is_active ||
+                                      material.id === value.materialId,
+                                  )
+                                  .map((material) => (
+                                    <option key={material.id} value={material.id}>
+                                      {material.name}
+                                      {!material.is_active ? " (неактивен)" : ""}
+                                    </option>
+                                  ))}
+                              </select>
+                            </label>
+                            {(() => {
+                              const selected = materials.find(
+                                (material) => material.id === value.materialId,
+                              );
+                              if (!selected) {
+                                return null;
+                              }
+                              return (
+                                <div className="flex max-w-xs items-start gap-2 rounded-lg border border-boutique-line bg-white/80 p-2">
+                                  {selected.image_url ? (
+                                    <span
+                                      className="h-12 w-12 shrink-0 rounded bg-boutique-paper bg-cover bg-center"
+                                      style={{
+                                        backgroundImage: `url(${selected.image_url})`,
+                                      }}
+                                      role="img"
+                                      aria-label={selected.name}
+                                    />
+                                  ) : null}
+                                  <div className="min-w-0">
+                                    <p className="truncate text-xs font-semibold text-boutique-ink">
+                                      {selected.name}
+                                    </p>
+                                    {selected.description ? (
+                                      <p className="mt-0.5 line-clamp-2 text-[11px] font-normal text-boutique-muted">
+                                        {selected.description}
+                                      </p>
+                                    ) : null}
+                                  </div>
+                                </div>
+                              );
+                            })()}
+                          </div>
+                          <span className="mt-1 block text-xs font-normal text-boutique-muted">
+                            По избор. Засега се записва към варианта; показване като cards идва в следващ UX етап.
                           </span>
                         </div>
                         <button

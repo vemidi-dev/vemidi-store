@@ -92,6 +92,22 @@ export function parseProductVisibility(formData: FormData): ProductVisibility {
   return normalizeProductVisibility(formData.get(adminFormFields.product.visibility));
 }
 
+export function parsePersonalizationOpenByDefault(
+  formData: FormData,
+): boolean | null {
+  const raw = getString(formData, adminFormFields.product.personalizationOpenByDefault);
+  if (!raw) {
+    return null;
+  }
+  if (raw === "true") {
+    return true;
+  }
+  if (raw === "false") {
+    return false;
+  }
+  return null;
+}
+
 export function getString(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
 }
@@ -164,6 +180,7 @@ export function getAdminTab(formData: FormData, fallback: AdminTab): AdminTab {
   const raw = getString(formData, adminFormFields.common.tab);
   return raw === "categories" ||
     raw === "colors" ||
+    raw === "materials" ||
     raw === "promotions" ||
     raw === "products" ||
     raw === "orders" ||
