@@ -349,6 +349,7 @@ export function ContentManagementPanel(props: ContentManagementPanelProps) {
                             rows={9}
                             className={`${adminFieldClass} resize-y`}
                             helperClassName={adminHelperClass}
+                            postId={item.id}
                           />
                         ) : (
                           <textarea name="content" required rows={9} defaultValue={item.content} className={`${adminFieldClass} resize-y`} />

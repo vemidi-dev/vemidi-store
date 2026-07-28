@@ -1,8 +1,14 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 
-import { BlogRichText, blogTextColors, type BlogTextColor } from "@/lib/content/blog-rich-text";
+import { uploadBlogInlineImage } from "@/app/admin/blog-inline-image-actions";
+import {
+  BlogRichText,
+  blogTextColors,
+  formatBlogInlineImageMarkdown,
+  type BlogTextColor,
+} from "@/lib/content/blog-rich-text";
 
 type BlogRichTextEditorProps = {
   name: string;
@@ -11,6 +17,7 @@ type BlogRichTextEditorProps = {
   rows?: number;
   className?: string;
   helperClassName?: string;
+  postId?: string | null;
 };
 
 function insertAround(value: string, start: number, end: number, before: string, after = before) {
@@ -50,6 +57,20 @@ function insertList(value: string, start: number, end: number) {
   };
 }
 
+function insertImageBlock(value: string, start: number, end: number, markdown: string) {
+  const beforeNeedsBreak = start > 0 && value[start - 1] !== "\n";
+  const afterNeedsBreak = end < value.length && value[end] !== "\n";
+  const prefix = beforeNeedsBreak ? "\n\n" : start > 0 ? "\n" : "";
+  const suffix = afterNeedsBreak ? "\n\n" : "\n";
+  const inserted = `${prefix}${markdown}${suffix}`;
+
+  return {
+    value: `${value.slice(0, start)}${inserted}${value.slice(end)}`,
+    start: start + inserted.length,
+    end: start + inserted.length,
+  };
+}
+
 export function BlogRichTextEditor({
   name,
   defaultValue = "",
@@ -57,18 +78,40 @@ export function BlogRichTextEditor({
   rows = 9,
   className,
   helperClassName,
+  postId = null,
 }: BlogRichTextEditorProps) {
   const [value, setValue] = useState(defaultValue);
   const [mode, setMode] = useState<"edit" | "preview">("edit");
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [isUploading, startUploadTransition] = useTransition();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const valueRef = useRef(value);
+  const selectionRef = useRef<{ start: number; end: number }>({
+    start: defaultValue.length,
+    end: defaultValue.length,
+  });
+  valueRef.current = value;
   const hasPreview = value.trim().length > 0;
   const toolbarButtonClass =
-    "rounded-md border border-boutique-line bg-white px-2.5 py-1.5 text-xs font-semibold text-boutique-ink transition hover:border-boutique-accent/50 hover:bg-boutique-bg";
+    "rounded-md border border-boutique-line bg-white px-2.5 py-1.5 text-xs font-semibold text-boutique-ink transition hover:border-boutique-accent/50 hover:bg-boutique-bg disabled:cursor-not-allowed disabled:opacity-50";
 
   const preview = useMemo(() => <BlogRichText content={value} />, [value]);
 
+  function rememberSelection() {
+    const textarea = textareaRef.current;
+    if (!textarea) {
+      return;
+    }
+    selectionRef.current = {
+      start: textarea.selectionStart,
+      end: textarea.selectionEnd,
+    };
+  }
+
   function applyChange(next: { value: string; start: number; end: number }) {
     setValue(next.value);
+    selectionRef.current = { start: next.start, end: next.end };
     window.requestAnimationFrame(() => {
       textareaRef.current?.focus();
       textareaRef.current?.setSelectionRange(next.start, next.end);
@@ -77,8 +120,8 @@ export function BlogRichTextEditor({
 
   function withSelection(callback: (value: string, start: number, end: number) => ReturnType<typeof insertAround>) {
     const textarea = textareaRef.current;
-    const start = textarea?.selectionStart ?? value.length;
-    const end = textarea?.selectionEnd ?? value.length;
+    const start = textarea?.selectionStart ?? selectionRef.current.start ?? value.length;
+    const end = textarea?.selectionEnd ?? selectionRef.current.end ?? value.length;
     applyChange(callback(value, start, end));
   }
 
@@ -88,9 +131,59 @@ export function BlogRichTextEditor({
     );
   }
 
+  function handleAddImageClick() {
+    rememberSelection();
+    setUploadError(null);
+    fileInputRef.current?.click();
+  }
+
+  function handleImageFileChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) {
+      return;
+    }
+
+    const altInput = window.prompt(
+      "Alt текст за снимката (препоръчително, може да остане празно):",
+      "",
+    );
+    if (altInput === null) {
+      return;
+    }
+
+    const formData = new FormData();
+    formData.set("image", file);
+    formData.set("alt", altInput);
+    if (postId) {
+      formData.set("postId", postId);
+    }
+
+    startUploadTransition(async () => {
+      setUploadError(null);
+      const result = await uploadBlogInlineImage(formData);
+      if (!result.ok) {
+        setUploadError(result.message);
+        return;
+      }
+
+      const markdown = formatBlogInlineImageMarkdown(result.alt, result.url);
+      const { start, end } = selectionRef.current;
+      applyChange(insertImageBlock(valueRef.current, start, end, markdown));
+      setMode("edit");
+    });
+  }
+
   return (
     <div className="mt-2 max-h-[72vh] overflow-hidden rounded-xl border border-boutique-line bg-boutique-paper">
       <input type="hidden" name={name} value={value} />
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        className="hidden"
+        onChange={handleImageFileChange}
+      />
       <div className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-2 border-b border-boutique-line bg-boutique-paper px-3 py-2">
         <div className="flex flex-wrap items-center gap-1.5">
           <button type="button" className={toolbarButtonClass} onClick={() => withSelection((text, start, end) => insertAround(text, start, end, "**"))}>
@@ -110,6 +203,14 @@ export function BlogRichTextEditor({
           </button>
           <button type="button" className={toolbarButtonClass} onClick={() => withSelection((text, start, end) => insertAround(text, start, end, "[", "](/produkti)"))}>
             Линк
+          </button>
+          <button
+            type="button"
+            className={toolbarButtonClass}
+            disabled={isUploading}
+            onClick={handleAddImageClick}
+          >
+            {isUploading ? "Качване…" : "Добави снимка"}
           </button>
           <div className="flex flex-wrap items-center gap-1 pl-1">
             {blogTextColors.map((color) => (
@@ -143,12 +244,20 @@ export function BlogRichTextEditor({
           </button>
         </div>
       </div>
+      {uploadError ? (
+        <p className="border-b border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700">
+          {uploadError}
+        </p>
+      ) : null}
       {mode === "edit" ? (
         <textarea
           ref={textareaRef}
           required={required}
           rows={rows}
           value={value}
+          onSelect={rememberSelection}
+          onClick={rememberSelection}
+          onKeyUp={rememberSelection}
           onChange={(event) => setValue(event.target.value)}
           className={`${className ?? ""} mt-0 max-h-[52vh] min-h-72 overflow-y-auto rounded-none border-0 bg-white focus:ring-0`}
         />
@@ -158,7 +267,8 @@ export function BlogRichTextEditor({
         </div>
       )}
       <p className={`${helperClassName ?? ""} px-3 pb-3 pt-2`}>
-        Може да използвате bold, italic, H2/H3, списък, линк и ограничени цветове от бранд палитрата.
+        Може да използвате bold, italic, H2/H3, списък, линк, inline снимки и ограничени цветове от бранд палитрата.
+        Снимките се вмъкват на текущата позиция като отделен блок; alt текстът е по избор, но е препоръчителен.
       </p>
     </div>
   );

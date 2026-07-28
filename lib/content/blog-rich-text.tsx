@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
@@ -49,7 +50,8 @@ type InlineToken =
 type BlockToken =
   | { type: "paragraph"; children: InlineToken[] }
   | { type: "heading"; level: 2 | 3; children: InlineToken[] }
-  | { type: "list"; ordered: boolean; items: InlineToken[][] };
+  | { type: "list"; ordered: boolean; items: InlineToken[][] }
+  | { type: "image"; src: string; alt: string };
 
 function isAllowedUrl(href: string) {
   return (
@@ -60,6 +62,32 @@ function isAllowedUrl(href: string) {
     href.startsWith("tel:")
   );
 }
+
+/** Image sources: same-origin paths or http(s) only — never javascript:/data:. */
+export function isAllowedBlogImageUrl(src: string) {
+  const trimmed = src.trim();
+  if (!trimmed) {
+    return false;
+  }
+
+  if (trimmed.startsWith("/")) {
+    return !trimmed.startsWith("//");
+  }
+
+  try {
+    const url = new URL(trimmed);
+    return url.protocol === "https:" || url.protocol === "http:";
+  } catch {
+    return false;
+  }
+}
+
+export function formatBlogInlineImageMarkdown(alt: string, src: string) {
+  const safeAlt = alt.replace(/[\[\]]/g, "").trim();
+  return `![${safeAlt}](${src.trim()})`;
+}
+
+const IMAGE_BLOCK_PATTERN = /^!\[([^\]\n]*)\]\(([^)\s]+)\)$/;
 
 function parseInline(text: string): InlineToken[] {
   const tokens: InlineToken[] = [];
@@ -170,6 +198,23 @@ export function parseBlogRichText(text: string): BlockToken[] {
       continue;
     }
 
+    const imageMatch = line.match(IMAGE_BLOCK_PATTERN);
+    if (imageMatch) {
+      const src = (imageMatch[2] ?? "").trim();
+      flushParagraph();
+      flushList();
+      if (isAllowedBlogImageUrl(src)) {
+        blocks.push({
+          type: "image",
+          src,
+          alt: (imageMatch[1] ?? "").trim(),
+        });
+      } else {
+        blocks.push({ type: "paragraph", children: parseInline(line) });
+      }
+      continue;
+    }
+
     const unorderedItem = line.match(/^[-*]\s+(.+)$/);
     const orderedItem = line.match(/^\d+[.)]\s+(.+)$/);
     if (unorderedItem || orderedItem) {
@@ -274,6 +319,26 @@ export function BlogRichText({ content }: { content: string }) {
                 </li>
               ))}
             </Tag>
+          );
+        }
+
+        if (block.type === "image") {
+          return (
+            <figure key={index} className="my-2 overflow-hidden rounded-2xl border border-boutique-line/70 bg-boutique-bg/40">
+              <Image
+                src={block.src}
+                alt={block.alt || ""}
+                width={1600}
+                height={1067}
+                sizes="(max-width: 768px) 100vw, 720px"
+                className="h-auto w-full max-w-full object-contain"
+              />
+              {block.alt ? (
+                <figcaption className="px-3 py-2 text-center text-sm text-boutique-muted">
+                  {block.alt}
+                </figcaption>
+              ) : null}
+            </figure>
           );
         }
 
