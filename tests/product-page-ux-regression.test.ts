@@ -148,6 +148,8 @@ test("mobile sticky action switches between prepare and add-to-cart states", () 
   assert.match(addToCart, /"Добави избора"/);
   assert.match(addToCart, /Добави \$\{preparedQuantityTotal\} бр\. в количката/);
   assert.match(addToCart, /const stickyActionHandler = usePreparedVariants/);
+  assert.match(addToCart, /: stockSelectionBlocked\s*: stockSelectionBlocked/);
+  assert.match(addToCart, /backdrop-blur lg:hidden/);
   assert.match(addToCart, /pb-24 lg:pb-0/);
 });
 

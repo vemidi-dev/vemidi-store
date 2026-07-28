@@ -902,8 +902,8 @@ export function ProductDetailAddToCart({
   const stickyActionDisabled = usePreparedVariants
     ? preparedQuantityTotal > 0
       ? !canSubmitAddToCart
-      : !canPrepareVariant
-    : !canSubmitAddToCart;
+      : stockSelectionBlocked
+    : stockSelectionBlocked;
 
   return (
     <>
@@ -1505,7 +1505,7 @@ export function ProductDetailAddToCart({
       : null}
     {showMobileBar ? (
       <div
-        className="fixed inset-x-0 bottom-0 z-50 border-t border-boutique-line bg-boutique-paper/95 px-4 py-3 shadow-[0_-10px_30px_-20px_rgb(44_40_37_/0.45)] backdrop-blur sm:hidden"
+        className="fixed inset-x-0 bottom-0 z-50 border-t border-boutique-line bg-boutique-paper/95 px-4 py-3 shadow-[0_-10px_30px_-20px_rgb(44_40_37_/0.45)] backdrop-blur lg:hidden"
         aria-label="Бързо добавяне в количката"
       >
         <div className="mx-auto flex max-w-xl items-center gap-3">
