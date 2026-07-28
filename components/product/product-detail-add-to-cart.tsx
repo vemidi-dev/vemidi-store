@@ -42,6 +42,10 @@ import {
   resolveQuantityTierDisplayUnitPrice,
   resolveQuantityUnitPrice,
 } from "@/lib/product-quantity-pricing";
+import {
+  resolvePreparedVariantUnitPrice,
+  resolvePreparedVariantsTotalPrice,
+} from "@/lib/product-prepared-variants";
 import { formatEur } from "@/lib/format-eur";
 import { getProductPath } from "@/lib/product-url";
 import type { ProductPersonalizationField } from "@/lib/product-personalization";
@@ -539,26 +543,16 @@ export function ProductDetailAddToCart({
   const quantityTiersSectionOrder = "order-30";
   const quantitySelectorOrder = useMaterialCards ? "order-20" : "order-60";
   const quantityDiscountPerItem = Math.max(0, product.price - quantityBasePrice);
-  const preparedPricingQuantity =
-    currentProductQuantityInCart + preparedQuantityTotal;
-  const getPreparedVariantUnitPrice = (variant: PreparedProductVariant) => {
-    const originalBaseUnitPrice = resolveQuantityUnitPrice(
+  const getPreparedVariantUnitPrice = (variant: PreparedProductVariant) =>
+    resolvePreparedVariantUnitPrice(
       product.price,
       product.quantityPriceTiers,
-      variant.quantity,
+      variant,
     );
-    const tierBaseUnitPrice = resolveQuantityUnitPrice(
-      product.price,
-      product.quantityPriceTiers,
-      Math.max(variant.quantity, preparedPricingQuantity),
-    );
-    const variantDelta = Math.max(0, variant.unitPrice - originalBaseUnitPrice);
-    return tierBaseUnitPrice + variantDelta;
-  };
-  const preparedVariantsTotalPrice = preparedVariants.reduce(
-    (total, variant) =>
-      total + getPreparedVariantUnitPrice(variant) * variant.quantity,
-    0,
+  const preparedVariantsTotalPrice = resolvePreparedVariantsTotalPrice(
+    product.price,
+    product.quantityPriceTiers,
+    preparedVariants,
   );
 
   useEffect(() => {
