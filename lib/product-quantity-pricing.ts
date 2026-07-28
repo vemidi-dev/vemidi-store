@@ -81,3 +81,19 @@ export function resolveQuantityTierDisplayUnitPrice(
 
   return Math.round((safeTier + safeOption + safePersonalization) * 100) / 100;
 }
+
+/** Cart/checkout unit price: quantity tier base + option + personalization deltas. */
+export function resolveCartLineUnitPrice(
+  baseUnitPrice: number,
+  tiers: ProductQuantityPriceTier[] | undefined,
+  quantity: number,
+  optionDelta = 0,
+  personalizationDelta = 0,
+) {
+  return resolveQuantityTierDisplayUnitPrice(
+    resolveQuantityUnitPrice(baseUnitPrice, tiers, quantity),
+    optionDelta,
+    personalizationDelta,
+  );
+}
+

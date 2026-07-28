@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
 import {
@@ -72,4 +73,26 @@ test("resolvePersonalizationDetailsOpen keeps material layout closed by default"
     true,
   );
   assert.equal(resolvePersonalizationDetailsOpen(true, true, false), true);
+});
+
+test("related product picker supports searchable single mode and material filter", () => {
+  const picker = readFileSync(
+    new URL("../components/admin/related-product-picker.tsx", import.meta.url),
+    "utf8",
+  );
+  const merchandising = readFileSync(
+    new URL("../components/admin/product-merchandising-fields.tsx", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(picker, /mode === "single"/);
+  assert.match(picker, /type=\{mode === "single" \? "radio" : "checkbox"\}/);
+  assert.match(picker, /materialCategoryId/);
+  assert.match(picker, /getAdminCategoryFilterLabel\("material"\)/);
+  assert.match(picker, /formatEur\(product\.price\)/);
+
+  assert.match(merchandising, /Свързани продукти/);
+  assert.match(merchandising, /Готов вариант/);
+  assert.match(merchandising, /mode="single"/);
+  assert.match(merchandising, /readyProductCtaProductId/);
 });

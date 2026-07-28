@@ -728,6 +728,7 @@ export function ProductDetailAddToCart({
           variant.personalizationFields,
           attribution,
           variant.optionSelections,
+          { unitPrice: variant.unitPrice },
         );
       });
       setPreparedVariants([]);
@@ -756,6 +757,7 @@ export function ProductDetailAddToCart({
       personalizationFields,
       attribution,
       optionSelections.length ? optionSelections : undefined,
+      { unitPrice: displayedUnitPrice },
     );
     upsellOffers
       .filter((offer) => selectedUpsellIds.has(offer.id) && offer.product.orderable)
