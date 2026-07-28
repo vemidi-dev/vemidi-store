@@ -2,6 +2,10 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { prepareCartLineInput, mergeCartLineForAdd } from "@/lib/cart/prepare-cart-line";
+import {
+  getCartLineQuantityTierGroupKey,
+  sumQuantityTierGroupTotals,
+} from "@/lib/cart/quantity-tier-group";
 import { updateCartLineQuantityWithLinkedUpsells } from "@/lib/cart/update-cart-line-quantity";
 import { getCartTotals } from "@/lib/cart-storage";
 import type { CartLine } from "@/lib/cart-types";
@@ -112,6 +116,81 @@ const materialProduct: Product = {
   maxCartQuantity: 99,
   optionGroups: materialOptionGroups,
 };
+
+const floraSizeGroup: ProductOptionGroup = {
+  id: "size-group",
+  name: "Размер",
+  key: "size",
+  inputType: "single",
+  isRequired: true,
+  minSelect: 1,
+  maxSelect: 1,
+  sortOrder: 0,
+  isActive: true,
+  pricingMode: "delta",
+  dependsOnOptionId: null,
+  placeholder: null,
+  maxLength: null,
+  textPriceDelta: 0,
+  values: [
+    {
+      id: "medium",
+      label: "Средна 10x6x8",
+      key: "medium",
+      priceDelta: 0,
+      isDefault: true,
+      isActive: true,
+      isSoldOut: false,
+      imageUrl: null,
+      sortOrder: 0,
+    },
+  ],
+};
+
+const floraProduct: Product = {
+  ...materialProduct,
+  id: "44444444-4444-4444-8444-444444444444",
+  slug: "flora-kosnichka",
+  productCode: "VM-FLORA",
+  title: "Дървена кошничка „Флора“",
+  optionGroups: [floraSizeGroup, ...materialOptionGroups],
+};
+
+const floraMediumSize = { groupId: "size-group", valueIds: ["medium"] };
+
+function floraMaterialSelection(materialValueId: "albasia" | "birch" | "oak") {
+  return [floraMediumSize, { groupId: "material-group", valueIds: [materialValueId] }];
+}
+
+function floraLilacColor() {
+  return {
+    fieldId: "color-field",
+    fieldLabel: "Цвят",
+    groupId: "color-group",
+    groupKey: "color",
+    groupLabel: "Цвят",
+    optionId: "lilac",
+    optionName: "Лилав",
+    optionHex: "#9b59b6",
+  };
+}
+
+function floraRedColor() {
+  return {
+    fieldId: "color-field",
+    fieldLabel: "Цвят",
+    groupId: "color-group",
+    groupKey: "color",
+    groupLabel: "Цвят",
+    optionId: "red",
+    optionName: "Червен",
+    optionHex: "#c00",
+  };
+}
+
+function lineTotal(line: CartLine) {
+  return Math.round(line.price * line.quantity * 100) / 100;
+}
 
 const legacyPersonalizedProduct: Product = {
   id: "33333333-3333-4333-8333-333333333333",
@@ -381,6 +460,127 @@ test("material variant price from option selections matches displayed 3.70 witho
   assert.ok(prepared);
   assert.equal(prepared.line.price, 3.7);
   assert.equal(prepared.line.optionDelta, 0.35);
+});
+
+test("manual regression: Flora basket — different materials do not share quantity tier", () => {
+  const albasia = prepareCartLineInput({
+    product: floraProduct,
+    quantity: 5,
+    optionSelections: floraMaterialSelection("albasia"),
+    selectedColors: [floraLilacColor()],
+  });
+  const birch = prepareCartLineInput({
+    product: floraProduct,
+    quantity: 2,
+    optionSelections: floraMaterialSelection("birch"),
+    selectedColors: [floraLilacColor()],
+  });
+  assert.ok(albasia);
+  assert.ok(birch);
+
+  const lines = mergeCartLineForAdd(mergeCartLineForAdd([], albasia), birch);
+  const albasiaLine = lines.find((line) => line.optionDelta === 0);
+  const birchLine = lines.find((line) => line.optionDelta === 0.35);
+  assert.ok(albasiaLine);
+  assert.ok(birchLine);
+
+  const albasiaKey = getCartLineQuantityTierGroupKey(albasiaLine);
+  const birchKey = getCartLineQuantityTierGroupKey(birchLine);
+  assert.ok(albasiaKey);
+  assert.ok(birchKey);
+  assert.notEqual(albasiaKey, birchKey);
+  assert.notEqual(albasiaKey, `${floraProduct.id}::p:0`);
+
+  const groupTotals = sumQuantityTierGroupTotals(lines);
+  assert.equal(groupTotals.get(albasiaKey!), 5);
+  assert.equal(groupTotals.get(birchKey!), 2);
+
+  assert.equal(albasiaLine.price, 3.35);
+  assert.equal(albasiaLine.quantity, 5);
+  assert.equal(lineTotal(albasiaLine), 16.75);
+  assert.equal(birchLine.price, 3.7);
+  assert.equal(birchLine.quantity, 2);
+  assert.equal(lineTotal(birchLine), 7.4);
+  assert.equal(getCartTotals(lines).subtotal, 24.15);
+
+  // Wrong product-wide grouping would apply tier 6–10 (3.20 base) to both lines.
+  assert.notEqual(albasiaLine.price, 3.2);
+  assert.notEqual(birchLine.price, 3.55);
+});
+
+test("manual regression: Flora basket — same material different colors share quantity tier", () => {
+  const lilac = prepareCartLineInput({
+    product: floraProduct,
+    quantity: 5,
+    optionSelections: floraMaterialSelection("albasia"),
+    selectedColors: [floraLilacColor()],
+  });
+  const red = prepareCartLineInput({
+    product: floraProduct,
+    quantity: 2,
+    optionSelections: floraMaterialSelection("albasia"),
+    selectedColors: [floraRedColor()],
+  });
+  assert.ok(lilac);
+  assert.ok(red);
+
+  const lines = mergeCartLineForAdd(mergeCartLineForAdd([], lilac), red);
+  assert.equal(lines.length, 2);
+
+  const lilacLine = lines.find((line) =>
+    line.selectedColors?.some((color) => color.optionId === "lilac"),
+  );
+  const redLine = lines.find((line) =>
+    line.selectedColors?.some((color) => color.optionId === "red"),
+  );
+  assert.ok(lilacLine);
+  assert.ok(redLine);
+
+  const groupKey = getCartLineQuantityTierGroupKey(lilacLine);
+  assert.equal(getCartLineQuantityTierGroupKey(redLine), groupKey);
+  assert.equal(sumQuantityTierGroupTotals(lines).get(groupKey!), 7);
+
+  assert.equal(lilacLine.price, 3.2);
+  assert.equal(redLine.price, 3.2);
+  assert.equal(lineTotal(lilacLine), 16);
+  assert.equal(lineTotal(redLine), 6.4);
+  assert.equal(getCartTotals(lines).subtotal, 22.4);
+});
+
+test("quantity tier group key groups by product + options, not color or productId alone", () => {
+  const albasiaLilac = prepareCartLineInput({
+    product: floraProduct,
+    quantity: 1,
+    optionSelections: floraMaterialSelection("albasia"),
+    selectedColors: [floraLilacColor()],
+  });
+  const albasiaRed = prepareCartLineInput({
+    product: floraProduct,
+    quantity: 1,
+    optionSelections: floraMaterialSelection("albasia"),
+    selectedColors: [floraRedColor()],
+  });
+  const birchLilac = prepareCartLineInput({
+    product: floraProduct,
+    quantity: 1,
+    optionSelections: floraMaterialSelection("birch"),
+    selectedColors: [floraLilacColor()],
+  });
+  assert.ok(albasiaLilac);
+  assert.ok(albasiaRed);
+  assert.ok(birchLilac);
+
+  const albasiaLilacKey = getCartLineQuantityTierGroupKey(albasiaLilac.line);
+  const albasiaRedKey = getCartLineQuantityTierGroupKey(albasiaRed.line);
+  const birchLilacKey = getCartLineQuantityTierGroupKey(birchLilac.line);
+
+  assert.equal(albasiaLilacKey, albasiaRedKey);
+  assert.notEqual(albasiaLilacKey, birchLilacKey);
+  assert.ok(albasiaLilacKey?.includes(floraProduct.id));
+  assert.ok(albasiaLilacKey?.includes("material-group:albasia"));
+  assert.ok(birchLilacKey?.includes("material-group:birch"));
+  assert.ok(!albasiaLilacKey?.includes("lilac"));
+  assert.ok(!albasiaLilacKey?.includes("red"));
 });
 
 test("F) different materials do not share quantity tier (Flora basket)", () => {
