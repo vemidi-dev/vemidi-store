@@ -52,15 +52,26 @@ const materialOptionGroups: ProductOptionGroup[] = [
     textPriceDelta: 0,
     values: [
       {
-        id: "birch",
-        label: "Брезов шперплат",
-        key: "birch",
-        priceDelta: 0.65,
+        id: "albasia",
+        label: "Албасия",
+        key: "albasia",
+        priceDelta: 0,
         isDefault: true,
         isActive: true,
         isSoldOut: false,
         imageUrl: null,
         sortOrder: 0,
+      },
+      {
+        id: "birch",
+        label: "Брезов шперплат",
+        key: "birch",
+        priceDelta: 0.35,
+        isDefault: false,
+        isActive: true,
+        isSoldOut: false,
+        imageUrl: null,
+        sortOrder: 1,
       },
       {
         id: "oak",
@@ -71,7 +82,7 @@ const materialOptionGroups: ProductOptionGroup[] = [
         isActive: true,
         isSoldOut: false,
         imageUrl: null,
-        sortOrder: 1,
+        sortOrder: 2,
       },
     ],
   },
@@ -200,37 +211,37 @@ test("resolveQuantityTierDisplayUnitPrice adds option and personalization deltas
   assert.equal(resolveQuantityTierDisplayUnitPrice(7.33, 1.11, 0.56), 9);
 });
 
-test("A) material/stock tiers: 4.00 / 3.85 / 3.65 and cart total", () => {
-  assert.equal(resolveCartLineUnitPrice(3.35, materialTiers, 1, 0.65), 4);
-  assert.equal(resolveCartLineUnitPrice(3.35, materialTiers, 6, 0.65), 3.85);
-  assert.equal(resolveCartLineUnitPrice(3.35, materialTiers, 11, 0.65), 3.65);
+test("A) material/stock tiers: 3.70 / 3.55 / 3.35 and cart total", () => {
+  assert.equal(resolveCartLineUnitPrice(3.35, materialTiers, 1, 0.35), 3.7);
+  assert.equal(resolveCartLineUnitPrice(3.35, materialTiers, 6, 0.35), 3.55);
+  assert.equal(resolveCartLineUnitPrice(3.35, materialTiers, 11, 0.35), 3.35);
 
   const qty1 = prepareCartLineInput({
     product: materialProduct,
     quantity: 1,
     optionSelections: [{ groupId: "material-group", valueIds: ["birch"] }],
-    unitPriceOverride: 4,
+    unitPriceOverride: 3.7,
   });
   assert.ok(qty1);
-  assert.equal(qty1.line.price, 4);
-  assert.equal(qty1.line.optionDelta, 0.65);
-  assert.equal(getCartTotals([qty1.line]).subtotal, 4);
+  assert.equal(qty1.line.price, 3.7);
+  assert.equal(qty1.line.optionDelta, 0.35);
+  assert.equal(getCartTotals([qty1.line]).subtotal, 3.7);
 
   const qty6 = updateCartLineQuantityWithLinkedUpsells(
     [qty1.line],
     qty1.line.lineId,
     6,
   );
-  assert.equal(qty6[0]?.price, 3.85);
-  assert.equal(getCartTotals(qty6).subtotal, 3.85 * 6);
+  assert.equal(qty6[0]?.price, 3.55);
+  assert.equal(getCartTotals(qty6).subtotal, 3.55 * 6);
 
   const qty11 = updateCartLineQuantityWithLinkedUpsells(
     qty6,
     qty1.line.lineId,
     11,
   );
-  assert.equal(qty11[0]?.price, 3.65);
-  assert.equal(getCartTotals(qty11).subtotal, 3.65 * 11);
+  assert.equal(qty11[0]?.price, 3.35);
+  assert.equal(getCartTotals(qty11).subtotal, 3.35 * 11);
 });
 
 test("B) cart quantity update keeps optionDelta and recalculates unit/line total", () => {
@@ -240,8 +251,8 @@ test("B) cart quantity update keeps optionDelta and recalculates unit/line total
     optionSelections: [{ groupId: "material-group", valueIds: ["birch"] }],
   });
   assert.ok(prepared);
-  assert.equal(prepared.line.price, 4);
-  assert.equal(prepared.line.optionDelta, 0.65);
+  assert.equal(prepared.line.price, 3.7);
+  assert.equal(prepared.line.optionDelta, 0.35);
 
   const updated = updateCartLineQuantityWithLinkedUpsells(
     [prepared.line],
@@ -249,14 +260,14 @@ test("B) cart quantity update keeps optionDelta and recalculates unit/line total
     6,
   );
 
-  assert.equal(updated[0]?.optionDelta, 0.65);
+  assert.equal(updated[0]?.optionDelta, 0.35);
   assert.equal(updated[0]?.baseUnitPrice, 3.35);
-  assert.equal(updated[0]?.price, 3.85);
+  assert.equal(updated[0]?.price, 3.55);
   assert.equal(updated[0]?.quantity, 6);
-  assert.equal(getCartTotals(updated).subtotal, 3.85 * 6);
+  assert.equal(getCartTotals(updated).subtotal, 3.55 * 6);
 });
 
-test("C) multiple material variants keep own deltas; qty change preserves other line qty", () => {
+test("C) multiple material variants keep own deltas and separate tier groups", () => {
   const birch = prepareCartLineInput({
     product: materialProduct,
     quantity: 1,
@@ -272,14 +283,14 @@ test("C) multiple material variants keep own deltas; qty change preserves other 
 
   const lines = mergeCartLineForAdd(mergeCartLineForAdd([], birch), oak);
   assert.equal(lines.length, 2);
-  assert.equal(birch.line.optionDelta, 0.65);
+  assert.equal(birch.line.optionDelta, 0.35);
   assert.equal(oak.line.optionDelta, 1.15);
 
-  const birchLine = lines.find((line) => line.optionDelta === 0.65);
+  const birchLine = lines.find((line) => line.optionDelta === 0.35);
   const oakLine = lines.find((line) => line.optionDelta === 1.15);
   assert.ok(birchLine);
   assert.ok(oakLine);
-  assert.equal(birchLine.price, 4);
+  assert.equal(birchLine.price, 3.7);
   assert.equal(oakLine.price, 4.5);
 
   const afterBirchQty = updateCartLineQuantityWithLinkedUpsells(
@@ -292,11 +303,11 @@ test("C) multiple material variants keep own deltas; qty change preserves other 
 
   assert.equal(birchAfter?.quantity, 5);
   assert.equal(oakAfter?.quantity, 1);
-  assert.equal(birchAfter?.optionDelta, 0.65);
+  assert.equal(birchAfter?.optionDelta, 0.35);
   assert.equal(oakAfter?.optionDelta, 1.15);
-  // Shared product tier quantity becomes 6 => both use 3.20 base + own delta
-  assert.equal(birchAfter?.price, 3.85);
-  assert.equal(oakAfter?.price, 4.35);
+  // Each material has its own tier group — birch qty 5 stays on tier 1-5, oak stays at qty 1
+  assert.equal(birchAfter?.price, 3.7);
+  assert.equal(oakAfter?.price, 4.5);
 });
 
 test("D) legacy personalized product keeps price + personalization delta without tiers", () => {
@@ -360,7 +371,7 @@ test("E) legacy cart line without pricing metadata keeps unit price on qty updat
   assert.equal(getCartTotals(updated).subtotal, 24);
 });
 
-test("material variant price from option selections matches displayed 4.00 without override", () => {
+test("material variant price from option selections matches displayed 3.70 without override", () => {
   const prepared = prepareCartLineInput({
     product: materialProduct,
     quantity: 1,
@@ -368,6 +379,129 @@ test("material variant price from option selections matches displayed 4.00 witho
   });
 
   assert.ok(prepared);
-  assert.equal(prepared.line.price, 4);
-  assert.equal(prepared.line.optionDelta, 0.65);
+  assert.equal(prepared.line.price, 3.7);
+  assert.equal(prepared.line.optionDelta, 0.35);
+});
+
+test("F) different materials do not share quantity tier (Flora basket)", () => {
+  const albasia = prepareCartLineInput({
+    product: materialProduct,
+    quantity: 5,
+    optionSelections: [{ groupId: "material-group", valueIds: ["albasia"] }],
+    selectedColors: [
+      {
+        fieldId: "color-field",
+        fieldLabel: "Цвят",
+        groupId: "color-group",
+        groupKey: "color",
+        groupLabel: "Цвят",
+        optionId: "lilac",
+        optionName: "Лилав",
+        optionHex: "#9b59b6",
+      },
+    ],
+  });
+  const birch = prepareCartLineInput({
+    product: materialProduct,
+    quantity: 2,
+    optionSelections: [{ groupId: "material-group", valueIds: ["birch"] }],
+    selectedColors: [
+      {
+        fieldId: "color-field",
+        fieldLabel: "Цвят",
+        groupId: "color-group",
+        groupKey: "color",
+        groupLabel: "Цвят",
+        optionId: "lilac",
+        optionName: "Лилав",
+        optionHex: "#9b59b6",
+      },
+    ],
+  });
+  assert.ok(albasia);
+  assert.ok(birch);
+
+  const lines = mergeCartLineForAdd(mergeCartLineForAdd([], albasia), birch);
+  const albasiaLine = lines.find((line) => line.optionDelta === 0);
+  const birchLine = lines.find((line) => line.optionDelta === 0.35);
+  assert.ok(albasiaLine);
+  assert.ok(birchLine);
+
+  assert.equal(albasiaLine.price, 3.35);
+  assert.equal(albasiaLine.quantity, 5);
+  assert.equal(birchLine.price, 3.7);
+  assert.equal(birchLine.quantity, 2);
+  assert.equal(getCartTotals(lines).subtotal, 16.75 + 7.4);
+});
+
+test("G) same material different colors share quantity tier", () => {
+  const lilac = prepareCartLineInput({
+    product: materialProduct,
+    quantity: 5,
+    optionSelections: [{ groupId: "material-group", valueIds: ["albasia"] }],
+    selectedColors: [
+      {
+        fieldId: "color-field",
+        fieldLabel: "Цвят",
+        groupId: "color-group",
+        groupKey: "color",
+        groupLabel: "Цвят",
+        optionId: "lilac",
+        optionName: "Лилав",
+        optionHex: "#9b59b6",
+      },
+    ],
+  });
+  const red = prepareCartLineInput({
+    product: materialProduct,
+    quantity: 2,
+    optionSelections: [{ groupId: "material-group", valueIds: ["albasia"] }],
+    selectedColors: [
+      {
+        fieldId: "color-field",
+        fieldLabel: "Цвят",
+        groupId: "color-group",
+        groupKey: "color",
+        groupLabel: "Цвят",
+        optionId: "red",
+        optionName: "Червен",
+        optionHex: "#c00",
+      },
+    ],
+  });
+  assert.ok(lilac);
+  assert.ok(red);
+
+  const lines = mergeCartLineForAdd(mergeCartLineForAdd([], lilac), red);
+  assert.equal(lines.length, 2);
+  assert.deepEqual(
+    lines.map((line) => line.price),
+    [3.2, 3.2],
+  );
+  assert.equal(getCartTotals(lines).subtotal, 3.2 * 5 + 3.2 * 2);
+});
+
+test("H) different material deltas create separate pricing groups on add", () => {
+  const albasia = prepareCartLineInput({
+    product: materialProduct,
+    quantity: 6,
+    optionSelections: [{ groupId: "material-group", valueIds: ["albasia"] }],
+  });
+  const birch = prepareCartLineInput({
+    product: materialProduct,
+    quantity: 6,
+    optionSelections: [{ groupId: "material-group", valueIds: ["birch"] }],
+  });
+  assert.ok(albasia);
+  assert.ok(birch);
+
+  const lines = mergeCartLineForAdd(mergeCartLineForAdd([], albasia), birch);
+  const albasiaLine = lines.find((line) => line.optionDelta === 0);
+  const birchLine = lines.find((line) => line.optionDelta === 0.35);
+  assert.ok(albasiaLine);
+  assert.ok(birchLine);
+
+  assert.equal(albasiaLine.price, 3.2);
+  assert.equal(birchLine.price, 3.55);
+  assert.equal(getCartTotals(lines).subtotal, 3.2 * 6 + 3.55 * 6);
 });
