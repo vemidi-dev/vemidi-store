@@ -43,6 +43,7 @@ import {
   resolveQuantityUnitPrice,
 } from "@/lib/product-quantity-pricing";
 import {
+  resolvePreparedVariantsUnitPrices,
   resolvePreparedVariantUnitPrice,
   resolvePreparedVariantsTotalPrice,
 } from "@/lib/product-prepared-variants";
@@ -82,6 +83,8 @@ type PreparedProductVariant = {
   id: string;
   quantity: number;
   unitPrice: number;
+  optionDelta?: number;
+  personalizationDelta?: number;
   personalization?: string;
   selectedColors?: SelectedProductColor[];
   personalizationFields?: ReturnType<typeof buildPersonalizationFieldValues>;
@@ -543,7 +546,16 @@ export function ProductDetailAddToCart({
   const quantityTiersSectionOrder = "order-30";
   const quantitySelectorOrder = useMaterialCards ? "order-20" : "order-60";
   const quantityDiscountPerItem = Math.max(0, product.price - quantityBasePrice);
-  const getPreparedVariantUnitPrice = (variant: PreparedProductVariant) =>
+  const preparedVariantUnitPrices = resolvePreparedVariantsUnitPrices(
+    product.price,
+    product.quantityPriceTiers,
+    preparedVariants,
+  );
+  const getPreparedVariantUnitPrice = (
+    variant: PreparedProductVariant,
+    index: number,
+  ) =>
+    preparedVariantUnitPrices[index] ??
     resolvePreparedVariantUnitPrice(
       product.price,
       product.quantityPriceTiers,
@@ -686,6 +698,8 @@ export function ProductDetailAddToCart({
       id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
       quantity: selectedQuantity,
       unitPrice: displayedUnitPrice,
+      optionDelta,
+      personalizationDelta,
       personalization: personalization || undefined,
       selectedColors: colors.length ? colors : undefined,
       personalizationFields: personalizationFields.length
@@ -1203,7 +1217,7 @@ export function ProductDetailAddToCart({
                       <div>
                         <p className="text-sm font-semibold text-boutique-ink">
                           Вариант {index + 1} · {variant.quantity} бр. ·{" "}
-                          {formatEur(getPreparedVariantUnitPrice(variant) * variant.quantity)}
+                          {formatEur(getPreparedVariantUnitPrice(variant, index) * variant.quantity)}
                         </p>
                         <div className="mt-1 space-y-0.5 text-xs leading-5 text-boutique-muted">
                           {variant.summary.map((row) => (
