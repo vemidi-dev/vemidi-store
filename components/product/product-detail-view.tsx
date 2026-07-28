@@ -146,7 +146,7 @@ export function ProductDetailView({
   const breadcrumbSchema = buildBreadcrumbListSchema(breadcrumbItems, getSiteUrl());
 
   return (
-    <div className="min-h-screen bg-boutique-bg">
+    <div className="min-h-screen bg-boutique-bg pb-24 lg:pb-0">
       {previewBanner}
       {includeStructuredData ? (
         <JsonLd data={[structuredData, breadcrumbSchema]} />
@@ -171,9 +171,9 @@ export function ProductDetailView({
                   syncKey={product.id}
                   syncOptionImages={false}
                 />
-                <div id={PRODUCT_LEFT_COLORS_SLOT_ID} className="min-w-0" />
+                <div id={PRODUCT_LEFT_COLORS_SLOT_ID} className="hidden min-w-0 lg:block" />
                 <ProductDetailGalleryAside
-                  className="mt-5"
+                  className="mt-5 hidden lg:block"
                   description={product.description}
                   personalizationInfo={product.personalizationInfo}
                   dimensionsMaterials={product.dimensionsMaterials}
@@ -260,6 +260,16 @@ export function ProductDetailView({
                   </Link>
                 ) : null}
 
+                <ProductDetailGalleryAside
+                  className="mt-5 lg:hidden"
+                  description={product.description}
+                  personalizationInfo={product.personalizationInfo}
+                  dimensionsMaterials={product.dimensionsMaterials}
+                  orderingInfo={product.orderingInfo}
+                  additionalInfo={product.additionalInfo}
+                  showFulfillmentInfo={false}
+                />
+
                 <ProductDetailAddToCart
                   attribution={attribution}
                   initialOptionSelections={initialOptionSelections}
@@ -288,7 +298,7 @@ export function ProductDetailView({
                 />
               </div>
               <ProductDetailGalleryAside
-                className="mt-5"
+                className="mt-5 hidden lg:block"
                 description={product.description}
                 personalizationInfo={product.personalizationInfo}
                 dimensionsMaterials={product.dimensionsMaterials}
@@ -374,6 +384,16 @@ export function ProductDetailView({
                   </span>
                 </Link>
               ) : null}
+
+              <ProductDetailGalleryAside
+                className="mt-5 lg:hidden"
+                description={product.description}
+                personalizationInfo={product.personalizationInfo}
+                dimensionsMaterials={product.dimensionsMaterials}
+                orderingInfo={product.orderingInfo}
+                additionalInfo={product.additionalInfo}
+                showFulfillmentInfo={false}
+              />
 
               <ProductDetailAddToCart
                 attribution={attribution}

@@ -92,6 +92,8 @@ type PreparedProductVariant = {
   summary: string[];
 };
 
+type ColorFieldsPlacement = "inline" | "desktop-sidebar";
+
 function clampUpsellQuantity(value: number, maxQuantity: number) {
   if (!Number.isFinite(value)) {
     return 1;
@@ -222,6 +224,7 @@ export function ProductDetailAddToCart({
     [optionGroups, product, usesMaterialStockLayout],
   );
   const [leftColorsSlot, setLeftColorsSlot] = useState<HTMLElement | null>(null);
+  const [desktopColorPortalActive, setDesktopColorPortalActive] = useState(false);
   const defaultOptionSelections = useMemo(
     () => buildDefaultOptionSelections(optionGroups),
     [optionGroups],
@@ -538,13 +541,13 @@ export function ProductDetailAddToCart({
     showQuantitySelector && hasQuantityPriceTiers(product.quantityPriceTiers);
   const personalizationSectionOrder = showQuantityPriceTiers
     ? useMaterialCards
-      ? "order-40"
-      : "order-35"
+      ? "order-50 lg:order-40"
+      : "order-50 lg:order-35"
     : useMaterialCards
-      ? "order-40"
-      : "order-10";
-  const quantityTiersSectionOrder = "order-30";
-  const quantitySelectorOrder = useMaterialCards ? "order-20" : "order-60";
+      ? "order-50 lg:order-40"
+      : "order-50 lg:order-10";
+  const quantityTiersSectionOrder = "order-40 lg:order-30";
+  const quantitySelectorOrder = useMaterialCards ? "order-30 lg:order-20" : "order-30 lg:order-60";
   const quantityDiscountPerItem = Math.max(0, product.price - quantityBasePrice);
   const preparedVariantUnitPrices = resolvePreparedVariantsUnitPrices(
     product.price,
@@ -575,6 +578,20 @@ export function ProductDetailAddToCart({
 
     setLeftColorsSlot(document.getElementById(PRODUCT_LEFT_COLORS_SLOT_ID));
   }, [product.id, useMaterialCards]);
+
+  useEffect(() => {
+    if (!useMaterialCards) {
+      setDesktopColorPortalActive(false);
+      return;
+    }
+
+    const mediaQuery = window.matchMedia("(min-width: 1024px)");
+    const sync = () => setDesktopColorPortalActive(mediaQuery.matches);
+
+    sync();
+    mediaQuery.addEventListener("change", sync);
+    return () => mediaQuery.removeEventListener("change", sync);
+  }, [useMaterialCards]);
 
   useEffect(() => {
     if (!optionGroups.length || useMaterialCards) {
@@ -720,6 +737,26 @@ export function ProductDetailAddToCart({
     );
   };
 
+  const renderColorFields = (placement: ColorFieldsPlacement) => (
+    <ProductDetailColorFields
+      colorFields={colorFields}
+      selectedByGroup={selectedByGroup}
+      onSelectedByGroupChange={setSelectedByGroup}
+      quantitiesByField={quantitiesByField}
+      onQuantitiesByFieldChange={setQuantitiesByField}
+      expandedColorFields={expandedColorFields}
+      onExpandedColorFieldsChange={setExpandedColorFields}
+      embedded={embedded}
+      variant={placement === "desktop-sidebar" ? "sidebar" : "default"}
+      onColorSelectionChange={() => setError(null)}
+      onQuantityReset={() => {
+        if (showQuantitySelector) {
+          setQuantity(1);
+        }
+      }}
+    />
+  );
+
   const handleAddToCart = () => {
     if (usePreparedVariants) {
       if (preparedVariants.length === 0) {
@@ -825,25 +862,32 @@ export function ProductDetailAddToCart({
     );
   }
 
-  const colorFieldsSection = colorFields.length ? (
-    <ProductDetailColorFields
-      colorFields={colorFields}
-      selectedByGroup={selectedByGroup}
-      onSelectedByGroupChange={setSelectedByGroup}
-      quantitiesByField={quantitiesByField}
-      onQuantitiesByFieldChange={setQuantitiesByField}
-      expandedColorFields={expandedColorFields}
-      onExpandedColorFieldsChange={setExpandedColorFields}
-      embedded={embedded}
-      variant={useMaterialCards ? "sidebar" : "default"}
-      onColorSelectionChange={() => setError(null)}
-      onQuantityReset={() => {
-        if (showQuantitySelector) {
-          setQuantity(1);
-        }
-      }}
-    />
+  const mobileColorFieldsSection = colorFields.length ? (
+    <div className="order-15 lg:hidden">
+      {renderColorFields("inline")}
+    </div>
   ) : null;
+  const desktopInlineColorFieldsSection = colorFields.length && !useMaterialCards ? (
+    <div className="order-40 hidden lg:block">{renderColorFields("inline")}</div>
+  ) : null;
+  const desktopSidebarColorFieldsSection = colorFields.length && useMaterialCards
+    ? renderColorFields("desktop-sidebar")
+    : null;
+  const stickyActionLabel = usePreparedVariants
+    ? preparedQuantityTotal > 0
+      ? `Добави ${preparedQuantityTotal} бр. в количката`
+      : "Добави избора"
+    : "Добави в количката";
+  const stickyActionHandler = usePreparedVariants
+    ? preparedQuantityTotal > 0
+      ? handleAddToCart
+      : handlePrepareVariant
+    : handleAddToCart;
+  const stickyActionDisabled = usePreparedVariants
+    ? preparedQuantityTotal > 0
+      ? !canSubmitAddToCart
+      : !canPrepareVariant
+    : !canSubmitAddToCart;
 
   return (
     <>
@@ -852,13 +896,14 @@ export function ProductDetailAddToCart({
       ref={configuratorRef}
       className={
         embedded
-          ? "scroll-mt-28 mt-6 w-full"
-          : "scroll-mt-28 rounded-2xl border border-boutique-line bg-boutique-paper p-4 transition-shadow duration-300 ease-out hover:shadow-boutique-sm motion-reduce:transition-none sm:p-5"
+          ? "scroll-mt-28 mt-6 w-full pb-24 lg:pb-0"
+          : "scroll-mt-28 rounded-2xl border border-boutique-line bg-boutique-paper p-4 pb-24 transition-shadow duration-300 ease-out hover:shadow-boutique-sm motion-reduce:transition-none sm:p-5 lg:pb-5"
       }
     >
       <div className="flex flex-col">
+      {mobileColorFieldsSection}
       {optionGroups.length ? (
-        <div className={useMaterialCards ? "order-10" : "order-20"}>
+        <div className={useMaterialCards ? "order-20" : "order-20"}>
         <ProductOptionsSelector
           basePrice={product.price + personalizationDelta}
           variantDisplayBasePrice={product.price}
@@ -919,6 +964,8 @@ export function ProductDetailAddToCart({
           </div>
         </section>
       ) : null}
+
+      {desktopInlineColorFieldsSection}
 
       {fields.length ? (
         <details
@@ -1094,10 +1141,6 @@ export function ProductDetailAddToCart({
           ) : null}
           </div>
         </details>
-      ) : null}
-
-      {!useMaterialCards && colorFieldsSection ? (
-        <div className="order-40">{colorFieldsSection}</div>
       ) : null}
 
       {error ? (
@@ -1428,8 +1471,8 @@ export function ProductDetailAddToCart({
 
       </div>
     </div>
-    {useMaterialCards && leftColorsSlot && colorFieldsSection
-      ? createPortal(colorFieldsSection, leftColorsSlot)
+      {useMaterialCards && desktopColorPortalActive && leftColorsSlot && desktopSidebarColorFieldsSection
+      ? createPortal(desktopSidebarColorFieldsSection, leftColorsSlot)
       : null}
     {showMobileBar ? (
       <div
@@ -1442,20 +1485,28 @@ export function ProductDetailAddToCart({
               {priceSummaryLabel}
             </p>
             <p className="font-heading text-xl text-boutique-ink">
-              {selectedQuantity > 1 ? formatEur(displayedLinePrice) : formatEur(displayedUnitPrice)}
+              {usePreparedVariants
+                ? preparedQuantityTotal > 0
+                  ? formatEur(preparedVariantsTotalPrice)
+                  : selectedQuantity > 1
+                    ? formatEur(displayedLinePrice)
+                    : formatEur(displayedUnitPrice)
+                : selectedQuantity > 1
+                  ? formatEur(displayedLinePrice)
+                  : formatEur(displayedUnitPrice)}
             </p>
           </div>
           <button
             type="button"
-            disabled={!canSubmitAddToCart}
-            onClick={handleAddToCart}
+            disabled={stickyActionDisabled}
+            onClick={stickyActionHandler}
             className={`min-h-12 shrink-0 rounded-xl px-5 text-sm font-semibold text-white transition duration-200 ease-out hover:-translate-y-1 hover:shadow-[0_14px_28px_-10px_rgb(44_40_37_/0.2)] active:translate-y-0 active:shadow-sm disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none motion-reduce:transition-none motion-reduce:hover:translate-y-0 ${
               added
                 ? "bg-boutique-sage shadow-boutique-sm"
                 : "bg-boutique-sage-deep hover:bg-boutique-ink"
             }`}
           >
-            {added ? "✓ Добавено" : "Добавете"}
+            {added ? "✓ Добавено" : stickyActionLabel}
           </button>
         </div>
       </div>
