@@ -151,6 +151,14 @@ test("mobile sticky action switches between prepare and add-to-cart states", () 
   assert.match(addToCart, /pb-24 lg:pb-0/);
 });
 
+test("quantity input allows temporary empty value for keyboard typing", () => {
+  const addToCart = readSource("../components/product/product-detail-add-to-cart.tsx");
+
+  assert.match(addToCart, /const \[quantityInput, setQuantityInput\] = useState\("1"\)/);
+  assert.match(addToCart, /if \(!nextValue\.trim\(\)\) \{\s*return;\s*\}/);
+  assert.match(addToCart, /onBlur=\{\(event\) => commitQuantityInput\(event\.target\.value\)\}/);
+});
+
 test("mobile product layout moves info accordions above configurator without changing desktop aside", () => {
   const view = readSource("../components/product/product-detail-view.tsx");
 

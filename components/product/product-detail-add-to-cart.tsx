@@ -214,6 +214,7 @@ export function ProductDetailAddToCart({
     useState<ProductOptionSelection[]>(initialOptionSelections);
   const [estimatedUnitPrice, setEstimatedUnitPrice] = useState(product.price);
   const [quantity, setQuantity] = useState(1);
+  const [quantityInput, setQuantityInput] = useState("1");
   const [preparedVariants, setPreparedVariants] = useState<PreparedProductVariant[]>([]);
   const [showMobileBar, setShowMobileBar] = useState(false);
   const [draftReady, setDraftReady] = useState(false);
@@ -275,6 +276,10 @@ export function ProductDetailAddToCart({
   useEffect(() => {
     setQuantity((current) => clampProductQuantity(current, maxSelectableQuantity));
   }, [maxSelectableQuantity]);
+
+  useEffect(() => {
+    setQuantityInput(String(quantity));
+  }, [quantity]);
 
   useEffect(() => {
     if (!showQuantitySelector) {
@@ -737,6 +742,17 @@ export function ProductDetailAddToCart({
     );
   };
 
+  const commitQuantityInput = (rawValue: string) => {
+    const trimmed = rawValue.trim();
+    if (!trimmed) {
+      setQuantityInput(String(quantity));
+      return;
+    }
+
+    const nextQuantity = clampProductQuantity(Number(trimmed), maxSelectableQuantity);
+    setQuantity(nextQuantity);
+  };
+
   const renderColorFields = (placement: ColorFieldsPlacement) => (
     <ProductDetailColorFields
       colorFields={colorFields}
@@ -1182,12 +1198,25 @@ export function ProductDetailAddToCart({
               min={1}
               max={maxSelectableQuantity}
               disabled={stockSelectionBlocked}
-              value={quantity}
-              onChange={(event) =>
-                setQuantity(
-                  clampProductQuantity(Number(event.target.value), maxSelectableQuantity),
-                )
-              }
+                value={quantityInput}
+                onChange={(event) => {
+                  const nextValue = event.target.value;
+                  setQuantityInput(nextValue);
+
+                  if (!nextValue.trim()) {
+                    return;
+                  }
+
+                  const nextQuantity = Number(nextValue);
+                  if (!Number.isFinite(nextQuantity)) {
+                    return;
+                  }
+
+                  setQuantity(
+                    clampProductQuantity(nextQuantity, maxSelectableQuantity),
+                  );
+                }}
+                onBlur={(event) => commitQuantityInput(event.target.value)}
               className="h-11 w-16 border-x border-boutique-line bg-transparent text-center text-sm font-semibold text-boutique-ink outline-none disabled:opacity-50"
             />
             <button
