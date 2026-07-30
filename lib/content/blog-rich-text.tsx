@@ -324,13 +324,13 @@ export function BlogRichText({ content }: { content: string }) {
 
         if (block.type === "image") {
           return (
-            <figure key={index} className="my-2 overflow-hidden rounded-2xl border border-boutique-line/70 bg-boutique-bg/40">
+            <figure key={index} className="mx-auto my-2 max-w-2xl overflow-hidden rounded-2xl border border-boutique-line/70 bg-boutique-bg/40">
               <Image
                 src={block.src}
                 alt={block.alt || ""}
                 width={1600}
                 height={1067}
-                sizes="(max-width: 768px) 100vw, 720px"
+                sizes="(max-width: 768px) 100vw, 640px"
                 className="h-auto w-full max-w-full object-contain"
               />
               {block.alt ? (
