@@ -17,6 +17,7 @@ type ProductCardMediaProps = {
   soldOut?: boolean;
   promotion?: ProductPromotionSnapshot | null;
   compact?: boolean;
+  dense?: boolean;
 };
 
 export function ProductCardMedia({
@@ -25,6 +26,7 @@ export function ProductCardMedia({
   soldOut,
   promotion,
   compact = false,
+  dense = false,
 }: ProductCardMediaProps) {
   const [activeImage, setActiveImage] = useState(0);
   const touchStartX = useRef<number | null>(null);
@@ -86,7 +88,9 @@ export function ProductCardMedia({
 
   return (
     <div
-      className={`relative overflow-hidden ${compact ? "aspect-[5/6] sm:aspect-square" : "aspect-[4/5]"}`}
+      className={`relative overflow-hidden ${
+        dense ? "aspect-[4/3]" : compact ? "aspect-[5/6] sm:aspect-square" : "aspect-[4/5]"
+      }`}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
@@ -98,7 +102,11 @@ export function ProductCardMedia({
               src={cover.src}
               alt={cover.alt}
               fill
-              sizes="(max-width: 640px) 50vw, (max-width: 768px) 50vw, 33vw"
+              sizes={
+                dense
+                  ? "(max-width: 640px) 46vw, (max-width: 1024px) 33vw, 20vw"
+                  : "(max-width: 640px) 50vw, (max-width: 768px) 50vw, 33vw"
+              }
               className="object-cover transition duration-700 ease-out group-hover:scale-[1.045] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
             />
             <div

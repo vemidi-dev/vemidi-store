@@ -11,15 +11,18 @@ import { getProductPath } from "@/lib/product-url";
 
 type ProductCardProps = {
   product: Product;
-  variant?: "default" | "catalog";
+  variant?: "default" | "catalog" | "related";
 };
 
 export function ProductCard({ product, variant = "default" }: ProductCardProps) {
-  const compact = variant === "catalog";
+  const compact = variant === "catalog" || variant === "related";
+  const related = variant === "related";
   const statusLabel = resolveProductCardStatusLabel(product);
   const ctaLabel = getProductCardCtaLabel(product);
   const ctaClassName = compact
-    ? "mt-2 inline-flex min-h-9 items-center text-xs font-semibold text-boutique-sage-deep underline-offset-4 transition-colors duration-200 ease-out hover:text-boutique-ink hover:underline sm:mt-3 sm:text-sm"
+    ? related
+      ? "mt-2 inline-flex min-h-7 items-center text-xs font-semibold text-boutique-sage-deep underline-offset-4 transition-colors duration-200 ease-out hover:text-boutique-ink hover:underline"
+      : "mt-2 inline-flex min-h-9 items-center text-xs font-semibold text-boutique-sage-deep underline-offset-4 transition-colors duration-200 ease-out hover:text-boutique-ink hover:underline sm:mt-3 sm:text-sm"
     : "mt-4 block w-full rounded-full bg-boutique-ink py-3.5 text-center text-sm font-semibold tracking-wide text-boutique-paper shadow-sm transition duration-300 ease-out hover:-translate-y-1 hover:bg-boutique-accent hover:shadow-[0_14px_28px_-10px_rgb(44_40_37_/0.22)] active:translate-y-0 active:shadow-sm disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-sm motion-reduce:transition-none motion-reduce:hover:translate-y-0";
 
   return (
@@ -36,14 +39,17 @@ export function ProductCard({ product, variant = "default" }: ProductCardProps) 
         soldOut={!product.orderable}
         promotion={product.promotion}
         compact={compact}
+        dense={related}
       />
 
-      <div className={`flex flex-1 flex-col ${compact ? "p-3 sm:p-5" : "p-6 sm:p-7"}`}>
+      <div className={`flex flex-1 flex-col ${related ? "p-3" : compact ? "p-3 sm:p-5" : "p-6 sm:p-7"}`}>
         {statusLabel ? (
           <p
             className={`font-semibold uppercase tracking-[0.22em] text-boutique-accent ${
               compact
-                ? "hidden text-[0.6rem] tracking-[0.18em] sm:block"
+                ? related
+                  ? "hidden"
+                  : "hidden text-[0.6rem] tracking-[0.18em] sm:block"
                 : "text-[0.65rem]"
             }`}
           >
@@ -57,7 +63,9 @@ export function ProductCard({ product, variant = "default" }: ProductCardProps) 
         >
           <h2
             className={`font-heading text-boutique-ink transition-colors duration-300 ease-out group-hover:text-boutique-sage-deep ${
-              compact
+              related
+                ? "line-clamp-2 text-sm leading-snug"
+                : compact
                 ? "line-clamp-2 text-sm leading-snug sm:text-lg"
                 : "text-xl leading-snug"
             }`}
@@ -72,8 +80,8 @@ export function ProductCard({ product, variant = "default" }: ProductCardProps) 
           </p>
         ) : null}
 
-        <div className={compact ? "mt-3 sm:mt-5" : "mt-6 border-t border-boutique-line/80 pt-5"}>
-          <ProductPrice product={product} size={compact ? "md" : "lg"} />
+        <div className={related ? "mt-2" : compact ? "mt-3 sm:mt-5" : "mt-6 border-t border-boutique-line/80 pt-5"}>
+          <ProductPrice product={product} size={related ? "sm" : compact ? "md" : "lg"} />
           {!product.orderable ? (
             <p className="mt-3 text-xs font-semibold uppercase tracking-[0.16em] text-boutique-muted">
               {product.availabilityLabel}

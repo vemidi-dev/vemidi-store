@@ -202,3 +202,15 @@ test("ready product CTA renders only when configured", () => {
   );
   assert.match(view, /readyProductCtaLabel/);
 });
+
+test("related products use compact wide-grid cards", () => {
+  const view = readSource("../components/product/product-detail-view.tsx");
+  const card = readSource("../components/product/product-card.tsx");
+  const media = readSource("../components/product/product-card-media.tsx");
+
+  assert.match(view, /xl:grid-cols-5/);
+  assert.match(view, /variant="related"/);
+  assert.match(card, /variant\?: "default" \| "catalog" \| "related"/);
+  assert.match(card, /dense=\{related\}/);
+  assert.match(media, /dense \? "aspect-\[4\/3\]"/);
+});

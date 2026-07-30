@@ -163,3 +163,13 @@ test("blog editor wires inline image upload control and reuse of image pipeline"
   assert.match(action, /"blog"/);
   assert.match(action, /BLOG_INLINE_SCOPE_ID/);
 });
+
+test("blog inline images render centered and constrained", () => {
+  const renderer = readFileSync(
+    new URL("../lib/content/blog-rich-text.tsx", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(renderer, /mx-auto my-2 max-w-md/);
+  assert.match(renderer, /sizes="\(max-width: 768px\) 92vw, 448px"/);
+});
