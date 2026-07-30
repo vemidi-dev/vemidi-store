@@ -428,17 +428,17 @@ export function ProductDetailView({
       </section>
 
       {relatedProducts.length ? (
-        <section className="border-b border-boutique-line bg-boutique-bg py-10 md:py-16">
+        <section className="border-b border-boutique-line bg-boutique-bg py-8 md:py-12">
           <PageContainer>
             <div className="flex items-end justify-between gap-4">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-boutique-accent">
                   Може да харесате
                 </p>
-                <h2 className="mt-2 font-heading text-3xl text-boutique-ink">
+                <h2 className="mt-1.5 font-heading text-2xl text-boutique-ink md:text-3xl">
                   Вижте още продукти
                 </h2>
-                <p className="mt-2 max-w-2xl text-sm leading-relaxed text-boutique-muted">
+                <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-boutique-muted">
                   Подбрахме още идеи, които се комбинират добре с този продукт.
                 </p>
               </div>
@@ -458,12 +458,12 @@ export function ProductDetailView({
                 <span aria-hidden="true">→</span>
               </Link>
             ) : null}
-            <div className="mt-7 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
+            <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5">
               {relatedProducts.map((related) => (
                 <ProductCard
                   key={related.id}
                   product={related}
-                  variant="catalog"
+                  variant="related"
                 />
               ))}
             </div>
