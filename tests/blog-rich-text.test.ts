@@ -170,6 +170,6 @@ test("blog inline images render centered and constrained", () => {
     "utf8",
   );
 
-  assert.match(renderer, /mx-auto my-2 max-w-2xl/);
-  assert.match(renderer, /sizes="\(max-width: 768px\) 100vw, 640px"/);
+  assert.match(renderer, /mx-auto my-2 max-w-md/);
+  assert.match(renderer, /sizes="\(max-width: 768px\) 92vw, 448px"/);
 });
