@@ -782,6 +782,7 @@ export function ProductListPanel({
                         initialGroups={initialOptionGroups}
                         allDependencyOptions={productDependencyOptions}
                         materials={data.materials}
+                        variantGroups={data.variantGroups}
                         productImages={[
                           ...new Map(
                             [

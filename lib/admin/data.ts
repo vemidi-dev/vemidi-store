@@ -14,6 +14,7 @@ import type {
   ProductOptionValueRow,
   ProductPersonalizationFieldRow,
   ProductMaterialRow,
+  ProductVariantGroupRow,
   RelatedProductRow,
   CategoryRelatedCategoryRow,
   ProductWishTemplateRow,
@@ -30,6 +31,10 @@ import type {
 } from "@/lib/storefront/product-upsells";
 import { isProductLandingPagesMigrationMissing } from "@/lib/product-landing/admin-rpc";
 import type { ProductLandingPageRow } from "@/lib/product-landing/types";
+import {
+  loadProductMaterials,
+  loadProductVariantGroups,
+} from "@/lib/admin/variant-data";
 import type {
   FaqGroupRow,
   FaqItemRow,
@@ -55,6 +60,7 @@ export type AdminData = {
   optionGroupsByProductId: Map<string, ProductOptionGroupRow[]>;
   optionValuesByGroupId: Map<string, ProductOptionValueRow[]>;
   materials: ProductMaterialRow[];
+  variantGroups: ProductVariantGroupRow[];
   wishTemplates: WishTemplateRow[];
   wishTemplateOccasions: WishTemplateOccasionRow[];
   wishTemplateIdsByProductId: Map<string, string[]>;
@@ -95,6 +101,7 @@ export type AdminData = {
     optionGroups: QueryError;
     optionValues: QueryError;
     materials: QueryError;
+    variantGroups: QueryError;
     landingPages: QueryError;
   };
 };
@@ -120,7 +127,6 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
     categoryRelatedCategoriesResult,
     optionGroupsResult,
     optionValuesResult,
-    materialsResult,
     landingPagesResult,
     faqGroupsResult,
     faqItemsResult,
@@ -204,13 +210,6 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
       )
       .order("sort_order", { ascending: true }),
     supabase
-      .from("product_materials")
-      .select(
-        "id,name,description,image_url,is_active,sort_order,created_at,updated_at",
-      )
-      .order("sort_order", { ascending: true })
-      .order("name", { ascending: true }),
-    supabase
       .from("product_landing_pages")
       .select(
         "id,product_id,title,slug,campaign_code,is_primary,is_active,sort_order,created_at,updated_at",
@@ -237,6 +236,12 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
       .select("product_id,faq_item_id,sort_order,created_at")
       .order("sort_order", { ascending: true }),
   ]);
+
+  const variantGroupsLoaded = await loadProductVariantGroups(supabase);
+  const materialsLoaded = await loadProductMaterials(
+    supabase,
+    variantGroupsLoaded.groups,
+  );
 
   const products = (productsResult.data ?? []) as ProductRow[];
   const categories = (categoriesResult.data ?? []) as CategoryRow[];
@@ -267,9 +272,8 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
     []) as CategoryRelatedCategoryRow[];
   const optionGroups = (optionGroupsResult.data ?? []) as ProductOptionGroupRow[];
   const optionValues = (optionValuesResult.data ?? []) as ProductOptionValueRow[];
-  const materials = materialsResult.error
-    ? []
-    : ((materialsResult.data ?? []) as ProductMaterialRow[]);
+  const materials = materialsLoaded.materials;
+  const variantGroups = variantGroupsLoaded.groups;
   const landingPagesMigrationMissing = isProductLandingPagesMigrationMissing(
     landingPagesResult.error,
   );
@@ -412,6 +416,7 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
     optionGroupsByProductId,
     optionValuesByGroupId,
     materials,
+    variantGroups,
     wishTemplates,
     wishTemplateOccasions,
     wishTemplateIdsByProductId,
@@ -451,7 +456,10 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
       categoryRelatedCategories: categoryRelatedCategoriesResult.error,
       optionGroups: optionGroupsResult.error,
       optionValues: optionValuesResult.error,
-      materials: materialsResult.error,
+      materials: materialsLoaded.error ? { message: materialsLoaded.error } : null,
+      variantGroups: variantGroupsLoaded.error
+        ? { message: variantGroupsLoaded.error }
+        : null,
       landingPages: landingPagesMigrationMissing ? null : landingPagesResult.error,
     },
   };

@@ -273,6 +273,7 @@ export type ColorOptionRow = {
   is_active: boolean;
 };
 
+/** Visual variant row (DB table still named product_materials). */
 export type ProductMaterialRow = {
   id: string;
   name: string;
@@ -280,6 +281,21 @@ export type ProductMaterialRow = {
   image_url: string | null;
   is_active: boolean;
   sort_order: number;
+  created_at: string;
+  updated_at: string;
+  /** Present after product_variant_groups.sql; Stage 1 UI treats missing as Материал. */
+  group_id?: string | null;
+  /** small | medium | large; default medium = current 2/row storefront. */
+  display_size?: string | null;
+};
+
+export type ProductVariantGroupRow = {
+  id: string;
+  key: string;
+  name: string;
+  description: string | null;
+  sort_order: number;
+  is_active: boolean;
   created_at: string;
   updated_at: string;
 };

@@ -18,6 +18,10 @@ import {
   isChoiceOptionGroup,
   isTextOptionGroup,
 } from "@/lib/product-options";
+import {
+  resolveOptionGroupVariantDisplaySize,
+  variantDisplaySizeGridClass,
+} from "@/lib/product-variants";
 
 type ProductOptionsSelectorProps = {
   basePrice: number;
@@ -344,7 +348,13 @@ export function ProductOptionsSelector({
                 {group.isRequired ? " *" : ""}
               </legend>
               {materialValues.length ? (
-                <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <div
+                  className={`mt-2 ${variantDisplaySizeGridClass(
+                    resolveOptionGroupVariantDisplaySize(
+                      materialValues.map((option) => option.material?.displaySize),
+                    ),
+                  )}`}
+                >
                   {materialValues.map((option) => {
                     const selected = selection.valueIds.includes(option.id);
                     const priceLabel = formatOptionChoicePrice(

@@ -37,6 +37,7 @@ type MaterialRow = {
   name: string;
   description: string | null;
   image_url: string | null;
+  display_size?: string | null;
 };
 
 export function mapProductOptionGroups(
@@ -91,6 +92,12 @@ export function mapProductOptionGroups(
                   name: materialRow.name,
                   description: materialRow.description,
                   imageUrl: materialRow.image_url,
+                  displaySize:
+                    materialRow.display_size === "small" ||
+                    materialRow.display_size === "medium" ||
+                    materialRow.display_size === "large"
+                      ? materialRow.display_size
+                      : "medium",
                 }
               : null,
             sku: value.sku,

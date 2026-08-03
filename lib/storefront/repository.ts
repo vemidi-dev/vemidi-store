@@ -616,19 +616,38 @@ async function loadProductDetails(
   ];
   const materialsById = new Map<
     string,
-    { id: string; name: string; description: string | null; image_url: string | null }
+    {
+      id: string;
+      name: string;
+      description: string | null;
+      image_url: string | null;
+      display_size?: string | null;
+    }
   >();
   if (materialIds.length) {
-    const { data: materialsData } = await supabase
+    const full = await supabase
       .from("product_materials")
-      .select("id,name,description,image_url")
+      .select("id,name,description,image_url,display_size")
       .in("id", materialIds);
-    for (const material of materialsData ?? []) {
+    const rows =
+      full.error || !full.data
+        ? (
+            await supabase
+              .from("product_materials")
+              .select("id,name,description,image_url")
+              .in("id", materialIds)
+          ).data ?? []
+        : full.data;
+    for (const material of rows) {
       materialsById.set(String(material.id), {
         id: String(material.id),
         name: String(material.name),
         description: material.description ? String(material.description) : null,
         image_url: material.image_url ? String(material.image_url) : null,
+        display_size:
+          "display_size" in material && material.display_size
+            ? String(material.display_size)
+            : "medium",
       });
     }
   }
