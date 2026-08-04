@@ -59,21 +59,28 @@ export function variantDisplaySizeGridClass(
 }
 
 /**
- * When an option group mixes linked variants with different display sizes,
- * use the **largest** size so cards never look cramped.
- * Empty / missing sizes fall back to medium.
+ * Backward compatibility for older data where display size still lives
+ * on the linked visual variant instead of the product option group.
  */
-export function resolveOptionGroupVariantDisplaySize(
+export function resolveLegacyVariantDisplaySizeFallback(
   sizes: Array<VariantDisplaySize | string | null | undefined>,
 ): VariantDisplaySize {
-  let resolved: VariantDisplaySize | null = null;
   for (const raw of sizes) {
-    if (!isVariantDisplaySize(raw)) continue;
-    if (!resolved || DISPLAY_SIZE_RANK[raw] > DISPLAY_SIZE_RANK[resolved]) {
-      resolved = raw;
+    if (isVariantDisplaySize(raw)) {
+      return raw;
     }
   }
-  return resolved ?? DEFAULT_VARIANT_DISPLAY_SIZE;
+  return DEFAULT_VARIANT_DISPLAY_SIZE;
+}
+
+export function resolveOptionGroupVariantDisplaySize(
+  optionGroupSize: VariantDisplaySize | string | null | undefined,
+  legacyVariantSizes: Array<VariantDisplaySize | string | null | undefined> = [],
+): VariantDisplaySize {
+  if (isVariantDisplaySize(optionGroupSize)) {
+    return optionGroupSize;
+  }
+  return resolveLegacyVariantDisplaySizeFallback(legacyVariantSizes);
 }
 
 const BG_TRANSLIT: Record<string, string> = {

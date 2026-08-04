@@ -18,12 +18,8 @@ import type {
   ProductVariantGroupRow,
 } from "@/lib/admin/types";
 import {
-  DEFAULT_VARIANT_DISPLAY_SIZE,
   DEFAULT_VARIANT_GROUP_KEY,
   DEFAULT_VARIANT_GROUP_NAME,
-  VARIANT_DISPLAY_SIZE_LABELS,
-  VARIANT_DISPLAY_SIZES,
-  normalizeVariantDisplaySize,
 } from "@/lib/product-variants";
 
 export function MaterialManagementPanel({
@@ -218,20 +214,6 @@ export function MaterialManagementPanel({
             </select>
           </label>
           <label className="text-sm font-medium text-boutique-ink">
-            Размер на картата
-            <select
-              name={adminFormFields.material.displaySize}
-              defaultValue={DEFAULT_VARIANT_DISPLAY_SIZE}
-              className={adminFieldClass}
-            >
-              {VARIANT_DISPLAY_SIZES.map((size) => (
-                <option key={size} value={size}>
-                  {VARIANT_DISPLAY_SIZE_LABELS[size]}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="text-sm font-medium text-boutique-ink">
             Име
             <input
               name={adminFormFields.material.name}
@@ -279,25 +261,28 @@ export function MaterialManagementPanel({
       ) : (
         groups.map((group) => {
           const groupMaterials = materialsByGroup.get(group.id) ?? [];
-          if (groupMaterials.length === 0) {
-            return (
-              <div key={group.id} className="space-y-2">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-boutique-muted">
-                  Група: {group.name} (0)
-                </p>
-                <p className="text-sm text-boutique-muted">Няма варианти в тази група.</p>
-              </div>
-            );
-          }
-
           return (
-            <div key={group.id} className="space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-boutique-muted">
-                Група: {group.name} ({groupMaterials.length})
-              </p>
-              {groupMaterials.map((material, index) => {
-                const displaySize = normalizeVariantDisplaySize(material.display_size);
-                return (
+            <details
+              key={group.id}
+              className="rounded-xl border border-boutique-line bg-white shadow-boutique-sm"
+            >
+              <summary className="cursor-pointer list-none px-4 py-3">
+                <span className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-sm font-semibold text-boutique-ink">
+                    {group.name}
+                    <span className="ml-2 text-xs font-normal text-boutique-muted">
+                      {groupMaterials.length} варианта
+                      {!group.is_active ? " · неактивна" : " · активна"}
+                      {group.key === DEFAULT_VARIANT_GROUP_KEY ? " · default" : ""}
+                    </span>
+                  </span>
+                </span>
+              </summary>
+              <div className="space-y-3 border-t border-boutique-line px-4 py-4">
+                {groupMaterials.length === 0 ? (
+                  <p className="text-sm text-boutique-muted">Няма варианти в тази група.</p>
+                ) : null}
+                {groupMaterials.map((material, index) => (
                   <article
                     key={material.id}
                     className="rounded-xl border border-boutique-line bg-white p-4 shadow-boutique-sm"
@@ -347,20 +332,6 @@ export function MaterialManagementPanel({
                               <option key={optionGroup.id} value={optionGroup.id}>
                                 {optionGroup.name}
                                 {!optionGroup.is_active ? " (неактивна)" : ""}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                        <label className="text-xs font-medium text-boutique-ink">
-                          Размер на картата
-                          <select
-                            name={adminFormFields.material.displaySize}
-                            defaultValue={displaySize}
-                            className={`${adminFieldClass} !mt-1`}
-                          >
-                            {VARIANT_DISPLAY_SIZES.map((size) => (
-                              <option key={size} value={size}>
-                                {VARIANT_DISPLAY_SIZE_LABELS[size]}
                               </option>
                             ))}
                           </select>
@@ -460,9 +431,9 @@ export function MaterialManagementPanel({
                       </AdminConfirmForm>
                     </div>
                   </article>
-                );
-              })}
-            </div>
+                ))}
+              </div>
+            </details>
           );
         })
       )}

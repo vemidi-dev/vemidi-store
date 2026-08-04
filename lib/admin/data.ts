@@ -44,6 +44,26 @@ import type {
 
 type QueryError = { message: string } | null;
 
+async function loadAdminOptionGroups(supabase: SupabaseClient) {
+  const full = await supabase
+    .from("product_option_groups")
+    .select(
+      "id,product_id,name,key,input_type,is_required,min_select,max_select,sort_order,is_active,pricing_mode,depends_on_option_id,placeholder,max_length,text_price_delta,image_display_size",
+    )
+    .order("sort_order", { ascending: true });
+
+  if (!full.error) {
+    return full;
+  }
+
+  return supabase
+    .from("product_option_groups")
+    .select(
+      "id,product_id,name,key,input_type,is_required,min_select,max_select,sort_order,is_active,pricing_mode,depends_on_option_id,placeholder,max_length,text_price_delta",
+    )
+    .order("sort_order", { ascending: true });
+}
+
 export type AdminData = {
   products: ProductRow[];
   categories: CategoryRow[];
@@ -197,12 +217,7 @@ export async function loadAdminData(supabase: SupabaseClient): Promise<AdminData
       .from("category_related_categories")
       .select("category_id,related_category_id,sort_order")
       .order("sort_order", { ascending: true }),
-    supabase
-      .from("product_option_groups")
-      .select(
-        "id,product_id,name,key,input_type,is_required,min_select,max_select,sort_order,is_active,pricing_mode,depends_on_option_id,placeholder,max_length,text_price_delta",
-      )
-      .order("sort_order", { ascending: true }),
+    loadAdminOptionGroups(supabase),
     supabase
       .from("product_option_values")
       .select(

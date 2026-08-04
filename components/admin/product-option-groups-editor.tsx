@@ -14,8 +14,12 @@ import {
   formatPriceDelta,
 } from "@/lib/product-option-pricing";
 import {
+  DEFAULT_VARIANT_DISPLAY_SIZE,
   DEFAULT_VARIANT_GROUP_KEY,
   DEFAULT_VARIANT_GROUP_NAME,
+  VARIANT_DISPLAY_SIZE_LABELS,
+  VARIANT_DISPLAY_SIZES,
+  normalizeVariantDisplaySize,
 } from "@/lib/product-variants";
 
 type InitialOptionGroup = ParsedOptionGroup;
@@ -96,6 +100,7 @@ function toLocalGroup(
 ): LocalGroup {
   return {
     ...group,
+    imageDisplaySize: normalizeVariantDisplaySize(group.imageDisplaySize),
     uid: group.id ?? crypto.randomUUID(),
     sortOrder: group.sortOrder ?? index,
     values: group.values.map((value, valueIndex) => ({
@@ -118,6 +123,7 @@ function makeEmptyGroup(sortOrder: number, basePrice: number): LocalGroup {
     name: "",
     key: "",
     inputType: "single",
+    imageDisplaySize: DEFAULT_VARIANT_DISPLAY_SIZE,
     isRequired: true,
     minSelect: 1,
     maxSelect: 1,
@@ -177,6 +183,11 @@ function OptionGroupCollapsedFields({
       <input type="hidden" name={adminFormFields.optionGroup.names} value={group.name} />
       <input type="hidden" name={adminFormFields.optionGroup.inputTypes} value={group.inputType} />
       <input type="hidden" name={adminFormFields.optionGroup.keys} value={group.key} />
+      <input
+        type="hidden"
+        name={adminFormFields.optionGroup.imageDisplaySizes}
+        value={group.imageDisplaySize}
+      />
       <input
         type="hidden"
         name={adminFormFields.optionGroup.dependsOnOptionIds}
@@ -336,6 +347,7 @@ export function ProductOptionGroupsEditor({
       {groups.map((group, index) => {
         const isOpen = openUid === group.uid;
         const valueCount = isChoiceType(group.inputType) ? group.values.length : 0;
+        const hasLinkedVisualVariants = group.values.some((value) => Boolean(value.materialId));
         return (
           <details
             key={group.uid}
@@ -386,6 +398,11 @@ export function ProductOptionGroupsEditor({
                 type="hidden"
                 name={adminFormFields.optionGroup.valuesJson}
                 value={serializeGroupValuesJson(group)}
+              />
+              <input
+                type="hidden"
+                name={adminFormFields.optionGroup.imageDisplaySizes}
+                value={group.imageDisplaySize}
               />
 
               <div className="grid gap-4 md:grid-cols-2">
@@ -472,6 +489,34 @@ export function ProductOptionGroupsEditor({
                   <input type="hidden" name={adminFormFields.optionGroup.placeholders} value="" />
                   <input type="hidden" name={adminFormFields.optionGroup.maxLengths} value="" />
                   <input type="hidden" name={adminFormFields.optionGroup.textPriceDeltas} value="0" />
+                  {hasLinkedVisualVariants ? (
+                    <div className="rounded-xl border border-boutique-line bg-boutique-bg px-4 py-3">
+                      <label className="text-sm font-medium text-boutique-ink">
+                        Размер на снимките
+                        <select
+                          className={fieldClassName}
+                          value={group.imageDisplaySize}
+                          onChange={(event) =>
+                            updateGroup(group.uid, {
+                              imageDisplaySize: normalizeVariantDisplaySize(event.target.value),
+                            })
+                          }
+                          name={adminFormFields.optionGroup.imageDisplaySizes}
+                        >
+                          {VARIANT_DISPLAY_SIZES.map((size) => (
+                            <option key={size} value={size}>
+                              {VARIANT_DISPLAY_SIZE_LABELS[size]}
+                            </option>
+                          ))}
+                        </select>
+                        <span className="mt-1 block text-xs font-normal text-boutique-muted">
+                          Малки: компактни карти, подходящи при много варианти; Средни:
+                          текущият вид, 2 на ред; Големи: 1 на ред, когато клиентът
+                          трябва ясно да сравни изображенията.
+                        </span>
+                      </label>
+                    </div>
+                  ) : null}
                 </>
               ) : (
                 <>

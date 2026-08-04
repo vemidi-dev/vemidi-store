@@ -112,7 +112,6 @@ export const adminFormFields = {
     imageFile: "material_image_file",
     isActive: "material_is_active",
     groupId: "material_group_id",
-    displaySize: "material_display_size",
     direction: "direction",
   },
   variantGroup: {
@@ -157,6 +156,7 @@ export const adminFormFields = {
     placeholders: "option_group_placeholder[]",
     maxLengths: "option_group_max_length[]",
     textPriceDeltas: "option_group_text_price_delta[]",
+    imageDisplaySizes: "option_group_image_display_size[]",
     valuesJson: "option_group_values_json[]",
   },
   eventGallery: {

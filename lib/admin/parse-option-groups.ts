@@ -1,5 +1,6 @@
 import { adminFormFields } from "@/lib/admin/form-fields";
 import type { ParsedOptionGroup, ParsedOptionValue } from "@/lib/admin/types";
+import { normalizeVariantDisplaySize } from "@/lib/product-variants";
 
 const KEY_PATTERN = /^[a-z][a-z0-9_]{0,63}$/;
 const INPUT_TYPES = new Set(["single", "multiple", "text", "textarea", "date"]);
@@ -54,6 +55,9 @@ export function parseProductOptionGroups(formData: FormData): {
     .map((v) => String(v ?? "").trim());
   const textPriceDeltas = formData
     .getAll(adminFormFields.optionGroup.textPriceDeltas)
+    .map((v) => String(v ?? "").trim());
+  const imageDisplaySizes = formData
+    .getAll(adminFormFields.optionGroup.imageDisplaySizes)
     .map((v) => String(v ?? "").trim());
   const valuePayloads = formData
     .getAll(adminFormFields.optionGroup.valuesJson)
@@ -201,6 +205,7 @@ export function parseProductOptionGroups(formData: FormData): {
       name,
       key,
       inputType: inputType as ParsedOptionGroup["inputType"],
+      imageDisplaySize: normalizeVariantDisplaySize(imageDisplaySizes[index]),
       isRequired: requiredFlags[index] === "on",
       minSelect,
       maxSelect,

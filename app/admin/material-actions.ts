@@ -15,10 +15,7 @@ import {
   type UploadedImage,
 } from "@/lib/images/upload-image";
 import {
-  DEFAULT_VARIANT_DISPLAY_SIZE,
   DEFAULT_VARIANT_GROUP_KEY,
-  isVariantDisplaySize,
-  normalizeVariantDisplaySize,
   slugifyVariantGroupKey,
 } from "@/lib/product-variants";
 import { checkIsAdmin } from "@/lib/supabase/admin-auth";
@@ -99,11 +96,6 @@ async function uploadMaterialImage(
   return url;
 }
 
-function readDisplaySize(formData: FormData) {
-  const raw = getString(formData, adminFormFields.material.displaySize);
-  return isVariantDisplaySize(raw) ? raw : DEFAULT_VARIANT_DISPLAY_SIZE;
-}
-
 export async function createProductMaterial(formData: FormData) {
   const supabase = await getAuthorizedClient();
   const name = getString(formData, adminFormFields.material.name);
@@ -112,7 +104,6 @@ export async function createProductMaterial(formData: FormData) {
   const file = getFile(formData, adminFormFields.material.imageFile);
   let groupId =
     getString(formData, adminFormFields.material.groupId) || null;
-  const displaySize = readDisplaySize(formData);
 
   if (!name) {
     done("error", "Въведете име на варианта.");
@@ -141,7 +132,6 @@ export async function createProductMaterial(formData: FormData) {
     image_url: imageUrl,
     is_active: true,
     sort_order: sortOrder,
-    display_size: displaySize,
   };
   if (groupId) {
     payload.group_id = groupId;
@@ -169,7 +159,6 @@ export async function updateProductMaterial(formData: FormData) {
   const file = getFile(formData, adminFormFields.material.imageFile);
   let groupId =
     getString(formData, adminFormFields.material.groupId) || null;
-  const displaySize = readDisplaySize(formData);
 
   if (!id || !name) {
     done("error", "Невалидни данни за варианта.");
@@ -202,7 +191,6 @@ export async function updateProductMaterial(formData: FormData) {
     description,
     image_url: imageUrl,
     is_active: isActive,
-    display_size: displaySize,
     updated_at: new Date().toISOString(),
   };
   if (groupId) {

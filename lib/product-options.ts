@@ -34,6 +34,7 @@ export type ProductOptionGroup = {
   name: string;
   key: string;
   inputType: ProductOptionInputType;
+  imageDisplaySize?: "small" | "medium" | "large" | null;
   isRequired: boolean;
   minSelect: number;
   maxSelect: number;

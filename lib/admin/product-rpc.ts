@@ -56,6 +56,7 @@ function toOptionGroupsPayload(groups: ParsedOptionGroup[]) {
     name: group.name,
     key: group.key,
     input_type: group.inputType,
+    image_display_size: group.imageDisplaySize,
     is_required: group.isRequired,
     min_select: group.minSelect,
     max_select: group.maxSelect,

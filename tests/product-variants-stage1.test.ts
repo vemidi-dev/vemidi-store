@@ -17,6 +17,7 @@ import {
   DEFAULT_VARIANT_GROUP_NAME,
   normalizeVariantDisplaySize,
   resolveOptionGroupVariantDisplaySize,
+  resolveLegacyVariantDisplaySizeFallback,
   slugifyVariantGroupKey,
   variantDisplaySizeGridClass,
 } from "@/lib/product-variants";
@@ -58,14 +59,14 @@ test("normalizeProductMaterialRow falls back to medium and group", () => {
   assert.equal(row.display_size, "medium");
 });
 
-test("mixed display sizes resolve to largest for option group layout", () => {
+test("option group display size wins and legacy variant size stays fallback", () => {
   assert.equal(
-    resolveOptionGroupVariantDisplaySize(["small", "medium", "large"]),
+    resolveOptionGroupVariantDisplaySize("large", ["small", "medium"]),
     "large",
   );
-  assert.equal(resolveOptionGroupVariantDisplaySize(["small", null]), "small");
-  assert.equal(resolveOptionGroupVariantDisplaySize([null, undefined]), "medium");
-  assert.equal(resolveOptionGroupVariantDisplaySize([]), "medium");
+  assert.equal(resolveOptionGroupVariantDisplaySize(null, ["small", null]), "small");
+  assert.equal(resolveLegacyVariantDisplaySizeFallback(["large", "small"]), "large");
+  assert.equal(resolveOptionGroupVariantDisplaySize(undefined, [null, undefined]), "medium");
 });
 
 test("storefront layout classes for small/medium/large", () => {
@@ -100,6 +101,7 @@ test("legacy material-linked product stays medium and drives cards", () => {
         placeholder: null,
         max_length: null,
         text_price_delta: 0,
+        image_display_size: "large",
       },
     ],
     [
@@ -131,6 +133,7 @@ test("legacy material-linked product stays medium and drives cards", () => {
   ) as ProductOptionGroup[];
 
   assert.equal(groups[0]!.values[0]!.material?.displaySize, "medium");
+  assert.equal(groups[0]!.imageDisplaySize, "large");
   assert.equal(
     shouldUseMaterialOptionCards(
       { fulfillmentType: "made_to_order", allowQuantitySelector: false },
@@ -160,6 +163,7 @@ test("non-material group variant maps with display_size small", () => {
         placeholder: null,
         max_length: null,
         text_price_delta: 0,
+        image_display_size: null,
       },
     ],
     [
@@ -193,15 +197,10 @@ test("non-material group variant maps with display_size small", () => {
 
   assert.equal(groups[0]!.values[0]!.materialId, variantId);
   assert.equal(groups[0]!.values[0]!.material?.displaySize, "small");
-  assert.equal(
-    resolveOptionGroupVariantDisplaySize([
-      groups[0]!.values[0]!.material?.displaySize,
-    ]),
-    "small",
-  );
+  assert.equal(groups[0]!.imageDisplaySize, "small");
 });
 
-test("product editor and panel expose linked variant + groups UI", () => {
+test("product editor and panel expose linked variant + group UI", () => {
   const editor = readFileSync(
     resolve(root, "components/admin/product-option-groups-editor.tsx"),
     "utf8",
@@ -212,7 +211,9 @@ test("product editor and panel expose linked variant + groups UI", () => {
   );
   assert.match(editor, new RegExp(ADMIN_VARIANT_LINK_LABEL));
   assert.match(editor, /optgroup/);
+  assert.match(editor, /Размер на снимките/);
   assert.match(panel, /Групи варианти/);
-  assert.match(panel, /Размер на картата/);
+  assert.match(panel, /<details/);
+  assert.doesNotMatch(panel, /Размер на картата/);
   assert.match(panel, /createProductVariantGroup/);
 });

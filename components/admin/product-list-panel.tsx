@@ -19,6 +19,7 @@ import {
   normalizeProductPublicationStatus,
   PRODUCT_PUBLICATION_STATUS_LABELS,
 } from "@/lib/product-publication";
+import { normalizeVariantDisplaySize } from "@/lib/product-variants";
 import { buildPromotionProductOptions } from "@/lib/promotion-admin";
 import { AdminAutoOpenProductEdit } from "@/components/admin/admin-auto-open-product-edit";
 import { AdminProductEditStickyActions } from "@/components/admin/admin-product-edit-sticky-actions";
@@ -358,6 +359,7 @@ export function ProductListPanel({
               name: group.name,
               key: group.key,
               inputType: group.input_type,
+              imageDisplaySize: normalizeVariantDisplaySize(group.image_display_size),
               isRequired: group.is_required,
               minSelect: group.min_select,
               maxSelect: group.max_select,

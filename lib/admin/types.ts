@@ -400,6 +400,7 @@ export type ProductOptionGroupRow = {
   placeholder: string | null;
   max_length: number | null;
   text_price_delta: number;
+  image_display_size?: string | null;
 };
 
 export type ProductOptionValueRow = {
@@ -436,6 +437,7 @@ export type ParsedOptionGroup = {
   name: string;
   key: string;
   inputType: "single" | "multiple" | "text" | "textarea" | "date";
+  imageDisplaySize: "small" | "medium" | "large";
   isRequired: boolean;
   minSelect: number;
   maxSelect: number;

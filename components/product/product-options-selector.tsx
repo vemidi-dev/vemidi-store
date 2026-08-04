@@ -351,6 +351,7 @@ export function ProductOptionsSelector({
                 <div
                   className={`mt-2 ${variantDisplaySizeGridClass(
                     resolveOptionGroupVariantDisplaySize(
+                      group.imageDisplaySize,
                       materialValues.map((option) => option.material?.displaySize),
                     ),
                   )}`}

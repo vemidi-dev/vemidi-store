@@ -61,6 +61,31 @@ type SubmittedCartItem = {
   upsell?: unknown;
 };
 
+async function loadCheckoutOptionGroups(
+  supabase: NonNullable<Awaited<ReturnType<typeof createServiceClient>>>,
+  productIds: string[],
+) {
+  const full = await supabase
+    .from("product_option_groups")
+    .select(
+      "id,product_id,name,key,input_type,is_required,min_select,max_select,sort_order,is_active,pricing_mode,depends_on_option_id,placeholder,max_length,text_price_delta,image_display_size",
+    )
+    .in("product_id", productIds)
+    .eq("is_active", true);
+
+  if (!full.error) {
+    return full;
+  }
+
+  return supabase
+    .from("product_option_groups")
+    .select(
+      "id,product_id,name,key,input_type,is_required,min_select,max_select,sort_order,is_active,pricing_mode,depends_on_option_id,placeholder,max_length,text_price_delta",
+    )
+    .in("product_id", productIds)
+    .eq("is_active", true);
+}
+
 function parseSubmittedUpsell(value: unknown) {
   if (typeof value !== "object" || value === null) {
     return null;
@@ -219,13 +244,7 @@ export async function createStoreOrder(
       .from("product_personalization_fields")
       .select("id,product_id,label,field_key,field_type,max_length,is_required")
       .in("product_id", productIds),
-    supabase
-      .from("product_option_groups")
-      .select(
-        "id,product_id,name,key,input_type,is_required,min_select,max_select,sort_order,is_active,pricing_mode,depends_on_option_id,placeholder,max_length,text_price_delta",
-      )
-      .in("product_id", productIds)
-      .eq("is_active", true),
+    loadCheckoutOptionGroups(supabase, productIds),
   ]);
 
   if (fieldError || optionGroupError) {
