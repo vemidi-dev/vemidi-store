@@ -58,6 +58,55 @@ export function variantDisplaySizeGridClass(
   }
 }
 
+/** Card shell layout for visual variant option cards. */
+export function variantDisplaySizeCardClass(
+  size: VariantDisplaySize = DEFAULT_VARIANT_DISPLAY_SIZE,
+): string {
+  switch (size) {
+    case "large":
+      return "flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:gap-4 sm:p-4";
+    case "small":
+      return "flex items-center gap-1.5 p-1.5 sm:gap-2 sm:p-2";
+    case "medium":
+    default:
+      return "flex items-center gap-2 p-2";
+  }
+}
+
+/**
+ * Image wrapper size.
+ * - small: compact thumbs
+ * - medium: legacy material thumbs (~48–56px)
+ * - large: ~144px mobile / ~192px desktop for clear visual comparison
+ */
+export function variantDisplaySizeImageClass(
+  size: VariantDisplaySize = DEFAULT_VARIANT_DISPLAY_SIZE,
+): string {
+  switch (size) {
+    case "large":
+      return "h-36 w-36 shrink-0 overflow-hidden rounded-xl border border-boutique-line/70 bg-boutique-bg sm:h-48 sm:w-48";
+    case "small":
+      return "h-10 w-10 shrink-0 overflow-hidden rounded-md border border-boutique-line/70 bg-boutique-bg sm:h-12 sm:w-12 sm:rounded-lg";
+    case "medium":
+    default:
+      return "h-12 w-12 shrink-0 overflow-hidden rounded-md border border-boutique-line/70 bg-boutique-bg sm:h-14 sm:w-14 sm:rounded-lg";
+  }
+}
+
+export function variantDisplaySizeTitleClass(
+  size: VariantDisplaySize = DEFAULT_VARIANT_DISPLAY_SIZE,
+): string {
+  switch (size) {
+    case "large":
+      return "block text-sm font-semibold leading-5 text-boutique-ink sm:text-base sm:leading-6";
+    case "small":
+      return "block text-[11px] font-semibold leading-4 text-boutique-ink sm:text-xs sm:leading-4";
+    case "medium":
+    default:
+      return "block text-xs font-semibold leading-4 text-boutique-ink sm:text-sm sm:leading-5";
+  }
+}
+
 /**
  * Backward compatibility for older data where display size still lives
  * on the linked visual variant instead of the product option group.

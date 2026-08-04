@@ -19,7 +19,10 @@ import {
   resolveOptionGroupVariantDisplaySize,
   resolveLegacyVariantDisplaySizeFallback,
   slugifyVariantGroupKey,
+  variantDisplaySizeCardClass,
   variantDisplaySizeGridClass,
+  variantDisplaySizeImageClass,
+  variantDisplaySizeTitleClass,
 } from "@/lib/product-variants";
 import { normalizeProductMaterialRow } from "@/lib/admin/variant-data";
 
@@ -79,7 +82,32 @@ test("storefront layout classes for small/medium/large", () => {
     "grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4",
   );
   assert.equal(variantDisplaySizeGridClass("large"), "grid grid-cols-1 gap-3");
+  assert.match(variantDisplaySizeGridClass("large"), /grid-cols-1/);
   assert.equal(normalizeVariantDisplaySize(undefined), DEFAULT_VARIANT_DISPLAY_SIZE);
+});
+
+test("large card uses bigger image class while medium stays compact", () => {
+  const largeImage = variantDisplaySizeImageClass("large");
+  const mediumImage = variantDisplaySizeImageClass("medium");
+  const smallImage = variantDisplaySizeImageClass("small");
+
+  assert.match(largeImage, /h-36/);
+  assert.match(largeImage, /sm:h-48/);
+  assert.doesNotMatch(mediumImage, /h-36|h-48/);
+  assert.match(mediumImage, /h-12/);
+  assert.match(smallImage, /h-10/);
+
+  assert.match(variantDisplaySizeCardClass("large"), /sm:flex-row/);
+  assert.doesNotMatch(variantDisplaySizeCardClass("medium"), /sm:flex-row/);
+  assert.match(variantDisplaySizeTitleClass("large"), /sm:text-base/);
+  assert.doesNotMatch(variantDisplaySizeTitleClass("medium"), /sm:text-base/);
+
+  const selector = readFileSync(
+    resolve(root, "components/product/product-options-selector.tsx"),
+    "utf8",
+  );
+  assert.match(selector, /variantDisplaySizeImageClass/);
+  assert.match(selector, /displaySize=\{materialDisplaySize\}/);
 });
 
 test("legacy material-linked product stays medium and drives cards", () => {
