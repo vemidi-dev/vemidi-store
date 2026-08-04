@@ -111,7 +111,16 @@ export const adminFormFields = {
     description: "material_description",
     imageFile: "material_image_file",
     isActive: "material_is_active",
+    groupId: "material_group_id",
     direction: "direction",
+  },
+  variantGroup: {
+    id: "variant_group_id",
+    key: "variant_group_key",
+    name: "variant_group_name",
+    description: "variant_group_description",
+    sortOrder: "variant_group_sort_order",
+    isActive: "variant_group_is_active",
   },
   colorField: {
     labels: "color_field_label[]",
@@ -147,6 +156,7 @@ export const adminFormFields = {
     placeholders: "option_group_placeholder[]",
     maxLengths: "option_group_max_length[]",
     textPriceDeltas: "option_group_text_price_delta[]",
+    imageDisplaySizes: "option_group_image_display_size[]",
     valuesJson: "option_group_values_json[]",
   },
   eventGallery: {

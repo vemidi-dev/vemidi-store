@@ -131,6 +131,33 @@ async function loadActivePromotions(
   return pickActivePromotionByProductId((data ?? []) as ProductPromotionRow[]);
 }
 
+async function loadProductOptionGroupRows(
+  supabase: SupabaseClient,
+  productId: string,
+) {
+  const full = await supabase
+    .from("product_option_groups")
+    .select(
+      "id,name,key,input_type,is_required,min_select,max_select,sort_order,is_active,pricing_mode,depends_on_option_id,placeholder,max_length,text_price_delta,image_display_size",
+    )
+    .eq("product_id", productId)
+    .eq("is_active", true)
+    .order("sort_order");
+
+  if (!full.error) {
+    return full;
+  }
+
+  return supabase
+    .from("product_option_groups")
+    .select(
+      "id,name,key,input_type,is_required,min_select,max_select,sort_order,is_active,pricing_mode,depends_on_option_id,placeholder,max_length,text_price_delta",
+    )
+    .eq("product_id", productId)
+    .eq("is_active", true)
+    .order("sort_order");
+}
+
 async function fetchStorefrontCatalog(): Promise<StorefrontCatalog> {
   const supabase = await getClient();
   if (!supabase) {
@@ -580,14 +607,7 @@ async function loadProductDetails(
         .select("id,name")
         .eq("category_type", "occasion"),
       loadActivePromotions(supabase),
-      supabase
-        .from("product_option_groups")
-        .select(
-          "id,name,key,input_type,is_required,min_select,max_select,sort_order,is_active,pricing_mode,depends_on_option_id,placeholder,max_length,text_price_delta",
-        )
-        .eq("product_id", productId)
-        .eq("is_active", true)
-        .order("sort_order"),
+      loadProductOptionGroupRows(supabase, productId),
       supabase
         .from("product_option_values")
         .select(
@@ -616,19 +636,38 @@ async function loadProductDetails(
   ];
   const materialsById = new Map<
     string,
-    { id: string; name: string; description: string | null; image_url: string | null }
+    {
+      id: string;
+      name: string;
+      description: string | null;
+      image_url: string | null;
+      display_size?: string | null;
+    }
   >();
   if (materialIds.length) {
-    const { data: materialsData } = await supabase
+    const full = await supabase
       .from("product_materials")
-      .select("id,name,description,image_url")
+      .select("id,name,description,image_url,display_size")
       .in("id", materialIds);
-    for (const material of materialsData ?? []) {
+    const rows =
+      full.error || !full.data
+        ? (
+            await supabase
+              .from("product_materials")
+              .select("id,name,description,image_url")
+              .in("id", materialIds)
+          ).data ?? []
+        : full.data;
+    for (const material of rows) {
       materialsById.set(String(material.id), {
         id: String(material.id),
         name: String(material.name),
         description: material.description ? String(material.description) : null,
         image_url: material.image_url ? String(material.image_url) : null,
+        display_size:
+          "display_size" in material && material.display_size
+            ? String(material.display_size)
+            : "medium",
       });
     }
   }

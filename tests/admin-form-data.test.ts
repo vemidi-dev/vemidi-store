@@ -166,6 +166,7 @@ test("mixed product option groups keep their row values aligned", () => {
     formData.append(adminFormFields.optionGroup.placeholders, values.placeholder);
     formData.append(adminFormFields.optionGroup.maxLengths, values.maxLength);
     formData.append(adminFormFields.optionGroup.textPriceDeltas, values.textPriceDelta);
+    formData.append(adminFormFields.optionGroup.imageDisplaySizes, values.inputType === "single" ? "small" : "medium");
     formData.append(adminFormFields.optionGroup.valuesJson, values.valuesJson);
   };
 
@@ -214,10 +215,12 @@ test("mixed product option groups keep their row values aligned", () => {
     parsed.groups[0]?.values[0]?.materialId,
     "11111111-1111-1111-1111-111111111111",
   );
+  assert.equal(parsed.groups[0]?.imageDisplaySize, "small");
   assert.equal(parsed.groups[1]?.name, "Име");
   assert.equal(parsed.groups[1]?.placeholder, "Въведете име");
   assert.equal(parsed.groups[1]?.maxLength, 50);
   assert.equal(parsed.groups[1]?.textPriceDelta, 3);
+  assert.equal(parsed.groups[1]?.imageDisplaySize, "medium");
 });
 
 test("option group payload sentinel distinguishes missing editor from intentional empty options", () => {
@@ -253,6 +256,7 @@ test("product create draft preserves option groups for recovery", () => {
   formData.append(adminFormFields.optionGroup.placeholders, "");
   formData.append(adminFormFields.optionGroup.maxLengths, "");
   formData.append(adminFormFields.optionGroup.textPriceDeltas, "0");
+  formData.append(adminFormFields.optionGroup.imageDisplaySizes, "large");
   formData.append(
     adminFormFields.optionGroup.valuesJson,
     JSON.stringify([
@@ -271,6 +275,7 @@ test("product create draft preserves option groups for recovery", () => {
   const draft = parseProductCreateDraft(makeCreateProductDraft(formData));
 
   assert.equal(draft?.optionGroups?.[0]?.name, "Size");
+  assert.equal(draft?.optionGroups?.[0]?.imageDisplaySize, "large");
   assert.equal(draft?.optionGroups?.[0]?.values[0]?.label, "Mini");
 });
 

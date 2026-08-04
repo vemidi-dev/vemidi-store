@@ -30,7 +30,8 @@ const errorLabels: Record<keyof AdminData["errors"], string> = {
   categoryRelatedCategories: "свързани категории",
   optionGroups: "универсални опции",
   optionValues: "стойности на опции",
-  materials: "материали",
+  materials: "варианти",
+  variantGroups: "групи варианти",
   landingPages: "landing страници",
 };
 

@@ -7,12 +7,17 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { getFile, getString } from "@/lib/admin/form-data";
 import { adminFormFields } from "@/lib/admin/form-fields";
 import { deleteProductImage, getProductImagePath } from "@/lib/admin/storage";
+import { resolveDefaultMaterialGroupId } from "@/lib/admin/variant-data";
 import { PRODUCT_MATERIALS_SCOPE_ID } from "@/lib/images/constants";
 import {
   processAndUploadImages,
   validateImageUploadBatch,
   type UploadedImage,
 } from "@/lib/images/upload-image";
+import {
+  DEFAULT_VARIANT_GROUP_KEY,
+  slugifyVariantGroupKey,
+} from "@/lib/product-variants";
 import { checkIsAdmin } from "@/lib/supabase/admin-auth";
 import { createClient } from "@/lib/supabase/server";
 
@@ -97,9 +102,15 @@ export async function createProductMaterial(formData: FormData) {
   const description =
     getString(formData, adminFormFields.material.description).slice(0, 500) || null;
   const file = getFile(formData, adminFormFields.material.imageFile);
+  let groupId =
+    getString(formData, adminFormFields.material.groupId) || null;
 
   if (!name) {
-    done("error", "Въведете име на материала.");
+    done("error", "Въведете име на варианта.");
+  }
+
+  if (!groupId) {
+    groupId = await resolveDefaultMaterialGroupId(supabase);
   }
 
   const { data: lastRow } = await supabase
@@ -115,13 +126,18 @@ export async function createProductMaterial(formData: FormData) {
     imageUrl = await uploadMaterialImage(supabase, file);
   }
 
-  const { error } = await supabase.from("product_materials").insert({
+  const payload: Record<string, unknown> = {
     name,
     description,
     image_url: imageUrl,
     is_active: true,
     sort_order: sortOrder,
-  });
+  };
+  if (groupId) {
+    payload.group_id = groupId;
+  }
+
+  const { error } = await supabase.from("product_materials").insert(payload);
 
   if (error && imageUrl) {
     await deleteStoredImageBestEffort(supabase, imageUrl);
@@ -129,7 +145,7 @@ export async function createProductMaterial(formData: FormData) {
 
   done(
     error ? "error" : "success",
-    error ? "Материалът не беше добавен." : "Материалът е добавен.",
+    error ? "Вариантът не беше добавен." : "Вариантът е добавен.",
   );
 }
 
@@ -141,9 +157,15 @@ export async function updateProductMaterial(formData: FormData) {
     getString(formData, adminFormFields.material.description).slice(0, 500) || null;
   const isActive = formData.get(adminFormFields.material.isActive) === "on";
   const file = getFile(formData, adminFormFields.material.imageFile);
+  let groupId =
+    getString(formData, adminFormFields.material.groupId) || null;
 
   if (!id || !name) {
-    done("error", "Невалидни данни за материала.");
+    done("error", "Невалидни данни за варианта.");
+  }
+
+  if (!groupId) {
+    groupId = await resolveDefaultMaterialGroupId(supabase);
   }
 
   const { data: existing, error: loadError } = await supabase
@@ -153,7 +175,7 @@ export async function updateProductMaterial(formData: FormData) {
     .maybeSingle();
 
   if (loadError || !existing) {
-    done("error", "Материалът не беше намерен.");
+    done("error", "Вариантът не беше намерен.");
   }
 
   let imageUrl = existing.image_url?.trim() || null;
@@ -164,36 +186,41 @@ export async function updateProductMaterial(formData: FormData) {
     imageUrl = uploadedUrl;
   }
 
+  const payload: Record<string, unknown> = {
+    name,
+    description,
+    image_url: imageUrl,
+    is_active: isActive,
+    updated_at: new Date().toISOString(),
+  };
+  if (groupId) {
+    payload.group_id = groupId;
+  }
+
   const { error } = await supabase
     .from("product_materials")
-    .update({
-      name,
-      description,
-      image_url: imageUrl,
-      is_active: isActive,
-      updated_at: new Date().toISOString(),
-    })
+    .update(payload)
     .eq("id", id);
 
   if (error) {
     if (uploadedUrl) {
       await deleteStoredImageBestEffort(supabase, uploadedUrl);
     }
-    done("error", "Материалът не беше обновен.");
+    done("error", "Вариантът не беше обновен.");
   }
 
   if (uploadedUrl && existing.image_url && existing.image_url !== uploadedUrl) {
     await deleteStoredImageBestEffort(supabase, existing.image_url);
   }
 
-  done("success", "Материалът е обновен.");
+  done("success", "Вариантът е обновен.");
 }
 
 export async function deleteProductMaterial(formData: FormData) {
   const supabase = await getAuthorizedClient();
   const id = getString(formData, adminFormFields.material.id);
   if (!id) {
-    done("error", "Липсва материал за изтриване.");
+    done("error", "Липсва вариант за изтриване.");
   }
 
   const { data: existing } = await supabase
@@ -209,7 +236,7 @@ export async function deleteProductMaterial(formData: FormData) {
 
   done(
     error ? "error" : "success",
-    error ? "Материалът не беше изтрит." : "Материалът е изтрит.",
+    error ? "Вариантът не беше изтрит." : "Вариантът е изтрит.",
   );
 }
 
@@ -229,5 +256,92 @@ export async function moveProductMaterial(formData: FormData) {
   done(
     error ? "error" : "success",
     error ? "Редът не беше променен." : "Редът е променен.",
+  );
+}
+
+export async function createProductVariantGroup(formData: FormData) {
+  const supabase = await getAuthorizedClient();
+  const name = getString(formData, adminFormFields.variantGroup.name);
+  const description =
+    getString(formData, adminFormFields.variantGroup.description).slice(0, 500) ||
+    null;
+  const keyRaw = getString(formData, adminFormFields.variantGroup.key);
+  const key = slugifyVariantGroupKey(keyRaw || name);
+
+  if (!name) {
+    done("error", "Въведете име на групата.");
+  }
+
+  if (key === DEFAULT_VARIANT_GROUP_KEY) {
+    done("error", "Ключът „material“ е запазен за групата Материал.");
+  }
+
+  const { data: lastRow } = await supabase
+    .from("product_variant_groups")
+    .select("sort_order")
+    .order("sort_order", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const sortOrder = (Number(lastRow?.sort_order) || 0) + 10;
+
+  const { error } = await supabase.from("product_variant_groups").insert({
+    key,
+    name,
+    description,
+    sort_order: sortOrder,
+    is_active: true,
+  });
+
+  done(
+    error ? "error" : "success",
+    error
+      ? "Групата не беше добавена (възможно дублиран ключ)."
+      : "Групата е добавена.",
+  );
+}
+
+export async function updateProductVariantGroup(formData: FormData) {
+  const supabase = await getAuthorizedClient();
+  const id = getString(formData, adminFormFields.variantGroup.id);
+  const name = getString(formData, adminFormFields.variantGroup.name);
+  const description =
+    getString(formData, adminFormFields.variantGroup.description).slice(0, 500) ||
+    null;
+  const isActive = formData.get(adminFormFields.variantGroup.isActive) === "on";
+  const sortOrderRaw = getString(formData, adminFormFields.variantGroup.sortOrder);
+  const sortOrder = Number.parseInt(sortOrderRaw, 10);
+
+  if (!id || !name) {
+    done("error", "Невалидни данни за групата.");
+  }
+
+  const { data: existing, error: loadError } = await supabase
+    .from("product_variant_groups")
+    .select("id,key")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (loadError || !existing) {
+    done("error", "Групата не беше намерена.");
+  }
+
+  if (existing.key === DEFAULT_VARIANT_GROUP_KEY && !isActive) {
+    done("error", "Групата „Материал“ не може да бъде деактивирана.");
+  }
+
+  const { error } = await supabase
+    .from("product_variant_groups")
+    .update({
+      name,
+      description,
+      is_active: isActive,
+      sort_order: Number.isFinite(sortOrder) ? sortOrder : 0,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id);
+
+  done(
+    error ? "error" : "success",
+    error ? "Групата не беше обновена." : "Групата е обновена.",
   );
 }

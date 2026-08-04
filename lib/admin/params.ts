@@ -5,6 +5,7 @@ import type {
   ProductDraftOptionGroup,
   ProductDraftPersonalizationField,
 } from "@/lib/admin/types";
+import { normalizeVariantDisplaySize } from "@/lib/product-variants";
 import { normalizeProductPublicationStatus } from "@/lib/product-publication";
 import { normalizeProductVisibility } from "@/lib/product-visibility";
 import { normalizeQuantityPriceTiers } from "@/lib/product-quantity-pricing";
@@ -262,6 +263,7 @@ export function parseProductCreateDraft(raw: string): ProductCreateDraft | null 
                   ? candidate.key
                   : "option",
               inputType,
+              imageDisplaySize: normalizeVariantDisplaySize(candidate.imageDisplaySize),
               isRequired: candidate.isRequired === true,
               minSelect:
                 typeof candidate.minSelect === "number"

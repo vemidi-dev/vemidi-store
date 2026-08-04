@@ -559,15 +559,17 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   }
 
   if (activeTab === "materials") {
-    const materialsResult = await supabase
-      .from("product_materials")
-      .select("id,name,description,image_url,is_active,sort_order,created_at,updated_at")
-      .order("sort_order", { ascending: true })
-      .order("name", { ascending: true });
+    const { loadProductMaterials, loadProductVariantGroups } = await import(
+      "@/lib/admin/variant-data"
+    );
+    const groupsLoaded = await loadProductVariantGroups(supabase);
+    const materialsLoaded = await loadProductMaterials(supabase, groupsLoaded.groups);
 
-    const loadError = materialsResult.error
-      ? "Материалите не могат да бъдат заредени. Изпълнете product_materials.sql."
-      : null;
+    const loadError = materialsLoaded.error
+      ? "Вариантите не могат да бъдат заредени. Изпълнете product_materials.sql и product_variant_groups.sql."
+      : groupsLoaded.error
+        ? "Групите варианти не могат да бъдат заредени напълно — показан е fallback за „Материал“."
+        : null;
 
     return (
       <section className="pb-24 pt-10">
@@ -586,9 +588,8 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               </div>
             ) : null}
             <MaterialManagementPanel
-              materials={
-                (materialsResult.data ?? []) as import("@/lib/admin/types").ProductMaterialRow[]
-              }
+              materials={materialsLoaded.materials}
+              variantGroups={groupsLoaded.groups}
               loadError={loadError}
             />
           </div>
@@ -791,6 +792,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                 colorGroups={data.colorGroups}
                 colorOptions={data.colorOptions}
                 materials={data.materials}
+                variantGroups={data.variantGroups}
                 wishes={data.wishTemplates}
                 wishOccasionLinks={data.wishTemplateOccasions}
                 faqProductGroups={data.faqProductGroups}

@@ -1,0 +1,196 @@
+/**
+ * Variants system helpers.
+ * Rows still live in `product_materials`; option links keep `material_id`.
+ */
+
+export const DEFAULT_VARIANT_GROUP_KEY = "material";
+export const DEFAULT_VARIANT_GROUP_NAME = "Материал";
+
+export const VARIANT_DISPLAY_SIZES = ["small", "medium", "large"] as const;
+
+export type VariantDisplaySize = (typeof VARIANT_DISPLAY_SIZES)[number];
+
+/** Current storefront material cards: 1 col mobile, 2 cols from `sm` (medium). */
+export const DEFAULT_VARIANT_DISPLAY_SIZE: VariantDisplaySize = "medium";
+
+export const VARIANT_DISPLAY_SIZE_LABELS: Record<VariantDisplaySize, string> = {
+  small: "Малък",
+  medium: "Среден",
+  large: "Голям",
+};
+
+const DISPLAY_SIZE_RANK: Record<VariantDisplaySize, number> = {
+  small: 0,
+  medium: 1,
+  large: 2,
+};
+
+export function isVariantDisplaySize(value: unknown): value is VariantDisplaySize {
+  return (
+    typeof value === "string" &&
+    (VARIANT_DISPLAY_SIZES as readonly string[]).includes(value)
+  );
+}
+
+export function normalizeVariantDisplaySize(
+  value: unknown,
+): VariantDisplaySize {
+  return isVariantDisplaySize(value) ? value : DEFAULT_VARIANT_DISPLAY_SIZE;
+}
+
+/**
+ * Storefront grid classes by display size.
+ * - small: 2 mobile / up to 4 desktop
+ * - medium: 1 mobile / 2 desktop (legacy material cards)
+ * - large: 1 per row
+ */
+export function variantDisplaySizeGridClass(
+  size: VariantDisplaySize = DEFAULT_VARIANT_DISPLAY_SIZE,
+): string {
+  switch (size) {
+    case "small":
+      return "grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4";
+    case "large":
+      return "grid grid-cols-1 gap-3";
+    case "medium":
+    default:
+      return "grid grid-cols-1 gap-2 sm:grid-cols-2";
+  }
+}
+
+/** Card shell layout for visual variant option cards. */
+export function variantDisplaySizeCardClass(
+  size: VariantDisplaySize = DEFAULT_VARIANT_DISPLAY_SIZE,
+): string {
+  switch (size) {
+    case "large":
+      return "flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:gap-4 sm:p-4";
+    case "small":
+      return "flex items-center gap-1.5 p-1.5 sm:gap-2 sm:p-2";
+    case "medium":
+    default:
+      return "flex items-center gap-2 p-2";
+  }
+}
+
+/**
+ * Image wrapper size.
+ * - small: compact thumbs
+ * - medium: legacy material thumbs (~48–56px)
+ * - large: ~144px mobile / ~192px desktop for clear visual comparison
+ */
+export function variantDisplaySizeImageClass(
+  size: VariantDisplaySize = DEFAULT_VARIANT_DISPLAY_SIZE,
+): string {
+  switch (size) {
+    case "large":
+      return "h-36 w-36 shrink-0 overflow-hidden rounded-xl border border-boutique-line/70 bg-boutique-bg sm:h-48 sm:w-48";
+    case "small":
+      return "h-10 w-10 shrink-0 overflow-hidden rounded-md border border-boutique-line/70 bg-boutique-bg sm:h-12 sm:w-12 sm:rounded-lg";
+    case "medium":
+    default:
+      return "h-12 w-12 shrink-0 overflow-hidden rounded-md border border-boutique-line/70 bg-boutique-bg sm:h-14 sm:w-14 sm:rounded-lg";
+  }
+}
+
+export function variantDisplaySizeTitleClass(
+  size: VariantDisplaySize = DEFAULT_VARIANT_DISPLAY_SIZE,
+): string {
+  switch (size) {
+    case "large":
+      return "block text-sm font-semibold leading-5 text-boutique-ink sm:text-base sm:leading-6";
+    case "small":
+      return "block text-[11px] font-semibold leading-4 text-boutique-ink sm:text-xs sm:leading-4";
+    case "medium":
+    default:
+      return "block text-xs font-semibold leading-4 text-boutique-ink sm:text-sm sm:leading-5";
+  }
+}
+
+/**
+ * Backward compatibility for older data where display size still lives
+ * on the linked visual variant instead of the product option group.
+ */
+export function resolveLegacyVariantDisplaySizeFallback(
+  sizes: Array<VariantDisplaySize | string | null | undefined>,
+): VariantDisplaySize {
+  for (const raw of sizes) {
+    if (isVariantDisplaySize(raw)) {
+      return raw;
+    }
+  }
+  return DEFAULT_VARIANT_DISPLAY_SIZE;
+}
+
+export function resolveOptionGroupVariantDisplaySize(
+  optionGroupSize: VariantDisplaySize | string | null | undefined,
+  legacyVariantSizes: Array<VariantDisplaySize | string | null | undefined> = [],
+): VariantDisplaySize {
+  if (isVariantDisplaySize(optionGroupSize)) {
+    return optionGroupSize;
+  }
+  return resolveLegacyVariantDisplaySizeFallback(legacyVariantSizes);
+}
+
+const BG_TRANSLIT: Record<string, string> = {
+  а: "a",
+  б: "b",
+  в: "v",
+  г: "g",
+  д: "d",
+  е: "e",
+  ж: "zh",
+  з: "z",
+  и: "i",
+  й: "y",
+  к: "k",
+  л: "l",
+  м: "m",
+  н: "n",
+  о: "o",
+  п: "p",
+  р: "r",
+  с: "s",
+  т: "t",
+  у: "u",
+  ф: "f",
+  х: "h",
+  ц: "ts",
+  ч: "ch",
+  ш: "sh",
+  щ: "sht",
+  ъ: "a",
+  ь: "",
+  ю: "yu",
+  я: "ya",
+};
+
+export function slugifyVariantGroupKey(raw: string): string {
+  const lowered = raw.trim().toLocaleLowerCase("bg");
+  let out = "";
+  for (const char of lowered) {
+    if (BG_TRANSLIT[char]) {
+      out += BG_TRANSLIT[char];
+      continue;
+    }
+    if (/[a-z0-9]/.test(char)) {
+      out += char;
+      continue;
+    }
+    if (/\s|-|_/.test(char)) {
+      out += "_";
+    }
+  }
+  out = out.replace(/_+/g, "_").replace(/^_|_$/g, "");
+  if (!out) {
+    out = "group";
+  }
+  if (!/^[a-z]/.test(out)) {
+    out = `g_${out}`;
+  }
+  return out.slice(0, 64);
+}
+
+export const ADMIN_VARIANTS_TAB_LABEL = "Варианти";
+export const ADMIN_VARIANT_LINK_LABEL = "Свързан вариант със снимка";
+export const ADMIN_VARIANT_LINK_NONE_LABEL = "Без свързан вариант";

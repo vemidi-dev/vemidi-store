@@ -1,4 +1,5 @@
 import type { ProductOptionGroup } from "@/lib/product-options";
+import { resolveOptionGroupVariantDisplaySize } from "@/lib/product-variants";
 
 type OptionGroupRow = {
   id: string;
@@ -15,6 +16,7 @@ type OptionGroupRow = {
   placeholder: string | null;
   max_length: number | null;
   text_price_delta: number;
+  image_display_size?: string | null;
 };
 
 type OptionValueRow = {
@@ -37,6 +39,7 @@ type MaterialRow = {
   name: string;
   description: string | null;
   image_url: string | null;
+  display_size?: string | null;
 };
 
 export function mapProductOptionGroups(
@@ -54,48 +57,65 @@ export function mapProductOptionGroups(
   return groups
     .filter((group) => group.is_active)
     .sort((a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name, "bg"))
-    .map((group) => ({
-      id: group.id,
-      name: group.name,
-      key: group.key,
-      inputType: group.input_type as ProductOptionGroup["inputType"],
-      isRequired: group.is_required,
-      minSelect: group.min_select,
-      maxSelect: group.max_select,
-      sortOrder: group.sort_order,
-      isActive: group.is_active,
-      pricingMode: "delta" as const,
-      dependsOnOptionId: group.depends_on_option_id,
-      placeholder: group.placeholder,
-      maxLength: group.max_length,
-      textPriceDelta: Number(group.text_price_delta) || 0,
-      values: (valuesByGroup.get(group.id) ?? [])
-        .filter((value) => value.is_active)
-        .sort((a, b) => a.sort_order - b.sort_order || a.label.localeCompare(b.label, "bg"))
-        .map((value) => {
-          const materialId = value.material_id ?? null;
-          const materialRow = materialId ? materialsById.get(materialId) : undefined;
-          return {
-            id: value.id,
-            label: value.label,
-            key: value.key,
-            priceDelta: Number(value.price_delta) || 0,
-            isDefault: value.is_default,
-            isActive: value.is_active,
-            isSoldOut: value.is_sold_out,
-            imageUrl: value.image_url ?? null,
-            materialId,
-            material: materialRow
-              ? {
-                  id: materialRow.id,
-                  name: materialRow.name,
-                  description: materialRow.description,
-                  imageUrl: materialRow.image_url,
-                }
-              : null,
-            sku: value.sku,
-            sortOrder: value.sort_order,
-          };
-        }),
-    }));
+    .map((group) => {
+      const legacyMaterialSizes = (valuesByGroup.get(group.id) ?? [])
+        .map((value) => value.material_id ?? null)
+        .map((materialId) =>
+          materialId ? materialsById.get(materialId)?.display_size ?? null : null,
+        );
+      return {
+        id: group.id,
+        name: group.name,
+        key: group.key,
+        inputType: group.input_type as ProductOptionGroup["inputType"],
+        imageDisplaySize: resolveOptionGroupVariantDisplaySize(
+          group.image_display_size,
+          legacyMaterialSizes,
+        ),
+        isRequired: group.is_required,
+        minSelect: group.min_select,
+        maxSelect: group.max_select,
+        sortOrder: group.sort_order,
+        isActive: group.is_active,
+        pricingMode: "delta" as const,
+        dependsOnOptionId: group.depends_on_option_id,
+        placeholder: group.placeholder,
+        maxLength: group.max_length,
+        textPriceDelta: Number(group.text_price_delta) || 0,
+        values: (valuesByGroup.get(group.id) ?? [])
+          .filter((value) => value.is_active)
+          .sort((a, b) => a.sort_order - b.sort_order || a.label.localeCompare(b.label, "bg"))
+          .map((value) => {
+            const materialId = value.material_id ?? null;
+            const materialRow = materialId ? materialsById.get(materialId) : undefined;
+            return {
+              id: value.id,
+              label: value.label,
+              key: value.key,
+              priceDelta: Number(value.price_delta) || 0,
+              isDefault: value.is_default,
+              isActive: value.is_active,
+              isSoldOut: value.is_sold_out,
+              imageUrl: value.image_url ?? null,
+              materialId,
+              material: materialRow
+                ? {
+                    id: materialRow.id,
+                    name: materialRow.name,
+                    description: materialRow.description,
+                    imageUrl: materialRow.image_url,
+                    displaySize:
+                      materialRow.display_size === "small" ||
+                      materialRow.display_size === "medium" ||
+                      materialRow.display_size === "large"
+                        ? materialRow.display_size
+                        : "medium",
+                  }
+                : null,
+              sku: value.sku,
+              sortOrder: value.sort_order,
+            };
+          }),
+      };
+    });
 }

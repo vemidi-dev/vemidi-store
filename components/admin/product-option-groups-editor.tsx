@@ -3,11 +3,24 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { adminFormFields } from "@/lib/admin/form-fields";
-import type { ParsedOptionGroup, ParsedOptionValue, ProductMaterialRow } from "@/lib/admin/types";
+import type {
+  ParsedOptionGroup,
+  ParsedOptionValue,
+  ProductMaterialRow,
+  ProductVariantGroupRow,
+} from "@/lib/admin/types";
 import {
   calculateOptionFinalPrice,
   formatPriceDelta,
 } from "@/lib/product-option-pricing";
+import {
+  DEFAULT_VARIANT_DISPLAY_SIZE,
+  DEFAULT_VARIANT_GROUP_KEY,
+  DEFAULT_VARIANT_GROUP_NAME,
+  VARIANT_DISPLAY_SIZE_LABELS,
+  VARIANT_DISPLAY_SIZES,
+  normalizeVariantDisplaySize,
+} from "@/lib/product-variants";
 
 type InitialOptionGroup = ParsedOptionGroup;
 
@@ -26,6 +39,7 @@ type ProductOptionGroupsEditorProps = {
   allDependencyOptions: Array<{ id: string; label: string; groupName: string }>;
   productImages?: Array<{ src: string; label: string }>;
   materials?: ProductMaterialRow[];
+  variantGroups?: ProductVariantGroupRow[];
   basePrice: number;
   helperClassName: string;
   fieldClassName: string;
@@ -86,6 +100,7 @@ function toLocalGroup(
 ): LocalGroup {
   return {
     ...group,
+    imageDisplaySize: normalizeVariantDisplaySize(group.imageDisplaySize),
     uid: group.id ?? crypto.randomUUID(),
     sortOrder: group.sortOrder ?? index,
     values: group.values.map((value, valueIndex) => ({
@@ -108,6 +123,7 @@ function makeEmptyGroup(sortOrder: number, basePrice: number): LocalGroup {
     name: "",
     key: "",
     inputType: "single",
+    imageDisplaySize: DEFAULT_VARIANT_DISPLAY_SIZE,
     isRequired: true,
     minSelect: 1,
     maxSelect: 1,
@@ -167,6 +183,11 @@ function OptionGroupCollapsedFields({
       <input type="hidden" name={adminFormFields.optionGroup.names} value={group.name} />
       <input type="hidden" name={adminFormFields.optionGroup.inputTypes} value={group.inputType} />
       <input type="hidden" name={adminFormFields.optionGroup.keys} value={group.key} />
+      <input
+        type="hidden"
+        name={adminFormFields.optionGroup.imageDisplaySizes}
+        value={group.imageDisplaySize}
+      />
       <input
         type="hidden"
         name={adminFormFields.optionGroup.dependsOnOptionIds}
@@ -232,6 +253,7 @@ export function ProductOptionGroupsEditor({
   allDependencyOptions,
   productImages = [],
   materials = [],
+  variantGroups = [],
   basePrice: initialBasePrice,
   helperClassName,
   fieldClassName,
@@ -325,6 +347,7 @@ export function ProductOptionGroupsEditor({
       {groups.map((group, index) => {
         const isOpen = openUid === group.uid;
         const valueCount = isChoiceType(group.inputType) ? group.values.length : 0;
+        const hasLinkedVisualVariants = group.values.some((value) => Boolean(value.materialId));
         return (
           <details
             key={group.uid}
@@ -375,6 +398,11 @@ export function ProductOptionGroupsEditor({
                 type="hidden"
                 name={adminFormFields.optionGroup.valuesJson}
                 value={serializeGroupValuesJson(group)}
+              />
+              <input
+                type="hidden"
+                name={adminFormFields.optionGroup.imageDisplaySizes}
+                value={group.imageDisplaySize}
               />
 
               <div className="grid gap-4 md:grid-cols-2">
@@ -461,6 +489,34 @@ export function ProductOptionGroupsEditor({
                   <input type="hidden" name={adminFormFields.optionGroup.placeholders} value="" />
                   <input type="hidden" name={adminFormFields.optionGroup.maxLengths} value="" />
                   <input type="hidden" name={adminFormFields.optionGroup.textPriceDeltas} value="0" />
+                  {hasLinkedVisualVariants ? (
+                    <div className="rounded-xl border border-boutique-line bg-boutique-bg px-4 py-3">
+                      <label className="text-sm font-medium text-boutique-ink">
+                        Размер на снимките
+                        <select
+                          className={fieldClassName}
+                          value={group.imageDisplaySize}
+                          onChange={(event) =>
+                            updateGroup(group.uid, {
+                              imageDisplaySize: normalizeVariantDisplaySize(event.target.value),
+                            })
+                          }
+                          name={adminFormFields.optionGroup.imageDisplaySizes}
+                        >
+                          {VARIANT_DISPLAY_SIZES.map((size) => (
+                            <option key={size} value={size}>
+                              {VARIANT_DISPLAY_SIZE_LABELS[size]}
+                            </option>
+                          ))}
+                        </select>
+                        <span className="mt-1 block text-xs font-normal text-boutique-muted">
+                          Малки: компактни карти, подходящи при много варианти; Средни:
+                          текущият вид, 2 на ред; Големи: 1 на ред, когато клиентът
+                          трябва ясно да сравни изображенията.
+                        </span>
+                      </label>
+                    </div>
+                  ) : null}
                 </>
               ) : (
                 <>
@@ -788,10 +844,10 @@ export function ProductOptionGroupsEditor({
                           </span>
                         </div>
                         <div className="text-sm font-medium text-boutique-ink md:col-span-3">
-                          <span>Материал</span>
+                          <span>Свързан вариант със снимка</span>
                           <div className="mt-2 flex flex-wrap items-start gap-3">
                             <label className="min-w-[min(100%,16rem)] flex-1">
-                              <span className="sr-only">Материал</span>
+                              <span className="sr-only">Свързан вариант със снимка</span>
                               <select
                                 className={fieldClassName}
                                 value={value.materialId ?? ""}
@@ -805,19 +861,68 @@ export function ProductOptionGroupsEditor({
                                   updateGroup(group.uid, { values: nextValues });
                                 }}
                               >
-                                <option value="">Без материал</option>
-                                {materials
-                                  .filter(
-                                    (material) =>
-                                      material.is_active ||
-                                      material.id === value.materialId,
-                                  )
-                                  .map((material) => (
-                                    <option key={material.id} value={material.id}>
-                                      {material.name}
-                                      {!material.is_active ? " (неактивен)" : ""}
-                                    </option>
-                                  ))}
+                                <option value="">Без свързан вариант</option>
+                                {(() => {
+                                  const sortedGroups = [...variantGroups].sort(
+                                    (left, right) =>
+                                      left.sort_order - right.sort_order ||
+                                      left.name.localeCompare(right.name, "bg"),
+                                  );
+                                  const fallbackGroupName = DEFAULT_VARIANT_GROUP_NAME;
+                                  const groupNameById = new Map(
+                                    sortedGroups.map((group) => [group.id, group.name]),
+                                  );
+                                  const byGroup = new Map<string, ProductMaterialRow[]>();
+                                  for (const material of materials) {
+                                    if (
+                                      !material.is_active &&
+                                      material.id !== value.materialId
+                                    ) {
+                                      continue;
+                                    }
+                                    const key =
+                                      material.group_id &&
+                                      groupNameById.has(material.group_id)
+                                        ? material.group_id
+                                        : sortedGroups.find(
+                                            (group) =>
+                                              group.key === DEFAULT_VARIANT_GROUP_KEY,
+                                          )?.id || "__ungrouped__";
+                                    const list = byGroup.get(key) ?? [];
+                                    list.push(material);
+                                    byGroup.set(key, list);
+                                  }
+
+                                  const orderedKeys = [
+                                    ...sortedGroups.map((group) => group.id),
+                                    ...[...byGroup.keys()].filter(
+                                      (key) =>
+                                        !sortedGroups.some((group) => group.id === key),
+                                    ),
+                                  ];
+
+                                  return orderedKeys.map((groupId) => {
+                                    const list = byGroup.get(groupId);
+                                    if (!list?.length) {
+                                      return null;
+                                    }
+                                    const label =
+                                      groupNameById.get(groupId) || fallbackGroupName;
+                                    return (
+                                      <optgroup key={groupId} label={label}>
+                                        {list.map((material) => (
+                                          <option
+                                            key={material.id}
+                                            value={material.id}
+                                          >
+                                            {material.name}
+                                            {!material.is_active ? " (неактивен)" : ""}
+                                          </option>
+                                        ))}
+                                      </optgroup>
+                                    );
+                                  });
+                                })()}
                               </select>
                             </label>
                             {(() => {
@@ -827,6 +932,10 @@ export function ProductOptionGroupsEditor({
                               if (!selected) {
                                 return null;
                               }
+                              const groupLabel =
+                                variantGroups.find(
+                                  (group) => group.id === selected.group_id,
+                                )?.name || DEFAULT_VARIANT_GROUP_NAME;
                               return (
                                 <div className="flex max-w-xs items-start gap-2 rounded-lg border border-boutique-line bg-white/80 p-2">
                                   {selected.image_url ? (
@@ -840,6 +949,9 @@ export function ProductOptionGroupsEditor({
                                     />
                                   ) : null}
                                   <div className="min-w-0">
+                                    <p className="truncate text-[10px] font-semibold uppercase tracking-wider text-boutique-muted">
+                                      {groupLabel}
+                                    </p>
                                     <p className="truncate text-xs font-semibold text-boutique-ink">
                                       {selected.name}
                                     </p>
@@ -854,7 +966,8 @@ export function ProductOptionGroupsEditor({
                             })()}
                           </div>
                           <span className="mt-1 block text-xs font-normal text-boutique-muted">
-                            По избор. Засега се записва към варианта; показване като cards идва в следващ UX етап.
+                            По избор. Свързва option value с визуален вариант (снимка +
+                            описание) от която и да е група.
                           </span>
                         </div>
                         <button

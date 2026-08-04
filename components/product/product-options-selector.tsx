@@ -18,6 +18,14 @@ import {
   isChoiceOptionGroup,
   isTextOptionGroup,
 } from "@/lib/product-options";
+import {
+  resolveOptionGroupVariantDisplaySize,
+  variantDisplaySizeCardClass,
+  variantDisplaySizeGridClass,
+  variantDisplaySizeImageClass,
+  variantDisplaySizeTitleClass,
+  type VariantDisplaySize,
+} from "@/lib/product-variants";
 
 type ProductOptionsSelectorProps = {
   basePrice: number;
@@ -38,6 +46,7 @@ function MaterialOptionCard({
   priceLabel,
   selection,
   updateSelection,
+  displaySize,
 }: {
   option: ProductOptionValue;
   group: ProductOptionGroup;
@@ -45,14 +54,16 @@ function MaterialOptionCard({
   priceLabel: string | null;
   selection: ProductOptionSelection;
   updateSelection: (groupId: string, next: ProductOptionSelection) => void;
+  displaySize: VariantDisplaySize;
 }) {
   const material = option.material;
   const title = material?.name?.trim() || option.label;
   const description = material?.description?.trim() || null;
+  const isLarge = displaySize === "large";
 
   return (
     <label
-      className={`relative flex cursor-pointer items-center gap-2 overflow-hidden rounded-lg border bg-white p-2 text-left transition duration-200 ease-out motion-reduce:transition-none ${
+      className={`relative cursor-pointer overflow-hidden rounded-lg border bg-white text-left transition duration-200 ease-out motion-reduce:transition-none ${variantDisplaySizeCardClass(displaySize)} ${
         option.isSoldOut
           ? "cursor-not-allowed border-boutique-line/60 opacity-60"
           : selected
@@ -82,7 +93,7 @@ function MaterialOptionCard({
           });
         }}
       />
-      <span className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md border border-boutique-line/70 bg-boutique-bg sm:h-14 sm:w-14 sm:rounded-lg">
+      <span className={`relative ${variantDisplaySizeImageClass(displaySize)}`}>
         {material?.imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -91,22 +102,34 @@ function MaterialOptionCard({
             className="h-full w-full object-cover"
           />
         ) : (
-          <span className="flex h-full items-center justify-center px-1 text-center text-[9px] font-medium leading-tight text-boutique-muted">
+          <span
+            className={`flex h-full items-center justify-center px-1 text-center font-medium leading-tight text-boutique-muted ${
+              isLarge ? "text-sm" : "text-[9px]"
+            }`}
+          >
             {title.slice(0, 2)}
           </span>
         )}
       </span>
-      <span className="min-w-0 flex-1 pr-5">
-        <span className="block text-xs font-semibold leading-4 text-boutique-ink sm:text-sm sm:leading-5">
+      <span className={`min-w-0 flex-1 ${isLarge ? "pr-7 sm:self-center" : "pr-5"}`}>
+        <span className={variantDisplaySizeTitleClass(displaySize)}>
           {title}
         </span>
         {description ? (
-          <span className="mt-0.5 line-clamp-2 block text-[11px] leading-4 text-boutique-muted">
+          <span
+            className={`mt-0.5 line-clamp-2 block leading-4 text-boutique-muted ${
+              isLarge ? "text-xs sm:mt-1 sm:line-clamp-3 sm:text-sm sm:leading-5" : "text-[11px]"
+            }`}
+          >
             {description}
           </span>
         ) : null}
         {priceLabel ? (
-          <span className="mt-1 block text-xs font-semibold text-boutique-ink sm:text-sm">
+          <span
+            className={`mt-1 block font-semibold text-boutique-ink ${
+              isLarge ? "text-sm sm:mt-2 sm:text-base" : "text-xs sm:text-sm"
+            }`}
+          >
             {priceLabel}
           </span>
         ) : null}
@@ -118,7 +141,11 @@ function MaterialOptionCard({
       </span>
       {selected ? (
         <span
-          className="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-boutique-sage-deep text-[10px] font-bold text-white shadow-sm"
+          className={`absolute flex items-center justify-center rounded-full bg-boutique-sage-deep font-bold text-white shadow-sm ${
+            isLarge
+              ? "right-2.5 top-2.5 h-6 w-6 text-xs"
+              : "right-1.5 top-1.5 h-5 w-5 text-[10px]"
+          }`}
           aria-hidden
         >
           ✓
@@ -336,6 +363,10 @@ export function ProductOptionsSelector({
           const compactValues = useMaterialCards
             ? activeValues.filter((option) => !optionValueSupportsMaterialCard(option))
             : activeValues;
+          const materialDisplaySize = resolveOptionGroupVariantDisplaySize(
+            group.imageDisplaySize,
+            materialValues.map((option) => option.material?.displaySize),
+          );
 
           return (
             <fieldset key={group.id}>
@@ -344,7 +375,9 @@ export function ProductOptionsSelector({
                 {group.isRequired ? " *" : ""}
               </legend>
               {materialValues.length ? (
-                <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <div
+                  className={`mt-2 ${variantDisplaySizeGridClass(materialDisplaySize)}`}
+                >
                   {materialValues.map((option) => {
                     const selected = selection.valueIds.includes(option.id);
                     const priceLabel = formatOptionChoicePrice(
@@ -361,6 +394,7 @@ export function ProductOptionsSelector({
                         priceLabel={priceLabel}
                         selection={selection}
                         updateSelection={updateSelection}
+                        displaySize={materialDisplaySize}
                       />
                     );
                   })}

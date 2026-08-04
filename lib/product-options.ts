@@ -10,6 +10,8 @@ export type ProductOptionMaterial = {
   name: string;
   description: string | null;
   imageUrl: string | null;
+  /** Stage 1: optional; storefront still uses medium (2/row) layout. */
+  displaySize?: "small" | "medium" | "large" | null;
 };
 
 export type ProductOptionValue = {
@@ -32,6 +34,7 @@ export type ProductOptionGroup = {
   name: string;
   key: string;
   inputType: ProductOptionInputType;
+  imageDisplaySize?: "small" | "medium" | "large" | null;
   isRequired: boolean;
   minSelect: number;
   maxSelect: number;
