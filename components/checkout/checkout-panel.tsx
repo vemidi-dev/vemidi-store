@@ -144,7 +144,23 @@ export function CheckoutPanel({ content }: { content: CheckoutPageContent }) {
   useEffect(() => {
     if (state.ok) {
       if (state.purchase) {
-        window.sessionStorage.setItem(PURCHASE_STORAGE_KEY, JSON.stringify(state.purchase));
+        // Enrich analytics payload client-side (no checkout RPC changes).
+        // Uses cart line slugs/qty/price + confirmation orderRef for Meta Purchase.
+        window.sessionStorage.setItem(
+          PURCHASE_STORAGE_KEY,
+          JSON.stringify({
+            ...state.purchase,
+            ...(state.confirmation?.orderRef
+              ? { orderRef: state.confirmation.orderRef }
+              : {}),
+            contentIds: lines.map((line) => line.slug).filter(Boolean),
+            contents: lines.map((line) => ({
+              id: line.slug,
+              quantity: line.quantity,
+              item_price: line.price,
+            })),
+          }),
+        );
       }
       if (state.confirmation?.orderRef) {
         window.sessionStorage.setItem(
@@ -158,6 +174,7 @@ export function CheckoutPanel({ content }: { content: CheckoutPageContent }) {
       clear();
       router.replace("/thank-you");
     }
+    // `lines` intentionally omitted from deps: capture cart contents at success render.
   }, [clear, router, state.confirmation, state.ok, state.purchase]);
 
   if (state.ok) {
