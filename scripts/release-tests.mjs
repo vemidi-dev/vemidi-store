@@ -84,6 +84,7 @@ const releaseTestGroups = [
       "tests/robots-config.test.ts",
       "tests/canonical-produkti-route.test.ts",
       "tests/seo-editor-mvp.test.ts",
+      "tests/google-merchant-feed.test.ts",
     ],
   },
 ];
