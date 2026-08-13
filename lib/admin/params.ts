@@ -30,7 +30,8 @@ export function normalizeAdminTab(value: string): AdminTab {
     value === "wishes" ||
     value === "subscribers" ||
     value === "content" ||
-    value === "faq"
+    value === "faq" ||
+    value === "seo"
   ) {
     return value;
   }

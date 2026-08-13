@@ -129,6 +129,7 @@ test("all current admin tabs are accepted", () => {
     "wishes",
     "subscribers",
     "content",
+    "seo",
   ] as const) {
     formData.set(adminFormFields.common.tab, tab);
     assert.equal(getAdminTab(formData, "products"), tab);

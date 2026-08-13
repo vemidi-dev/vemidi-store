@@ -346,6 +346,8 @@ export function ProductCreatePanel({
         />
 
         <ProductContentSeoFields
+          previewName={activeDraft?.name}
+          previewDescription={activeDraft?.description}
           defaults={{
             meta_title: activeDraft?.metaTitle ?? "",
             meta_description: activeDraft?.metaDescription ?? "",

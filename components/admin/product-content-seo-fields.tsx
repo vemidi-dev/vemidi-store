@@ -1,16 +1,27 @@
 import { AdminSectionAccordion } from "@/components/admin/admin-section-accordion";
+import { SeoResolvedPreview } from "@/components/admin/seo-resolved-preview";
 import { adminFieldClass, adminHelperClass } from "@/components/admin/styles";
 import {
   getProductContentFormDefaults,
   productContentLimits,
 } from "@/lib/admin/product-content";
+import { resolveProductSeoPreview } from "@/lib/admin/seo-resolved-preview";
 import { adminFormFields } from "@/lib/admin/form-fields";
 import type { ProductRow } from "@/lib/admin/types";
 
 type ProductContentSeoFieldsProps = {
   product?: Pick<
     ProductRow,
-    "meta_title" | "meta_description" | "og_title" | "og_description"
+    | "name"
+    | "description"
+    | "meta_title"
+    | "meta_description"
+    | "og_title"
+    | "og_description"
+    | "is_customizable"
+    | "fulfillment_type"
+    | "fulfillment_note"
+    | "card_badge"
   >;
   defaults?: {
     meta_title?: string;
@@ -18,18 +29,44 @@ type ProductContentSeoFieldsProps = {
     og_title?: string;
     og_description?: string;
   };
+  /** Optional display name when creating (no saved product row yet). */
+  previewName?: string;
+  previewDescription?: string;
+  primaryCategoryName?: string | null;
+  primaryCategorySlug?: string | null;
   className?: string;
 };
 
 export function ProductContentSeoFields({
   product,
   defaults: defaultsOverride,
+  previewName,
+  previewDescription,
+  primaryCategoryName,
+  primaryCategorySlug,
   className = "mt-4",
 }: ProductContentSeoFieldsProps) {
   const defaults = {
     ...getProductContentFormDefaults(product),
     ...defaultsOverride,
   };
+
+  const resolvedPreview = resolveProductSeoPreview({
+    name: product?.name || previewName || "Продукт",
+    description: product?.description ?? previewDescription ?? "",
+    meta_title: defaults.meta_title,
+    meta_description: defaults.meta_description,
+    og_title: defaults.og_title,
+    og_description: defaults.og_description,
+    customizable: product?.is_customizable,
+    fulfillmentType: product?.fulfillment_type,
+    fulfillmentNote: product?.fulfillment_note,
+    cardBadge: product?.card_badge,
+    primaryCategory:
+      primaryCategoryName && primaryCategorySlug
+        ? { name: primaryCategoryName, slug: primaryCategorySlug }
+        : null,
+  });
 
   return (
     <AdminSectionAccordion
@@ -96,6 +133,8 @@ export function ProductContentSeoFields({
           </span>
         </label>
       </div>
+
+      <SeoResolvedPreview preview={resolvedPreview} className="mt-5 md:col-span-2" />
     </AdminSectionAccordion>
   );
 }

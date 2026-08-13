@@ -25,6 +25,7 @@ import { PromotionManagementPanel } from "@/components/admin/promotion-managemen
 import { DiscountCouponPanel } from "@/components/admin/discount-coupon-panel";
 import { WishManagementPanel } from "@/components/admin/wish-management-panel";
 import { FaqManagementPanel } from "@/components/admin/faq-management-panel";
+import { SeoOverviewPanel } from "@/components/admin/seo-overview-panel";
 import { PageContainer } from "@/components/layout/page-container";
 import { loadAdminData } from "@/lib/admin/data";
 import { buildProductCountByCategoryId } from "@/lib/admin/category-stats";
@@ -40,6 +41,7 @@ import { createClient } from "@/lib/supabase/server";
 import { buildOrderNotificationSummaries } from "@/lib/admin/order-notifications";
 import type { OrderNotificationSummary } from "@/lib/admin/order-notifications";
 import { loadOrdersPage, parseOrdersQuery } from "@/lib/admin/orders";
+import type { CategoryRow, ProductRow } from "@/lib/admin/types";
 import { loadWithdrawalsPage, parseWithdrawalsQuery } from "@/lib/admin/withdrawals";
 import { loadOrderNotificationDeliveries } from "@/lib/orders/order-notification-outbox";
 import {
@@ -292,6 +294,78 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             <SiteMediaManagementPanel
               rows={(siteMediaResult.data ?? []) as SiteMediaRow[]}
               error={siteMediaResult.error?.message ?? null}
+            />
+          </div>
+        </PageContainer>
+      </section>
+    );
+  }
+
+  if (activeTab === "seo") {
+    const [productsResult, categoriesResult] = await Promise.all([
+      supabase
+        .from("products")
+        .select(
+          "id,name,slug,meta_title,meta_description,og_title,og_description",
+        )
+        .order("name", { ascending: true }),
+      supabase
+        .from("categories")
+        .select(
+          "id,name,slug,category_type,meta_title,meta_description,og_title,og_description,robots_index",
+        )
+        .order("name", { ascending: true }),
+    ]);
+
+    return (
+      <section className="pb-24 pt-10">
+        <PageContainer>
+          <div className="mx-auto max-w-6xl space-y-8">
+            <AdminHeader activeTab={activeTab} />
+            {success || error ? (
+              <div
+                className={`rounded-xl border px-4 py-3 text-sm ${
+                  error
+                    ? "border-red-200 bg-red-50 text-red-700"
+                    : "border-emerald-200 bg-emerald-50 text-emerald-700"
+                }`}
+              >
+                {error || success}
+              </div>
+            ) : null}
+            <SeoOverviewPanel
+              products={
+                (productsResult.data ?? []) as Array<
+                  Pick<
+                    ProductRow,
+                    | "id"
+                    | "name"
+                    | "slug"
+                    | "meta_title"
+                    | "meta_description"
+                    | "og_title"
+                    | "og_description"
+                  >
+                >
+              }
+              categories={
+                (categoriesResult.data ?? []) as Array<
+                  Pick<
+                    CategoryRow,
+                    | "id"
+                    | "name"
+                    | "slug"
+                    | "category_type"
+                    | "meta_title"
+                    | "meta_description"
+                    | "og_title"
+                    | "og_description"
+                    | "robots_index"
+                  >
+                >
+              }
+              productsError={productsResult.error?.message ?? null}
+              categoriesError={categoriesResult.error?.message ?? null}
             />
           </div>
         </PageContainer>

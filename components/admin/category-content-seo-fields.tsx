@@ -1,15 +1,20 @@
 import { AdminSectionAccordion } from "@/components/admin/admin-section-accordion";
+import { SeoResolvedPreview } from "@/components/admin/seo-resolved-preview";
 import { adminFieldClass, adminHelperClass } from "@/components/admin/styles";
 import {
   categoryContentLimits,
   getCategoryContentFormDefaults,
 } from "@/lib/admin/category-content";
+import { resolveCategorySeoPreview } from "@/lib/admin/seo-resolved-preview";
 import { adminFormFields } from "@/lib/admin/form-fields";
 import type { CategoryRow } from "@/lib/admin/types";
 
 type CategoryContentSeoFieldsProps = {
   category?: Pick<
     CategoryRow,
+    | "name"
+    | "category_type"
+    | "card_description"
     | "hero_description"
     | "listing_heading"
     | "intro_text"
@@ -20,14 +25,28 @@ type CategoryContentSeoFieldsProps = {
     | "og_description"
     | "robots_index"
   >;
+  /** Used for create forms when category row is not yet saved. */
+  previewName?: string;
+  previewCategoryType?: CategoryRow["category_type"];
   className?: string;
 };
 
 export function CategoryContentSeoFields({
   category,
+  previewName,
+  previewCategoryType = "product",
   className = "mt-4",
 }: CategoryContentSeoFieldsProps) {
   const defaults = getCategoryContentFormDefaults(category);
+  const resolvedPreview = resolveCategorySeoPreview({
+    name: category?.name || previewName || "Категория",
+    category_type: category?.category_type ?? previewCategoryType,
+    card_description: category?.card_description,
+    meta_title: defaults.meta_title,
+    meta_description: defaults.meta_description,
+    og_title: defaults.og_title,
+    og_description: defaults.og_description,
+  });
 
   return (
     <AdminSectionAccordion
@@ -170,6 +189,8 @@ export function CategoryContentSeoFields({
           </span>
         </label>
       </div>
+
+      <SeoResolvedPreview preview={resolvedPreview} className="mt-5" />
     </AdminSectionAccordion>
   );
 }

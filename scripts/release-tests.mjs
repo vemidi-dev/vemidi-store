@@ -83,6 +83,7 @@ const releaseTestGroups = [
       "tests/info-page-metadata.test.ts",
       "tests/robots-config.test.ts",
       "tests/canonical-produkti-route.test.ts",
+      "tests/seo-editor-mvp.test.ts",
     ],
   },
 ];

@@ -189,7 +189,8 @@ export function getAdminTab(formData: FormData, fallback: AdminTab): AdminTab {
     raw === "wishes" ||
     raw === "subscribers" ||
     raw === "content" ||
-    raw === "faq"
+    raw === "faq" ||
+    raw === "seo"
     ? raw
     : fallback;
 }
