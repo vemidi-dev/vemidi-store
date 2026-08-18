@@ -6,6 +6,7 @@ import {
   buildMetaPurchasePayload,
   buildMetaViewContentPayload,
   getMetaPixelId,
+  resolveMetaPurchaseEventId,
   shouldLoadMetaPixel,
   type MetaPixelEcommercePayload,
   type MetaPixelPurchasePayload,
@@ -43,6 +44,7 @@ function trackMetaPixel(
   eventName: string,
   payload?: MetaPixelEcommercePayload | MetaPixelPurchasePayload,
   preferences?: CookieConsentPreferences | null,
+  options?: { eventID?: string },
 ) {
   if (typeof window === "undefined" || typeof window.fbq !== "function") {
     return;
@@ -52,6 +54,11 @@ function trackMetaPixel(
   const pixelId = getMetaPixelId();
 
   if (!shouldLoadMetaPixel(resolvedPreferences, pixelId)) {
+    return;
+  }
+
+  if (payload && options?.eventID) {
+    window.fbq("track", eventName, payload, { eventID: options.eventID });
     return;
   }
 
@@ -68,7 +75,7 @@ export function ensureMetaPixelScript(pixelId: string) {
     return;
   }
 
-  const selector = `script[data-vemidi-meta-pixel-loader="${pixelId}"]`;
+  const selector = `script[data-meta-pixel-loader="${pixelId}"]`;
 
   if (document.querySelector(selector)) {
     return;
@@ -94,7 +101,7 @@ export function ensureMetaPixelScript(pixelId: string) {
   const script = document.createElement("script");
   script.async = true;
   script.src = "https://connect.facebook.net/en_US/fbevents.js";
-  script.setAttribute("data-vemidi-meta-pixel-loader", pixelId);
+  script.setAttribute("data-meta-pixel-loader", pixelId);
   document.head.appendChild(script);
 }
 
@@ -151,5 +158,9 @@ export function trackMetaPurchase(
     "Purchase",
     buildMetaPurchasePayload(purchase),
     preferences,
+    (() => {
+      const eventID = resolveMetaPurchaseEventId(purchase.orderRef);
+      return eventID ? { eventID } : undefined;
+    })(),
   );
 }

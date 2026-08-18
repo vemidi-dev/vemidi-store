@@ -6,10 +6,21 @@ export type OrderConfirmationPayload = {
   issuedAt: number;
 };
 
+export type PurchaseAnalyticsContentItem = {
+  id: string;
+  quantity: number;
+  item_price?: number;
+};
+
 export type PurchaseAnalyticsPayload = {
   value: number;
   currency: string;
   itemCount: number;
+  /** Non-PII product identifiers (storefront slugs). */
+  contentIds?: string[];
+  contents?: PurchaseAnalyticsContentItem[];
+  /** Short public order reference — safe for Meta `eventID` / future CAPI dedup. */
+  orderRef?: string;
 };
 
 export function formatOrderReference(orderId: string): string {
@@ -78,10 +89,44 @@ export function parsePurchaseAnalyticsPayload(
       return null;
     }
 
+    const contentIds = Array.isArray(value.contentIds)
+      ? value.contentIds
+          .filter((id): id is string => typeof id === "string" && Boolean(id.trim()))
+          .map((id) => id.trim())
+      : undefined;
+
+    const contents = Array.isArray(value.contents)
+      ? value.contents
+          .filter(
+            (item): item is PurchaseAnalyticsContentItem =>
+              Boolean(item) &&
+              typeof item === "object" &&
+              typeof (item as PurchaseAnalyticsContentItem).id === "string" &&
+              Boolean((item as PurchaseAnalyticsContentItem).id.trim()) &&
+              typeof (item as PurchaseAnalyticsContentItem).quantity === "number" &&
+              Number.isFinite((item as PurchaseAnalyticsContentItem).quantity),
+          )
+          .map((item) => ({
+            id: item.id.trim(),
+            quantity: Math.max(1, Math.floor(item.quantity)),
+            ...(typeof item.item_price === "number" && Number.isFinite(item.item_price)
+              ? { item_price: item.item_price }
+              : {}),
+          }))
+      : undefined;
+
+    const orderRef =
+      typeof value.orderRef === "string" && value.orderRef.trim()
+        ? value.orderRef.trim()
+        : undefined;
+
     return {
       value: value.value,
       currency: value.currency,
       itemCount: Math.floor(value.itemCount),
+      ...(contentIds && contentIds.length > 0 ? { contentIds } : {}),
+      ...(contents && contents.length > 0 ? { contents } : {}),
+      ...(orderRef ? { orderRef } : {}),
     };
   } catch {
     return null;

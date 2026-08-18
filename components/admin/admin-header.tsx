@@ -5,6 +5,7 @@ import type { AdminTab } from "@/lib/admin/types";
 const managementTabs: Array<{ tab: AdminTab; label: string }> = [
   { tab: "products", label: "Продукти" },
   { tab: "categories", label: "Категории" },
+  { tab: "seo", label: "SEO" },
   { tab: "colors", label: "Цветове" },
   { tab: "materials", label: "Варианти" },
   { tab: "promotions", label: "Промоции" },

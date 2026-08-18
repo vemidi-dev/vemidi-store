@@ -702,7 +702,21 @@ export function ProductListPanel({
                         helperClassName={adminHelperClass}
                         fieldClassName={adminFieldClass}
                       />
-                      <ProductContentSeoFields product={product} />
+                      <ProductContentSeoFields
+                        product={product}
+                        primaryCategoryName={
+                          product.primary_category_id
+                            ? categoryById.get(product.primary_category_id)?.name ??
+                              null
+                            : null
+                        }
+                        primaryCategorySlug={
+                          product.primary_category_id
+                            ? categoryById.get(product.primary_category_id)?.slug ??
+                              null
+                            : null
+                        }
+                      />
                     </div>
 
                     <fieldset className="rounded-lg border border-boutique-line/70 bg-boutique-bg p-3 md:col-span-2">

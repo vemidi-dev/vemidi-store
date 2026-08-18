@@ -57,4 +57,16 @@ test("parsePurchaseAnalyticsPayload validates purchase event data", () => {
     parsePurchaseAnalyticsPayload(JSON.stringify({ value: -1, currency: "EUR", itemCount: 1 })),
     null,
   );
+
+  const withMetaFields = parsePurchaseAnalyticsPayload(
+    JSON.stringify({
+      value: 10,
+      currency: "EUR",
+      itemCount: 1,
+      orderRef: "ABCD1234",
+      contentIds: ["slug-a"],
+    }),
+  );
+  assert.equal(withMetaFields?.orderRef, "ABCD1234");
+  assert.deepEqual(withMetaFields?.contentIds, ["slug-a"]);
 });
