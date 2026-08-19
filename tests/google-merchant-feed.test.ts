@@ -247,7 +247,7 @@ test("availability mapping covers stock made-to-order and out of stock", () => {
       fulfillmentType: "made_to_order",
       soldOut: false,
     }),
-    "preorder",
+    "in_stock",
   );
   assert.equal(
     mapMerchantAvailability({
