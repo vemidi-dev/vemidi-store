@@ -16,8 +16,7 @@ import type { StorefrontCategory, StorefrontProduct } from "@/lib/storefront/typ
 
 export type GoogleMerchantAvailability =
   | "in_stock"
-  | "out_of_stock"
-  | "preorder";
+  | "out_of_stock";
 
 export type GoogleMerchantFeedItem = {
   id: string;
@@ -62,7 +61,8 @@ export function formatMerchantPriceEur(amount: number): string {
 
 /**
  * Map storefront availability/fulfillment to Google Merchant values.
- * made_to_order + orderable → preorder; stocked + orderable → in_stock; else out_of_stock.
+ * Both stocked and made_to_order orderable products → in_stock.
+ * preorder/backorder require availability_date and are deferred.
  */
 export function mapMerchantAvailability(
   product: Pick<Product, "orderable" | "fulfillmentType" | "soldOut">,
@@ -70,10 +70,7 @@ export function mapMerchantAvailability(
   if (!product.orderable || product.soldOut) {
     return "out_of_stock";
   }
-  if (product.fulfillmentType === "made_to_order") {
-    return "preorder";
-  }
-  if (product.fulfillmentType === "stocked") {
+  if (product.fulfillmentType === "stocked" || product.fulfillmentType === "made_to_order") {
     return "in_stock";
   }
   return "out_of_stock";

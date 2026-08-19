@@ -38,7 +38,7 @@ Empty catalog → valid channel with zero `<item>` elements.
 | `g:link` | Absolute `/produkti/{slug}` via `getSiteUrl()` |
 | `g:image_link` | First absolute product image URL |
 | `g:additional_image_link` | Remaining images (nice-to-have) |
-| `g:availability` | `in_stock` / `out_of_stock` / `preorder` (see below) |
+| `g:availability` | `in_stock` / `out_of_stock` (see below) |
 | `g:price` | Listing `product.price` as `19.90 EUR` (promo-aware from catalog mapper) |
 | `g:condition` | `new` |
 | `g:brand` | `siteConfig.name` |
@@ -51,8 +51,10 @@ Empty catalog → valid channel with zero `<item>` elements.
 | Storefront state | Google value |
 |------------------|--------------|
 | orderable + `stocked` | `in_stock` |
-| orderable + `made_to_order` | `preorder` |
+| orderable + `made_to_order` | `in_stock` |
 | not orderable / sold out / `unavailable` | `out_of_stock` |
+
+> **Note:** `preorder` and `backorder` require `availability_date` and a landing page date, so they are deferred from the MVP.
 
 ---
 
@@ -84,7 +86,7 @@ Empty catalog → valid channel with zero `<item>` elements.
 
 - Public unauthenticated feed (no `MERCHANT_FEED_SECRET` yet).
 - No `sale_price` / compare-at split — single listing `price` only.
-- Made-to-order mapped to `preorder` (Merchant policy may need review per brand).
+- Made-to-order mapped to `in_stock` (products are orderable and fulfilled within stated time).
 - Products without images omitted entirely.
 - No per-product “exclude from feed” admin toggle.
 - Brand is placeholder `siteConfig.name` until client branding.
