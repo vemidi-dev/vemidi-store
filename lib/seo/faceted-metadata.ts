@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import {
   appendOpenGraphAndTwitterImages,
+  OG_DEFAULTS,
   type SeoSocialImage,
 } from "@/lib/seo/social-images";
 
@@ -23,6 +24,7 @@ export function buildIndexableMetadata(
       robots: { index: true, follow: true },
       openGraph: {
         type: "website",
+        ...OG_DEFAULTS,
         title: base.title,
         description: base.description,
         url: canonicalPath,

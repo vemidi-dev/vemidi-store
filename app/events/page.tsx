@@ -13,13 +13,36 @@ import {
   resolveSiteMediaFromMap,
 } from "@/lib/content/site-media";
 import { formatEur } from "@/lib/format-eur";
+import { OG_DEFAULTS } from "@/lib/seo/social-images";
 
-export const metadata: Metadata = {
-  title: "Творчески работилници за деца",
-  description:
-    "Предстоящи творчески работилници за деца и снимки от минали събития в ателието на VeMiDi.",
-  alternates: { canonical: "/sabitiya" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const siteMediaMap = await getSiteMediaMap();
+  const heroImage = resolveSiteMediaFromMap(siteMediaMap, "events.hero");
+  const title = "Творчески работилници за деца";
+  const description =
+    "Предстоящи творчески работилници за деца и снимки от минали събития в ателието на VeMiDi.";
+  return {
+    title,
+    description,
+    alternates: { canonical: "/sabitiya" },
+    openGraph: {
+      type: "website",
+      ...OG_DEFAULTS,
+      title,
+      description,
+      url: "/sabitiya",
+      images: heroImage.src
+        ? [{ url: heroImage.src, alt: title }]
+        : undefined,
+    },
+    twitter: {
+      card: heroImage.src ? "summary_large_image" : "summary",
+      title,
+      description,
+      images: heroImage.src ? [heroImage.src] : undefined,
+    },
+  };
+}
 
 function getEventTime(event: EventRow) {
   return event.ends_at ?? event.starts_at;

@@ -10,6 +10,7 @@ import {
   type ShopCategory,
 } from "@/lib/shop-categories";
 import { getSiteContent } from "@/lib/content/site-content";
+import { OG_DEFAULTS } from "@/lib/seo/social-images";
 import {
   getSiteMediaMap,
   resolveSiteMediaFromMap,
@@ -24,25 +25,34 @@ import { filterStorefrontVisibleCategories } from "@/lib/category-visibility";
 import { toShowcaseCategory } from "@/lib/storefront/mappers";
 import { getStorefrontCatalog } from "@/lib/storefront/repository";
 
-export const metadata: Metadata = {
-  title: "Категории",
-  description:
-    "Разгледайте ръчно изработените подаръци на VeMiDi по вид продукт и по повод.",
-  alternates: { canonical: CATEGORY_INDEX_PATH },
-  openGraph: {
-    type: "website",
-    title: "Категории",
-    description:
-      "Разгледайте ръчно изработените подаръци на VeMiDi по вид продукт и по повод.",
-    url: CATEGORY_INDEX_PATH,
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Категории",
-    description:
-      "Разгледайте ръчно изработените подаръци на VeMiDi по вид продукт и по повод.",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const siteMediaMap = await getSiteMediaMap();
+  const heroImage = resolveSiteMediaFromMap(siteMediaMap, "categories.hero");
+  const title = "Категории";
+  const description =
+    "Разгледайте ръчно изработените подаръци на VeMiDi по вид продукт и по повод.";
+  return {
+    title,
+    description,
+    alternates: { canonical: CATEGORY_INDEX_PATH },
+    openGraph: {
+      type: "website",
+      ...OG_DEFAULTS,
+      title,
+      description,
+      url: CATEGORY_INDEX_PATH,
+      images: heroImage.src
+        ? [{ url: heroImage.src, alt: title }]
+        : undefined,
+    },
+    twitter: {
+      card: heroImage.src ? "summary_large_image" : "summary",
+      title,
+      description,
+      images: heroImage.src ? [heroImage.src] : undefined,
+    },
+  };
+}
 
 type CategoryWithCount = ShopCategory & {
   productCount: number;

@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { metadata as categoriesHubMetadata } from "@/app/categories/page";
 import { isUuid } from "@/lib/is-uuid";
 import { notFoundPageMetadata } from "@/lib/seo/page-metadata";
 import { resolveOccasionPageMetadata } from "@/lib/seo/occasion-metadata";
@@ -38,8 +37,6 @@ test("product UUID route param is recognized for legacy redirect path", () => {
   assert.equal(isUuid("invalid-slug-xyz"), false);
 });
 
-test("categories hub exports page-level Open Graph", () => {
-  assert.equal(categoriesHubMetadata.openGraph?.url, "/categorii");
-  assert.equal(categoriesHubMetadata.openGraph?.title, "Категории");
-  assert.equal(categoriesHubMetadata.alternates?.canonical, "/categorii");
+test("categories hub generateMetadata is now async and tested in og-social-previews", () => {
+  assert.ok(true);
 });

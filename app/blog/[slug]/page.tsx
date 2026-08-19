@@ -14,6 +14,7 @@ import {
   getPublishedBlogPosts,
   getPublishedEvents,
 } from "@/lib/content/repository";
+import { OG_DEFAULTS } from "@/lib/seo/social-images";
 import { getSiteUrl } from "@/lib/site-url";
 import { getStorefrontCatalog } from "@/lib/storefront/repository";
 import { buildArticleSchema } from "@/lib/seo/article-schema";
@@ -38,6 +39,7 @@ export async function generateMetadata({
     alternates: { canonical: `/blog/${slug}` },
     openGraph: {
       type: "article",
+      ...OG_DEFAULTS,
       title: post.title,
       description: post.excerpt,
       url: `/blog/${slug}`,
@@ -45,6 +47,12 @@ export async function generateMetadata({
       images: post.image_url
         ? [{ url: post.image_url, alt: post.title }]
         : undefined,
+    },
+    twitter: {
+      card: post.image_url ? "summary_large_image" : "summary",
+      title: post.title,
+      description: post.excerpt,
+      images: post.image_url ? [post.image_url] : undefined,
     },
   };
 }

@@ -6,6 +6,7 @@ import {
 } from "@/lib/content/site-media";
 import {
   appendOpenGraphAndTwitterImages,
+  OG_DEFAULTS,
   type SeoSocialImage,
 } from "@/lib/seo/social-images";
 
@@ -66,6 +67,7 @@ export function buildInfoPageMetadata(
       alternates: { canonical: canonicalPath },
       openGraph: {
         type: "website",
+        ...OG_DEFAULTS,
         title,
         description,
         url: canonicalPath,
