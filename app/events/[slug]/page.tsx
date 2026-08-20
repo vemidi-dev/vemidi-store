@@ -17,6 +17,7 @@ import {
 } from "@/lib/seo/breadcrumbs";
 import { buildEventSchema } from "@/lib/seo/event-schema";
 import { withPlainTextClass } from "@/lib/plain-text";
+import { OG_DEFAULTS } from "@/lib/seo/social-images";
 import { getSiteUrl } from "@/lib/site-url";
 
 type EventPageProps = { params: Promise<{ slug: string }> };
@@ -31,10 +32,17 @@ export async function generateMetadata({ params }: EventPageProps): Promise<Meta
     alternates: { canonical: `/sabitiya/${slug}` },
     openGraph: {
       type: "article",
+      ...OG_DEFAULTS,
       title: event.title,
       description: event.excerpt,
       url: `/sabitiya/${slug}`,
       images: event.image_url ? [{ url: event.image_url, alt: event.title }] : undefined,
+    },
+    twitter: {
+      card: event.image_url ? "summary_large_image" : "summary",
+      title: event.title,
+      description: event.excerpt,
+      images: event.image_url ? [event.image_url] : undefined,
     },
   };
 }

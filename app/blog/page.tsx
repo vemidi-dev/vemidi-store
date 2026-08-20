@@ -29,7 +29,12 @@ type Props = {
 };
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
-  return buildBlogMetadata(await searchParams);
+  const [params, siteMediaMap] = await Promise.all([
+    searchParams,
+    getSiteMediaMap(),
+  ]);
+  const heroImage = resolveSiteMediaFromMap(siteMediaMap, "blog.hero");
+  return buildBlogMetadata(params, { src: heroImage.src, alt: heroImage.alt });
 }
 
 const first = (value: string | string[] | undefined) =>

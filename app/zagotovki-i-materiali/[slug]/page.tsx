@@ -27,6 +27,7 @@ import {
   resolveCategoryListingHeading,
   resolveCategorySeoBody,
 } from "@/lib/seo/category-page-content";
+import { OG_DEFAULTS } from "@/lib/seo/social-images";
 import { getStorefrontCatalog } from "@/lib/storefront/repository";
 
 type MaterialCategoryPageProps = {
@@ -50,6 +51,10 @@ export async function generateMetadata({
     category.hero_description?.trim() ||
     `Разгледайте ${category.name.toLocaleLowerCase("bg")} от VeMiDi crafts.`;
 
+  const heroImage = resolveCategoryCoverImage(category);
+  const ogTitle = category.og_title?.trim() || title;
+  const ogDescription = category.og_description?.trim() || description;
+
   return {
     title,
     description,
@@ -57,9 +62,19 @@ export async function generateMetadata({
     robots: category.robots_index === false ? { index: false, follow: true } : undefined,
     openGraph: {
       type: "website",
-      title: category.og_title?.trim() || title,
-      description: category.og_description?.trim() || description,
+      ...OG_DEFAULTS,
+      title: ogTitle,
+      description: ogDescription,
       url: getMaterialPath(category.slug),
+      images: heroImage.src
+        ? [{ url: heroImage.src, alt: ogTitle }]
+        : undefined,
+    },
+    twitter: {
+      card: heroImage.src ? "summary_large_image" : "summary",
+      title: ogTitle,
+      description: ogDescription,
+      images: heroImage.src ? [heroImage.src] : undefined,
     },
   };
 }

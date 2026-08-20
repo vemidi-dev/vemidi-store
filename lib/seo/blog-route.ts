@@ -4,6 +4,7 @@ import {
   buildFacetedNoindexMetadata,
   buildIndexableMetadata,
 } from "@/lib/seo/faceted-metadata";
+import type { SeoSocialImage } from "@/lib/seo/social-images";
 import { firstSearchParam } from "@/lib/seo/shop-route";
 
 export const BLOG_KNOWN_PARAMS = new Set(["q", "category", "sort"]);
@@ -42,10 +43,11 @@ export function isBlogFaceted(
 
 export function buildBlogMetadata(
   params: Record<string, string | string[] | undefined>,
+  socialImage?: SeoSocialImage | null,
 ): Metadata {
   if (isBlogFaceted(params)) {
     return buildFacetedNoindexMetadata("/blog", BLOG_METADATA_BASE);
   }
 
-  return buildIndexableMetadata("/blog", BLOG_METADATA_BASE);
+  return buildIndexableMetadata("/blog", BLOG_METADATA_BASE, socialImage);
 }

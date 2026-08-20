@@ -11,6 +11,7 @@ import {
   resolveCategoryPageRobots,
 } from "@/lib/seo/category-page-content";
 import { isOccasionIndexable } from "@/lib/seo/occasion-indexability";
+import { OG_DEFAULTS } from "@/lib/seo/social-images";
 import type { StorefrontCategory } from "@/lib/storefront/types";
 
 type BuildOccasionMetadataInput = {
@@ -75,10 +76,14 @@ export function buildOccasionPageMetadata({
       robotsIndex: occasion.robots_index,
     }),
     openGraph: {
+      type: "website",
+      ...OG_DEFAULTS,
       title: ogTitle,
       description: ogDescription,
       url: canonicalPath,
-      images: heroImage.src ? [heroImage.src] : undefined,
+      images: heroImage.src
+        ? [{ url: heroImage.src, alt: ogTitle }]
+        : undefined,
     },
     twitter: {
       card: "summary_large_image",
