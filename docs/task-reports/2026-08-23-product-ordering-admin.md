@@ -367,7 +367,7 @@ npx tsx --test tests/product-ordering.test.ts  # 7/7 PASS
 |------|----------|
 | Branch | `codex/product-ordering-admin` |
 | Commit message | `chore(admin): log product ordering save failures` |
-| Diagnostic commit | *(попълва се след commit)* |
+| Diagnostic commit | `2c663f9` — `chore(admin): log product ordering save failures` |
 | PR | [#21](https://github.com/vemidi-dev/vemidi-store/pull/21) — OPEN, не е merged |
 | `notify pgrst, 'reload schema'` | Изпълнено ръчно — **не реши** Preview save failure |
 | Следваща стъпка | Повторен save в Preview → **Vercel Runtime Logs** за `[saveProductOrdering] RPC failed` |
@@ -376,11 +376,11 @@ npx tsx --test tests/product-ordering.test.ts  # 7/7 PASS
 
 **Production:** не е засегнат. **Merge/promote:** не са правени.
 
-### Текущ git status (преди diagnostic commit)
+### Текущ git status (след diagnostic commit)
 
 **Branch:** `codex/product-ordering-admin`
 
-**За commit:** `app/admin/actions.ts`, `docs/task-reports/2026-08-23-product-ordering-admin.md`
+**Committed:** `2c663f9` (`app/admin/actions.ts` + task report)
 
-**Scratch (изключени):** `.tmp-*`, `.codex-handoff.md`
+**Scratch (изключени):** `.tmp-*`, `.codex-handoff.md` — не са commit-нати
 
