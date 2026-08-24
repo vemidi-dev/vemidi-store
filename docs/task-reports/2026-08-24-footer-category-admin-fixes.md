@@ -30,6 +30,21 @@ Admin формите за категории вече използват общ�
 
 - `npm run typecheck` — PASS
 
+## Preview deployment
+
+*(2026-08-24)*
+
+| Поле | Стойност |
+|------|----------|
+| Branch | `codex/footer-category-admin-fixes` |
+| Commit | `d3b9028` — `fix: polish footer links and category admin feedback` |
+| PR | [#22](https://github.com/vemidi-dev/vemidi-store/pull/22) — OPEN (не е merged) |
+| Vercel Preview | https://vemidi-store-git-codex-footer-category-admin-fixes-ve-mi-di.vercel.app — **Ready** |
+| Vercel Inspector | https://vercel.com/ve-mi-di/vemidi-store/2goLX8e1g6PV6LFUgaZNGV98fm5V |
+| Typecheck | PASS |
+| Production promote | **Не е правен** |
+
 ## Бележки
 
 Старите untracked scratch файлове не са пипани.
+`D:\store-template` не е пипан в тази задача.
