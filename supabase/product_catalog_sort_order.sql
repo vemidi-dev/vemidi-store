@@ -30,7 +30,9 @@ as $$
 begin
   perform public.assert_admin();
 
-  delete from public.home_featured_products;
+  -- pg-safeupdate (and similar guards) reject DELETE without a WHERE clause.
+  delete from public.home_featured_products
+  where product_id is not null;
 
   if coalesce(array_length(p_product_ids, 1), 0) = 0 then
     return;

@@ -388,3 +388,68 @@ npx tsx --test tests/product-ordering.test.ts  # 7/7 PASS
 
 **Scratch (изключени):** `.tmp-*`, `.codex-handoff.md` — не са commit-нати
 
+## Root cause (Vercel Runtime Logs)
+
+*(2026-08-24)*
+
+### Exact error
+
+```text
+[saveProductOrdering] RPC failed {
+  rpcName: "admin_replace_home_featured_order",
+  orderingScope: "home",
+  productIdsLength: 20,
+  code: "21000",
+  message: "DELETE requires a WHERE clause",
+  details: null,
+  hint: null
+}
+```
+
+### Причина
+
+RPC-то правело:
+
+```sql
+delete from public.home_featured_products;
+```
+
+Supabase/Postgres има **pg-safeupdate** (или еквивалентен guard), който **забранява DELETE/UPDATE без WHERE**. Затова auth, schema reload и `*_rpc_ok` бяха ОК, а save fail-ваше.
+
+Catalog RPC **няма** bare DELETE — само `UPDATE ... WHERE product.id = ranked.product_id`, затова home scope е засегнат първи.
+
+### Fix
+
+Промяна на DELETE към:
+
+```sql
+delete from public.home_featured_products
+where product_id is not null;
+```
+
+Файлове:
+- `supabase/product_catalog_sort_order.sql` — обновен
+- `supabase/product_catalog_sort_order_home_delete_hotfix.sql` — минимален hotfix за ръчно изпълнение в Supabase
+
+**Трябва ръчно изпълнение на hotfix SQL в Supabase**, преди Preview save да заработи. Не е прилаган автоматично от агента.
+
+### Verification
+
+- Hotfix е изпълнен ръчно в Supabase.
+- Home ordering **save работи коректно** в Preview (потвърдено от потребителя, 2026-08-24).
+- Catalog ordering: DELETE issue не важи (вече има WHERE); остава ръчна проверка на catalog save, ако още не е тестван.
+
+## Hotfix push (preview)
+
+*(2026-08-24)*
+
+| Поле | Стойност |
+|------|----------|
+| Branch | `codex/product-ordering-admin` |
+| Commit | *(попълва се след push)* |
+| PR | [#21](https://github.com/vemidi-dev/vemidi-store/pull/21) — OPEN |
+| Production | **Не е засегнат** — няма merge/promote |
+| Files | `product_catalog_sort_order.sql`, `product_catalog_sort_order_home_delete_hotfix.sql`, task report |
+
+
+
