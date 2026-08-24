@@ -448,11 +448,51 @@ where product_id is not null;
 | Branch | `codex/product-ordering-admin` |
 | Commit | `d36aba3` — `fix(admin): allow home featured reorder under pg-safeupdate` |
 | Docs | `4b684da` — record verification |
-| PR | [#21](https://github.com/vemidi-dev/vemidi-store/pull/21) — OPEN |
+| PR | [#21](https://github.com/vemidi-dev/vemidi-store/pull/21) — **MERGED** |
 | Vercel Preview | https://vemidi-store-git-codex-product-ordering-admin-ve-mi-di.vercel.app — **Ready** |
 | Vercel Inspector | https://vercel.com/ve-mi-di/vemidi-store/6VLDQwTeJkT1cRyXfJRUbdH1haKZ |
-| Production | **Не е засегнат** — няма merge/promote |
 | Files | `product_catalog_sort_order.sql`, `product_catalog_sort_order_home_delete_hotfix.sql`, task report |
+
+## Production deployment
+
+*(2026-08-24)*
+
+| Поле | Стойност |
+|------|----------|
+| PR | [#21](https://github.com/vemidi-dev/vemidi-store/pull/21) — **MERGED** |
+| Merge commit | `c15e969` — `Merge pull request #21 from vemidi-dev/codex/product-ordering-admin` |
+| Production deploy | https://vemidi-store-3ek6hygo2-ve-mi-di.vercel.app — **Ready** / Production |
+| Vercel Inspector | https://vercel.com/ve-mi-di/vemidi-store/D8fCTziBdmX63KtzAGG182tYqUjF |
+| SQL в Supabase | Миграция + home DELETE hotfix — вече изпълнени ръчно преди merge |
+
+### Какво е проверено преди merge
+
+```bash
+git status          # само scratch untracked; няма uncommitted task промени
+gh pr view 21       # MERGEABLE; release-tests SUCCESS; Vercel Preview SUCCESS
+npm run typecheck   # PASS
+npx tsx --test tests/product-ordering.test.ts  # 7/7 PASS
+```
+
+### Какво е проверено след merge
+
+- Vercel Production deployment за `c15e969` — **Ready** (~55s)
+- Preview save (home) беше потвърден работещ преди merge
+- Scratch файлове (`.tmp-*`, `.codex-handoff.md`) **не** са включени в merge
+
+### Ръчна smoke проверка на production (препоръчително)
+
+1. `/admin` → Подредба на продукти → Home + Catalog save
+2. Storefront начална страница — featured ред
+3. `/produkti` — catalog ред
+
+### Текущ git status
+
+**Branch:** `main` @ `c15e969` (synced with `origin/main` след pull)
+
+**Untracked — scratch (изключени):** `.tmp-*`, `.codex-handoff.md`
+
+**Заключение:** Product Ordering Admin е в production. SQL hotfix-ът вече е в Supabase; кодът е на `main` чрез merge на PR #21.
 
 
 
