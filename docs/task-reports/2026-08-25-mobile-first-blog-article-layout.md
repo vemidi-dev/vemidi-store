@@ -44,3 +44,12 @@ BreadcrumbList structured data вече използва по-пълната п�
 
 Промяната е направена само в `D:\Cursor\src`.
 Template-ът не е пипан в тази стъпка.
+
+## Preview deployment
+
+- **Commit hash:** `2d9657e`
+- **Branch:** `codex/mobile-first-blog-article-layout`
+- **PR:** https://github.com/vemidi-dev/vemidi-store/pull/23
+- **Vercel Preview URL:** https://vemidi-store-git-codex-mobile-first-blog-articl-e00475-ve-mi-di.vercel.app
+- **Typecheck:** PASS (`npm run typecheck`)
+- **Production promote:** не е правен
