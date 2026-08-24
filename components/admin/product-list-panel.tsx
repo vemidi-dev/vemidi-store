@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import {
   deleteProduct,
   deleteProductGalleryImage,
@@ -219,6 +221,12 @@ export function ProductListPanel({
             {products.length} продукта · компактен списък с търсене, филтри и пагинация
           </p>
         </div>
+        <Link
+          href="/admin?productsView=ordering&orderingScope=home"
+          className="rounded-lg border border-boutique-line px-3 py-1.5 text-xs font-semibold text-boutique-ink transition hover:border-boutique-sage-deep/40"
+        >
+          Подредба на продукти
+        </Link>
       </div>
 
       {products.length === 0 ? (
