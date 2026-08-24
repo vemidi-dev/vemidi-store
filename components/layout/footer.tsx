@@ -28,8 +28,6 @@ export function Footer() {
                 {item.label}
               </Link>
             ))}
-            <Link href="/blog" className="text-sm text-boutique-muted transition hover:text-boutique-rose-deep">Блог</Link>
-            <Link href="/sabitiya" className="text-sm text-boutique-muted transition hover:text-boutique-rose-deep">Събития</Link>
           </div>
         </div>
 
