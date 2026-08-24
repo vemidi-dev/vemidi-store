@@ -447,7 +447,10 @@ where product_id is not null;
 |------|----------|
 | Branch | `codex/product-ordering-admin` |
 | Commit | `d36aba3` — `fix(admin): allow home featured reorder under pg-safeupdate` |
+| Docs | `4b684da` — record verification |
 | PR | [#21](https://github.com/vemidi-dev/vemidi-store/pull/21) — OPEN |
+| Vercel Preview | https://vemidi-store-git-codex-product-ordering-admin-ve-mi-di.vercel.app — **Ready** |
+| Vercel Inspector | https://vercel.com/ve-mi-di/vemidi-store/6VLDQwTeJkT1cRyXfJRUbdH1haKZ |
 | Production | **Не е засегнат** — няма merge/promote |
 | Files | `product_catalog_sort_order.sql`, `product_catalog_sort_order_home_delete_hotfix.sql`, task report |
 
