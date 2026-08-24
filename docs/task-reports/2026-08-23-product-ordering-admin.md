@@ -200,3 +200,47 @@ npx tsx --test tests/canonical-produkti-route.test.ts \
 **Branch:** `main`. Feature промените **не са commit-нати**.
 
 **Заключение:** Pre-commit review мина успешно. SQL миграцията е приложена в Supabase. Готово за commit по желание.
+
+## Preview deployment
+
+*(2026-08-24)*
+
+| Поле | Стойност |
+|------|----------|
+| Branch | `codex/product-ordering-admin` |
+| Commit | `d621a34` — `feat(admin): add product ordering workflow for home and catalog` |
+| PR | [#21](https://github.com/vemidi-dev/vemidi-store/pull/21) (OPEN, не е merged) |
+| Vercel Preview | https://vemidi-store-git-codex-product-ordering-admin-ve-mi-di.vercel.app |
+| Vercel Inspector | https://vercel.com/ve-mi-di/vemidi-store/A99fF6kysR47ow7R25TjYjq54uoj |
+| Release tests (CI) | PASS (41s) |
+| Production | **Не е засегнат** — няма promote/merge |
+
+### Проверки преди push
+
+```bash
+npm run typecheck                                                                 # PASS
+npx tsx --test tests/product-ordering.test.ts                                   # 7/7 PASS
+npx tsx --test tests/canonical-produkti-route.test.ts \
+             tests/shop-seo-route.test.ts \
+             tests/category-related-storefront.test.ts                          # 54/54 PASS
+```
+
+### Какво остава за ръчно тестване
+
+1. Отвори preview URL → `/admin` → влез като администратор
+2. Провери бутон **„Подредба на продукти"** в списъка
+3. **Home view:** провери featured продуктите, пренареди, запази, провери storefront началната страница
+4. **Catalog view:** провери published продуктите, пренареди, запази, провери `/produkti` default сортиране
+5. Провери drag-and-drop + fallback бутони на мобилно устройство
+6. Провери thumbnail за продукти без снимки (очаква се placeholder „—")
+7. Провери другите sort опции на `/produkti` (по цена, по име) — не трябва да са засегнати
+
+### Текущ git status
+
+**Branch:** `codex/product-ordering-admin` (ahead of `origin/codex/product-ordering-admin` by 0 commits)
+
+**Staged/committed:** 12 task файла (7 modified + 5 added)
+
+**Untracked — scratch (изключени):** `.tmp-*`, `.codex-handoff.md` — не са commit-нати
+
+**Следваща стъпка:** ръчно тестване на preview → при ОК → merge PR #21 → promote
