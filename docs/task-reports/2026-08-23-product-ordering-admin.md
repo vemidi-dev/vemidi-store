@@ -368,7 +368,11 @@ npx tsx --test tests/product-ordering.test.ts  # 7/7 PASS
 | Branch | `codex/product-ordering-admin` |
 | Commit message | `chore(admin): log product ordering save failures` |
 | Diagnostic commit | `2c663f9` — `chore(admin): log product ordering save failures` |
+| Docs follow-up | `42e1a7c` — record hash + schema reload outcome |
 | PR | [#21](https://github.com/vemidi-dev/vemidi-store/pull/21) — OPEN, не е merged |
+| Vercel Preview | https://vemidi-store-git-codex-product-ordering-admin-ve-mi-di.vercel.app — **Ready** |
+| Vercel Inspector | https://vercel.com/ve-mi-di/vemidi-store/5gVSPefpruzvgCaonYp7zEBHurFt |
+| CI | release-tests PASS |
 | `notify pgrst, 'reload schema'` | Изпълнено ръчно — **не реши** Preview save failure |
 | Следваща стъпка | Повторен save в Preview → **Vercel Runtime Logs** за `[saveProductOrdering] RPC failed` |
 
