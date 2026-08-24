@@ -244,3 +244,143 @@ npx tsx --test tests/canonical-produkti-route.test.ts \
 **Untracked — scratch (изключени):** `.tmp-*`, `.codex-handoff.md` — не са commit-нати
 
 **Следваща стъпка:** ръчно тестване на preview → при ОК → merge PR #21 → promote
+
+## Preview save failure — диагностика
+
+*(2026-08-24)*
+
+### Симптом
+
+- SQL проверка: `home_rpc_ok = true`, `catalog_rpc_ok = true` (функциите съществуват в Postgres).
+- Vercel Preview при **Запази подредбата** все още показва:
+  > „Подредбата не беше запазена. Проверете дали SQL миграцията е изпълнена.“
+
+Това означава: `supabase.rpc(...)` връща `error`, а UI показва generic съобщение (без raw SQL).
+
+### Какво проверява кодът преди RPC
+
+`saveProductOrdering` вика `getAuthorizedClient()`, който:
+
+1. Създава Supabase server client
+2. Изисква логнат user (`auth.getUser()`)
+3. Вика `checkIsAdmin(supabase, user.id)` → `SELECT` от `admin_users` за `user_id`
+
+Ако някоя от тези стъпки fail-не, action-ът **redirect-ва към login / error** и **не стига** до RPC. Следователно при текущия UI error **auth + admin_users check вече са минали успешно**.
+
+### `assert_admin()` vs `checkIsAdmin()`
+
+| Слой | Механизъм |
+|------|-----------|
+| Next.js | `checkIsAdmin` → директно чете `admin_users` с user id от session |
+| Postgres RPC | `perform public.assert_admin()` → `auth.uid()` + `public.is_admin(auth.uid())` |
+
+`is_admin(uid)` (SECURITY DEFINER) изисква:
+
+- `uid is not null`
+- `uid = auth.uid()`
+- ред в `admin_users` за този `uid`
+
+**Може ли `assert_admin` да fail-не, след като `checkIsAdmin` е минал?** Да, в тези случаи:
+
+1. JWT/`auth.uid()` не се предава коректно към PostgREST при RPC (рядко, ако същият client работи за други admin RPC-та като merchandising).
+2. `assert_admin` / `is_admin` липсват или са с друг signature в DB (малко вероятно — други admin RPC-та ги ползват).
+3. Грешката **не е** `admin_required`, а друга (виж по-долу).
+
+Същият pattern (`assert_admin` + `grant … to authenticated`) се ползва от работещи RPC-та като `admin_replace_product_merchandising`. Ако merchandising save работи в preview с същия admin акаунт, `assert_admin` **вероятно не е** root cause.
+
+### Най-вероятни причини (ранжирани)
+
+1. ~~**PostgREST schema cache не е reload-нат**~~ — **пробвано:** `notify pgrst, 'reload schema'` е изпълнено ръчно; Preview save **още fail-ва**. Schema cache вече е малко вероятен като единствена причина.
+
+2. **`invalid_product` (errcode `22023`)**  
+   RPC сравнява `count(products where id = any(ids))` с `count(distinct ids)`. Ако някой ID от формата не съществува → exception. Малко вероятно при нормален UI flow, но възможно при stale HTML.
+
+3. **`admin_required` (errcode `42501`) от `assert_admin()`**  
+   Само ако JWT контекстът при RPC се различава от `getUser()` / `admin_users` check. Предложен минимален diagnostic SQL (като логнат admin през SQL role / service не е еквивалент — по-добре да се гледа Vercel log след logging fix).
+
+4. **Липсващ grant / грешен signature**  
+   Миграцията grant-ва `authenticated`. Ако в DB има друга overload или липсва grant, PostgREST връща permission/not found.
+
+### Какво е добавено в кода (диагностика)
+
+В `saveProductOrdering` при RPC error се логва **само server-side** (`console.error`), без raw SQL в UI:
+
+- `rpcName`
+- `orderingScope`
+- `productIdsLength`
+- `error.code`
+- `error.message`
+- `error.details`
+- `error.hint`
+
+UI съобщението остава generic.
+
+### Предложен минимален SQL (за ръчно изпълнение — НЕ е приложен)
+
+**A. Reload PostgREST (първа стъпка):**
+```sql
+notify pgrst, 'reload schema';
+```
+
+**B. Потвърди signature + grants:**
+```sql
+select
+  p.proname,
+  pg_get_function_identity_arguments(p.oid) as args,
+  has_function_privilege('authenticated', p.oid, 'execute') as authenticated_can_execute
+from pg_proc p
+join pg_namespace n on n.oid = p.pronamespace
+where n.nspname = 'public'
+  and p.proname in (
+    'admin_replace_home_featured_order',
+    'admin_replace_catalog_sort_order',
+    'assert_admin'
+  );
+```
+
+**C. Само ако logs покажат `admin_required` — не променяй `assert_admin`; провери session.**  
+Няма нужда от SQL hotfix на auth, освен ако `assert_admin` липсва — тогава преизпълни дефиницията от `atomic_product_admin_functions.sql`.
+
+### Следващи стъпки
+
+1. ~~Commit + push на logging fix към `codex/product-ordering-admin`~~ — виж секцията **Diagnostic logging push** по-долу.
+2. ~~`notify pgrst, 'reload schema'`~~ — **изпълнено ръчно; проблемът остава.** Schema cache **не** е root cause (или reload не е достатъчен).
+3. Reproduce save в Preview **след** deploy на logging commit → отвори **Vercel Runtime Logs** за preview deployment.
+4. По `error.message` / `error.code` от `[saveProductOrdering] RPC failed`:
+   - function not found / schema cache → повторна schema диагностика (по-малко вероятно след reload)
+   - `admin_required` / `42501` → session / `assert_admin` диагностика
+   - `invalid_product` / `22023` → payload IDs
+5. След успешен save — запази logging (полезно за admin ops) или го стесни.
+
+### Проверки след logging промяната
+
+```bash
+npm run typecheck                            # PASS
+npx tsx --test tests/product-ordering.test.ts  # 7/7 PASS
+```
+
+### Diagnostic logging push
+
+*(2026-08-24 — след като `notify pgrst, 'reload schema'` не реши проблема)*
+
+| Поле | Стойност |
+|------|----------|
+| Branch | `codex/product-ordering-admin` |
+| Commit message | `chore(admin): log product ordering save failures` |
+| Diagnostic commit | *(попълва се след commit)* |
+| PR | [#21](https://github.com/vemidi-dev/vemidi-store/pull/21) — OPEN, не е merged |
+| `notify pgrst, 'reload schema'` | Изпълнено ръчно — **не реши** Preview save failure |
+| Следваща стъпка | Повторен save в Preview → **Vercel Runtime Logs** за `[saveProductOrdering] RPC failed` |
+
+**UI:** raw SQL error **не** се показва; само generic българско съобщение.
+
+**Production:** не е засегнат. **Merge/promote:** не са правени.
+
+### Текущ git status (преди diagnostic commit)
+
+**Branch:** `codex/product-ordering-admin`
+
+**За commit:** `app/admin/actions.ts`, `docs/task-reports/2026-08-23-product-ordering-admin.md`
+
+**Scratch (изключени):** `.tmp-*`, `.codex-handoff.md`
+

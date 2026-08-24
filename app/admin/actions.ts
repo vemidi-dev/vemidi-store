@@ -2250,6 +2250,8 @@ export async function deleteCategory(formData: FormData) {
 }
 
 export async function saveProductOrdering(formData: FormData) {
+  // getAuthorizedClient() redirects away on auth/admin failure, so reaching
+  // the RPC call means the Next.js session + admin_users row already passed.
   const supabase = await getAuthorizedClient();
   const scope = getString(formData, adminFormFields.productOrdering.scope);
   const productIds = parseOrderedProductIds(
@@ -2275,6 +2277,15 @@ export async function saveProductOrdering(formData: FormData) {
   });
 
   if (error) {
+    console.error("[saveProductOrdering] RPC failed", {
+      rpcName,
+      orderingScope,
+      productIdsLength: productIds.length,
+      code: error.code,
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+    });
     redirectWith(
       "error",
       "Подредбата не беше запазена. Проверете дали SQL миграцията е изпълнена.",
