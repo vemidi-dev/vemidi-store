@@ -38,13 +38,37 @@ Admin формите за категории вече използват общ�
 |------|----------|
 | Branch | `codex/footer-category-admin-fixes` |
 | Commit | `d3b9028` — `fix: polish footer links and category admin feedback` |
-| PR | [#22](https://github.com/vemidi-dev/vemidi-store/pull/22) — OPEN (не е merged) |
+| PR | [#22](https://github.com/vemidi-dev/vemidi-store/pull/22) — **MERGED** |
 | Vercel Preview | https://vemidi-store-git-codex-footer-category-admin-fixes-ve-mi-di.vercel.app — **Ready** |
 | Vercel Inspector | https://vercel.com/ve-mi-di/vemidi-store/2goLX8e1g6PV6LFUgaZNGV98fm5V |
 | Typecheck | PASS |
-| Production promote | **Не е правен** |
+
+## Production deployment
+
+*(2026-08-24)*
+
+| Поле | Стойност |
+|------|----------|
+| PR | [#22](https://github.com/vemidi-dev/vemidi-store/pull/22) — **MERGED** |
+| Merge commit | `1684f10` — `Merge pull request #22 from vemidi-dev/codex/footer-category-admin-fixes` |
+| Feature commit | `d3b9028` |
+| Production deploy | https://vemidi-store-5xvvxfz4r-ve-mi-di.vercel.app — **Ready** / Production |
+| Vercel Inspector | https://vercel.com/ve-mi-di/vemidi-store/HvpZ9fJDk7Rq8jJmpnST7puQM9w1 |
+| Typecheck | PASS (преди merge) |
+
+### Какво е проверено
+
+- PR #22 съдържа само task файловете + report (6 файла)
+- release-tests + Vercel Preview SUCCESS преди merge
+- Scratch `.tmp-*` / `.codex-handoff.md` **не** са включени
+- Production deployment Ready (~55s) след merge
+
+### Ръчна smoke проверка (препоръчително на живия сайт)
+
+1. Footer: `Блог` и `Събития` по веднъж
+2. Admin → Категории: pending при add/edit
+3. Admin → Категории: ↑/↓ запазва активния tab
 
 ## Бележки
 
 Старите untracked scratch файлове не са пипани.
-`D:\store-template` не е пипан в тази задача.
