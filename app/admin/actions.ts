@@ -2196,6 +2196,10 @@ export async function moveCategory(formData: FormData) {
   const activeTab = getAdminTab(formData, "categories");
   const id = getString(formData, adminFormFields.common.id);
   const direction = getString(formData, adminFormFields.category.direction);
+  const categoryType = getString(formData, adminFormFields.category.type);
+  const redirectParams = {
+    categoryType: isCategoryType(categoryType) ? categoryType : "product",
+  };
 
   if (!id || !["up", "down"].includes(direction)) {
     redirectWith("error", "Невалидна заявка за преместване.", activeTab);
@@ -2206,14 +2210,14 @@ export async function moveCategory(formData: FormData) {
     p_direction: direction,
   });
   if (error) {
-    redirectWith("error", "Позицията не беше променена.", activeTab);
+    redirectWith("error", "Позицията не беше променена.", activeTab, undefined, redirectParams);
   }
   if (moved !== true) {
-    redirectWith("success", "Категорията вече е в края на списъка.", activeTab);
+    redirectWith("success", "Категорията вече е в края на списъка.", activeTab, undefined, redirectParams);
   }
 
   revalidateCategoryPaths();
-  redirectWith("success", "Позицията е променена.", activeTab);
+  redirectWith("success", "Позицията е променена.", activeTab, undefined, redirectParams);
 }
 
 export async function deleteCategory(formData: FormData) {

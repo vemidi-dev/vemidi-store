@@ -9,6 +9,8 @@ import {
 } from "@/app/admin/actions";
 import { AdminConfirmForm } from "@/components/admin/admin-confirm-form";
 import { AdminOpenDetailsButton } from "@/components/admin/admin-open-details-button";
+import { AdminFormPendingGuard } from "@/components/admin/admin-form-pending-guard";
+import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
 import { CategoryContentSeoFields } from "@/components/admin/category-content-seo-fields";
 import { CategoryRelatedSelector } from "@/components/admin/category-related-selector";
 import {
@@ -198,28 +200,30 @@ export function CategoryManagementView({
                   <form action={moveCategory} className="inline">
                     <input type="hidden" name={adminFormFields.common.tab} value="categories" />
                     <input type="hidden" name={adminFormFields.common.id} value={category.id} />
+                    <input type="hidden" name={adminFormFields.category.type} value={category.category_type} />
                     <input type="hidden" name={adminFormFields.category.direction} value="up" />
-                    <button
-                      type="submit"
+                    <AdminSubmitButton
+                      pendingLabel="…"
                       disabled={indexInTab === 0}
                       aria-label="Премести нагоре"
                       className="grid h-7 w-7 place-items-center rounded-full border border-boutique-line text-xs disabled:opacity-35"
                     >
                       ↑
-                    </button>
+                    </AdminSubmitButton>
                   </form>
                   <form action={moveCategory} className="inline">
                     <input type="hidden" name={adminFormFields.common.tab} value="categories" />
                     <input type="hidden" name={adminFormFields.common.id} value={category.id} />
+                    <input type="hidden" name={adminFormFields.category.type} value={category.category_type} />
                     <input type="hidden" name={adminFormFields.category.direction} value="down" />
-                    <button
-                      type="submit"
+                    <AdminSubmitButton
+                      pendingLabel="…"
                       disabled={indexInTab === siblings.length - 1}
                       aria-label="Премести надолу"
                       className="grid h-7 w-7 place-items-center rounded-full border border-boutique-line text-xs disabled:opacity-35"
                     >
                       ↓
-                    </button>
+                    </AdminSubmitButton>
                   </form>
                   <AdminOpenDetailsButton
                     detailsId={`category-edit-${category.id}`}
@@ -252,26 +256,30 @@ export function CategoryManagementView({
                   <form action={moveCategory}>
                     <input type="hidden" name={adminFormFields.common.tab} value="categories" />
                     <input type="hidden" name={adminFormFields.common.id} value={category.id} />
+                    <input type="hidden" name={adminFormFields.category.type} value={category.category_type} />
                     <input type="hidden" name={adminFormFields.category.direction} value="up" />
-                    <button
-                      type="submit"
+                    <AdminSubmitButton
+                      pendingLabel="…"
                       disabled={indexInTab === 0}
+                      aria-label="Премести нагоре"
                       className="grid h-7 w-7 place-items-center rounded-full border border-boutique-line text-xs disabled:opacity-35"
                     >
                       ↑
-                    </button>
+                    </AdminSubmitButton>
                   </form>
                   <form action={moveCategory}>
                     <input type="hidden" name={adminFormFields.common.tab} value="categories" />
                     <input type="hidden" name={adminFormFields.common.id} value={category.id} />
+                    <input type="hidden" name={adminFormFields.category.type} value={category.category_type} />
                     <input type="hidden" name={adminFormFields.category.direction} value="down" />
-                    <button
-                      type="submit"
+                    <AdminSubmitButton
+                      pendingLabel="…"
                       disabled={indexInTab === siblings.length - 1}
+                      aria-label="Премести надолу"
                       className="grid h-7 w-7 place-items-center rounded-full border border-boutique-line text-xs disabled:opacity-35"
                     >
                       ↓
-                    </button>
+                    </AdminSubmitButton>
                   </form>
                 </div>
               </div>
@@ -460,12 +468,15 @@ export function CategoryManagementView({
                     </div>
                   ) : null}
                   <div className="self-end">
-                    <button
-                      type="submit"
+                    <AdminSubmitButton
+                      pendingLabel="Записване…"
                       className="rounded-full bg-boutique-ink px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-boutique-paper"
                     >
                       Запази
-                    </button>
+                    </AdminSubmitButton>
+                  </div>
+                  <div className="md:col-span-3">
+                    <AdminFormPendingGuard message="Категорията се записва… Моля, изчакайте." />
                   </div>
                 </form>
                 <AdminConfirmForm

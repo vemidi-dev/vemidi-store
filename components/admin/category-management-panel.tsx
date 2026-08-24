@@ -1,4 +1,6 @@
 import { createCategory } from "@/app/admin/actions";
+import { AdminFormPendingGuard } from "@/components/admin/admin-form-pending-guard";
+import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
 import { CategoryContentSeoFields } from "@/components/admin/category-content-seo-fields";
 import { CategoryManagementView } from "@/components/admin/category-management-view";
 import { CategoryRelatedSelector } from "@/components/admin/category-related-selector";
@@ -189,12 +191,15 @@ export function CategoryManagementPanel({
               />
             </div>
             <div className="self-end">
-              <button
-                type="submit"
+              <AdminSubmitButton
+                pendingLabel="Добавяне…"
                 className="rounded-full bg-boutique-ink px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-boutique-paper transition hover:bg-boutique-accent"
               >
                 Добави
-              </button>
+              </AdminSubmitButton>
+            </div>
+            <div className="md:col-span-2 xl:col-span-4">
+              <AdminFormPendingGuard message="Категорията се добавя… Моля, изчакайте." />
             </div>
           </div>
         </form>
