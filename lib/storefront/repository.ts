@@ -34,6 +34,10 @@ import {
 } from "@/lib/product-publication";
 import { isProductCatalogVisible } from "@/lib/product-visibility";
 import {
+  compareCatalogSortOrder,
+  type ProductOrderScope,
+} from "@/lib/admin/product-ordering";
+import {
   resolveProductRoute,
   type ProductRouteResolution,
 } from "@/lib/product-route";
@@ -185,11 +189,10 @@ async function fetchStorefrontCatalog(): Promise<StorefrontCatalog> {
       supabase
         .from("products")
         .select(
-          "id,slug,product_code,name,heading_subtitle,subtitle,description,price,image_url,is_customizable,is_sold_out,show_quantity_selector,quantity_price_tiers,fulfillment_type,stock_quantity,card_badge,primary_category_id,meta_title,meta_description,og_title,og_description,status,visibility,created_at,updated_at",
+          "id,slug,product_code,name,heading_subtitle,subtitle,description,price,image_url,is_customizable,is_sold_out,show_quantity_selector,quantity_price_tiers,fulfillment_type,stock_quantity,card_badge,primary_category_id,meta_title,meta_description,og_title,og_description,status,visibility,catalog_sort_order,created_at,updated_at",
         )
         .eq("status", "published")
-        .eq("visibility", "public")
-        .order("created_at", { ascending: false }),
+        .eq("visibility", "public"),
       supabase
         .from("categories")
         .select(CATEGORY_STOREFRONT_SELECT)
@@ -262,8 +265,24 @@ async function fetchStorefrontCatalog(): Promise<StorefrontCatalog> {
     }
   });
 
-  const products: StorefrontProduct[] = ((productsResult.data ?? []) as ProductRow[]).map(
-    (row) => ({
+  const products: StorefrontProduct[] = (
+    (productsResult.data ?? []) as (ProductRow & { catalog_sort_order?: number })[]
+  )
+    .sort((left, right) =>
+      compareCatalogSortOrder(
+        {
+          catalogSortOrder: left.catalog_sort_order ?? 0,
+          createdAt: left.created_at,
+          id: left.id,
+        },
+        {
+          catalogSortOrder: right.catalog_sort_order ?? 0,
+          createdAt: right.created_at,
+          id: right.id,
+        },
+      ),
+    )
+    .map((row) => ({
       ...toProduct(
         row,
         imagesByProductId.get(row.id) ?? [],
@@ -275,8 +294,7 @@ async function fetchStorefrontCatalog(): Promise<StorefrontCatalog> {
       createdAt: row.created_at ?? null,
       hasColorOptions: productIdsWithColorOptions.has(row.id),
       hasPersonalizationOptions: productIdsWithPersonalizationOptions.has(row.id),
-    }),
-  );
+    }));
 
   ((relatedProductsResult.data ?? []) as RelatedProductRow[]).forEach((link) => {
     const ids = relatedProductIdsByProductId.get(link.product_id) ?? [];

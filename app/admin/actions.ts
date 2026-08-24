@@ -108,6 +108,10 @@ import {
 } from "@/lib/admin/product-publish-validation";
 import { checkIsAdmin } from "@/lib/supabase/admin-auth";
 import { createClient } from "@/lib/supabase/server";
+import {
+  parseOrderedProductIds,
+  type ProductOrderScope,
+} from "@/lib/admin/product-ordering";
 
 const ADMIN_PATH = "/admin";
 const ADMIN_LOGIN_PATH = "/admin/login";
@@ -2243,4 +2247,54 @@ export async function deleteCategory(formData: FormData) {
 
   revalidateCategoryPaths();
   redirectWith("success", "Категорията е изтрита.", activeTab);
+}
+
+export async function saveProductOrdering(formData: FormData) {
+  // getAuthorizedClient() redirects away on auth/admin failure, so reaching
+  // the RPC call means the Next.js session + admin_users row already passed.
+  const supabase = await getAuthorizedClient();
+  const scope = getString(formData, adminFormFields.productOrdering.scope);
+  const productIds = parseOrderedProductIds(
+    formData.getAll(adminFormFields.productOrdering.productIds),
+  );
+  const orderingScope: ProductOrderScope = scope === "catalog" ? "catalog" : "home";
+  const redirectParams = {
+    productsView: "ordering",
+    orderingScope,
+  };
+
+  if (productIds.length === 0) {
+    redirectWith("error", "Няма продукти за подредба.", "products", undefined, redirectParams);
+  }
+
+  const rpcName =
+    orderingScope === "home"
+      ? "admin_replace_home_featured_order"
+      : "admin_replace_catalog_sort_order";
+
+  const { error } = await supabase.rpc(rpcName, {
+    p_product_ids: productIds,
+  });
+
+  if (error) {
+    console.error("[saveProductOrdering] RPC failed", {
+      rpcName,
+      orderingScope,
+      productIdsLength: productIds.length,
+      code: error.code,
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+    });
+    redirectWith(
+      "error",
+      "Подредбата не беше запазена. Проверете дали SQL миграцията е изпълнена.",
+      "products",
+      undefined,
+      redirectParams,
+    );
+  }
+
+  await revalidateProductPaths(supabase);
+  redirectWith("success", "Подредбата е запазена.", "products", undefined, redirectParams);
 }

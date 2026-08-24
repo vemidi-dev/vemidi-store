@@ -89,6 +89,7 @@ export type ProductRow = {
   ready_product_cta_label?: string | null;
   ready_product_cta_product_id?: string | null;
   personalization_open_by_default?: boolean | null;
+  catalog_sort_order?: number | null;
   created_at?: string | null;
   updated_at?: string | null;
 };

@@ -85,6 +85,10 @@ export const adminFormFields = {
     readyProductCtaLabel: "ready_product_cta_label",
     readyProductCtaProductId: "ready_product_cta_product_id",
   },
+  productOrdering: {
+    scope: "product_order_scope",
+    productIds: "product_order_ids",
+  },
   blog: {
     productIds: "blog_product_ids",
     blogCategoryId: "blog_category_id",

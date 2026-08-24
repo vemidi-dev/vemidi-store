@@ -11,6 +11,7 @@ import { ColorManagementPanel } from "@/components/admin/color-management-panel"
 import { MaterialManagementPanel } from "@/components/admin/material-management-panel";
 import { ProductCreatePanel } from "@/components/admin/product-create-panel";
 import { ProductListPanel } from "@/components/admin/product-list-panel";
+import { ProductOrderingPanel } from "@/components/admin/product-ordering-panel";
 import { OrdersPanel } from "@/components/admin/orders-panel";
 import { WithdrawalsPanel } from "@/components/admin/withdrawals-panel";
 import { ContentManagementPanel } from "@/components/admin/content-management-panel";
@@ -71,6 +72,8 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         /снимките не бяха качени/i.test(error)),
   );
   const activeTab = normalizeAdminTab(firstValue(params.tab));
+  const productsView = firstValue(params.productsView);
+  const orderingScope = firstValue(params.orderingScope);
   const ordersQuery = parseOrdersQuery({
     status: firstValue(params.status),
     search: firstValue(params.q),
@@ -858,6 +861,11 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                   ? categoryType
                   : undefined;
               })()}
+            />
+          ) : productsView === "ordering" ? (
+            <ProductOrderingPanel
+              data={data}
+              initialScope={orderingScope === "catalog" ? "catalog" : "home"}
             />
           ) : (
             <>
