@@ -446,7 +446,7 @@ where product_id is not null;
 | Поле | Стойност |
 |------|----------|
 | Branch | `codex/product-ordering-admin` |
-| Commit | *(попълва се след push)* |
+| Commit | `d36aba3` — `fix(admin): allow home featured reorder under pg-safeupdate` |
 | PR | [#21](https://github.com/vemidi-dev/vemidi-store/pull/21) — OPEN |
 | Production | **Не е засегнат** — няма merge/promote |
 | Files | `product_catalog_sort_order.sql`, `product_catalog_sort_order_home_delete_hotfix.sql`, task report |
