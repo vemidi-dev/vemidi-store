@@ -149,3 +149,15 @@ Template-ът не е пипан в тази стъпка.
 - **Vercel Preview URL:** https://vemidi-store-git-codex-mobile-first-blog-articl-e00475-ve-mi-di.vercel.app
 - **Typecheck:** PASS (`npm run typecheck`)
 - **Production promote:** не е правен
+
+## Production deployment
+
+- **Merge commit:** `183e7d1` (Merge pull request #23)
+- **Feature tip:** `63816d1` / `c6e00c3`
+- **Branch / PR:** `codex/mobile-first-blog-article-layout` → `main` — [PR #23](https://github.com/vemidi-dev/vemidi-store/pull/23) MERGED
+- **Production URL:** https://vemidi-store.vercel.app
+- **Production deploy:** https://vemidi-store-gvtlkwnzm-ve-mi-di.vercel.app — **Ready**
+- **Typecheck:** PASS (`npm run typecheck`)
+- **Unit tests:** PASS — `tests/article-schema.test.ts`, `tests/blog-categories.test.ts`, `tests/blog-recommendations.test.ts` (14/14)
+- **SQL migration:** `supabase/blog_post_recommendation_copy.sql` — **остава ръчна стъпка в production Supabase**. Докато не се изпълни, admin полетата `recommendation_title` / `recommendation_description` няма да се записват/зареждат коректно.
+- **Проверено:** PR checks зелени; merge към main; Vercel Production deployment Ready.
