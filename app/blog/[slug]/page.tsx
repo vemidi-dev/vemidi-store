@@ -7,6 +7,7 @@ import { PageContainer } from "@/components/layout/page-container";
 import { ProductCard } from "@/components/product/product-card";
 import { JsonLd } from "@/components/seo/json-ld";
 import { VisibleBreadcrumbs } from "@/components/seo/visible-breadcrumbs";
+import { siteConfig } from "@/config/site";
 import type { BlogCategoryRow, BlogPostRow } from "@/lib/admin/types";
 import { resolveBlogRecommendation } from "@/lib/blog-recommendations";
 import {
@@ -20,11 +21,7 @@ import {
   getPublishedBlogPost,
   getPublishedBlogPosts,
 } from "@/lib/content/repository";
-import {
-  BlogRichText,
-  getBlogTableOfContents,
-  type BlogTableOfContentsItem,
-} from "@/lib/content/blog-rich-text";
+import { BlogRichText } from "@/lib/content/blog-rich-text";
 import { buildArticleSchema } from "@/lib/seo/article-schema";
 import {
   buildBreadcrumbListSchema,
@@ -96,55 +93,7 @@ function buildStructuredBlogBreadcrumbItems(post: BlogPostRow): BreadcrumbItem[]
   ];
 }
 
-function ArticleToc({
-  items,
-  variant = "mobile",
-}: {
-  items: BlogTableOfContentsItem[];
-  variant?: "mobile" | "desktop";
-}) {
-  if (!items.length) return null;
-
-  const links = (
-    <ol className="space-y-2">
-      {items.map((item) => (
-        <li key={item.id}>
-          <a
-            href={`#${item.id}`}
-            className="block rounded-md px-1 py-1 text-sm leading-5 text-boutique-muted transition hover:bg-white/70 hover:text-boutique-sage-deep"
-          >
-            {item.title}
-          </a>
-        </li>
-      ))}
-    </ol>
-  );
-
-  if (variant === "desktop") {
-    return (
-      <section className="rounded-2xl border border-boutique-line bg-boutique-paper p-5">
-        <h2 className="font-heading text-lg text-boutique-ink">В тази статия</h2>
-        <div className="mt-3">{links}</div>
-      </section>
-    );
-  }
-
-  return (
-    <details className="rounded-2xl border border-boutique-line bg-boutique-paper p-5 lg:hidden">
-      <summary className="cursor-pointer list-none font-heading text-lg text-boutique-ink">
-        <span className="flex items-center justify-between gap-3">
-          В тази статия
-          <span className="text-xs font-sans text-boutique-muted">
-            Покажи съдържанието ↓
-          </span>
-        </span>
-      </summary>
-      <div className="mt-4 border-t border-boutique-line pt-3">{links}</div>
-    </details>
-  );
-}
-
-function BlogTopicLinks({
+function BlogSearchAndCategories({
   categories,
   currentPost,
 }: {
@@ -157,22 +106,48 @@ function BlogTopicLinks({
     ...categories.filter((category) => category.id !== currentCategoryId),
   ].slice(0, 5);
 
-  if (!topics.length) return null;
-
   return (
     <section className="rounded-2xl border border-boutique-line bg-boutique-paper p-5">
-      <h2 className="font-heading text-lg text-boutique-ink">Разгледайте по тема</h2>
-      <div className="mt-3 grid gap-2">
-        {topics.map((category) => (
-          <Link
-            key={category.id}
-            href={getBlogCategoryFilterHref(category.slug)}
-            className="rounded-md px-1 py-1 text-sm text-boutique-muted transition hover:bg-white/70 hover:text-boutique-sage-deep"
+      <form action="/blog" className="space-y-3">
+        <label
+          htmlFor="blog-search"
+          className="font-heading text-lg text-boutique-ink"
+        >
+          Търсене
+        </label>
+        <div className="flex overflow-hidden rounded-full border border-boutique-line bg-white">
+          <input
+            id="blog-search"
+            name="q"
+            type="search"
+            placeholder="Търсете в блога..."
+            className="min-w-0 flex-1 bg-transparent px-4 py-2.5 text-sm text-boutique-ink outline-none placeholder:text-boutique-muted/70"
+          />
+          <button
+            type="submit"
+            className="px-4 text-sm font-semibold text-boutique-sage-deep"
           >
-            {category.name}
-          </Link>
-        ))}
-      </div>
+            Търси
+          </button>
+        </div>
+      </form>
+
+      {topics.length ? (
+        <>
+          <h2 className="mt-6 font-heading text-lg text-boutique-ink">Категории</h2>
+          <div className="mt-3 grid gap-2">
+            {topics.map((category) => (
+              <Link
+                key={category.id}
+                href={getBlogCategoryFilterHref(category.slug)}
+                className="rounded-md px-1 py-1 text-sm text-boutique-muted transition hover:bg-white/70 hover:text-boutique-sage-deep"
+              >
+                {category.name}
+              </Link>
+            ))}
+          </div>
+        </>
+      ) : null}
     </section>
   );
 }
@@ -189,7 +164,7 @@ function RelatedPostCards({
   if (compact) {
     return (
       <section className="rounded-2xl border border-boutique-line bg-boutique-paper p-5">
-        <h2 className="font-heading text-lg text-boutique-ink">Може да ви бъде интересно</h2>
+        <h2 className="font-heading text-lg text-boutique-ink">От същата категория</h2>
         <div className="mt-4 space-y-3">
           {posts.map((post) => (
             <Link
@@ -219,10 +194,10 @@ function RelatedPostCards({
       <div className="flex items-end justify-between gap-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-boutique-sage-deep">
-            Още идеи
+            Още от блога
           </p>
           <h2 className="mt-2 font-heading text-2xl text-boutique-ink">
-            Подобни статии
+            Още от тази категория
           </h2>
         </div>
         <Link
@@ -279,40 +254,71 @@ function ShareLinks({
       }
     >
       <h2 className="font-heading text-lg text-boutique-ink">
-        Запазете идеите за по-късно
+        Споделете статията
       </h2>
       <p className="mt-2 text-sm leading-6 text-boutique-muted">
-        Добавете статията в Pinterest или я изпратете като линк.
+        Покажете идеята на приятел или ни последвайте за още вдъхновение.
       </p>
       <div className="mt-4 flex flex-wrap gap-2">
         <a
-          href={`https://pinterest.com/pin/create/button/?url=${encodedUrl}&description=${encodedTitle}`}
+          href={`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`}
           target="_blank"
           rel="noreferrer"
           className="rounded-full bg-boutique-ink px-4 py-2 text-sm font-semibold text-boutique-paper transition hover:bg-boutique-accent"
         >
-          Запази в Pinterest
+          Сподели във Facebook
         </a>
+        {siteConfig.topBar.social.instagram ? (
+          <a
+            href={siteConfig.topBar.social.instagram}
+            target="_blank"
+            rel="noreferrer"
+            className="rounded-full border border-boutique-line px-4 py-2 text-sm font-semibold text-boutique-ink"
+          >
+            Instagram
+          </a>
+        ) : null}
         {!compact ? (
           <>
-            <a
-              href={`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`}
-              target="_blank"
-              rel="noreferrer"
-              className="rounded-full border border-boutique-line px-4 py-2 text-sm font-semibold text-boutique-ink"
-            >
-              Facebook
-            </a>
             <a
               href={`mailto:?subject=${encodedTitle}&body=${encodedUrl}`}
               className="rounded-full border border-boutique-line px-4 py-2 text-sm font-semibold text-boutique-ink"
             >
               Имейл
             </a>
+            {siteConfig.topBar.social.pinterest ? (
+              <a
+                href={`https://pinterest.com/pin/create/button/?url=${encodedUrl}&description=${encodedTitle}`}
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-full border border-boutique-line px-4 py-2 text-sm font-semibold text-boutique-ink"
+              >
+                Pinterest
+              </a>
+            ) : null}
           </>
         ) : null}
       </div>
     </section>
+  );
+}
+
+function MobileBlogTools({
+  categories,
+  currentPost,
+  encodedUrl,
+  encodedTitle,
+}: {
+  categories: BlogCategoryRow[];
+  currentPost: BlogPostRow;
+  encodedUrl: string;
+  encodedTitle: string;
+}) {
+  return (
+    <div className="space-y-5 lg:hidden">
+      <BlogSearchAndCategories categories={categories} currentPost={currentPost} />
+      <ShareLinks encodedUrl={encodedUrl} encodedTitle={encodedTitle} compact />
+    </div>
   );
 }
 
@@ -328,21 +334,16 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
   const selectedProductIds = await getBlogPostProductIds(post.id);
   const relatedPosts = posts
-    .filter((candidate) => candidate.slug !== slug)
+    .filter(
+      (candidate) =>
+        candidate.slug !== slug && postsShareBlogCategory(candidate, post),
+    )
     .sort(
       (a, b) =>
-        Number(postsShareBlogCategory(b, post)) -
-          Number(postsShareBlogCategory(a, post)) ||
         new Date(b.published_at ?? b.created_at).getTime() -
-          new Date(a.published_at ?? a.created_at).getTime(),
+        new Date(a.published_at ?? a.created_at).getTime(),
     )
     .slice(0, 3);
-  const currentIndex = posts.findIndex((candidate) => candidate.slug === slug);
-  const newerPost = currentIndex > 0 ? posts[currentIndex - 1] : null;
-  const olderPost =
-    currentIndex >= 0 && currentIndex < posts.length - 1
-      ? posts[currentIndex + 1]
-      : null;
   const recommendation = resolveBlogRecommendation(
     post,
     catalog,
@@ -359,7 +360,6 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     buildArticleSchema(post, siteUrl),
     buildBreadcrumbListSchema(buildStructuredBlogBreadcrumbItems(post), siteUrl),
   ];
-  const tocItems = getBlogTableOfContents(post.content);
   const categoryName = getBlogPostCategoryName(post);
 
   return (
@@ -416,9 +416,14 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         <PageContainer className="py-8 sm:py-10 lg:py-14">
           <div className="grid gap-8 lg:grid-cols-[minmax(0,760px)_300px] lg:items-start lg:justify-center lg:gap-12">
             <div className="min-w-0 space-y-8">
-              <ArticleToc items={tocItems} />
-
               <BlogRichText content={post.content} />
+
+              <MobileBlogTools
+                categories={blogCategories}
+                currentPost={post}
+                encodedUrl={encodedUrl}
+                encodedTitle={encodedTitle}
+              />
 
               {recommendation ? (
                 <section className="border-t border-boutique-line pt-9">
@@ -465,40 +470,6 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
               <RelatedPostCards posts={relatedPosts} />
 
-              <nav
-                aria-label="Предишна и следваща статия"
-                className="grid gap-3 border-t border-boutique-line pt-8 sm:grid-cols-2"
-              >
-                {newerPost ? (
-                  <Link
-                    href={`/blog/${newerPost.slug}`}
-                    className="rounded-2xl border border-boutique-line bg-boutique-paper p-5 transition hover:border-boutique-sage-deep"
-                  >
-                    <span className="text-xs font-semibold uppercase tracking-[0.16em] text-boutique-muted">
-                      Предишна статия
-                    </span>
-                    <span className="mt-2 block font-heading text-xl leading-snug text-boutique-ink">
-                      {newerPost.title}
-                    </span>
-                  </Link>
-                ) : null}
-                {olderPost ? (
-                  <Link
-                    href={`/blog/${olderPost.slug}`}
-                    className="rounded-2xl border border-boutique-line bg-boutique-paper p-5 transition hover:border-boutique-sage-deep sm:text-right"
-                  >
-                    <span className="text-xs font-semibold uppercase tracking-[0.16em] text-boutique-muted">
-                      Следваща статия
-                    </span>
-                    <span className="mt-2 block font-heading text-xl leading-snug text-boutique-ink">
-                      {olderPost.title}
-                    </span>
-                  </Link>
-                ) : null}
-              </nav>
-
-              <ShareLinks encodedUrl={encodedUrl} encodedTitle={encodedTitle} />
-
               <div className="text-center">
                 <Link
                   href="/blog#all-articles"
@@ -510,28 +481,8 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
             </div>
 
             <aside className="hidden lg:sticky lg:top-24 lg:block lg:space-y-5">
-              <ArticleToc items={tocItems} variant="desktop" />
-              <BlogTopicLinks categories={blogCategories} currentPost={post} />
+              <BlogSearchAndCategories categories={blogCategories} currentPost={post} />
               <RelatedPostCards posts={relatedPosts} compact />
-              {recommendation?.href ? (
-                <section className="rounded-2xl border border-boutique-line bg-boutique-paper p-5">
-                  <h2 className="font-heading text-lg text-boutique-ink">
-                    Подарък с лично послание
-                  </h2>
-                  <p className="mt-2 text-sm leading-6 text-boutique-muted">
-                    Разгледайте подходящи ръчно изработени подаръци към тази тема.
-                  </p>
-                  <Link
-                    href={recommendation.href}
-                    className="mt-4 inline-flex text-sm font-semibold text-boutique-sage-deep hover:underline"
-                  >
-                    {recommendation.linkLabel ??
-                      recommendation.category?.name ??
-                      "Разгледайте подаръците"}{" "}
-                    →
-                  </Link>
-                </section>
-              ) : null}
               <ShareLinks
                 encodedUrl={encodedUrl}
                 encodedTitle={encodedTitle}
