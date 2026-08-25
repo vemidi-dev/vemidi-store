@@ -92,6 +92,8 @@ export const adminFormFields = {
   blog: {
     productIds: "blog_product_ids",
     blogCategoryId: "blog_category_id",
+    recommendationTitle: "recommendation_title",
+    recommendationDescription: "recommendation_description",
   },
   blogCategory: {
     id: "blog_category_row_id",

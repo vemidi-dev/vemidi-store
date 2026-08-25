@@ -105,6 +105,8 @@ export type BlogPostRow = {
   is_popular: boolean;
   cta_link_label: string | null;
   cta_category_id: string | null;
+  recommendation_title: string | null;
+  recommendation_description: string | null;
   is_published: boolean;
   published_at: string | null;
   created_at: string;

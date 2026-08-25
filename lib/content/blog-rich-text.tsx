@@ -53,6 +53,12 @@ type BlockToken =
   | { type: "list"; ordered: boolean; items: InlineToken[][] }
   | { type: "image"; src: string; alt: string };
 
+export type BlogTableOfContentsItem = {
+  id: string;
+  title: string;
+  level: 2 | 3;
+};
+
 function isAllowedUrl(href: string) {
   return (
     href.startsWith("/") ||
@@ -238,6 +244,46 @@ export function parseBlogRichText(text: string): BlockToken[] {
   return blocks;
 }
 
+function getInlinePlainText(tokens: InlineToken[]): string {
+  return tokens
+    .map((token) => {
+      if (token.type === "text") return token.value;
+      return getInlinePlainText(token.children);
+    })
+    .join("");
+}
+
+function slugifyHeading(value: string) {
+  const slug = value
+    .trim()
+    .toLocaleLowerCase("bg")
+    .replace(/[^\p{L}\p{N}]+/gu, "-")
+    .replace(/^-+|-+$/g, "");
+
+  return slug || "section";
+}
+
+export function getBlogTableOfContents(content: string): BlogTableOfContentsItem[] {
+  const counts = new Map<string, number>();
+
+  return parseBlogRichText(content)
+    .filter((block): block is Extract<BlockToken, { type: "heading" }> => block.type === "heading")
+    .filter((block) => block.level === 2)
+    .map((block) => {
+      const title = getInlinePlainText(block.children).trim();
+      const baseId = slugifyHeading(title);
+      const count = counts.get(baseId) ?? 0;
+      counts.set(baseId, count + 1);
+
+      return {
+        id: count ? `${baseId}-${count + 1}` : baseId,
+        title,
+        level: block.level,
+      };
+    })
+    .filter((item) => item.title.length > 0);
+}
+
 function renderInline(tokens: InlineToken[], keyPrefix: string): ReactNode[] {
   return tokens.map((token, index) => {
     const key = `${keyPrefix}-${index}`;
@@ -287,6 +333,8 @@ function renderInline(tokens: InlineToken[], keyPrefix: string): ReactNode[] {
 
 export function BlogRichText({ content }: { content: string }) {
   const blocks = parseBlogRichText(content);
+  const headingIds = getBlogTableOfContents(content);
+  let headingIndex = 0;
 
   if (!blocks.length) return null;
 
@@ -295,13 +343,15 @@ export function BlogRichText({ content }: { content: string }) {
       {blocks.map((block, index) => {
         if (block.type === "heading") {
           const Tag = block.level === 2 ? "h2" : "h3";
+          const id = block.level === 2 ? headingIds[headingIndex++]?.id : undefined;
           return (
             <Tag
+              id={id}
               key={index}
               className={
                 block.level === 2
-                  ? "pt-3 font-heading text-3xl leading-tight text-boutique-ink"
-                  : "pt-2 font-heading text-2xl leading-tight text-boutique-ink"
+                  ? "scroll-mt-28 pt-3 font-heading text-3xl leading-tight text-boutique-ink"
+                  : "scroll-mt-28 pt-2 font-heading text-2xl leading-tight text-boutique-ink"
               }
             >
               {renderInline(block.children, `h-${index}`)}

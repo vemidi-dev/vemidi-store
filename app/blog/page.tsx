@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ContentImage } from "@/components/content/content-image";
 import { NewsletterForm } from "@/components/content/newsletter-form";
 import { PageContainer } from "@/components/layout/page-container";
+import { SocialLinks } from "@/components/layout/social-links";
 import { VisualPageHero } from "@/components/layout/visual-page-hero";
 import type { BlogCategoryRow, BlogPostRow } from "@/lib/admin/types";
 import {
@@ -570,16 +571,11 @@ export default async function BlogPage({ searchParams }: Props) {
                 <p className="mt-2 text-sm leading-6 text-boutique-muted">
                   Вдъхновение, нови продукти и моменти зад кулисите.
                 </p>
-                <div className="mt-5 flex gap-3">
-                  {["Facebook", "Instagram", "Pinterest"].map((network) => (
-                    <span
-                      key={network}
-                      className="grid h-10 w-10 place-items-center rounded-full border border-boutique-line bg-white text-xs font-semibold text-boutique-sage-deep"
-                      title={network}
-                    >
-                      {network.slice(0, 1)}
-                    </span>
-                  ))}
+                <div className="mt-5">
+                  <SocialLinks
+                    showHeading={false}
+                    networks={["facebook", "instagram", "tiktok", "pinterest"]}
+                  />
                 </div>
               </section>
             </aside>

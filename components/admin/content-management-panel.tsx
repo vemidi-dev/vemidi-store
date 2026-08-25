@@ -168,6 +168,28 @@ export function ContentManagementPanel(props: ContentManagementPanelProps) {
                   По избор: изберете повод или категория, за да се покаже кликабелен линк. Текстът по-горе се показва и без зададен линк.
                 </p>
               </label>
+              <label className="text-sm font-medium text-boutique-ink md:col-span-2">
+                Заглавие за продуктовата секция
+                <input
+                  name={adminFormFields.blog.recommendationTitle}
+                  maxLength={160}
+                  className={adminFieldClass}
+                  placeholder="Напр. Идеи към тази статия"
+                />
+              </label>
+              <label className="text-sm font-medium text-boutique-ink md:col-span-2">
+                Описание за продуктовата секция
+                <textarea
+                  name={adminFormFields.blog.recommendationDescription}
+                  rows={2}
+                  maxLength={400}
+                  className={`${adminFieldClass} resize-y`}
+                  placeholder="Кратко описание над продуктите"
+                />
+                <p className={adminHelperClass}>
+                  Показва се в статията над избраните продукти. Ако е празно, сайтът използва стандартен текст.
+                </p>
+              </label>
               <div className="rounded-xl border border-boutique-line bg-boutique-bg/40 p-4 md:col-span-2">
                 <h3 className="text-sm font-semibold text-boutique-ink">
                   Показани продукти под статията
@@ -424,6 +446,30 @@ export function ContentManagementPanel(props: ContentManagementPanelProps) {
                                 Категорията на стария линк не е в списъка с продуктови категории. Може да я запазите временно или да изберете друга.
                               </p>
                             ) : null}
+                          </label>
+                          <label className="text-sm font-medium text-boutique-ink md:col-span-2">
+                            Заглавие за продуктовата секция
+                            <input
+                              name={adminFormFields.blog.recommendationTitle}
+                              maxLength={160}
+                              defaultValue={(item as BlogPostRow).recommendation_title ?? ""}
+                              className={adminFieldClass}
+                              placeholder="Напр. Идеи към тази статия"
+                            />
+                          </label>
+                          <label className="text-sm font-medium text-boutique-ink md:col-span-2">
+                            Описание за продуктовата секция
+                            <textarea
+                              name={adminFormFields.blog.recommendationDescription}
+                              rows={2}
+                              maxLength={400}
+                              defaultValue={(item as BlogPostRow).recommendation_description ?? ""}
+                              className={`${adminFieldClass} resize-y`}
+                              placeholder="Кратко описание над продуктите"
+                            />
+                            <p className={adminHelperClass}>
+                              Показва се в статията над избраните продукти. Ако е празно, сайтът използва стандартен текст.
+                            </p>
                           </label>
                           <div className="rounded-xl border border-boutique-line bg-boutique-bg/40 p-4 md:col-span-2">
                             <h3 className="text-sm font-semibold text-boutique-ink">
