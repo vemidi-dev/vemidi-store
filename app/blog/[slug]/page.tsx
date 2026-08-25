@@ -3,7 +3,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { ContentImage } from "@/components/content/content-image";
+import { NewsletterForm } from "@/components/content/newsletter-form";
 import { PageContainer } from "@/components/layout/page-container";
+import { SocialLinks } from "@/components/layout/social-links";
 import { ProductCard } from "@/components/product/product-card";
 import { JsonLd } from "@/components/seo/json-ld";
 import { VisibleBreadcrumbs } from "@/components/seo/visible-breadcrumbs";
@@ -31,6 +33,8 @@ import {
 import { OG_DEFAULTS } from "@/lib/seo/social-images";
 import { getSiteUrl } from "@/lib/site-url";
 import { getStorefrontCatalog } from "@/lib/storefront/repository";
+
+const DEFAULT_RECOMMENDATION_TITLE = "Идеи към тази статия";
 
 type BlogPostPageProps = { params: Promise<{ slug: string }> };
 
@@ -303,6 +307,32 @@ function ShareLinks({
   );
 }
 
+function FollowUsBlock() {
+  return (
+    <section className="rounded-2xl border border-boutique-line bg-boutique-paper p-5">
+      <h2 className="font-heading text-lg text-boutique-ink">Последвайте ни</h2>
+      <p className="mt-2 text-sm leading-6 text-boutique-muted">
+        Вдъхновение, нови продукти и моменти зад кулисите.
+      </p>
+      <div className="mt-4">
+        <SocialLinks
+          showHeading={false}
+          networks={["facebook", "instagram", "tiktok", "pinterest"]}
+        />
+      </div>
+    </section>
+  );
+}
+
+function BlogEngageBlocks() {
+  return (
+    <>
+      <NewsletterForm variant="sidebar" defaultTopic="blog" />
+      <FollowUsBlock />
+    </>
+  );
+}
+
 function MobileBlogTools({
   categories,
   currentPost,
@@ -317,6 +347,7 @@ function MobileBlogTools({
   return (
     <div className="space-y-5 lg:hidden">
       <BlogSearchAndCategories categories={categories} currentPost={currentPost} />
+      <BlogEngageBlocks />
       <ShareLinks encodedUrl={encodedUrl} encodedTitle={encodedTitle} compact />
     </div>
   );
@@ -361,6 +392,10 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     buildBreadcrumbListSchema(buildStructuredBlogBreadcrumbItems(post), siteUrl),
   ];
   const categoryName = getBlogPostCategoryName(post);
+  const recommendationTitle =
+    post.recommendation_title?.trim() || DEFAULT_RECOMMENDATION_TITLE;
+  const recommendationDescription =
+    post.recommendation_description?.trim() || null;
 
   return (
     <>
@@ -433,12 +468,11 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                         Подходящи предложения
                       </p>
                       <h2 className="mt-2 max-w-xl font-heading text-2xl text-boutique-ink">
-                        Превърнете пожеланието в личен подарък
+                        {recommendationTitle}
                       </h2>
-                      {recommendation.category ? (
+                      {recommendationDescription ? (
                         <p className="mt-2 max-w-xl text-sm leading-6 text-boutique-muted">
-                          Изберете ръчно изработен подарък от „{recommendation.category.name}“,
-                          към който да добавим лично послание.
+                          {recommendationDescription}
                         </p>
                       ) : null}
                     </div>
@@ -482,6 +516,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
             <aside className="hidden lg:sticky lg:top-24 lg:block lg:space-y-5">
               <BlogSearchAndCategories categories={blogCategories} currentPost={post} />
+              <BlogEngageBlocks />
               <RelatedPostCards posts={relatedPosts} compact />
               <ShareLinks
                 encodedUrl={encodedUrl}

@@ -100,6 +100,19 @@ function getBlogCta(formData: FormData) {
   };
 }
 
+function getBlogRecommendationCopy(formData: FormData) {
+  return {
+    recommendationTitle: getOptionalString(
+      formData,
+      adminFormFields.blog.recommendationTitle,
+    ),
+    recommendationDescription: getOptionalString(
+      formData,
+      adminFormFields.blog.recommendationDescription,
+    ),
+  };
+}
+
 async function getBlogCategoryFields(
   supabase: NonNullable<Awaited<ReturnType<typeof createClient>>>,
   formData: FormData,
@@ -295,6 +308,8 @@ async function createContent(formData: FormData, kind: ContentKind) {
 
   if (kind === "blog") {
     const { ctaLinkLabel, ctaCategoryId } = getBlogCta(formData);
+    const { recommendationTitle, recommendationDescription } =
+      getBlogRecommendationCopy(formData);
     const blogCategoryFields = await getBlogCategoryFields(supabase, formData);
     row.__blogProductIds = getBlogProductIds(formData);
     row.blog_category_id = blogCategoryFields.blog_category_id;
@@ -305,6 +320,8 @@ async function createContent(formData: FormData, kind: ContentKind) {
     row.is_popular = isChecked(formData, "is_popular");
     row.cta_link_label = ctaLinkLabel;
     row.cta_category_id = ctaCategoryId;
+    row.recommendation_title = recommendationTitle;
+    row.recommendation_description = recommendationDescription;
     row.published_at = isPublished ? new Date().toISOString() : null;
   } else {
     const startsAt = parseDateTime(getString(formData, "starts_at"));
@@ -420,6 +437,8 @@ async function updateContent(
 
   if (kind === "blog") {
     const { ctaLinkLabel, ctaCategoryId } = getBlogCta(formData);
+    const { recommendationTitle, recommendationDescription } =
+      getBlogRecommendationCopy(formData);
     const blogCategoryFields = await getBlogCategoryFields(supabase, formData);
     row.__blogProductIds = getBlogProductIds(formData);
     row.blog_category_id = blogCategoryFields.blog_category_id;
@@ -430,6 +449,8 @@ async function updateContent(
     row.is_popular = isChecked(formData, "is_popular");
     row.cta_link_label = ctaLinkLabel;
     row.cta_category_id = ctaCategoryId;
+    row.recommendation_title = recommendationTitle;
+    row.recommendation_description = recommendationDescription;
     row.published_at = isPublished
       ? (previousRow?.published_at ?? new Date().toISOString())
       : null;

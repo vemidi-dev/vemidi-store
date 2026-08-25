@@ -52,6 +52,7 @@ BreadcrumbList structured data вече използва по-пълната п�
 - Премахната е навигацията `Предишна статия` / `Следваща статия`.
 - `Подобни статии` е преименувано на `Още от тази категория`.
 - Препоръчаните статии вече се филтрират само от същата блог категория.
+- В blog index sidebar блока `Последвайте ни` placeholder буквите са заменени с реалните social SVG икони от `SocialLinks`.
 
 Проверки след revision:
 
@@ -82,3 +83,40 @@ Template-ът не е пипан в тази стъпка.
 - **Typecheck:** PASS (`npm run typecheck`)
 - **Production promote:** не е правен
 - **Бележка:** admin-настройваеми препоръчани статии остават отделна бъдеща задача
+
+## Recommendation copy + sidebar newsletter/social revision
+
+### Променени файлове
+
+- `supabase/blog_post_recommendation_copy.sql` — нова миграция
+- `lib/admin/types.ts`
+- `lib/admin/form-fields.ts`
+- `app/admin/content-actions.ts`
+- `components/admin/content-management-panel.tsx`
+- `app/blog/[slug]/page.tsx`
+- `app/blog/page.tsx` — SocialLinks с реални SVG икони в „Последвайте ни“
+- `tests/article-schema.test.ts`
+- `tests/blog-categories.test.ts`
+- `docs/task-reports/2026-08-25-mobile-first-blog-article-layout.md`
+
+### SQL
+
+Миграция: `supabase/blog_post_recommendation_copy.sql`
+
+Добавя nullable колони:
+- `recommendation_title`
+- `recommendation_description`
+
+**SQL трябва да се изпълни ръчно в Supabase SQL Editor** преди admin save и storefront да ползват новите полета.
+
+### Какво се променя в UX
+
+- Текстовете над „Подходящи предложения“ се управляват от admin панела за всяка статия.
+- Fallback заглавие: `Идеи към тази статия`.
+- Ако description е празно, не се показва hardcoded gift copy.
+- В sidebar (и на mobile след търсене/категории) се показват Newsletter + „Последвайте ни“ с реални social SVG икони.
+
+### Проверки
+
+- `npm run typecheck` — PASS
+- Production promote: **не е правен**

@@ -21,6 +21,8 @@ const post: BlogPostRow = {
   is_popular: false,
   cta_link_label: null,
   cta_category_id: null,
+  recommendation_title: null,
+  recommendation_description: null,
   is_published: true,
   published_at: "2026-01-10T10:00:00.000Z",
   created_at: "2026-01-01T10:00:00.000Z",
