@@ -4,9 +4,9 @@ import { notFound } from "next/navigation";
 
 import { ContentImage } from "@/components/content/content-image";
 import { NewsletterForm } from "@/components/content/newsletter-form";
+import { BlogProductCarousel } from "@/components/blog/blog-product-carousel";
 import { PageContainer } from "@/components/layout/page-container";
 import { SocialLinks } from "@/components/layout/social-links";
-import { ProductCard } from "@/components/product/product-card";
 import { JsonLd } from "@/components/seo/json-ld";
 import { VisibleBreadcrumbs } from "@/components/seo/visible-breadcrumbs";
 import { siteConfig } from "@/config/site";
@@ -270,7 +270,7 @@ function ShareLinks({
           rel="noreferrer"
           className="rounded-full bg-boutique-ink px-4 py-2 text-sm font-semibold text-boutique-paper transition hover:bg-boutique-accent"
         >
-          Сподели във Facebook
+          Facebook
         </a>
         {siteConfig.topBar.social.instagram ? (
           <a
@@ -380,7 +380,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     catalog,
     selectedProductIds,
   );
-  const recommendedProducts = recommendation?.products.slice(0, 3) ?? [];
+  const recommendedProducts = recommendation?.products ?? [];
   const articleUrl = new URL(`/blog/${slug}`, getSiteUrl()).toString();
   const encodedUrl = encodeURIComponent(articleUrl);
   const encodedTitle = encodeURIComponent(post.title);
@@ -489,15 +489,10 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                     ) : null}
                   </div>
                   {recommendedProducts.length ? (
-                    <div className="mt-5 grid gap-4 sm:grid-cols-3">
-                      {recommendedProducts.map((product) => (
-                        <ProductCard
-                          key={product.id}
-                          product={product}
-                          variant="related"
-                        />
-                      ))}
-                    </div>
+                    <BlogProductCarousel
+                      products={recommendedProducts}
+                      cardVariant="related"
+                    />
                   ) : null}
                 </section>
               ) : null}

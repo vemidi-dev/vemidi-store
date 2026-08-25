@@ -132,3 +132,11 @@ Template-ът не е пипан в тази стъпка.
 - **SQL migration:** `supabase/blog_post_recommendation_copy.sql`
 - **Важно:** SQL трябва да се изпълни ръчно в Supabase преди admin полетата `recommendation_title` / `recommendation_description` да работят.
 - **Production promote:** не е правен
+
+## Product carousel + share label revision
+
+- Продуктите в „Подходящи предложения“ вече не са ограничени до първите 3 — рендерират се всички избрани/свързани продукти.
+- Използва се `BlogProductCarousel` с хоризонтален scroll и стрелки; в article страницата картите са `ProductCard variant="related"` чрез `cardVariant`.
+- Facebook бутонът в „Споделете статията“ е преименуван от „Сподели във Facebook“ на „Facebook“.
+- `npm run typecheck` — PASS
+- Production promote: **не е правен**
