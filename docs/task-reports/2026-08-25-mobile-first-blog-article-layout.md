@@ -120,3 +120,15 @@ Template-ът не е пипан в тази стъпка.
 
 - `npm run typecheck` — PASS
 - Production promote: **не е правен**
+
+## Preview: recommendation copy and sidebar revision
+
+- **Commit hash:** `255a0d0`
+- **Branch:** `codex/mobile-first-blog-article-layout`
+- **PR:** https://github.com/vemidi-dev/vemidi-store/pull/23
+- **Vercel Preview URL:** https://vemidi-store-git-codex-mobile-first-blog-articl-e00475-ve-mi-di.vercel.app
+- **Typecheck:** PASS (`npm run typecheck`)
+- **Unit tests:** PASS — `npx tsx --test tests/article-schema.test.ts tests/blog-categories.test.ts tests/blog-recommendations.test.ts` (14/14)
+- **SQL migration:** `supabase/blog_post_recommendation_copy.sql`
+- **Важно:** SQL трябва да се изпълни ръчно в Supabase преди admin полетата `recommendation_title` / `recommendation_description` да работят.
+- **Production promote:** не е правен
