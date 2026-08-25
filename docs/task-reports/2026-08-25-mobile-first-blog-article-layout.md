@@ -140,3 +140,12 @@ Template-ът не е пипан в тази стъпка.
 - Facebook бутонът в „Споделете статията“ е преименуван от „Сподели във Facebook“ на „Facebook“.
 - `npm run typecheck` — PASS
 - Production promote: **не е правен**
+
+## Preview: product carousel revision
+
+- **Commit hash:** `c6e00c3`
+- **Branch:** `codex/mobile-first-blog-article-layout`
+- **PR:** https://github.com/vemidi-dev/vemidi-store/pull/23
+- **Vercel Preview URL:** https://vemidi-store-git-codex-mobile-first-blog-articl-e00475-ve-mi-di.vercel.app
+- **Typecheck:** PASS (`npm run typecheck`)
+- **Production promote:** не е правен
