@@ -33,7 +33,7 @@ export const siteConfig = {
   business: {
     legalName: "Дрийм Гифтс ЕООД",
     registrationNumber: "208135190",
-    address: "София, Младост 2, бл. 210",
+    address: "ж.к. Младост 2, бл.210, вх.3, София",
     email: "vemidi.crafts@gmail.com",
     phoneDisplay: "0895 627 631",
     phoneHref: "+359895627631",
