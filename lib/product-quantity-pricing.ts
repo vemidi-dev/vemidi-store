@@ -4,6 +4,52 @@ export type ProductQuantityPriceTier = {
   unitPrice: number;
 };
 
+export type QuantityPriceTierValidationResult =
+  | { ok: true; tiers: ProductQuantityPriceTier[] }
+  | { ok: false; message: string };
+
+export function validateQuantityPriceTierRanges(
+  value: unknown,
+): QuantityPriceTierValidationResult {
+  if (value === undefined || value === null) {
+    return { ok: true, tiers: [] };
+  }
+
+  if (!Array.isArray(value)) {
+    return {
+      ok: false,
+      message: "quantity_price_tiers трябва да е масив.",
+    };
+  }
+
+  if (value.length === 0) {
+    return { ok: true, tiers: [] };
+  }
+
+  const tiers = normalizeQuantityPriceTiers(value);
+  if (tiers.length !== value.length) {
+    return {
+      ok: false,
+      message: "quantity_price_tiers съдържа невалидни редове.",
+    };
+  }
+
+  for (let index = 1; index < tiers.length; index += 1) {
+    const previous = tiers[index - 1]!;
+    const current = tiers[index]!;
+    const previousEnd = previous.maxQuantity ?? Number.POSITIVE_INFINITY;
+
+    if (current.minQuantity <= previousEnd) {
+      return {
+        ok: false,
+        message: "quantity_price_tiers имат припокриващи се ranges.",
+      };
+    }
+  }
+
+  return { ok: true, tiers };
+}
+
 export function normalizeQuantityPriceTiers(
   value: unknown,
 ): ProductQuantityPriceTier[] {

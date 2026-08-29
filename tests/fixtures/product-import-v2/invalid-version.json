@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "products": [
+    {
+      "name": "Legacy",
+      "slug": "legacy-product",
+      "price": 1,
+      "description": "Test",
+      "categories": ["cat"],
+      "primary_category": "cat",
+      "images": [{ "original_filename": "a.png", "alt": "Alt" }]
+    }
+  ]
+}

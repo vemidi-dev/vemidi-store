@@ -1,0 +1,27 @@
+export const PRODUCT_JSON_IMPORT_VERSION = 2 as const;
+
+export const MAX_PRODUCT_JSON_IMPORT_BYTES = 2 * 1024 * 1024;
+
+export const MAX_PRODUCTS_PER_IMPORT = 25;
+
+export const MAX_PRODUCT_NAME_LENGTH = 200;
+
+export const MAX_PRODUCT_SUBTITLE_LENGTH = 200;
+
+export const MAX_PRODUCT_HEADING_SUBTITLE_LENGTH = 200;
+
+export const MAX_PRODUCT_META_TITLE_LENGTH = 120;
+
+export const MAX_PRODUCT_META_DESCRIPTION_LENGTH = 160;
+
+export const MAX_PRODUCT_OG_TITLE_LENGTH = 120;
+
+export const MAX_PRODUCT_OG_DESCRIPTION_LENGTH = 160;
+
+export const MAX_PRODUCT_IMAGE_ALT_LENGTH = 160;
+
+export const MAX_PERSONALIZATION_FIELDS = 20;
+
+export const PRODUCT_CODE_PATTERN = /^[A-Z0-9-]{2,32}$/;
+
+export const TARGET_FILENAME_PATTERN = /^[a-z0-9-]+-vemidi-crafts-\d{2}\.webp$/;

@@ -1,0 +1,66 @@
+{
+  "version": 2,
+  "import_key": "darvena-liniyka-s-ime-moliv-2026-08-30",
+  "defaults": {
+    "status": "draft",
+    "visibility": "public",
+    "fulfillment_type": "made_to_order",
+    "is_customizable": true,
+    "promo_code_eligible": true
+  },
+  "products": [
+    {
+      "name": "Дървена линийка с име – Молив",
+      "slug": "darvena-liniyka-s-ime-moliv",
+      "product_code": "LIN-MOL-01",
+      "price": 2.5,
+      "subtitle": "Дървена линийка с форма на молив, гравирано име и скала до 15 см.",
+      "description": "Дървената линийка с име е практичен и личен аксесоар за училище или детската градина. Формата на молив и гравираните детайли я превръщат в интересна част от ученическите принадлежности.\n\nВърху линийката са изобразени отворена книга, букви и посланието „Светът принадлежи на тези, които четат!“. Скалата е разграфена от 0 до 15 см.\n\nИмето на детето се гравира върху продукта и е задължително при поръчка.",
+      "categories": [
+        "za-uchilishte-i-detska-gradina",
+        "liniyki"
+      ],
+      "primary_category": "liniyki",
+      "personalization_info": "Задължителна персонализация с име. Въведете името на детето при поръчка.",
+      "personalization_fields": [
+        {
+          "label": "Име на детето",
+          "field_key": "child_name",
+          "field_type": "text",
+          "placeholder": "Напр. Емма",
+          "max_length": 50,
+          "price_delta": 0,
+          "required": true
+        }
+      ],
+      "promo_code_eligible": true,
+      "meta_title": "Дървена линийка с име – Молив | VeMiDi Crafts",
+      "meta_description": "Дървена линийка с форма на молив, скала до 15 см и гравирано име. Практичен персонализиран аксесоар за ученик.",
+      "og_title": "Дървена линийка с име – Молив",
+      "og_description": "Персонализирана дървена линийка с форма на молив, скала до 15 см и име на детето.",
+      "images": [
+        {
+          "original_filename": "ChatGPT Image Aug 29, 2026, 04_41_32 PM.png",
+          "target_filename": "darvena-liniyka-s-ime-moliv-vemidi-crafts-01.webp",
+          "alt": "Дървени линийки с форма на молив и гравирани детски имена",
+          "primary": true
+        },
+        {
+          "original_filename": "ChatGPT Image Aug 29, 2026, 04_30_14 PM.png",
+          "target_filename": "darvena-liniyka-s-ime-moliv-vemidi-crafts-02.webp",
+          "alt": "Дървена линийка молив с гравирано име Емма"
+        },
+        {
+          "original_filename": "1Asset 6.png",
+          "target_filename": "darvena-liniyka-s-ime-moliv-vemidi-crafts-03.webp",
+          "alt": "Персонализирана дървена линийка молив с име Александър"
+        },
+        {
+          "original_filename": "ChatGPT Image Aug 29, 2026, 04_17_00 PM.png",
+          "target_filename": "darvena-liniyka-s-ime-moliv-vemidi-crafts-04.webp",
+          "alt": "Дървена линийка с форма на молив и име Симеон"
+        }
+      ]
+    }
+  ]
+}
