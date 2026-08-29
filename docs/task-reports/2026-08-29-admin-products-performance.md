@@ -436,5 +436,8 @@ Merge: **чака потвърждение**
 ### Deploy
 
 - Production: **не**
-- Preview: да (след commit/PR)
+- Preview: **да** — PR [#30](https://github.com/vemidi-dev/vemidi-store/pull/30)
+  - Preview URL: https://vemidi-store-git-feat-admin-products-performanc-b0719d-ve-mi-di.vercel.app
+  - Unauth smoke: `/admin?tab=products|categories` (+ filter params) → **307** към login (без 504)
+  - Authenticated list/edit smoke: **ръчно** след login
 - Merge: само след ръчно потвърждение
