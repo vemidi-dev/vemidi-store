@@ -1,8 +1,7 @@
-import { createCategory } from "@/app/admin/actions";
-import { AdminFormPendingGuard } from "@/components/admin/admin-form-pending-guard";
 import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
 import { CategoryContentSeoFields } from "@/components/admin/category-content-seo-fields";
 import { CategoryManagementView } from "@/components/admin/category-management-view";
+import { CategoryRedirectingForm } from "@/components/admin/category-redirecting-form";
 import { CategoryRelatedSelector } from "@/components/admin/category-related-selector";
 import {
   adminAccordionClass,
@@ -18,23 +17,29 @@ export function CategoryManagementPanel({
   productCountByCategoryId,
   relatedCategoryIdsByCategoryId,
   initialCategoryType,
+  editCategoryId,
+  categoryQuery,
+  listKey,
 }: {
   categories: CategoryRow[];
   productCountByCategoryId: Map<string, number>;
   relatedCategoryIdsByCategoryId: Map<string, string[]>;
   initialCategoryType?: CategoryRow["category_type"];
+  editCategoryId?: string;
+  categoryQuery?: string;
+  listKey?: string;
 }) {
   const parentCategories = categories
     .filter(
       (category) =>
         (category.category_type === "product" ||
           category.category_type === "material") &&
-          category.parent_id === null,
+        category.parent_id === null,
     )
     .sort((left, right) => left.name.localeCompare(right.name, "bg"));
 
   return (
-    <article className={adminPanelClass}>
+    <article className={adminPanelClass} key={listKey}>
       <h2 className="font-heading text-2xl text-boutique-ink">
         Управление на категории
       </h2>
@@ -53,8 +58,9 @@ export function CategoryManagementPanel({
             Формуляр
           </span>
         </summary>
-        <form
-          action={createCategory}
+        <CategoryRedirectingForm
+          kind="create"
+          pendingMessage="Категорията се добавя… Моля, изчакайте."
           className="border-t border-boutique-line/80 px-4 pb-4 pt-4 sm:px-5 sm:pb-5"
         >
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-[1fr_1fr_1fr_1fr_auto]">
@@ -198,11 +204,8 @@ export function CategoryManagementPanel({
                 Добави
               </AdminSubmitButton>
             </div>
-            <div className="md:col-span-2 xl:col-span-4">
-              <AdminFormPendingGuard message="Категорията се добавя… Моля, изчакайте." />
-            </div>
           </div>
-        </form>
+        </CategoryRedirectingForm>
       </details>
 
       {categories.length === 0 ? (
@@ -213,6 +216,8 @@ export function CategoryManagementPanel({
           productCountByCategoryId={productCountByCategoryId}
           relatedCategoryIdsByCategoryId={relatedCategoryIdsByCategoryId}
           initialCategoryType={initialCategoryType}
+          editCategoryId={editCategoryId}
+          categoryQuery={categoryQuery}
         />
       )}
     </article>

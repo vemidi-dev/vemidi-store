@@ -29,7 +29,14 @@ import { FaqManagementPanel } from "@/components/admin/faq-management-panel";
 import { SeoOverviewPanel } from "@/components/admin/seo-overview-panel";
 import { PageContainer } from "@/components/layout/page-container";
 import { loadAdminData } from "@/lib/admin/data";
-import { buildProductCountByCategoryId } from "@/lib/admin/category-stats";
+import { loadAdminCategoriesData } from "@/lib/admin/categories-data";
+import { loadAdminProductEditBundle } from "@/lib/admin/product-edit-data";
+import { loadAdminProductLookups } from "@/lib/admin/product-lookups";
+import {
+  loadAdminProductsPage,
+  parseProductsQuery,
+} from "@/lib/admin/products-query";
+import { ProductListSlimPanel } from "@/components/admin/product-list-slim-panel";
 import {
   firstValue,
   normalizeAdminTab,
@@ -837,22 +844,40 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     );
   }
 
-  const data = await loadAdminData(supabase);
-
-  return (
-    <section className="pb-24 pt-10">
-      <PageContainer>
-        <div className="mx-auto max-w-6xl space-y-8">
-          <AdminHeader activeTab={activeTab} />
-          <AdminNotices success={success} error={error} errors={data.errors} />
-
-          {activeTab === "categories" ? (
+  if (activeTab === "categories") {
+    const categoriesData = await loadAdminCategoriesData(supabase);
+    return (
+      <section className="pb-24 pt-10">
+        <PageContainer>
+          <div className="mx-auto max-w-6xl space-y-8">
+            <AdminHeader activeTab={activeTab} />
+            {success || error ? (
+              <div
+                className={`rounded-xl border px-4 py-3 text-sm ${
+                  error
+                    ? "border-red-200 bg-red-50 text-red-700"
+                    : "border-emerald-200 bg-emerald-50 text-emerald-700"
+                }`}
+              >
+                {error || success}
+              </div>
+            ) : null}
+            {categoriesData.errors.categories ||
+            categoriesData.errors.productCategories ||
+            categoriesData.errors.categoryRelatedCategories ? (
+              <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                Категориите не могат да бъдат заредени напълно.
+              </div>
+            ) : null}
             <CategoryManagementPanel
-              categories={data.categories}
-              relatedCategoryIdsByCategoryId={data.relatedCategoryIdsByCategoryId}
-              productCountByCategoryId={buildProductCountByCategoryId(
-                data.categoryIdsByProductId,
-              )}
+              categories={categoriesData.categories}
+              relatedCategoryIdsByCategoryId={
+                categoriesData.relatedCategoryIdsByCategoryId
+              }
+              productCountByCategoryId={categoriesData.productCountByCategoryId}
+              listKey={`${success}-${error}-${firstValue(params._refresh)}`}
+              editCategoryId={firstValue(params.editCategory) || undefined}
+              categoryQuery={firstValue(params.category_q)}
               initialCategoryType={(() => {
                 const categoryType = firstValue(params.categoryType);
                 return categoryType === "material" ||
@@ -862,30 +887,103 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                   : undefined;
               })()}
             />
-          ) : productsView === "ordering" ? (
-            <ProductOrderingPanel
-              data={data}
-              initialScope={orderingScope === "catalog" ? "catalog" : "home"}
+          </div>
+        </PageContainer>
+      </section>
+    );
+  }
+
+  if (activeTab === "products" && productsView !== "ordering") {
+    const productsQuery = parseProductsQuery({
+      q: firstValue(params.q),
+      category: firstValue(params.category),
+      productCat: firstValue(params.product_cat),
+      materialCat: firstValue(params.material_cat),
+      occasionCat: firstValue(params.occasion_cat),
+      availability: firstValue(params.availability),
+      status: firstValue(params.status),
+      sort: firstValue(params.sort),
+      page: firstValue(params.page),
+      pageSize: firstValue(params.page_size),
+    });
+
+    const [lookups, productsPage] = await Promise.all([
+      loadAdminProductLookups(supabase),
+      loadAdminProductsPage(supabase, productsQuery),
+    ]);
+
+    const editBundle =
+      editProductId.length > 0
+        ? await loadAdminProductEditBundle(supabase, editProductId, lookups)
+        : null;
+
+    return (
+      <section className="pb-24 pt-10">
+        <PageContainer>
+          <div className="mx-auto max-w-6xl space-y-8">
+            <AdminHeader activeTab={activeTab} />
+            {success || error || editBundle?.error ? (
+              <div
+                className={`rounded-xl border px-4 py-3 text-sm ${
+                  error || editBundle?.error
+                    ? "border-red-200 bg-red-50 text-red-700"
+                    : "border-emerald-200 bg-emerald-50 text-emerald-700"
+                }`}
+              >
+                {error || editBundle?.error || success}
+              </div>
+            ) : null}
+            <ProductCreatePanel
+              categories={lookups.categories}
+              colorGroups={lookups.colorGroups}
+              colorOptions={lookups.colorOptions}
+              materials={lookups.materials}
+              variantGroups={lookups.variantGroups}
+              wishes={lookups.wishTemplates}
+              wishOccasionLinks={lookups.wishTemplateOccasions}
+              faqProductGroups={lookups.faqProductGroups}
+              faqItems={lookups.faqItems}
+              draft={draft}
+              imageReselectWarning={imageReselectWarning}
+              successMessage={success}
             />
-          ) : (
-            <>
-              <ProductCreatePanel
-                categories={data.categories}
-                colorGroups={data.colorGroups}
-                colorOptions={data.colorOptions}
-                materials={data.materials}
-                variantGroups={data.variantGroups}
-                wishes={data.wishTemplates}
-                wishOccasionLinks={data.wishTemplateOccasions}
-                faqProductGroups={data.faqProductGroups}
-                faqItems={data.faqItems}
-                draft={draft}
-                imageReselectWarning={imageReselectWarning}
-                successMessage={success}
+            <ProductListSlimPanel
+              products={productsPage.products}
+              total={productsPage.total}
+              query={productsQuery}
+              categories={lookups.categories}
+              categoryById={
+                new Map(lookups.categories.map((category) => [category.id, category]))
+              }
+              error={productsPage.error?.message ?? null}
+              editProductId={editProductId || undefined}
+            />
+            {editBundle?.data ? (
+              <ProductListPanel
+                data={editBundle.data}
+                editProductId={editProductId}
+                editOnly
               />
-              <ProductListPanel data={data} editProductId={editProductId || undefined} />
-            </>
-          )}
+            ) : null}
+          </div>
+        </PageContainer>
+      </section>
+    );
+  }
+
+  // Ordering still uses the monolith loader until Stage 4.
+  const data = await loadAdminData(supabase);
+
+  return (
+    <section className="pb-24 pt-10">
+      <PageContainer>
+        <div className="mx-auto max-w-6xl space-y-8">
+          <AdminHeader activeTab={activeTab} />
+          <AdminNotices success={success} error={error} errors={data.errors} />
+          <ProductOrderingPanel
+            data={data}
+            initialScope={orderingScope === "catalog" ? "catalog" : "home"}
+          />
         </div>
       </PageContainer>
     </section>

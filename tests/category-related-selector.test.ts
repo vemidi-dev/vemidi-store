@@ -139,12 +139,10 @@ test("edit category form passes selected related ids to selector", () => {
     "utf8",
   );
 
-  assert.match(viewSource, /relatedCategoryIdsByCategoryId\.get\(category\.id\)/);
+  assert.match(viewSource, /relatedCategoryIdsByCategoryId\.get\(editingCategory\.id\)/);
   assert.match(viewSource, /selectedRelatedIds=/);
-  assert.match(
-    viewSource,
-    /updateCategory/,
-  );
+  assert.match(viewSource, /kind="update"/);
+  assert.match(viewSource, /CategoryRedirectingForm/);
 });
 
 test("update category action still parses related category ids", () => {
