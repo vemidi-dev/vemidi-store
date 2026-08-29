@@ -713,8 +713,8 @@ npx tsx --test tests/admin-categories-edit-move.test.ts
 | PR | https://github.com/vemidi-dev/vemidi-store/pull/30 |
 | Merge commit | `659263f` |
 | Tip commit on main (includes CI test fix) | `c028e40` (in merge) |
-| Production deployment | https://vemidi-store-kr1l3lidu-ve-mi-di.vercel.app (`dpl_41uv2D2eckA5fCQrG4RRZYK2qBAn`) — **Ready** |
-| Production aliases | `vemidi-crafts.com`, `www.vemidi-crafts.com`, `vemidi-store.vercel.app`, `vemidi-store-ve-mi-di.vercel.app` → новият deploy |
+| Production deployment | https://vemidi-store-kr1l3lidu-ve-mi-di.vercel.app (`dpl_41uv2D2eckA5fCQrG4RRZYK2qBAn`) — **Ready** (първоначален Git production deploy от PR #30) |
+| Production aliases (първоначално) | ръчно alias-нати към `kr1l3lidu` / commit `659263f` — виж §20 за корекция |
 
 **Promo `promo_code_eligible` WIP:** **не е пипан, не е commit-нат, не е merge-нат, не е deploy-нат.** Остава само локално в `D:\Cursor\src`.
 
@@ -753,3 +753,51 @@ npx tsx --test tests/admin-categories-edit-move.test.ts tests/admin-categories-l
 
 - Product **ordering** tab все още ползва `loadAdminData` (Stage 4).
 - Authenticated production UI smoke зависи от ръчен login (unauth smoke покрива само „без 504“).
+
+---
+
+## 20. Production alias correction
+
+Дата: 2026-08-30
+
+### Проблем
+
+След §19 custom domains бяха alias-нати ръчно към Git production deploy от PR #30 merge (`659263f`, `vemidi-store-kr1l3lidu-ve-mi-di.vercel.app`). По-новият main commit `e2e345b` (docs report, PR #31) беше **Ready** в Vercel, но **не** беше активният production alias на `vemidi-crafts.com`.
+
+### Корекция (без локален build)
+
+Намерен Ready **Production** deploy от `main` / commit `e2e345b`:
+
+| Item | Value |
+|------|--------|
+| Commit | `e2e345b` |
+| Deployment URL | https://vemidi-store-k0rawnhwh-ve-mi-di.vercel.app |
+| Deployment ID | `dpl_FvMTUanx8PDjM3Ax4M2hcrEQBToQ` |
+| GitHub Production deployment | `2026-08-29T18:31:42Z`, sha `e2e345b` |
+
+Команди (само alias, без `vercel deploy` от локална папка):
+
+```text
+vercel alias set vemidi-store-k0rawnhwh-ve-mi-di.vercel.app vemidi-crafts.com
+vercel alias set vemidi-store-k0rawnhwh-ve-mi-di.vercel.app www.vemidi-crafts.com
+vercel alias set vemidi-store-k0rawnhwh-ve-mi-di.vercel.app vemidi-store.vercel.app
+```
+
+### Преди / след
+
+| | Commit | Deployment |
+|---|--------|------------|
+| **Преди** | `659263f` | https://vemidi-store-kr1l3lidu-ve-mi-di.vercel.app |
+| **След** | `e2e345b` | https://vemidi-store-k0rawnhwh-ve-mi-di.vercel.app |
+
+Активни production aliases (`vemidi-crafts.com`, `www.vemidi-crafts.com`, `vemidi-store.vercel.app`) → **`k0rawnhwh` / `e2e345b`**.
+
+### Smoke след alias (unauthenticated)
+
+| URL | Status | Time | 504 |
+|-----|--------|------|-----|
+| https://vemidi-crafts.com/admin | 307 → login | ~1.5s | не |
+| https://vemidi-crafts.com/admin?tab=categories | 307 → login | ~0.6s | не |
+| https://vemidi-crafts.com/admin?tab=products | 307 → login | ~0.7s | не |
+
+**Promo `promo_code_eligible` WIP:** не е пипан; не е deploy-ван от `D:\Cursor\src`.
