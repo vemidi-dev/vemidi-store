@@ -471,8 +471,10 @@ Merge: **чака потвърждение**
 
 ### Preview
 
-- Нов Vercel Preview след push на UX revision (обнови URL тук след deploy).
-- Ръчен checklist: products onChange filters; category type AND; publish refresh; categories close/move/save/create + related checkboxes; без 504.
+- Preview (branch alias): https://vemidi-store-git-feat-admin-products-performanc-b0719d-ve-mi-di.vercel.app
+- Commit: `021cb7c` на PR [#30](https://github.com/vemidi-dev/vemidi-store/pull/30)
+- Unauth smoke: `/admin?tab=products` и `/admin?tab=categories` → **307** login (без 504)
+- Authenticated checklist: products onChange filters; category type AND; publish refresh; categories close/move/save/create + related checkboxes
 
 ### Преди merge
 
