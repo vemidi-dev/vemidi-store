@@ -2,6 +2,7 @@ import { createCategory } from "@/app/admin/actions";
 import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
 import { CategoryContentSeoFields } from "@/components/admin/category-content-seo-fields";
 import { CategoryManagementView } from "@/components/admin/category-management-view";
+import { CategoryRedirectingForm } from "@/components/admin/category-redirecting-form";
 import { CategoryRelatedSelector } from "@/components/admin/category-related-selector";
 import {
   adminAccordionClass,
@@ -58,8 +59,9 @@ export function CategoryManagementPanel({
             Формуляр
           </span>
         </summary>
-        <form
+        <CategoryRedirectingForm
           action={createCategory}
+          pendingMessage="Категорията се добавя… Моля, изчакайте."
           className="border-t border-boutique-line/80 px-4 pb-4 pt-4 sm:px-5 sm:pb-5"
         >
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-[1fr_1fr_1fr_1fr_auto]">
@@ -204,7 +206,7 @@ export function CategoryManagementPanel({
               </AdminSubmitButton>
             </div>
           </div>
-        </form>
+        </CategoryRedirectingForm>
       </details>
 
       {categories.length === 0 ? (

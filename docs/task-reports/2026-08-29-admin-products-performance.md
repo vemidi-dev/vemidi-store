@@ -645,3 +645,46 @@ npx tsx --test tests/admin-categories-edit-move.test.ts tests/admin-categories-l
 npm run typecheck → pass
 npx tsx --test tests/admin-categories-edit-move.test.ts tests/admin-categories-loader.test.ts tests/category-related-selector.test.ts → 15/15 pass
 ```
+
+---
+
+## 18. Categories move/save — restore client href navigation
+
+Дата: 2026-08-29
+
+### Симптом (authenticated)
+
+1. Стрелки ↑/↓ за преместване — без видим ефект / refresh.
+2. `Запази` при редакция — няма refresh; промяната може да е записана в DB.
+
+### Root cause
+
+Server `redirect()` след `createCategory` / `updateCategory` / `moveCategory`
+често **не презарежда** лекия RSC tree на `/admin?tab=categories` в браузъра.
+Записът в DB може да е успешен, но UI остава на старото състояние (няма success banner, няма нов ред).
+
+По-рано UX revision (§13) работеше с `{ href }` + `CategoryRedirectingForm`
+(`router.push` + `router.refresh`). По-късните „fixes“ (§14–17) върнаха
+server redirect и отново счупиха видимия refresh.
+
+### Fix
+
+- Възстановен `categoryActionHref` — actions връщат `{ href }` (с `_refresh`).
+- Възстановен `CategoryRedirectingForm` за create / update / move:
+  `await action` → `router.push(href)` → `router.refresh()`.
+- Pending feedback през `useFormStatus` (async form action, не `startTransition`
+  без returned promise).
+- `deleteCategory` остава на стандартния `redirectWith` (confirm form).
+
+### Проверки
+
+```text
+npm run typecheck
+npx tsx --test tests/admin-categories-edit-move.test.ts
+```
+
+### Preview smoke (след push)
+
+- [ ] ↑/↓ сменят реда и показват success
+- [ ] Запази затваря/опреснява с „Категорията е обновена.“
+- [ ] Добави категория опреснява списъка

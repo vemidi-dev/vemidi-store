@@ -6,6 +6,7 @@ import {
 import { AdminConfirmForm } from "@/components/admin/admin-confirm-form";
 import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
 import { CategoryContentSeoFields } from "@/components/admin/category-content-seo-fields";
+import { CategoryRedirectingForm } from "@/components/admin/category-redirecting-form";
 import { CategoryRelatedSelector } from "@/components/admin/category-related-selector";
 import {
   adminFieldClass,
@@ -114,7 +115,7 @@ function CategoryMoveButtons({
 }) {
   return (
     <>
-      <form action={moveCategory} className="inline">
+      <CategoryRedirectingForm action={moveCategory} className="inline">
         <input type="hidden" name={adminFormFields.common.tab} value="categories" />
         <input type="hidden" name={adminFormFields.common.id} value={category.id} />
         <input type="hidden" name={adminFormFields.category.type} value={category.category_type} />
@@ -127,8 +128,8 @@ function CategoryMoveButtons({
         >
           ↑
         </AdminSubmitButton>
-      </form>
-      <form action={moveCategory} className="inline">
+      </CategoryRedirectingForm>
+      <CategoryRedirectingForm action={moveCategory} className="inline">
         <input type="hidden" name={adminFormFields.common.tab} value="categories" />
         <input type="hidden" name={adminFormFields.common.id} value={category.id} />
         <input type="hidden" name={adminFormFields.category.type} value={category.category_type} />
@@ -141,7 +142,7 @@ function CategoryMoveButtons({
         >
           ↓
         </AdminSubmitButton>
-      </form>
+      </CategoryRedirectingForm>
     </>
   );
 }
@@ -252,8 +253,9 @@ export function CategoryManagementView({
               Затвори редакцията
             </a>
           </div>
-          <form
+          <CategoryRedirectingForm
             action={updateCategory}
+            pendingMessage="Категорията се записва… Моля, изчакайте."
             className="mt-3 grid gap-3 md:grid-cols-[1fr_1fr_1fr_auto]"
           >
             <input type="hidden" name={adminFormFields.common.tab} value="categories" />
@@ -436,7 +438,7 @@ export function CategoryManagementView({
                 Запази
               </AdminSubmitButton>
             </div>
-          </form>
+          </CategoryRedirectingForm>
           <AdminConfirmForm
             action={deleteCategory}
             confirmMessage={`Сигурни ли сте, че искате да изтриете "${editingCategory.name}"?`}

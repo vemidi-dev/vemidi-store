@@ -38,7 +38,7 @@ test("makeAdminCategoriesHref move/save success includes tab and success", () =>
   assert.match(href, /_refresh=/);
 });
 
-test("category management view renders a separate edit panel and Редакция href", () => {
+test("category management view uses CategoryRedirectingForm for move/save", () => {
   const viewSource = readFileSync(
     path.join(root, "components/admin/category-management-view.tsx"),
     "utf8",
@@ -46,36 +46,66 @@ test("category management view renders a separate edit panel and Редакци�
   assert.match(viewSource, /const editingCategory = editCategoryId/);
   assert.match(viewSource, /id=\{`category-edit-\$\{editingCategory\.id\}`\}/);
   assert.doesNotMatch(viewSource, /<details\s+id=\{`category-edit-\$\{category\.id\}`\}/);
-  assert.match(viewSource, /makeAdminCategoriesHref\(\{\s*categoryType: category\.category_type,\s*editCategory: category\.id,/);
-  assert.match(viewSource, /Затвори редакцията/);
   assert.match(
     viewSource,
-    /makeAdminCategoriesHref\(\{\s*categoryType: editingCategory\.category_type/,
+    /makeAdminCategoriesHref\(\{\s*categoryType: category\.category_type,\s*editCategory: category\.id,/,
   );
+  assert.match(viewSource, /Затвори редакцията/);
+  assert.match(viewSource, /CategoryRedirectingForm/);
   assert.match(viewSource, /action=\{moveCategory\}/);
-  assert.doesNotMatch(viewSource, /CategoryRedirectingForm/);
+  assert.match(viewSource, /action=\{updateCategory\}/);
 });
 
-test("category actions redirect to categories success href", () => {
+test("category create panel uses CategoryRedirectingForm", () => {
+  const panelSource = readFileSync(
+    path.join(root, "components/admin/category-management-panel.tsx"),
+    "utf8",
+  );
+  assert.match(panelSource, /CategoryRedirectingForm/);
+  assert.match(panelSource, /action=\{createCategory\}/);
+});
+
+test("category actions return href for client navigation", () => {
   const actionsSource = readFileSync(
     path.join(root, "app/admin/actions.ts"),
     "utf8",
   );
-  assert.match(actionsSource, /function redirectToCategories/);
+  assert.match(actionsSource, /function categoryActionHref/);
   assert.match(
     actionsSource,
-    /redirectToCategories\(\s*"success",\s*"Позицията е променена\."/,
+    /createCategory\(formData: FormData\): Promise<\{ href: string \}>/,
   );
   assert.match(
     actionsSource,
-    /redirectToCategories\(\s*"success",\s*"Категорията е обновена\."/,
+    /updateCategory\(formData: FormData\): Promise<\{ href: string \}>/,
   );
-  assert.doesNotMatch(actionsSource, /categoryActionHref/);
-  assert.doesNotMatch(actionsSource, /Promise<\{ href: string \}>/);
+  assert.match(
+    actionsSource,
+    /moveCategory\(formData: FormData\): Promise<\{ href: string \}>/,
+  );
+  assert.match(
+    actionsSource,
+    /return categoryActionHref\(\s*"success",\s*"Позицията е променена\."/,
+  );
+  assert.match(
+    actionsSource,
+    /return categoryActionHref\(\s*"success",\s*"Категорията е обновена\."/,
+  );
+  assert.doesNotMatch(actionsSource, /function redirectToCategories/);
 });
 
 test("admin page passes editCategory into CategoryManagementPanel", () => {
   const pageSource = readFileSync(path.join(root, "app/admin/page.tsx"), "utf8");
   assert.match(pageSource, /editCategoryId=\{firstValue\(params\.editCategory\)/);
   assert.match(pageSource, /loadAdminCategoriesData/);
+});
+
+test("CategoryRedirectingForm pushes href and refreshes", () => {
+  const formSource = readFileSync(
+    path.join(root, "components/admin/category-redirecting-form.tsx"),
+    "utf8",
+  );
+  assert.match(formSource, /"use client"/);
+  assert.match(formSource, /router\.push\(result\.href\)/);
+  assert.match(formSource, /router\.refresh\(\)/);
 });
