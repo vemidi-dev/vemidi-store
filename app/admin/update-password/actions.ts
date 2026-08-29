@@ -32,5 +32,5 @@ export async function updateAdminPassword(formData: FormData) {
     redirect(`/admin/update-password?error=${encodeURIComponent(error.message)}`);
   }
 
-  redirect("/admin?success=Паролата е променена успешно.");
+  redirect("/admin?tab=orders&success=Паролата е променена успешно.");
 }

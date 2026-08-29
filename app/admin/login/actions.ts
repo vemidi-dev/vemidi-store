@@ -6,7 +6,7 @@ import { checkIsAdmin } from "@/lib/supabase/admin-auth";
 import { createClient } from "@/lib/supabase/server";
 
 const LOGIN_PATH = "/admin/login";
-const ADMIN_PATH = "/admin";
+const ADMIN_PATH = "/admin?tab=orders";
 
 function getField(formData: FormData, key: "email" | "password") {
   return String(formData.get(key) ?? "").trim();
