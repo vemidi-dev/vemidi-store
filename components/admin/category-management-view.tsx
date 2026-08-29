@@ -1,7 +1,5 @@
 import {
   deleteCategory,
-  moveCategory,
-  updateCategory,
 } from "@/app/admin/actions";
 import { AdminConfirmForm } from "@/components/admin/admin-confirm-form";
 import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
@@ -115,7 +113,7 @@ function CategoryMoveButtons({
 }) {
   return (
     <>
-      <CategoryRedirectingForm action={moveCategory} className="inline">
+      <CategoryRedirectingForm kind="move" className="inline">
         <input type="hidden" name={adminFormFields.common.tab} value="categories" />
         <input type="hidden" name={adminFormFields.common.id} value={category.id} />
         <input type="hidden" name={adminFormFields.category.type} value={category.category_type} />
@@ -129,7 +127,7 @@ function CategoryMoveButtons({
           ↑
         </AdminSubmitButton>
       </CategoryRedirectingForm>
-      <CategoryRedirectingForm action={moveCategory} className="inline">
+      <CategoryRedirectingForm kind="move" className="inline">
         <input type="hidden" name={adminFormFields.common.tab} value="categories" />
         <input type="hidden" name={adminFormFields.common.id} value={category.id} />
         <input type="hidden" name={adminFormFields.category.type} value={category.category_type} />
@@ -254,7 +252,7 @@ export function CategoryManagementView({
             </a>
           </div>
           <CategoryRedirectingForm
-            action={updateCategory}
+            kind="update"
             pendingMessage="Категорията се записва… Моля, изчакайте."
             className="mt-3 grid gap-3 md:grid-cols-[1fr_1fr_1fr_auto]"
           >

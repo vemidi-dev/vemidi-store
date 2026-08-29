@@ -667,14 +667,25 @@ Server `redirect()` след `createCategory` / `updateCategory` / `moveCategory
 (`router.push` + `router.refresh`). По-късните „fixes“ (§14–17) върнаха
 server redirect и отново счупиха видимия refresh.
 
-### Fix
+### Fix (първи опит — недостатъчен)
 
 - Възстановен `categoryActionHref` — actions връщат `{ href }` (с `_refresh`).
-- Възстановен `CategoryRedirectingForm` за create / update / move:
-  `await action` → `router.push(href)` → `router.refresh()`.
-- Pending feedback през `useFormStatus` (async form action, не `startTransition`
-  без returned promise).
-- `deleteCategory` остава на стандартния `redirectWith` (confirm form).
+- `CategoryRedirectingForm` с `router.push` + `router.refresh()`.
+
+### Регресия след първия опит
+
+Authenticated smoke: формата остава на **„ЗАПИСВАНЕ…“** / pending banner.
+Причина: `await serverAction` + `revalidatePath("/admin")` в същия request
+забива soft refresh на текущия `/admin` tree; `router.push` не се стига.
+
+### Fix v2 (този commit)
+
+- Actions success: `revalidateCategoryPaths({ includeAdmin: false })` — без
+  revalidate на `/admin` преди return (пълният reload зарежда admin наново).
+- `CategoryRedirectingForm` импортира actions директно (`kind=create|update|move`),
+  не ги приема като props.
+- След успех: **`window.location.assign(href)`** (hard navigation).
+- NEXT_REDIRECT от auth се прехвърля нагоре (login redirect).
 
 ### Проверки
 
@@ -683,8 +694,8 @@ npm run typecheck
 npx tsx --test tests/admin-categories-edit-move.test.ts
 ```
 
-### Preview smoke (след push)
+### Preview smoke (след Ready)
 
-- [ ] ↑/↓ сменят реда и показват success
-- [ ] Запази затваря/опреснява с „Категорията е обновена.“
-- [ ] Добави категория опреснява списъка
+- [ ] Hard refresh на Preview, после ↑/↓ сменят реда + success
+- [ ] Запази → пълен reload + „Категорията е обновена.“
+- [ ] Не остава забит „ЗАПИСВАНЕ…“

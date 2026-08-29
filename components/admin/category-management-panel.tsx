@@ -1,4 +1,3 @@
-import { createCategory } from "@/app/admin/actions";
 import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
 import { CategoryContentSeoFields } from "@/components/admin/category-content-seo-fields";
 import { CategoryManagementView } from "@/components/admin/category-management-view";
@@ -60,7 +59,7 @@ export function CategoryManagementPanel({
           </span>
         </summary>
         <CategoryRedirectingForm
-          action={createCategory}
+          kind="create"
           pendingMessage="Категорията се добавя… Моля, изчакайте."
           className="border-t border-boutique-line/80 px-4 pb-4 pt-4 sm:px-5 sm:pb-5"
         >

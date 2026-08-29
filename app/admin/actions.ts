@@ -297,9 +297,11 @@ function getProductGalleryEditUrl(
   });
 }
 
-function revalidateCategoryPaths() {
-  revalidatePath(ADMIN_PATH);
-  revalidatePath(ADMIN_PATH, "layout");
+function revalidateCategoryPaths(options?: { includeAdmin?: boolean }) {
+  if (options?.includeAdmin !== false) {
+    revalidatePath(ADMIN_PATH);
+    revalidatePath(ADMIN_PATH, "layout");
+  }
   revalidatePath("/");
   revalidatePath("/categorii");
   revalidatePath("/categorii");
@@ -312,7 +314,7 @@ function revalidateCategoryPaths() {
   revalidatePath("/categorii/[slug]", "page");
 }
 
-/** Return href for client CategoryRedirectingForm (server redirect is unreliable here). */
+/** Return href for client hard-navigation (avoid soft refresh deadlock on /admin). */
 function categoryActionHref(
   kind: "success" | "error",
   message: string,
@@ -2037,7 +2039,7 @@ export async function createCategory(formData: FormData): Promise<{ href: string
     return categoryActionHref("error", relatedSyncError);
   }
 
-  revalidateCategoryPaths();
+  revalidateCategoryPaths({ includeAdmin: false });
   return categoryActionHref(
     "success",
     "Категорията е добавена.",
@@ -2220,7 +2222,7 @@ export async function updateCategory(formData: FormData): Promise<{ href: string
     }
   }
 
-  revalidateCategoryPaths();
+  revalidateCategoryPaths({ includeAdmin: false });
   return categoryActionHref(
     "success",
     "Категорията е обновена.",
@@ -2252,7 +2254,7 @@ export async function moveCategory(formData: FormData): Promise<{ href: string }
     return categoryActionHref("success", "Категорията вече е в края на списъка.", redirectParams.categoryType);
   }
 
-  revalidateCategoryPaths();
+  revalidateCategoryPaths({ includeAdmin: false });
   return categoryActionHref("success", "Позицията е променена.", redirectParams.categoryType);
 }
 

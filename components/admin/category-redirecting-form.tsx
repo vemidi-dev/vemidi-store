@@ -1,29 +1,42 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import {
+  createCategory,
+  moveCategory,
+  updateCategory,
+} from "@/app/admin/actions";
 import { useState, type ReactNode } from "react";
 import { useFormStatus } from "react-dom";
 
+type CategoryMutationKind = "create" | "update" | "move";
+
 type CategoryRedirectingFormProps = {
-  action: (formData: FormData) => Promise<{ href: string }>;
+  kind: CategoryMutationKind;
   children: ReactNode;
   className?: string;
   pendingMessage?: string;
 };
 
+const actions = {
+  create: createCategory,
+  update: updateCategory,
+  move: moveCategory,
+} as const;
+
 /**
- * Category create/update/move must navigate via returned href + refresh.
- * Server `redirect()` after these actions often does not remount the
- * lightweight `/admin?tab=categories` RSC tree in the browser.
+ * Full page assign after mutation — soft router refresh was leaving the
+ * categories tab stuck on pending / stale RSC after revalidatePath("/admin").
+ * Server actions are imported here (not passed as props) so the action
+ * binding stays stable in the client bundle.
  */
 export function CategoryRedirectingForm({
-  action,
+  kind,
   children,
   className,
   pendingMessage,
 }: CategoryRedirectingFormProps) {
-  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const action = actions[kind];
 
   return (
     <form
@@ -32,14 +45,28 @@ export function CategoryRedirectingForm({
         setError(null);
         try {
           const result = await action(formData);
-          router.push(result.href);
-          router.refresh();
+          if (!result?.href) {
+            setError("Липсва адрес за пренасочване след записа.");
+            return;
+          }
+          window.location.assign(result.href);
         } catch (caught) {
-          const message =
+          // Auth helpers may throw NEXT_REDIRECT — let the framework navigate.
+          if (
+            typeof caught === "object" &&
+            caught !== null &&
+            "digest" in caught &&
+            String((caught as { digest?: unknown }).digest ?? "").startsWith(
+              "NEXT_REDIRECT",
+            )
+          ) {
+            throw caught;
+          }
+          setError(
             caught instanceof Error
               ? caught.message
-              : "Действието не беше завършено.";
-          setError(message);
+              : "Действието не беше завършено.",
+          );
         }
       }}
     >
