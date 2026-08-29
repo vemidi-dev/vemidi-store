@@ -10,7 +10,7 @@ import {
 } from "@/app/admin/actions";
 import { AdminConfirmForm } from "@/components/admin/admin-confirm-form";
 import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
-import { CategoryRedirectingForm } from "@/components/admin/category-redirecting-form";
+import { AdminFormPendingGuard } from "@/components/admin/admin-form-pending-guard";
 import { CategoryContentSeoFields } from "@/components/admin/category-content-seo-fields";
 import { CategoryRelatedSelector } from "@/components/admin/category-related-selector";
 import {
@@ -57,11 +57,17 @@ export function CategoryManagementView({
   initialCategoryType = "product",
   editCategoryId,
 }: CategoryManagementViewProps) {
-  const [activeTab, setActiveTab] = useState<CategoryTab>(() =>
-    categoryTabs.includes(initialCategoryType as CategoryTab)
+  const [activeTab, setActiveTab] = useState<CategoryTab>(() => {
+    if (editCategoryId) {
+      const match = categories.find((category) => category.id === editCategoryId);
+      if (match && categoryTabs.includes(match.category_type as CategoryTab)) {
+        return match.category_type as CategoryTab;
+      }
+    }
+    return categoryTabs.includes(initialCategoryType as CategoryTab)
       ? (initialCategoryType as CategoryTab)
-      : "product",
-  );
+      : "product";
+  });
   const [query, setQuery] = useState("");
 
   useEffect(() => {
@@ -78,12 +84,21 @@ export function CategoryManagementView({
     if (match && categoryTabs.includes(match.category_type as CategoryTab)) {
       setActiveTab(match.category_type as CategoryTab);
     }
-    const details = document.getElementById(`category-edit-${editCategoryId}`);
-    if (details instanceof HTMLDetailsElement) {
-      details.open = true;
-      details.scrollIntoView({ behavior: "smooth", block: "nearest" });
-    }
   }, [categories, editCategoryId]);
+
+  useEffect(() => {
+    if (!editCategoryId) {
+      return;
+    }
+    const frame = window.requestAnimationFrame(() => {
+      const details = document.getElementById(`category-edit-${editCategoryId}`);
+      if (details instanceof HTMLDetailsElement) {
+        details.open = true;
+        details.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [activeTab, categories, editCategoryId]);
 
   const sortedCategories = useMemo(() => {
     const byOrder = (left: CategoryRow, right: CategoryRow) => {
@@ -114,6 +129,9 @@ export function CategoryManagementView({
 
   const normalizedQuery = query.trim().toLocaleLowerCase("bg");
   const visibleCategories = sortedCategories.filter((category) => {
+    if (editCategoryId && category.id === editCategoryId) {
+      return true;
+    }
     if (!normalizedQuery) {
       return true;
     }
@@ -215,7 +233,7 @@ export function CategoryManagementView({
                 </p>
                 <p className="text-xs text-boutique-muted">{category.home_sort_order}</p>
                 <div className="flex flex-wrap justify-end gap-1">
-                  <CategoryRedirectingForm action={moveCategory} className="inline" pendingMessage="">
+                  <form action={moveCategory} className="inline">
                     <input type="hidden" name={adminFormFields.common.tab} value="categories" />
                     <input type="hidden" name={adminFormFields.common.id} value={category.id} />
                     <input type="hidden" name={adminFormFields.category.type} value={category.category_type} />
@@ -228,8 +246,8 @@ export function CategoryManagementView({
                     >
                       ↑
                     </AdminSubmitButton>
-                  </CategoryRedirectingForm>
-                  <CategoryRedirectingForm action={moveCategory} className="inline" pendingMessage="">
+                  </form>
+                  <form action={moveCategory} className="inline">
                     <input type="hidden" name={adminFormFields.common.tab} value="categories" />
                     <input type="hidden" name={adminFormFields.common.id} value={category.id} />
                     <input type="hidden" name={adminFormFields.category.type} value={category.category_type} />
@@ -242,7 +260,7 @@ export function CategoryManagementView({
                     >
                       ↓
                     </AdminSubmitButton>
-                  </CategoryRedirectingForm>
+                  </form>
                   <Link
                     href={makeAdminCategoriesHref({
                       categoryType: category.category_type,
@@ -274,7 +292,7 @@ export function CategoryManagementView({
                   <p className="truncate text-xs text-boutique-muted">{category.slug}</p>
                 </div>
                 <div className="flex gap-1">
-                  <CategoryRedirectingForm action={moveCategory} pendingMessage="">
+                  <form action={moveCategory}>
                     <input type="hidden" name={adminFormFields.common.tab} value="categories" />
                     <input type="hidden" name={adminFormFields.common.id} value={category.id} />
                     <input type="hidden" name={adminFormFields.category.type} value={category.category_type} />
@@ -287,8 +305,8 @@ export function CategoryManagementView({
                     >
                       ↑
                     </AdminSubmitButton>
-                  </CategoryRedirectingForm>
-                  <CategoryRedirectingForm action={moveCategory} pendingMessage="">
+                  </form>
+                  <form action={moveCategory}>
                     <input type="hidden" name={adminFormFields.common.tab} value="categories" />
                     <input type="hidden" name={adminFormFields.common.id} value={category.id} />
                     <input type="hidden" name={adminFormFields.category.type} value={category.category_type} />
@@ -301,12 +319,22 @@ export function CategoryManagementView({
                     >
                       ↓
                     </AdminSubmitButton>
-                  </CategoryRedirectingForm>
+                  </form>
+                  <Link
+                    href={makeAdminCategoriesHref({
+                      categoryType: category.category_type,
+                      editCategory: category.id,
+                    })}
+                    className="rounded-full border border-boutique-line px-2.5 py-1 text-[11px] font-semibold text-boutique-ink"
+                  >
+                    Редакция
+                  </Link>
                 </div>
               </div>
 
               <details
                 id={`category-edit-${category.id}`}
+                open={editCategoryId === category.id ? true : undefined}
                 className="border-t border-boutique-line/60 bg-boutique-bg/40 px-3 py-2"
               >
                 <summary className="cursor-pointer text-xs font-semibold text-boutique-sage-deep md:sr-only">
@@ -321,9 +349,8 @@ export function CategoryManagementView({
                     Затвори редакцията
                   </Link>
                 </div>
-                <CategoryRedirectingForm
+                <form
                   action={updateCategory}
-                  pendingMessage="Категорията се записва… Моля, изчакайте."
                   className="mt-3 grid gap-3 md:grid-cols-[1fr_1fr_1fr_auto]"
                 >
                   <input type="hidden" name={adminFormFields.common.tab} value="categories" />
@@ -506,7 +533,10 @@ export function CategoryManagementView({
                       Запази
                     </AdminSubmitButton>
                   </div>
-                </CategoryRedirectingForm>
+                  <div className="md:col-span-3">
+                    <AdminFormPendingGuard message="Категорията се записва… Моля, изчакайте." />
+                  </div>
+                </form>
                 <AdminConfirmForm
                   action={deleteCategory}
                   confirmMessage={`Сигурни ли сте, че искате да изтриете „${category.name}"?`}

@@ -485,3 +485,41 @@ Merge: **чака потвърждение**
 ### Residual risk (Stage 4)
 
 - `productsView=ordering` още ползва `loadAdminData` → възможен timeout при много продукти.
+
+---
+
+## 14. Categories blocking bug fix
+
+Дата: 2026-08-29
+
+### Причина
+
+1. **Редакция:** `Редакция` сменяше URL с `editCategory`, но отварянето разчиташе на `useEffect` + `getElementById` **преди** tab/DOM да са готови; `<details>` нямаше контролиран `open`.
+2. **Move up/down:** UX revision мина към client `CategoryRedirectingForm` + `{ href }` return вместо стандартния admin `redirect()`. Това беше нестабилно (няма надежден refresh/success UI).
+
+### Fix
+
+- Върнати **server action `redirect()`** за create/update/move (`redirectToCategories` + `makeAdminCategoriesHref` с `success`/`_refresh`/`categoryType`).
+- Премахнат `CategoryRedirectingForm`.
+- Edit: `open={editCategoryId === category.id ? true : undefined}`, active tab init от `editCategoryId`, rAF scroll/open, edited row остава visible при search.
+- „Затвори редакцията“ → href без `editCategory`.
+- Lightweight `loadAdminCategoriesData` запазен.
+
+### Тестове
+
+- `tests/admin-categories-edit-move.test.ts`
+- `npm run typecheck`
+- categories/products/related selector unit tests
+
+### Preview
+
+- PR [#30](https://github.com/vemidi-dev/vemidi-store/pull/30)
+- Branch alias: https://vemidi-store-git-feat-admin-products-performanc-b0719d-ve-mi-di.vercel.app
+
+### Ръчен checklist
+
+- [ ] `Редакция` отваря формата и URL има `editCategory`
+- [ ] `Затвори редакцията` маха `editCategory` и затваря формата
+- [ ] ↑/↓ сменят реда + success banner + видим нов `home_sort_order`
+- [ ] Create/update category завършват без stuck pending
+- [ ] Няма 504 на `/admin?tab=categories`

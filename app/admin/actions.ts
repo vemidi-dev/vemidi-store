@@ -312,17 +312,18 @@ function revalidateCategoryPaths() {
   revalidatePath("/categorii/[slug]", "page");
 }
 
-function categoryActionHref(
+function redirectToCategories(
   kind: "success" | "error",
   message: string,
   categoryType?: string,
-): { href: string } {
-  return {
-    href: makeAdminCategoriesHref({
+): never {
+  redirect(
+    makeAdminCategoriesHref({
       [kind]: message,
       categoryType: categoryType || undefined,
+      refresh: true,
     }),
-  };
+  );
 }
 
 async function getProductGalleryImageCount(
@@ -1877,7 +1878,7 @@ export async function deleteProductGalleryImage(formData: FormData) {
   redirectWith("success", "Снимката е изтрита.", "products");
 }
 
-export async function createCategory(formData: FormData): Promise<{ href: string }> {
+export async function createCategory(formData: FormData) {
   const supabase = await getAuthorizedClient();
   const name = getString(formData, adminFormFields.category.name);
   const slug = normalizeSlug(getString(formData, adminFormFields.category.slug));
@@ -1902,15 +1903,15 @@ export async function createCategory(formData: FormData): Promise<{ href: string
   const relatedCategoryIds = parseRelatedCategoryIdsFromFormData(formData);
 
   if (!name || !slug || !isCategoryType(categoryType)) {
-    return categoryActionHref("error", "Попълнете име и slug за категорията.");
+    redirectToCategories("error", "Попълнете име и slug за категорията.");
   }
 
   if (categoryContentError) {
-    return categoryActionHref("error", categoryContentError);
+    redirectToCategories("error", categoryContentError);
   }
 
   if (parentId && !categoryTypeAllowsParent(categoryType)) {
-    return categoryActionHref("error", "Само продуктовите категории могат да имат подкатегории.");
+    redirectToCategories("error", "Само продуктовите категории могат да имат подкатегории.");
   }
 
   if (parentId) {
@@ -1925,7 +1926,7 @@ export async function createCategory(formData: FormData): Promise<{ href: string
       parentCategory.category_type !== categoryType ||
       parentCategory.parent_id
     ) {
-      return categoryActionHref("error", "Избраната основна категория е невалидна.");
+      redirectToCategories("error", "Избраната основна категория е невалидна.");
     }
   }
 
@@ -1948,7 +1949,7 @@ export async function createCategory(formData: FormData): Promise<{ href: string
     try {
       uploadedCategoryImage = await uploadAdminImage(supabase, imageFile, "categories");
     } catch (error) {
-      return categoryActionHref(
+      redirectToCategories(
         "error",
         `Снимката на категорията не беше качена: ${
           error instanceof Error ? error.message : "неочаквана грешка"
@@ -1963,7 +1964,7 @@ export async function createCategory(formData: FormData): Promise<{ href: string
       if (uploadedCategoryImage) {
         await deleteProductImage(supabase, uploadedCategoryImage.path).catch(() => undefined);
       }
-      return categoryActionHref(
+      redirectToCategories(
         "error",
         `Cover снимката не беше качена: ${
           error instanceof Error ? error.message : "неочаквана грешка"
@@ -1998,7 +1999,7 @@ export async function createCategory(formData: FormData): Promise<{ href: string
     if (uploadedCoverImage) {
       await deleteProductImage(supabase, uploadedCoverImage.path).catch(() => undefined);
     }
-    return categoryActionHref("error", `Грешка при добавяне на категория: ${error?.message ?? "неочаквана грешка"}`);
+    redirectToCategories("error", `Грешка при добавяне на категория: ${error?.message ?? "неочаквана грешка"}`);
   }
 
   const validationCategories = await loadCategoryRelatedValidationCategories(supabase);
@@ -2016,7 +2017,7 @@ export async function createCategory(formData: FormData): Promise<{ href: string
     if (uploadedCoverImage) {
       await deleteProductImage(supabase, uploadedCoverImage.path).catch(() => undefined);
     }
-    return categoryActionHref("error", relatedValidationError);
+    redirectToCategories("error", relatedValidationError);
   }
 
   const relatedSyncError = await syncCategoryRelatedCategories(
@@ -2032,18 +2033,18 @@ export async function createCategory(formData: FormData): Promise<{ href: string
     if (uploadedCoverImage) {
       await deleteProductImage(supabase, uploadedCoverImage.path).catch(() => undefined);
     }
-    return categoryActionHref("error", relatedSyncError);
+    redirectToCategories("error", relatedSyncError);
   }
 
   revalidateCategoryPaths();
-  return categoryActionHref(
+  redirectToCategories(
     "success",
     "Категорията е добавена.",
     isCategoryType(categoryType) ? categoryType : "product",
   );
 }
 
-export async function updateCategory(formData: FormData): Promise<{ href: string }> {
+export async function updateCategory(formData: FormData) {
   const supabase = await getAuthorizedClient();
   const id = getString(formData, adminFormFields.common.id);
   const name = getString(formData, adminFormFields.category.name);
@@ -2069,18 +2070,18 @@ export async function updateCategory(formData: FormData): Promise<{ href: string
   const relatedCategoryIds = parseRelatedCategoryIdsFromFormData(formData);
 
   if (!id || !name || !slug || !isCategoryType(categoryType)) {
-    return categoryActionHref("error", "Невалидни данни за категория.");
+    redirectToCategories("error", "Невалидни данни за категория.");
   }
 
   if (categoryContentError) {
-    return categoryActionHref("error", categoryContentError);
+    redirectToCategories("error", categoryContentError);
   }
 
   if (parentId === id) {
-    return categoryActionHref("error", "Категорията не може да бъде собствена подкатегория.");
+    redirectToCategories("error", "Категорията не може да бъде собствена подкатегория.");
   }
   if (parentId && !categoryTypeAllowsParent(categoryType)) {
-    return categoryActionHref("error", "Само продуктовите категории могат да имат подкатегории.");
+    redirectToCategories("error", "Само продуктовите категории могат да имат подкатегории.");
   }
   if (parentId) {
     const { data: parentCategory, error: parentError } = await supabase
@@ -2094,7 +2095,7 @@ export async function updateCategory(formData: FormData): Promise<{ href: string
       parentCategory.category_type !== categoryType ||
       parentCategory.parent_id
     ) {
-      return categoryActionHref("error", "Избраната основна категория е невалидна.");
+      redirectToCategories("error", "Избраната основна категория е невалидна.");
     }
   }
 
@@ -2106,7 +2107,7 @@ export async function updateCategory(formData: FormData): Promise<{ href: string
     categoryType,
   );
   if (relatedValidationError) {
-    return categoryActionHref("error", relatedValidationError);
+    redirectToCategories("error", relatedValidationError);
   }
 
   const { data: existingCategory, error: existingCategoryError } = await supabase
@@ -2115,7 +2116,7 @@ export async function updateCategory(formData: FormData): Promise<{ href: string
     .eq("id", id)
     .single();
   if (existingCategoryError || !existingCategory) {
-    return categoryActionHref("error", "Категорията не беше намерена.");
+    redirectToCategories("error", "Категорията не беше намерена.");
   }
 
   let homeSortOrder = existingCategory.home_sort_order;
@@ -2144,7 +2145,7 @@ export async function updateCategory(formData: FormData): Promise<{ href: string
     try {
       uploadedCategoryImage = await uploadAdminImage(supabase, imageFile, "categories");
     } catch (error) {
-      return categoryActionHref(
+      redirectToCategories(
         "error",
         `Снимката на категорията не беше качена: ${
           error instanceof Error ? error.message : "неочаквана грешка"
@@ -2159,7 +2160,7 @@ export async function updateCategory(formData: FormData): Promise<{ href: string
       if (uploadedCategoryImage) {
         await deleteProductImage(supabase, uploadedCategoryImage.path).catch(() => undefined);
       }
-      return categoryActionHref(
+      redirectToCategories(
         "error",
         `Cover снимката не беше качена: ${
           error instanceof Error ? error.message : "неочаквана грешка"
@@ -2193,7 +2194,7 @@ export async function updateCategory(formData: FormData): Promise<{ href: string
     if (uploadedCoverImage) {
       await deleteProductImage(supabase, uploadedCoverImage.path).catch(() => undefined);
     }
-    return categoryActionHref("error", `Грешка при редакция на категория: ${error.message}`);
+    redirectToCategories("error", `Грешка при редакция на категория: ${error.message}`);
   }
 
   const relatedSyncError = await syncCategoryRelatedCategories(
@@ -2202,7 +2203,7 @@ export async function updateCategory(formData: FormData): Promise<{ href: string
     relatedCategoryIds,
   );
   if (relatedSyncError) {
-    return categoryActionHref("error", relatedSyncError);
+    redirectToCategories("error", relatedSyncError);
   }
 
   if (uploadedCategoryImage && existingCategory.image_url) {
@@ -2219,14 +2220,14 @@ export async function updateCategory(formData: FormData): Promise<{ href: string
   }
 
   revalidateCategoryPaths();
-  return categoryActionHref(
+  redirectToCategories(
     "success",
     "Категорията е обновена.",
     isCategoryType(categoryType) ? categoryType : "product",
   );
 }
 
-export async function moveCategory(formData: FormData): Promise<{ href: string }> {
+export async function moveCategory(formData: FormData) {
   const supabase = await getAuthorizedClient();
   const id = getString(formData, adminFormFields.common.id);
   const direction = getString(formData, adminFormFields.category.direction);
@@ -2236,7 +2237,7 @@ export async function moveCategory(formData: FormData): Promise<{ href: string }
   };
 
   if (!id || !["up", "down"].includes(direction)) {
-    return categoryActionHref("error", "Невалидна заявка за преместване.");
+    redirectToCategories("error", "Невалидна заявка за преместване.");
   }
 
   const { data: moved, error } = await supabase.rpc("admin_move_home_category", {
@@ -2244,14 +2245,14 @@ export async function moveCategory(formData: FormData): Promise<{ href: string }
     p_direction: direction,
   });
   if (error) {
-    return categoryActionHref("error", "Позицията не беше променена.", redirectParams.categoryType);
+    redirectToCategories("error", "Позицията не беше променена.", redirectParams.categoryType);
   }
   if (moved !== true) {
-    return categoryActionHref("success", "Категорията вече е в края на списъка.", redirectParams.categoryType);
+    redirectToCategories("success", "Категорията вече е в края на списъка.", redirectParams.categoryType);
   }
 
   revalidateCategoryPaths();
-  return categoryActionHref("success", "Позицията е променена.", redirectParams.categoryType);
+  redirectToCategories("success", "Позицията е променена.", redirectParams.categoryType);
 }
 
 export async function deleteCategory(formData: FormData) {
