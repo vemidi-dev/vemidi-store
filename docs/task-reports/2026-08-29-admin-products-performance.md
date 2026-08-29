@@ -574,3 +574,47 @@ npx tsx --test tests/admin-categories-edit-move.test.ts tests/admin-categories-l
 - [ ] Create/update category завършват без stuck pending
 - [ ] Related category checkboxes при нова категория могат да се избират
 - [ ] Няма 504 на `/admin?tab=categories`
+
+---
+
+## 16. Categories actions - server-rendered fallback
+
+Дата: 2026-08-29
+
+### Причина
+
+Authenticated preview тестът отново показа, че `Редакция` и стрелките ↑/↓
+не реагират надеждно. Тъй като проблемът засяга едновременно линк и форми,
+най-вероятната зона вече не е самият redirect, а client-side слоят на
+`CategoryManagementView` - state, hydration или обработка на кликове.
+
+### Fix
+
+- `CategoryManagementView` вече е server component, без `"use client"`,
+  `useState`, `useEffect` или `useMemo`.
+- Табовете са обикновени `<a href>` линкове към
+  `/admin?tab=categories&categoryType=<type>`.
+- `Редакция` е обикновен `<a href>` към
+  `/admin?tab=categories&categoryType=<type>&editCategory=<id>`.
+- Search в категориите е GET form с `category_q`, вместо client state.
+- Move ↑/↓ остават стандартни server action форми с `redirect()` в actions.
+- Edit формата остава отделен server-rendered panel над списъка.
+- `app/admin/page.tsx` подава `category_q` към `CategoryManagementPanel`.
+
+### Проверки
+
+```text
+npm run typecheck → pass
+npx tsx --test tests/admin-categories-edit-move.test.ts tests/admin-categories-loader.test.ts tests/admin-products-query.test.ts tests/category-related-selector.test.ts → 25/25 pass
+```
+
+### Ръчен checklist за preview
+
+- Latest preview deployment: https://vemidi-store-ld65to1w8-ve-mi-di.vercel.app
+- Branch alias: https://vemidi-store-git-feat-admin-products-performanc-b0719d-ve-mi-di.vercel.app
+
+- [ ] `Редакция` навигира до URL с `editCategory` и показва edit panel
+- [ ] `Затвори редакцията` маха `editCategory`
+- [ ] ↑/↓ изпращат server action, сменят реда и показват success banner
+- [ ] Search в категории работи през URL `category_q`
+- [ ] Няма 504 на `/admin?tab=categories`

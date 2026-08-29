@@ -1,25 +1,20 @@
-"use client";
-
-import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-
 import {
   deleteCategory,
   moveCategory,
   updateCategory,
 } from "@/app/admin/actions";
 import { AdminConfirmForm } from "@/components/admin/admin-confirm-form";
-import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
 import { AdminFormPendingGuard } from "@/components/admin/admin-form-pending-guard";
+import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
 import { CategoryContentSeoFields } from "@/components/admin/category-content-seo-fields";
 import { CategoryRelatedSelector } from "@/components/admin/category-related-selector";
 import {
   adminFieldClass,
   adminTableHeadClass,
 } from "@/components/admin/styles";
-import { adminFormFields } from "@/lib/admin/form-fields";
 import { hasCategoryContentGap } from "@/lib/admin/category-content";
 import { makeAdminCategoriesHref } from "@/lib/admin/categories-href";
+import { adminFormFields } from "@/lib/admin/form-fields";
 import type { CategoryRow, CategoryType } from "@/lib/admin/types";
 
 type CategoryManagementViewProps = {
@@ -28,6 +23,7 @@ type CategoryManagementViewProps = {
   relatedCategoryIdsByCategoryId: Map<string, string[]>;
   initialCategoryType?: CategoryType;
   editCategoryId?: string;
+  categoryQuery?: string;
 };
 
 type CategoryTab = CategoryType;
@@ -40,6 +36,12 @@ const tabLabels: Record<CategoryTab, string> = {
 
 const categoryTabs: CategoryTab[] = ["product", "occasion", "material"];
 
+function normalizeCategoryTab(value?: CategoryType | string | null): CategoryTab {
+  return value === "material" || value === "occasion" || value === "product"
+    ? value
+    : "product";
+}
+
 function getCategoryTypeLabel(categoryType: CategoryType) {
   if (categoryType === "product") {
     return "Продукт";
@@ -50,83 +52,125 @@ function getCategoryTypeLabel(categoryType: CategoryType) {
   return "Повод";
 }
 
+function sortCategories(categories: CategoryRow[]) {
+  const byOrder = (left: CategoryRow, right: CategoryRow) => {
+    const positionDifference = left.home_sort_order - right.home_sort_order;
+    return positionDifference || left.name.localeCompare(right.name, "bg");
+  };
+
+  const roots = categories
+    .filter((category) => category.parent_id === null)
+    .sort(byOrder);
+  const rootIds = new Set(roots.map((category) => category.id));
+  const nested = roots.flatMap((root) => [
+    root,
+    ...categories
+      .filter((category) => category.parent_id === root.id)
+      .sort(byOrder),
+  ]);
+  const orphans = categories
+    .filter(
+      (category) =>
+        category.parent_id !== null && !rootIds.has(category.parent_id),
+    )
+    .sort(byOrder);
+
+  return [...nested, ...orphans];
+}
+
+function categorySearchMatches(category: CategoryRow, query: string) {
+  if (!query) {
+    return true;
+  }
+
+  const searchable = `${category.name} ${category.slug}`.toLocaleLowerCase("bg");
+  return searchable.includes(query);
+}
+
+function CategoryBadges({ category }: { category: CategoryRow }) {
+  return (
+    <>
+      {category.is_visible === false ? (
+        <span className="ml-2 rounded-full bg-boutique-muted/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-boutique-muted">
+          Скрита
+        </span>
+      ) : null}
+      {hasCategoryContentGap(category) ? (
+        <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-800">
+          Липсва съдържание
+        </span>
+      ) : null}
+    </>
+  );
+}
+
+function CategoryMoveButtons({
+  category,
+  indexInTab,
+  siblingsCount,
+}: {
+  category: CategoryRow;
+  indexInTab: number;
+  siblingsCount: number;
+}) {
+  return (
+    <>
+      <form action={moveCategory} className="inline">
+        <input type="hidden" name={adminFormFields.common.tab} value="categories" />
+        <input type="hidden" name={adminFormFields.common.id} value={category.id} />
+        <input type="hidden" name={adminFormFields.category.type} value={category.category_type} />
+        <input type="hidden" name={adminFormFields.category.direction} value="up" />
+        <AdminSubmitButton
+          pendingLabel="..."
+          disabled={indexInTab === 0}
+          aria-label="Премести нагоре"
+          className="grid h-7 w-7 place-items-center rounded-full border border-boutique-line text-xs disabled:opacity-35"
+        >
+          ↑
+        </AdminSubmitButton>
+      </form>
+      <form action={moveCategory} className="inline">
+        <input type="hidden" name={adminFormFields.common.tab} value="categories" />
+        <input type="hidden" name={adminFormFields.common.id} value={category.id} />
+        <input type="hidden" name={adminFormFields.category.type} value={category.category_type} />
+        <input type="hidden" name={adminFormFields.category.direction} value="down" />
+        <AdminSubmitButton
+          pendingLabel="..."
+          disabled={indexInTab === siblingsCount - 1}
+          aria-label="Премести надолу"
+          className="grid h-7 w-7 place-items-center rounded-full border border-boutique-line text-xs disabled:opacity-35"
+        >
+          ↓
+        </AdminSubmitButton>
+      </form>
+    </>
+  );
+}
+
 export function CategoryManagementView({
   categories,
   productCountByCategoryId,
   relatedCategoryIdsByCategoryId,
-  initialCategoryType = "product",
+  initialCategoryType,
   editCategoryId,
+  categoryQuery = "",
 }: CategoryManagementViewProps) {
-  const [activeTab, setActiveTab] = useState<CategoryTab>(() => {
-    if (editCategoryId) {
-      const match = categories.find((category) => category.id === editCategoryId);
-      if (match && categoryTabs.includes(match.category_type as CategoryTab)) {
-        return match.category_type as CategoryTab;
-      }
-    }
-    return categoryTabs.includes(initialCategoryType as CategoryTab)
-      ? (initialCategoryType as CategoryTab)
-      : "product";
-  });
-  const [query, setQuery] = useState("");
-
-  useEffect(() => {
-    if (categoryTabs.includes(initialCategoryType as CategoryTab)) {
-      setActiveTab(initialCategoryType as CategoryTab);
-    }
-  }, [initialCategoryType]);
-
-  useEffect(() => {
-    if (!editCategoryId) {
-      return;
-    }
-    const match = categories.find((category) => category.id === editCategoryId);
-    if (match && categoryTabs.includes(match.category_type as CategoryTab)) {
-      setActiveTab(match.category_type as CategoryTab);
-    }
-  }, [categories, editCategoryId]);
-
-  const sortedCategories = useMemo(() => {
-    const byOrder = (left: CategoryRow, right: CategoryRow) => {
-      const positionDifference = left.home_sort_order - right.home_sort_order;
-      return positionDifference || left.name.localeCompare(right.name, "bg");
-    };
-    const matching = categories.filter(
-      (category) => category.category_type === activeTab,
-    );
-    const roots = matching
-      .filter((category) => category.parent_id === null)
-      .sort(byOrder);
-    const rootIds = new Set(roots.map((category) => category.id));
-    const nested = roots.flatMap((root) => [
-      root,
-      ...matching
-        .filter((category) => category.parent_id === root.id)
-        .sort(byOrder),
-    ]);
-    const orphans = matching
-      .filter(
-        (category) =>
-          category.parent_id !== null && !rootIds.has(category.parent_id),
-      )
-      .sort(byOrder);
-    return [...nested, ...orphans];
-  }, [activeTab, categories]);
-
-  const normalizedQuery = query.trim().toLocaleLowerCase("bg");
+  const editingCategory = editCategoryId
+    ? categories.find((category) => category.id === editCategoryId)
+    : undefined;
+  const activeTab = normalizeCategoryTab(
+    editingCategory?.category_type ?? initialCategoryType,
+  );
+  const sortedCategories = sortCategories(
+    categories.filter((category) => category.category_type === activeTab),
+  );
+  const normalizedQuery = categoryQuery.trim().toLocaleLowerCase("bg");
   const visibleCategories = sortedCategories.filter((category) => {
     if (editCategoryId && category.id === editCategoryId) {
       return true;
     }
-    if (!normalizedQuery) {
-      return true;
-    }
-    const searchable = `${category.name} ${category.slug}`.toLocaleLowerCase("bg");
-    return searchable.includes(normalizedQuery);
+    return categorySearchMatches(category, normalizedQuery);
   });
-  const editingCategory = editCategoryId
-    ? categories.find((category) => category.id === editCategoryId)
-    : undefined;
   const editingProductCount = editingCategory
     ? (productCountByCategoryId.get(editingCategory.id) ?? 0)
     : 0;
@@ -135,11 +179,10 @@ export function CategoryManagementView({
     <div className="mt-6">
       <div className="flex flex-wrap gap-2 border-b border-boutique-line pb-3">
         {categoryTabs.map((tab) => (
-          <button
+          <a
             key={tab}
-            type="button"
-            onClick={() => setActiveTab(tab)}
-            aria-pressed={activeTab === tab}
+            href={makeAdminCategoriesHref({ categoryType: tab })}
+            aria-current={activeTab === tab ? "page" : undefined}
             className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
               activeTab === tab
                 ? "bg-boutique-ink text-boutique-paper"
@@ -150,20 +193,42 @@ export function CategoryManagementView({
             <span className="ml-1.5 text-xs opacity-75">
               ({categories.filter((category) => category.category_type === tab).length})
             </span>
-          </button>
+          </a>
         ))}
       </div>
 
-      <label className="mt-4 block text-xs font-semibold uppercase tracking-wider text-boutique-muted">
-        Търсене
-        <input
-          type="search"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="Име или slug..."
-          className="mt-1.5 w-full max-w-md rounded-lg border border-boutique-line bg-white px-3 py-2.5 text-sm font-normal normal-case tracking-normal text-boutique-ink outline-none focus:border-boutique-accent/50"
-        />
-      </label>
+      <form
+        action="/admin"
+        method="get"
+        className="mt-4 flex max-w-2xl flex-col gap-2 sm:flex-row sm:items-end"
+      >
+        <input type="hidden" name="tab" value="categories" />
+        <input type="hidden" name="categoryType" value={activeTab} />
+        <label className="block flex-1 text-xs font-semibold uppercase tracking-wider text-boutique-muted">
+          Търсене
+          <input
+            type="search"
+            name="category_q"
+            defaultValue={categoryQuery}
+            placeholder="Име или slug..."
+            className="mt-1.5 w-full rounded-lg border border-boutique-line bg-white px-3 py-2.5 text-sm font-normal normal-case tracking-normal text-boutique-ink outline-none focus:border-boutique-accent/50"
+          />
+        </label>
+        <button
+          type="submit"
+          className="rounded-full bg-boutique-ink px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-boutique-paper"
+        >
+          Търси
+        </button>
+        {categoryQuery.trim() ? (
+          <a
+            href={makeAdminCategoriesHref({ categoryType: activeTab })}
+            className="rounded-full border border-boutique-line px-4 py-2.5 text-center text-xs font-semibold uppercase tracking-wider text-boutique-muted"
+          >
+            Изчисти
+          </a>
+        ) : null}
+      </form>
 
       {editingCategory ? (
         <section
@@ -179,14 +244,14 @@ export function CategoryManagementView({
                 {editingCategory.name}
               </p>
             </div>
-            <Link
+            <a
               href={makeAdminCategoriesHref({
                 categoryType: editingCategory.category_type,
               })}
               className="rounded-full border border-boutique-line px-3 py-1.5 text-xs font-semibold text-boutique-muted transition hover:text-boutique-ink"
             >
               Затвори редакцията
-            </Link>
+            </a>
           </div>
           <form
             action={updateCategory}
@@ -366,19 +431,19 @@ export function CategoryManagementView({
             ) : null}
             <div className="self-end">
               <AdminSubmitButton
-                pendingLabel="Записване…"
+                pendingLabel="Записване..."
                 className="rounded-full bg-boutique-ink px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-boutique-paper"
               >
                 Запази
               </AdminSubmitButton>
             </div>
             <div className="md:col-span-3">
-              <AdminFormPendingGuard message="Категорията се записва… Моля, изчакайте." />
+              <AdminFormPendingGuard message="Категорията се записва... Моля, изчакайте." />
             </div>
           </form>
           <AdminConfirmForm
             action={deleteCategory}
-            confirmMessage={`Сигурни ли сте, че искате да изтриете „${editingCategory.name}"?`}
+            confirmMessage={`Сигурни ли сте, че искате да изтриете "${editingCategory.name}"?`}
             className="mt-3 border-t border-red-100 pt-3"
           >
             <input type="hidden" name={adminFormFields.common.tab} value="categories" />
@@ -426,138 +491,71 @@ export function CategoryManagementView({
               ? categories.find((entry) => entry.id === category.parent_id)
               : null;
 
-            const productCount = productCountByCategoryId.get(category.id) ?? 0;
-
             return (
-            <div
-              key={category.id}
-              className="border-b border-boutique-line/70 bg-white last:border-b-0"
-            >
-              <div className="hidden px-3 py-2 md:grid md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_6rem_5rem_4rem_auto] md:items-center md:gap-2">
-                <p className="truncate font-medium text-boutique-ink">
-                  {parentCategory ? "↳ " : ""}
-                  {category.name}
-                  {category.is_visible === false ? (
-                    <span className="ml-2 rounded-full bg-boutique-muted/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-boutique-muted">
-                      Скрита
-                    </span>
-                  ) : null}
-                  {hasCategoryContentGap(category) ? (
-                    <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-800">
-                      Липсва съдържание
-                    </span>
-                  ) : null}
-                </p>
-                <p className="truncate text-xs text-boutique-muted">{category.slug}</p>
-                <p className="text-xs text-boutique-muted">
-                  {getCategoryTypeLabel(category.category_type)}
-                </p>
-                <p className="text-xs text-boutique-muted">
-                  {category.show_on_home ? "Да" : "Не"}
-                </p>
-                <p className="text-xs text-boutique-muted">{category.home_sort_order}</p>
-                <div className="flex flex-wrap justify-end gap-1">
-                  <form action={moveCategory} className="inline">
-                    <input type="hidden" name={adminFormFields.common.tab} value="categories" />
-                    <input type="hidden" name={adminFormFields.common.id} value={category.id} />
-                    <input type="hidden" name={adminFormFields.category.type} value={category.category_type} />
-                    <input type="hidden" name={adminFormFields.category.direction} value="up" />
-                    <AdminSubmitButton
-                      pendingLabel="…"
-                      disabled={indexInTab === 0}
-                      aria-label="Премести нагоре"
-                      className="grid h-7 w-7 place-items-center rounded-full border border-boutique-line text-xs disabled:opacity-35"
-                    >
-                      ↑
-                    </AdminSubmitButton>
-                  </form>
-                  <form action={moveCategory} className="inline">
-                    <input type="hidden" name={adminFormFields.common.tab} value="categories" />
-                    <input type="hidden" name={adminFormFields.common.id} value={category.id} />
-                    <input type="hidden" name={adminFormFields.category.type} value={category.category_type} />
-                    <input type="hidden" name={adminFormFields.category.direction} value="down" />
-                    <AdminSubmitButton
-                      pendingLabel="…"
-                      disabled={indexInTab === siblings.length - 1}
-                      aria-label="Премести надолу"
-                      className="grid h-7 w-7 place-items-center rounded-full border border-boutique-line text-xs disabled:opacity-35"
-                    >
-                      ↓
-                    </AdminSubmitButton>
-                  </form>
-                  <Link
-                    href={makeAdminCategoriesHref({
-                      categoryType: category.category_type,
-                      editCategory: category.id,
-                    })}
-                    className="rounded-full border border-boutique-line px-2.5 py-1 text-[11px] font-semibold text-boutique-ink"
-                  >
-                    Редакция
-                  </Link>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between gap-2 px-2 py-2 md:hidden">
-                <div className="min-w-0">
+              <div
+                key={category.id}
+                className="border-b border-boutique-line/70 bg-white last:border-b-0"
+              >
+                <div className="hidden px-3 py-2 md:grid md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_6rem_5rem_4rem_auto] md:items-center md:gap-2">
                   <p className="truncate font-medium text-boutique-ink">
                     {parentCategory ? "↳ " : ""}
                     {category.name}
-                    {category.is_visible === false ? (
-                      <span className="ml-2 rounded-full bg-boutique-muted/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-boutique-muted">
-                        Скрита
-                      </span>
-                    ) : null}
-                    {hasCategoryContentGap(category) ? (
-                      <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-800">
-                        Липсва съдържание
-                      </span>
-                    ) : null}
+                    <CategoryBadges category={category} />
                   </p>
                   <p className="truncate text-xs text-boutique-muted">{category.slug}</p>
+                  <p className="text-xs text-boutique-muted">
+                    {getCategoryTypeLabel(category.category_type)}
+                  </p>
+                  <p className="text-xs text-boutique-muted">
+                    {category.show_on_home ? "Да" : "Не"}
+                  </p>
+                  <p className="text-xs text-boutique-muted">{category.home_sort_order}</p>
+                  <div className="flex flex-wrap justify-end gap-1">
+                    <CategoryMoveButtons
+                      category={category}
+                      indexInTab={indexInTab}
+                      siblingsCount={siblings.length}
+                    />
+                    <a
+                      href={makeAdminCategoriesHref({
+                        categoryType: category.category_type,
+                        editCategory: category.id,
+                      })}
+                      className="rounded-full border border-boutique-line px-2.5 py-1 text-[11px] font-semibold text-boutique-ink"
+                    >
+                      Редакция
+                    </a>
+                  </div>
                 </div>
-                <div className="flex gap-1">
-                  <form action={moveCategory}>
-                    <input type="hidden" name={adminFormFields.common.tab} value="categories" />
-                    <input type="hidden" name={adminFormFields.common.id} value={category.id} />
-                    <input type="hidden" name={adminFormFields.category.type} value={category.category_type} />
-                    <input type="hidden" name={adminFormFields.category.direction} value="up" />
-                    <AdminSubmitButton
-                      pendingLabel="…"
-                      disabled={indexInTab === 0}
-                      aria-label="Премести нагоре"
-                      className="grid h-7 w-7 place-items-center rounded-full border border-boutique-line text-xs disabled:opacity-35"
+
+                <div className="flex items-center justify-between gap-2 px-2 py-2 md:hidden">
+                  <div className="min-w-0">
+                    <p className="truncate font-medium text-boutique-ink">
+                      {parentCategory ? "↳ " : ""}
+                      {category.name}
+                      <CategoryBadges category={category} />
+                    </p>
+                    <p className="truncate text-xs text-boutique-muted">{category.slug}</p>
+                  </div>
+                  <div className="flex gap-1">
+                    <CategoryMoveButtons
+                      category={category}
+                      indexInTab={indexInTab}
+                      siblingsCount={siblings.length}
+                    />
+                    <a
+                      href={makeAdminCategoriesHref({
+                        categoryType: category.category_type,
+                        editCategory: category.id,
+                      })}
+                      className="rounded-full border border-boutique-line px-2.5 py-1 text-[11px] font-semibold text-boutique-ink"
                     >
-                      ↑
-                    </AdminSubmitButton>
-                  </form>
-                  <form action={moveCategory}>
-                    <input type="hidden" name={adminFormFields.common.tab} value="categories" />
-                    <input type="hidden" name={adminFormFields.common.id} value={category.id} />
-                    <input type="hidden" name={adminFormFields.category.type} value={category.category_type} />
-                    <input type="hidden" name={adminFormFields.category.direction} value="down" />
-                    <AdminSubmitButton
-                      pendingLabel="…"
-                      disabled={indexInTab === siblings.length - 1}
-                      aria-label="Премести надолу"
-                      className="grid h-7 w-7 place-items-center rounded-full border border-boutique-line text-xs disabled:opacity-35"
-                    >
-                      ↓
-                    </AdminSubmitButton>
-                  </form>
-                  <Link
-                    href={makeAdminCategoriesHref({
-                      categoryType: category.category_type,
-                      editCategory: category.id,
-                    })}
-                    className="rounded-full border border-boutique-line px-2.5 py-1 text-[11px] font-semibold text-boutique-ink"
-                  >
-                    Редакция
-                  </Link>
+                      Редакция
+                    </a>
+                  </div>
                 </div>
               </div>
-
-            </div>
-          );
+            );
           })}
         </div>
       )}

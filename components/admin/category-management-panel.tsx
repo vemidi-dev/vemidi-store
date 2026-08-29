@@ -19,6 +19,7 @@ export function CategoryManagementPanel({
   relatedCategoryIdsByCategoryId,
   initialCategoryType,
   editCategoryId,
+  categoryQuery,
   listKey,
 }: {
   categories: CategoryRow[];
@@ -26,6 +27,7 @@ export function CategoryManagementPanel({
   relatedCategoryIdsByCategoryId: Map<string, string[]>;
   initialCategoryType?: CategoryRow["category_type"];
   editCategoryId?: string;
+  categoryQuery?: string;
   listKey?: string;
 }) {
   const parentCategories = categories
@@ -218,6 +220,7 @@ export function CategoryManagementPanel({
           relatedCategoryIdsByCategoryId={relatedCategoryIdsByCategoryId}
           initialCategoryType={initialCategoryType}
           editCategoryId={editCategoryId}
+          categoryQuery={categoryQuery}
         />
       )}
     </article>

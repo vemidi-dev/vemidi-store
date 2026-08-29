@@ -877,6 +877,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               productCountByCategoryId={categoriesData.productCountByCategoryId}
               listKey={`${success}-${error}-${firstValue(params._refresh)}`}
               editCategoryId={firstValue(params.editCategory) || undefined}
+              categoryQuery={firstValue(params.category_q)}
               initialCategoryType={(() => {
                 const categoryType = firstValue(params.categoryType);
                 return categoryType === "material" ||
