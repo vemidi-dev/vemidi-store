@@ -618,3 +618,30 @@ npx tsx --test tests/admin-categories-edit-move.test.ts tests/admin-categories-l
 - [ ] ↑/↓ изпращат server action, сменят реда и показват success banner
 - [ ] Search в категории работи през URL `category_q`
 - [ ] Няма 504 на `/admin?tab=categories`
+
+---
+
+## 17. Category save stuck pending
+
+Дата: 2026-08-29
+
+### Симптом
+
+След структурния fix `Редакция` вече се отваря, но при `Запази` формата
+остава визуално в pending състояние и не се вижда redirect/success.
+
+### Fix
+
+- Премахнат е `AdminFormPendingGuard` от category create/update формите.
+- Причина: guard-ът закача `beforeunload` докато формата е pending, което е
+  полезно при големи upload-и, но при server action redirect може да блокира
+  или да направи навигацията невидима за потребителя.
+- Оставен е `AdminSubmitButton` с pending label, така че има обратна връзка,
+  но няма `beforeunload` handler върху category save flow.
+
+### Проверки
+
+```text
+npm run typecheck → pass
+npx tsx --test tests/admin-categories-edit-move.test.ts tests/admin-categories-loader.test.ts tests/category-related-selector.test.ts → 15/15 pass
+```

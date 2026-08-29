@@ -4,7 +4,6 @@ import {
   updateCategory,
 } from "@/app/admin/actions";
 import { AdminConfirmForm } from "@/components/admin/admin-confirm-form";
-import { AdminFormPendingGuard } from "@/components/admin/admin-form-pending-guard";
 import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
 import { CategoryContentSeoFields } from "@/components/admin/category-content-seo-fields";
 import { CategoryRelatedSelector } from "@/components/admin/category-related-selector";
@@ -436,9 +435,6 @@ export function CategoryManagementView({
               >
                 Запази
               </AdminSubmitButton>
-            </div>
-            <div className="md:col-span-3">
-              <AdminFormPendingGuard message="Категорията се записва... Моля, изчакайте." />
             </div>
           </form>
           <AdminConfirmForm

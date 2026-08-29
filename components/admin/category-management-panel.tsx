@@ -1,5 +1,4 @@
 import { createCategory } from "@/app/admin/actions";
-import { AdminFormPendingGuard } from "@/components/admin/admin-form-pending-guard";
 import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
 import { CategoryContentSeoFields } from "@/components/admin/category-content-seo-fields";
 import { CategoryManagementView } from "@/components/admin/category-management-view";
@@ -203,9 +202,6 @@ export function CategoryManagementPanel({
               >
                 Добави
               </AdminSubmitButton>
-            </div>
-            <div className="md:col-span-2 xl:col-span-4">
-              <AdminFormPendingGuard message="Категорията се добавя… Моля, изчакайте." />
             </div>
           </div>
         </form>
