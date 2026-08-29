@@ -696,6 +696,60 @@ npx tsx --test tests/admin-categories-edit-move.test.ts
 
 ### Preview smoke (след Ready)
 
-- [ ] Hard refresh на Preview, после ↑/↓ сменят реда + success
-- [ ] Запази → пълен reload + „Категорията е обновена.“
-- [ ] Не остава забит „ЗАПИСВАНЕ…“
+- [x] Hard refresh на Preview, после ↑/↓ сменят реда + success (authenticated QA)
+- [x] Запази → пълен reload + „Категорията е обновена.“
+- [x] Не остава забит „ЗАПИСВАНЕ…“
+
+---
+
+## 19. Production + template port
+
+Дата: 2026-08-29
+
+### Store production
+
+| Item | Value |
+|------|--------|
+| PR | https://github.com/vemidi-dev/vemidi-store/pull/30 |
+| Merge commit | `659263f` |
+| Tip commit on main (includes CI test fix) | `c028e40` (in merge) |
+| Production deployment | https://vemidi-store-kr1l3lidu-ve-mi-di.vercel.app (`dpl_41uv2D2eckA5fCQrG4RRZYK2qBAn`) — **Ready** |
+| Production aliases | `vemidi-crafts.com`, `www.vemidi-crafts.com`, `vemidi-store.vercel.app`, `vemidi-store-ve-mi-di.vercel.app` → новият deploy |
+
+**Promo `promo_code_eligible` WIP:** **не е пипан, не е commit-нат, не е merge-нат, не е deploy-нат.** Остава само локално в `D:\Cursor\src`.
+
+### Unauthenticated production smoke (без 504)
+
+| URL | Status | Time |
+|-----|--------|------|
+| `/admin` | 307 | ~1.0s |
+| `/admin?tab=orders` | 307 | ~0.8s |
+| `/admin?tab=products` | 307 | ~0.7s |
+| `/admin?tab=categories` | 307 | ~0.4s |
+
+Authenticated category save/move + products filters бяха потвърдени на Preview преди merge; production носи същия commit tree.
+
+### Template port
+
+| Item | Value |
+|------|--------|
+| Repo | `vemidi-dev/store-template` |
+| Branch / PR | `feat/admin-products-performance-stage-1-2` → https://github.com/vemidi-dev/store-template/pull/6 (**MERGED**) |
+| Feature commit | `66b146d` |
+| Merge commit | `85010d0` |
+| Brand hardcodes | няма (`vemidi` / `crafts.com` не присъстват в ported files) |
+| `docs/vemidi-store-transfer-plan.md` | **не е commit-нат** (остава untracked) |
+
+Прехвърлено: lightweight categories/products loaders, slim list + filters, `CategoryRedirectingForm` hard-reload mutations, related tests.
+
+### Template checks
+
+```text
+npm run typecheck → pass
+npx tsx --test tests/admin-categories-edit-move.test.ts tests/admin-categories-loader.test.ts tests/admin-products-query.test.ts tests/category-related-selector.test.ts → 27/27 pass
+```
+
+### Residual risks
+
+- Product **ordering** tab все още ползва `loadAdminData` (Stage 4).
+- Authenticated production UI smoke зависи от ръчен login (unauth smoke покрива само „без 504“).
