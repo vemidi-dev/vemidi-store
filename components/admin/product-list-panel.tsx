@@ -148,9 +148,12 @@ function ProductStatusBadge({
 export function ProductListPanel({
   data,
   editProductId,
+  editOnly = false,
 }: {
   data: AdminData;
   editProductId?: string;
+  /** When true, only render the product matching editProductId (scoped edit bundle). */
+  editOnly?: boolean;
 }) {
   const {
     products,
@@ -212,31 +215,45 @@ export function ProductListPanel({
     categoryType: category.category_type,
   }));
 
+  const productsForCards =
+    editOnly && editProductId
+      ? products.filter((product) => product.id === editProductId)
+      : products;
+
   return (
     <article className={adminPanelClass}>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 className="font-heading text-2xl text-boutique-ink">Всички продукти</h2>
+          <h2 className="font-heading text-2xl text-boutique-ink">
+            {editOnly ? "Редакция на продукт" : "Всички продукти"}
+          </h2>
           <p className="mt-1 text-sm text-boutique-muted">
-            {products.length} продукта · компактен списък с търсене, филтри и пагинация
+            {editOnly
+              ? "Редакция на избран продукт"
+              : `${products.length} продукта · компактен списък с търсене, филтри и пагинация`}
           </p>
         </div>
-        <Link
-          href="/admin?productsView=ordering&orderingScope=home"
-          className="rounded-lg border border-boutique-line px-3 py-1.5 text-xs font-semibold text-boutique-ink transition hover:border-boutique-sage-deep/40"
-        >
-          Подредба на продукти
-        </Link>
+        {editOnly ? null : (
+          <Link
+            href="/admin?tab=products&productsView=ordering&orderingScope=home"
+            className="rounded-lg border border-boutique-line px-3 py-1.5 text-xs font-semibold text-boutique-ink transition hover:border-boutique-sage-deep/40"
+          >
+            Подредба на продукти
+          </Link>
+        )}
       </div>
 
-      {products.length === 0 ? (
-        <p className="mt-5 text-sm text-boutique-muted">Няма добавени продукти.</p>
+      {productsForCards.length === 0 ? (
+        <p className="mt-5 text-sm text-boutique-muted">
+          {editOnly ? "Продуктът за редакция не е намерен." : "Няма добавени продукти."}
+        </p>
       ) : (
         <>
+          {editOnly ? null : (
           <AdminListControls
             containerId="admin-product-list"
             itemSelector="[data-admin-product]"
-            total={products.length}
+            total={productsForCards.length}
             searchPlaceholder="Име, категория или цена..."
             filters={[
               {
@@ -306,9 +323,10 @@ export function ProductListPanel({
             pageSize={30}
             sticky
           />
+          )}
 
           <div id="admin-product-list" className="mt-4 space-y-3">
-          {products.map((product, productIndex) => {
+          {productsForCards.map((product, productIndex) => {
             const assignedIds = categoryIdsByProductId.get(product.id) ?? [];
             const assignedCategories = assignedIds
               .map((categoryId) => categoryById.get(categoryId))
@@ -630,6 +648,7 @@ export function ProductListPanel({
                   className={productSectionClass}
                   summaryClassName={productSectionSummaryClass}
                   contentClassName="border-t border-boutique-line/50 px-3 py-4 pb-20 sm:px-4"
+                  initiallyMounted={editOnly}
                   summary={
                     <>
                       <span>Редактирай продукт</span>
