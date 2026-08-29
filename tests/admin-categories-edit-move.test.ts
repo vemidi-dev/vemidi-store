@@ -38,17 +38,19 @@ test("makeAdminCategoriesHref move/save success includes tab and success", () =>
   assert.match(href, /_refresh=/);
 });
 
-test("category management view wires editCategory open and Редакция href", () => {
+test("category management view renders a separate edit panel and Редакция href", () => {
   const viewSource = readFileSync(
     path.join(root, "components/admin/category-management-view.tsx"),
     "utf8",
   );
-  assert.match(viewSource, /editCategoryId === category\.id \? true : undefined/);
+  assert.match(viewSource, /const editingCategory = editCategoryId/);
+  assert.match(viewSource, /id=\{`category-edit-\$\{editingCategory\.id\}`\}/);
+  assert.doesNotMatch(viewSource, /<details\s+id=\{`category-edit-\$\{category\.id\}`\}/);
   assert.match(viewSource, /makeAdminCategoriesHref\(\{\s*categoryType: category\.category_type,\s*editCategory: category\.id,/);
   assert.match(viewSource, /Затвори редакцията/);
   assert.match(
     viewSource,
-    /makeAdminCategoriesHref\(\{\s*categoryType: activeTab\s*\}\)/,
+    /makeAdminCategoriesHref\(\{\s*categoryType: editingCategory\.category_type/,
   );
   assert.match(viewSource, /action=\{moveCategory\}/);
   assert.doesNotMatch(viewSource, /CategoryRedirectingForm/);

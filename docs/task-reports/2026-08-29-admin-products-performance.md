@@ -523,3 +523,54 @@ Merge: **чака потвърждение**
 - [ ] ↑/↓ сменят реда + success banner + видим нов `home_sort_order`
 - [ ] Create/update category завършват без stuck pending
 - [ ] Няма 504 на `/admin?tab=categories`
+
+---
+
+## 15. Categories authenticated UI bug - second fix
+
+Дата: 2026-08-29
+
+### Причина
+
+Authenticated preview тестът показа, че първият fix не е достатъчен:
+
+- `Редакция` все още не отваряше надеждно формата.
+- ↑/↓ не даваха надежден видим refresh.
+
+Основният проблем беше, че edit UI все още живееше във всеки ред като
+`<details>` и разчиташе на URL + client state/effect. Това оставяше твърде
+много възможности за разминаване между tab state, DOM и hydrated client UI.
+
+### Fix
+
+- Edit формата вече е **отделен видим панел** над списъка, когато URL има
+  `editCategory=<id>`.
+- Редовете в списъка вече съдържат само actions: ↑, ↓ и `Редакция`.
+- `Редакция` е обикновен `Link` към
+  `/admin?tab=categories&categoryType=<type>&editCategory=<id>`.
+- `Затвори редакцията` маха `editCategory` и връща към същия category type.
+- Премахната е зависимостта от `requestAnimationFrame`, `getElementById` и
+  отваряне на `<details>` за edit form.
+- Move/create/update остават със server action `redirect()` + `_refresh` +
+  success/error message.
+- Lightweight `loadAdminCategoriesData` остава запазен.
+
+### Тестове
+
+```text
+npm run typecheck → pass
+npx tsx --test tests/admin-categories-edit-move.test.ts tests/admin-categories-loader.test.ts tests/admin-products-query.test.ts tests/category-related-selector.test.ts → 25/25 pass
+```
+
+### Ръчен checklist за нов preview
+
+- Latest preview deployment: https://vemidi-store-b8tdssgxh-ve-mi-di.vercel.app
+- Branch alias: https://vemidi-store-git-feat-admin-products-performanc-b0719d-ve-mi-di.vercel.app
+- Unauthenticated smoke: `/admin?tab=categories` и `/admin?tab=products` → 307 login, без 504.
+
+- [ ] `Редакция` показва отделния edit panel и URL има `editCategory`
+- [ ] `Затвори редакцията` маха `editCategory`
+- [ ] ↑/↓ сменят реда + success banner + видим нов ред
+- [ ] Create/update category завършват без stuck pending
+- [ ] Related category checkboxes при нова категория могат да се избират
+- [ ] Няма 504 на `/admin?tab=categories`
