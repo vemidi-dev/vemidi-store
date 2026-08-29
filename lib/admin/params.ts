@@ -19,6 +19,7 @@ export function firstValue(value: string | string[] | undefined) {
 
 export function normalizeAdminTab(value: string): AdminTab {
   if (
+    value === "products" ||
     value === "categories" ||
     value === "colors" ||
     value === "materials" ||
@@ -35,7 +36,10 @@ export function normalizeAdminTab(value: string): AdminTab {
   ) {
     return value;
   }
-  return "products";
+  // Bare /admin used to default to products and call loadAdminData (24+
+  // unbounded queries), which regularly hits Vercel's 60s FUNCTION_INVOCATION_TIMEOUT.
+  // Land on the lightweight orders tab instead; products stay at ?tab=products.
+  return "orders";
 }
 
 export function normalizeFaqScopeFilter(value: string): "global" | "product" {
@@ -43,7 +47,7 @@ export function normalizeFaqScopeFilter(value: string): "global" | "product" {
 }
 
 export function makeAdminTabHref(tab: AdminTab) {
-  return tab === "products" ? "/admin" : `/admin?tab=${tab}`;
+  return `/admin?tab=${tab}`;
 }
 
 function toNonNegativeInteger(value: string, fallback: number) {

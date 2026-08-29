@@ -18,7 +18,7 @@ import {
 } from "@/lib/admin/seo-resolved-preview";
 import { getAdminTab } from "@/lib/admin/form-data";
 import { adminFormFields } from "@/lib/admin/form-fields";
-import { normalizeAdminTab } from "@/lib/admin/params";
+import { makeAdminTabHref, normalizeAdminTab } from "@/lib/admin/params";
 
 test("hasSeoText treats blank and whitespace as missing", () => {
   assert.equal(hasSeoText(null), false);
@@ -208,4 +208,13 @@ test("admin seo tab is recognized in tab helpers", () => {
   const formData = new FormData();
   formData.set(adminFormFields.common.tab, "seo");
   assert.equal(getAdminTab(formData, "products"), "seo");
+});
+
+test("bare admin tab defaults to orders to avoid products loadAdminData timeout", () => {
+  assert.equal(normalizeAdminTab(""), "orders");
+  assert.equal(normalizeAdminTab("unknown-tab"), "orders");
+  assert.equal(normalizeAdminTab("products"), "products");
+  assert.equal(normalizeAdminTab("orders"), "orders");
+  assert.equal(makeAdminTabHref("products"), "/admin?tab=products");
+  assert.equal(makeAdminTabHref("orders"), "/admin?tab=orders");
 });
