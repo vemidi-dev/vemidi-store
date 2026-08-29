@@ -9,10 +9,38 @@ import {
 export const PRODUCT_PAGE_SIZE_DEFAULT = 30;
 export const PRODUCT_PAGE_SIZE_MAX = 100;
 
+export const PRODUCT_AVAILABILITY_VALUES = [
+  "active",
+  "sold-out",
+  "featured",
+  "customizable",
+] as const;
+
+export type ProductAvailabilityFilter =
+  | (typeof PRODUCT_AVAILABILITY_VALUES)[number]
+  | "";
+
+export const PRODUCT_SORT_VALUES = [
+  "order-desc",
+  "order-asc",
+  "name-asc",
+  "name-desc",
+  "price-asc",
+  "price-desc",
+] as const;
+
+export type ProductSortValue = (typeof PRODUCT_SORT_VALUES)[number];
+
 export type ProductsQuery = {
   search: string;
+  /** @deprecated Prefer productCategoryId / materialCategoryId / occasionCategoryId */
   categoryId: string;
+  productCategoryId: string;
+  materialCategoryId: string;
+  occasionCategoryId: string;
+  availability: ProductAvailabilityFilter;
   status: ProductPublicationStatus | "";
+  sort: ProductSortValue;
   page: number;
   pageSize: number;
 };
@@ -57,6 +85,11 @@ function isUuid(value: string) {
   return UUID_RE.test(value);
 }
 
+function normalizeUuid(value: string | undefined) {
+  const trimmed = (value ?? "").trim();
+  return isUuid(trimmed) ? trimmed : "";
+}
+
 export function sanitizeProductSearchTerm(value: string) {
   return value.trim().replace(/[%_,]/g, " ").replace(/\s+/g, " ").slice(0, 120);
 }
@@ -80,10 +113,36 @@ function normalizePageSize(raw: string) {
   return Math.min(parsed, PRODUCT_PAGE_SIZE_MAX);
 }
 
+function normalizeAvailability(raw: string): ProductAvailabilityFilter {
+  return (PRODUCT_AVAILABILITY_VALUES as readonly string[]).includes(raw)
+    ? (raw as ProductAvailabilityFilter)
+    : "";
+}
+
+function normalizeSort(raw: string): ProductSortValue {
+  return (PRODUCT_SORT_VALUES as readonly string[]).includes(raw)
+    ? (raw as ProductSortValue)
+    : "order-desc";
+}
+
+export function getRequiredCategoryFilterIds(query: ProductsQuery): string[] {
+  return [
+    query.productCategoryId,
+    query.materialCategoryId,
+    query.occasionCategoryId,
+    query.categoryId,
+  ].filter(Boolean);
+}
+
 export function parseProductsQuery(params: {
   q?: string;
   category?: string;
+  productCat?: string;
+  materialCat?: string;
+  occasionCat?: string;
+  availability?: string;
   status?: string;
+  sort?: string;
   page?: string;
   pageSize?: string;
 }): ProductsQuery {
@@ -92,22 +151,46 @@ export function parseProductsQuery(params: {
     statusRaw === "draft" || statusRaw === "published" || statusRaw === "archived"
       ? statusRaw
       : "";
-  const categoryId = (params.category ?? "").trim();
 
   return {
     search: sanitizeProductSearchTerm(params.q ?? ""),
-    categoryId: isUuid(categoryId) ? categoryId : "",
+    categoryId: normalizeUuid(params.category),
+    productCategoryId: normalizeUuid(params.productCat),
+    materialCategoryId: normalizeUuid(params.materialCat),
+    occasionCategoryId: normalizeUuid(params.occasionCat),
+    availability: normalizeAvailability((params.availability ?? "").trim()),
     status,
+    sort: normalizeSort((params.sort ?? "").trim()),
     page: normalizePage(params.page ?? ""),
     pageSize: normalizePageSize(params.pageSize ?? ""),
   };
+}
+
+export function parseProductsQueryFromFormData(formData: FormData): ProductsQuery {
+  return parseProductsQuery({
+    q: String(formData.get("q") ?? ""),
+    category: String(formData.get("category") ?? ""),
+    productCat: String(formData.get("product_cat") ?? ""),
+    materialCat: String(formData.get("material_cat") ?? ""),
+    occasionCat: String(formData.get("occasion_cat") ?? ""),
+    availability: String(formData.get("availability") ?? ""),
+    status: String(formData.get("status") ?? ""),
+    sort: String(formData.get("sort") ?? ""),
+    page: String(formData.get("page") ?? ""),
+    pageSize: String(formData.get("page_size") ?? ""),
+  });
 }
 
 export function makeAdminProductsHref(
   partial: Partial<{
     q: string;
     category: string;
+    productCat: string;
+    materialCat: string;
+    occasionCat: string;
+    availability: string;
     status: string;
+    sort: string;
     page: number;
     pageSize: number;
     editProduct: string;
@@ -123,7 +206,12 @@ export function makeAdminProductsHref(
 
   const search = partial.q ?? base.search ?? "";
   const category = partial.category ?? base.categoryId ?? "";
+  const productCat = partial.productCat ?? base.productCategoryId ?? "";
+  const materialCat = partial.materialCat ?? base.materialCategoryId ?? "";
+  const occasionCat = partial.occasionCat ?? base.occasionCategoryId ?? "";
+  const availability = partial.availability ?? base.availability ?? "";
   const status = partial.status ?? base.status ?? "";
+  const sort = partial.sort ?? base.sort ?? "order-desc";
   const page = partial.page ?? base.page ?? 1;
   const pageSize = partial.pageSize ?? base.pageSize ?? PRODUCT_PAGE_SIZE_DEFAULT;
   const editProduct = partial.editProduct ?? base.editProduct ?? "";
@@ -134,8 +222,23 @@ export function makeAdminProductsHref(
   if (category) {
     params.set("category", category);
   }
+  if (productCat) {
+    params.set("product_cat", productCat);
+  }
+  if (materialCat) {
+    params.set("material_cat", materialCat);
+  }
+  if (occasionCat) {
+    params.set("occasion_cat", occasionCat);
+  }
+  if (availability) {
+    params.set("availability", availability);
+  }
   if (status) {
     params.set("status", status);
+  }
+  if (sort && sort !== "order-desc") {
+    params.set("sort", sort);
   }
   if (page > 1) {
     params.set("page", String(page));
@@ -162,36 +265,126 @@ export function makeAdminProductsHref(
   return `/admin?${params.toString()}`;
 }
 
+export function productsQueryToSearchParams(
+  query: ProductsQuery,
+  extra?: Record<string, string>,
+): URLSearchParams {
+  const href = makeAdminProductsHref(
+    {
+      success: extra?.success,
+      error: extra?.error,
+      editProduct: extra?.editProduct,
+    },
+    query,
+  );
+  return new URLSearchParams(href.replace(/^\/admin\?/, ""));
+}
+
+function intersectIdSets(sets: string[][]): string[] {
+  if (sets.length === 0) {
+    return [];
+  }
+  let current = new Set(sets[0]);
+  for (let index = 1; index < sets.length; index += 1) {
+    const next = new Set(sets[index]);
+    current = new Set([...current].filter((id) => next.has(id)));
+    if (current.size === 0) {
+      return [];
+    }
+  }
+  return [...current];
+}
+
+async function loadProductIdsForCategory(
+  supabase: SupabaseClient,
+  categoryId: string,
+): Promise<{ ids: string[]; error: string | null }> {
+  const { data, error } = await supabase
+    .from("product_categories")
+    .select("product_id")
+    .eq("category_id", categoryId);
+
+  if (error) {
+    return { ids: [], error: error.message };
+  }
+
+  return {
+    ids: [
+      ...new Set(
+        (data ?? [])
+          .map((row) => (typeof row.product_id === "string" ? row.product_id : ""))
+          .filter(Boolean),
+      ),
+    ],
+    error: null,
+  };
+}
+
 export async function loadAdminProductsPage(
   supabase: SupabaseClient,
   query: ProductsQuery,
 ): Promise<AdminProductsPageResult> {
   let productIdsFilter: string[] | null = null;
+  const requiredCategoryIds = getRequiredCategoryFilterIds(query);
 
-  if (query.categoryId) {
-    const { data: links, error: linksError } = await supabase
-      .from("product_categories")
-      .select("product_id")
-      .eq("category_id", query.categoryId);
-
-    if (linksError) {
+  if (requiredCategoryIds.length > 0) {
+    const categoryResults = await Promise.all(
+      requiredCategoryIds.map((categoryId) =>
+        loadProductIdsForCategory(supabase, categoryId),
+      ),
+    );
+    const firstError = categoryResults.find((result) => result.error)?.error;
+    if (firstError) {
       return {
         products: [],
         total: 0,
         page: query.page,
         pageSize: query.pageSize,
         categoryById: new Map(),
-        error: { message: linksError.message },
+        error: { message: firstError },
       };
     }
 
-    productIdsFilter = [
+    productIdsFilter = intersectIdSets(categoryResults.map((result) => result.ids));
+    if (productIdsFilter.length === 0) {
+      return {
+        products: [],
+        total: 0,
+        page: query.page,
+        pageSize: query.pageSize,
+        categoryById: new Map(),
+        error: null,
+      };
+    }
+  }
+
+  if (query.availability === "featured") {
+    const { data: featuredRows, error: featuredError } = await supabase
+      .from("home_featured_products")
+      .select("product_id");
+
+    if (featuredError) {
+      return {
+        products: [],
+        total: 0,
+        page: query.page,
+        pageSize: query.pageSize,
+        categoryById: new Map(),
+        error: { message: featuredError.message },
+      };
+    }
+
+    const featuredIds = [
       ...new Set(
-        (links ?? [])
+        (featuredRows ?? [])
           .map((row) => (typeof row.product_id === "string" ? row.product_id : ""))
           .filter(Boolean),
       ),
     ];
+
+    productIdsFilter = productIdsFilter
+      ? intersectIdSets([productIdsFilter, featuredIds])
+      : featuredIds;
 
     if (productIdsFilter.length === 0) {
       return {
@@ -216,6 +409,13 @@ export async function loadAdminProductsPage(
   if (query.status) {
     request = request.eq("status", query.status);
   }
+  if (query.availability === "active") {
+    request = request.eq("is_sold_out", false);
+  } else if (query.availability === "sold-out") {
+    request = request.eq("is_sold_out", true);
+  } else if (query.availability === "customizable") {
+    request = request.eq("is_customizable", true);
+  }
   if (query.search) {
     const term = `%${query.search}%`;
     request = request.or(
@@ -223,9 +423,29 @@ export async function loadAdminProductsPage(
     );
   }
 
-  request = request
-    .order("created_at", { ascending: false, nullsFirst: false })
-    .range(offset, offset + query.pageSize - 1);
+  switch (query.sort) {
+    case "order-asc":
+      request = request.order("created_at", { ascending: true, nullsFirst: false });
+      break;
+    case "name-asc":
+      request = request.order("name", { ascending: true });
+      break;
+    case "name-desc":
+      request = request.order("name", { ascending: false });
+      break;
+    case "price-asc":
+      request = request.order("price", { ascending: true, nullsFirst: false });
+      break;
+    case "price-desc":
+      request = request.order("price", { ascending: false, nullsFirst: false });
+      break;
+    case "order-desc":
+    default:
+      request = request.order("created_at", { ascending: false, nullsFirst: false });
+      break;
+  }
+
+  request = request.range(offset, offset + query.pageSize - 1);
 
   const { data, error, count } = await request;
   const rows = (data ?? []) as Array<

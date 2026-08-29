@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import {
@@ -8,9 +9,8 @@ import {
   updateCategory,
 } from "@/app/admin/actions";
 import { AdminConfirmForm } from "@/components/admin/admin-confirm-form";
-import { AdminOpenDetailsButton } from "@/components/admin/admin-open-details-button";
-import { AdminFormPendingGuard } from "@/components/admin/admin-form-pending-guard";
 import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
+import { CategoryRedirectingForm } from "@/components/admin/category-redirecting-form";
 import { CategoryContentSeoFields } from "@/components/admin/category-content-seo-fields";
 import { CategoryRelatedSelector } from "@/components/admin/category-related-selector";
 import {
@@ -19,6 +19,7 @@ import {
 } from "@/components/admin/styles";
 import { adminFormFields } from "@/lib/admin/form-fields";
 import { hasCategoryContentGap } from "@/lib/admin/category-content";
+import { makeAdminCategoriesHref } from "@/lib/admin/categories-href";
 import type { CategoryRow, CategoryType } from "@/lib/admin/types";
 
 type CategoryManagementViewProps = {
@@ -26,6 +27,7 @@ type CategoryManagementViewProps = {
   productCountByCategoryId: Map<string, number>;
   relatedCategoryIdsByCategoryId: Map<string, string[]>;
   initialCategoryType?: CategoryType;
+  editCategoryId?: string;
 };
 
 type CategoryTab = CategoryType;
@@ -53,6 +55,7 @@ export function CategoryManagementView({
   productCountByCategoryId,
   relatedCategoryIdsByCategoryId,
   initialCategoryType = "product",
+  editCategoryId,
 }: CategoryManagementViewProps) {
   const [activeTab, setActiveTab] = useState<CategoryTab>(() =>
     categoryTabs.includes(initialCategoryType as CategoryTab)
@@ -66,6 +69,21 @@ export function CategoryManagementView({
       setActiveTab(initialCategoryType as CategoryTab);
     }
   }, [initialCategoryType]);
+
+  useEffect(() => {
+    if (!editCategoryId) {
+      return;
+    }
+    const match = categories.find((category) => category.id === editCategoryId);
+    if (match && categoryTabs.includes(match.category_type as CategoryTab)) {
+      setActiveTab(match.category_type as CategoryTab);
+    }
+    const details = document.getElementById(`category-edit-${editCategoryId}`);
+    if (details instanceof HTMLDetailsElement) {
+      details.open = true;
+      details.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+  }, [categories, editCategoryId]);
 
   const sortedCategories = useMemo(() => {
     const byOrder = (left: CategoryRow, right: CategoryRow) => {
@@ -197,7 +215,7 @@ export function CategoryManagementView({
                 </p>
                 <p className="text-xs text-boutique-muted">{category.home_sort_order}</p>
                 <div className="flex flex-wrap justify-end gap-1">
-                  <form action={moveCategory} className="inline">
+                  <CategoryRedirectingForm action={moveCategory} className="inline" pendingMessage="">
                     <input type="hidden" name={adminFormFields.common.tab} value="categories" />
                     <input type="hidden" name={adminFormFields.common.id} value={category.id} />
                     <input type="hidden" name={adminFormFields.category.type} value={category.category_type} />
@@ -210,8 +228,8 @@ export function CategoryManagementView({
                     >
                       ↑
                     </AdminSubmitButton>
-                  </form>
-                  <form action={moveCategory} className="inline">
+                  </CategoryRedirectingForm>
+                  <CategoryRedirectingForm action={moveCategory} className="inline" pendingMessage="">
                     <input type="hidden" name={adminFormFields.common.tab} value="categories" />
                     <input type="hidden" name={adminFormFields.common.id} value={category.id} />
                     <input type="hidden" name={adminFormFields.category.type} value={category.category_type} />
@@ -224,13 +242,16 @@ export function CategoryManagementView({
                     >
                       ↓
                     </AdminSubmitButton>
-                  </form>
-                  <AdminOpenDetailsButton
-                    detailsId={`category-edit-${category.id}`}
+                  </CategoryRedirectingForm>
+                  <Link
+                    href={makeAdminCategoriesHref({
+                      categoryType: category.category_type,
+                      editCategory: category.id,
+                    })}
                     className="rounded-full border border-boutique-line px-2.5 py-1 text-[11px] font-semibold text-boutique-ink"
                   >
                     Редакция
-                  </AdminOpenDetailsButton>
+                  </Link>
                 </div>
               </div>
 
@@ -253,7 +274,7 @@ export function CategoryManagementView({
                   <p className="truncate text-xs text-boutique-muted">{category.slug}</p>
                 </div>
                 <div className="flex gap-1">
-                  <form action={moveCategory}>
+                  <CategoryRedirectingForm action={moveCategory} pendingMessage="">
                     <input type="hidden" name={adminFormFields.common.tab} value="categories" />
                     <input type="hidden" name={adminFormFields.common.id} value={category.id} />
                     <input type="hidden" name={adminFormFields.category.type} value={category.category_type} />
@@ -266,8 +287,8 @@ export function CategoryManagementView({
                     >
                       ↑
                     </AdminSubmitButton>
-                  </form>
-                  <form action={moveCategory}>
+                  </CategoryRedirectingForm>
+                  <CategoryRedirectingForm action={moveCategory} pendingMessage="">
                     <input type="hidden" name={adminFormFields.common.tab} value="categories" />
                     <input type="hidden" name={adminFormFields.common.id} value={category.id} />
                     <input type="hidden" name={adminFormFields.category.type} value={category.category_type} />
@@ -280,7 +301,7 @@ export function CategoryManagementView({
                     >
                       ↓
                     </AdminSubmitButton>
-                  </form>
+                  </CategoryRedirectingForm>
                 </div>
               </div>
 
@@ -291,8 +312,18 @@ export function CategoryManagementView({
                 <summary className="cursor-pointer text-xs font-semibold text-boutique-sage-deep md:sr-only">
                   Редактирай категория
                 </summary>
-                <form
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-sm font-medium text-boutique-ink">Редакция на категория</p>
+                  <Link
+                    href={makeAdminCategoriesHref({ categoryType: activeTab })}
+                    className="rounded-full border border-boutique-line px-3 py-1.5 text-xs font-semibold text-boutique-muted transition hover:text-boutique-ink"
+                  >
+                    Затвори редакцията
+                  </Link>
+                </div>
+                <CategoryRedirectingForm
                   action={updateCategory}
+                  pendingMessage="Категорията се записва… Моля, изчакайте."
                   className="mt-3 grid gap-3 md:grid-cols-[1fr_1fr_1fr_auto]"
                 >
                   <input type="hidden" name={adminFormFields.common.tab} value="categories" />
@@ -475,10 +506,7 @@ export function CategoryManagementView({
                       Запази
                     </AdminSubmitButton>
                   </div>
-                  <div className="md:col-span-3">
-                    <AdminFormPendingGuard message="Категорията се записва… Моля, изчакайте." />
-                  </div>
-                </form>
+                </CategoryRedirectingForm>
                 <AdminConfirmForm
                   action={deleteCategory}
                   confirmMessage={`Сигурни ли сте, че искате да изтриете „${category.name}"?`}

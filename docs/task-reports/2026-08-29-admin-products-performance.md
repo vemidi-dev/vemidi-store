@@ -441,3 +441,45 @@ Merge: **чака потвърждение**
   - Unauth smoke: `/admin?tab=products|categories` (+ filter params) → **307** към login (без 504)
   - Authenticated list/edit smoke: **ръчно** след login
 - Merge: само след ръчно потвърждение
+
+---
+
+## 13. Stage 1-2 UX revision
+
+Дата: 2026-08-29 (follow-up на preview feedback)
+
+### Products UX fixes
+
+- Филтрите се прилагат **onChange** (без „Приложи“); search с debounce **400ms**; при промяна `page` → 1.
+- Отделни server-side dropdown-и: Категория / Заготовки и материали / Повод (+ Наличност, Статус, Сортиране).
+- AND match през `product_categories` когато са избрани няколко типа.
+- Publish / sold-out actions пазят list query params и добавят `_refresh` + success message.
+
+### Categories UX fixes
+
+- „Затвори редакцията“ → `/admin?tab=categories` (+ `categoryType`); edit през `editCategory` URL.
+- Create/update/move връщат `{ href }` + client `router.push/refresh` (избягва stuck pending след redirect).
+- Related checkboxes: stopPropagation + коректен material/occasion type resolve.
+- По-силна `revalidatePath` за categories; panel `key` от success/error/`_refresh`.
+
+### Tests
+
+- `tests/admin-products-query.test.ts` — typed filters, href, categories href
+- `tests/admin-categories-loader.test.ts`
+- `tests/category-related-selector.test.ts`
+- `npm run typecheck`
+
+### Preview
+
+- Нов Vercel Preview след push на UX revision (обнови URL тук след deploy).
+- Ръчен checklist: products onChange filters; category type AND; publish refresh; categories close/move/save/create + related checkboxes; без 504.
+
+### Преди merge
+
+- Authenticated smoke на preview.
+- Потвърждение от product owner.
+- **Не merge без потвърждение.**
+
+### Residual risk (Stage 4)
+
+- `productsView=ordering` още ползва `loadAdminData` → възможен timeout при много продукти.

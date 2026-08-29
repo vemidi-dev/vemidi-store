@@ -7,11 +7,9 @@ import {
 } from "@/app/admin/actions";
 import { AdminConfirmForm } from "@/components/admin/admin-confirm-form";
 import { ProductDuplicateButton } from "@/components/admin/product-duplicate-button";
+import { ProductListFilters } from "@/components/admin/product-list-filters";
 import { ProductPublicationBadge } from "@/components/admin/product-publication-badge";
-import {
-  adminFieldClass,
-  adminPanelClass,
-} from "@/components/admin/styles";
+import { adminPanelClass } from "@/components/admin/styles";
 import { adminFormFields } from "@/lib/admin/form-fields";
 import { getAdminProductPreviewPath } from "@/lib/admin/product-preview-path";
 import {
@@ -20,15 +18,8 @@ import {
   type ProductsQuery,
 } from "@/lib/admin/products-query";
 import type { CategoryRow } from "@/lib/admin/types";
-import {
-  getCategoryDisplayLabel,
-  sortCategoriesForDisplay,
-} from "@/lib/category-hierarchy";
 import { formatAdminFulfillmentListStatus } from "@/lib/product-fulfillment";
-import {
-  normalizeProductPublicationStatus,
-  PRODUCT_PUBLICATION_STATUS_LABELS,
-} from "@/lib/product-publication";
+import { normalizeProductPublicationStatus } from "@/lib/product-publication";
 
 const productCardClass =
   "group/product rounded-xl border border-boutique-line bg-white shadow-boutique-sm transition hover:border-boutique-sage/25 hover:shadow-md";
@@ -73,6 +64,22 @@ function ProductThumbnail({
   );
 }
 
+function ProductsQueryHiddenFields({ query }: { query: ProductsQuery }) {
+  return (
+    <>
+      <input type="hidden" name="q" value={query.search} />
+      <input type="hidden" name="product_cat" value={query.productCategoryId} />
+      <input type="hidden" name="material_cat" value={query.materialCategoryId} />
+      <input type="hidden" name="occasion_cat" value={query.occasionCategoryId} />
+      <input type="hidden" name="availability" value={query.availability} />
+      <input type="hidden" name="status" value={query.status} />
+      <input type="hidden" name="sort" value={query.sort} />
+      <input type="hidden" name="page" value={String(query.page)} />
+      <input type="hidden" name="page_size" value={String(query.pageSize)} />
+    </>
+  );
+}
+
 type ProductListSlimPanelProps = {
   products: AdminProductListRow[];
   total: number;
@@ -92,16 +99,6 @@ export function ProductListSlimPanel({
   error,
   editProductId,
 }: ProductListSlimPanelProps) {
-  const productCategories = sortCategoriesForDisplay(
-    categories.filter((category) => category.category_type === "product"),
-  );
-  const materialCategories = sortCategoriesForDisplay(
-    categories.filter((category) => category.category_type === "material"),
-  );
-  const occasionCategories = categories.filter(
-    (category) => category.category_type === "occasion",
-  );
-
   const totalPages = Math.max(1, Math.ceil(total / query.pageSize));
   const closeEditHref = makeAdminProductsHref({}, query);
 
@@ -122,100 +119,7 @@ export function ProductListSlimPanel({
         </Link>
       </div>
 
-      <form
-        method="get"
-        action="/admin"
-        className="mt-5 grid gap-3 rounded-xl border border-boutique-line/70 bg-boutique-bg/40 p-3 md:grid-cols-2 xl:grid-cols-5"
-      >
-        <input type="hidden" name="tab" value="products" />
-        <label className="text-sm font-medium text-boutique-ink xl:col-span-2">
-          Търсене
-          <input
-            name="q"
-            type="search"
-            defaultValue={query.search}
-            placeholder="Име, slug или код"
-            className={adminFieldClass}
-          />
-        </label>
-        <label className="text-sm font-medium text-boutique-ink">
-          Статус
-          <select name="status" defaultValue={query.status} className={adminFieldClass}>
-            <option value="">Всички</option>
-            <option value="draft">{PRODUCT_PUBLICATION_STATUS_LABELS.draft}</option>
-            <option value="published">
-              {PRODUCT_PUBLICATION_STATUS_LABELS.published}
-            </option>
-            <option value="archived">
-              {PRODUCT_PUBLICATION_STATUS_LABELS.archived}
-            </option>
-          </select>
-        </label>
-        <label className="text-sm font-medium text-boutique-ink">
-          Категория
-          <select
-            name="category"
-            defaultValue={query.categoryId}
-            className={adminFieldClass}
-          >
-            <option value="">Всички</option>
-            {productCategories.length > 0 ? (
-              <optgroup label="Продуктови">
-                {productCategories.map((category) => (
-                  <option key={category.id} value={category.id}>
-                    {getCategoryDisplayLabel(categories, category)}
-                  </option>
-                ))}
-              </optgroup>
-            ) : null}
-            {materialCategories.length > 0 ? (
-              <optgroup label="Заготовки и материали">
-                {materialCategories.map((category) => (
-                  <option key={category.id} value={category.id}>
-                    {getCategoryDisplayLabel(categories, category)}
-                  </option>
-                ))}
-              </optgroup>
-            ) : null}
-            {occasionCategories.length > 0 ? (
-              <optgroup label="Поводи">
-                {occasionCategories.map((category) => (
-                  <option key={category.id} value={category.id}>
-                    {category.name}
-                  </option>
-                ))}
-              </optgroup>
-            ) : null}
-          </select>
-        </label>
-        <label className="text-sm font-medium text-boutique-ink">
-          На страница
-          <select
-            name="page_size"
-            defaultValue={String(query.pageSize)}
-            className={adminFieldClass}
-          >
-            <option value="10">10</option>
-            <option value="30">30</option>
-            <option value="50">50</option>
-            <option value="100">100</option>
-          </select>
-        </label>
-        <div className="flex items-end gap-2 xl:col-span-5">
-          <button
-            type="submit"
-            className="rounded-lg bg-boutique-ink px-4 py-2 text-sm font-semibold text-boutique-paper transition hover:bg-boutique-accent"
-          >
-            Приложи
-          </button>
-          <Link
-            href="/admin?tab=products"
-            className="rounded-lg border border-boutique-line px-4 py-2 text-sm font-medium text-boutique-muted transition hover:text-boutique-ink"
-          >
-            Изчисти
-          </Link>
-        </div>
-      </form>
+      <ProductListFilters query={query} categories={categories} />
 
       {error ? (
         <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -330,6 +234,7 @@ export function ProductListSlimPanel({
                           name={adminFormFields.common.id}
                           value={product.id}
                         />
+                        <ProductsQueryHiddenFields query={query} />
                         <button type="submit" className={actionSecondaryClass}>
                           Публикуване
                         </button>
@@ -343,6 +248,7 @@ export function ProductListSlimPanel({
                     <form action={toggleProductSoldOut} className="inline">
                       <input type="hidden" name={adminFormFields.common.tab} value="products" />
                       <input type="hidden" name={adminFormFields.common.id} value={product.id} />
+                      <ProductsQueryHiddenFields query={query} />
                       <input
                         type="hidden"
                         name="sold_out_target"
@@ -359,6 +265,7 @@ export function ProductListSlimPanel({
                     >
                       <input type="hidden" name={adminFormFields.common.tab} value="products" />
                       <input type="hidden" name={adminFormFields.common.id} value={product.id} />
+                      <ProductsQueryHiddenFields query={query} />
                       <button type="submit" className={actionDangerClass}>
                         Изтрий
                       </button>
@@ -383,7 +290,7 @@ export function ProductListSlimPanel({
             {query.page > 1 ? (
               <Link
                 href={makeAdminProductsHref({ page: query.page - 1 }, query)}
-                className={actionSecondaryClass}
+                className="rounded-lg border border-boutique-line px-3 py-1.5 font-medium text-boutique-ink"
               >
                 Предишна
               </Link>
@@ -391,7 +298,7 @@ export function ProductListSlimPanel({
             {query.page < totalPages ? (
               <Link
                 href={makeAdminProductsHref({ page: query.page + 1 }, query)}
-                className={actionSecondaryClass}
+                className="rounded-lg border border-boutique-line px-3 py-1.5 font-medium text-boutique-ink"
               >
                 Следваща
               </Link>

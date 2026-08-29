@@ -15,6 +15,13 @@ type CategoryRelatedSelectorProps = {
   categoryTypeFieldName?: string;
 };
 
+function normalizeCategoryType(value: string): CategoryRow["category_type"] {
+  if (value === "occasion" || value === "material" || value === "product") {
+    return value;
+  }
+  return "product";
+}
+
 export function CategoryRelatedSelector({
   categories,
   excludeCategoryId = null,
@@ -57,9 +64,7 @@ export function CategoryRelatedSelector({
     }
 
     const updateCategoryType = () => {
-      setResolvedCategoryType(
-        select.value === "occasion" ? "occasion" : "product",
-      );
+      setResolvedCategoryType(normalizeCategoryType(select.value));
     };
 
     updateCategoryType();
@@ -175,11 +180,16 @@ export function CategoryRelatedSelector({
                     ? "border-boutique-sage/35 bg-boutique-sage/10"
                     : "border-transparent hover:border-boutique-line/70 hover:bg-boutique-warm/45"
                 }`}
+                onClick={(event) => {
+                  // Keep checkbox clicks from toggling parent <details>.
+                  event.stopPropagation();
+                }}
               >
                 <input
                   type="checkbox"
                   checked={isSelected}
                   onChange={() => toggleCategory(option.id)}
+                  onClick={(event) => event.stopPropagation()}
                   className="h-4 w-4 shrink-0 rounded border-boutique-line text-boutique-accent focus-visible:ring-2 focus-visible:ring-boutique-accent/30"
                 />
                 <span className="min-w-0 flex-1">

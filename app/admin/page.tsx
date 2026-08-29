@@ -875,6 +875,8 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                 categoriesData.relatedCategoryIdsByCategoryId
               }
               productCountByCategoryId={categoriesData.productCountByCategoryId}
+              listKey={`${success}-${error}-${firstValue(params._refresh)}`}
+              editCategoryId={firstValue(params.editCategory) || undefined}
               initialCategoryType={(() => {
                 const categoryType = firstValue(params.categoryType);
                 return categoryType === "material" ||
@@ -894,7 +896,12 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     const productsQuery = parseProductsQuery({
       q: firstValue(params.q),
       category: firstValue(params.category),
+      productCat: firstValue(params.product_cat),
+      materialCat: firstValue(params.material_cat),
+      occasionCat: firstValue(params.occasion_cat),
+      availability: firstValue(params.availability),
       status: firstValue(params.status),
+      sort: firstValue(params.sort),
       page: firstValue(params.page),
       pageSize: firstValue(params.page_size),
     });

@@ -35,12 +35,18 @@ import {
 } from "@/lib/admin/faq-form";
 import { syncProductFaqAssociations, copyProductFaqAssociations } from "@/lib/faq/product-associations";
 import { parseCategoryContentFromFormData } from "@/lib/admin/category-content";
+import { makeAdminCategoriesHref } from "@/lib/admin/categories-href";
 import {
   parseRelatedCategoryIdsFromFormData,
   loadCategoryRelatedValidationCategories,
   syncCategoryRelatedCategories,
   validateCategoryRelatedTargets,
 } from "@/lib/admin/category-related";
+import {
+  parseProductsQueryFromFormData,
+  productsQueryToSearchParams,
+  type ProductsQuery,
+} from "@/lib/admin/products-query";
 import { parseProductContentFromFormData } from "@/lib/admin/product-content";
 import { parseProductPageContentFromFormData } from "@/lib/admin/product-page-content";
 import {
@@ -239,13 +245,19 @@ function redirectWithProductEdit(
   kind: "success" | "error",
   message: string,
   productId: string,
-  options?: { hash?: string },
+  options?: { hash?: string; listQuery?: ProductsQuery },
 ): never {
-  const params = new URLSearchParams({
-    [kind]: message,
-    tab: "products",
-    editProduct: productId,
-  });
+  const params = options?.listQuery
+    ? productsQueryToSearchParams(options.listQuery, {
+        [kind]: message,
+        editProduct: productId,
+      })
+    : new URLSearchParams({
+        [kind]: message,
+        tab: "products",
+        editProduct: productId,
+      });
+  params.set("_refresh", Date.now().toString());
   const hash = options?.hash ? `#${options.hash}` : "";
   redirect(`${ADMIN_PATH}?${params.toString()}${hash}`);
 }
@@ -287,6 +299,7 @@ function getProductGalleryEditUrl(
 
 function revalidateCategoryPaths() {
   revalidatePath(ADMIN_PATH);
+  revalidatePath(ADMIN_PATH, "layout");
   revalidatePath("/");
   revalidatePath("/categorii");
   revalidatePath("/categorii");
@@ -297,6 +310,19 @@ function revalidateCategoryPaths() {
   revalidatePath("/produkti");
   revalidatePath("/categorii/[slug]", "page");
   revalidatePath("/categorii/[slug]", "page");
+}
+
+function categoryActionHref(
+  kind: "success" | "error",
+  message: string,
+  categoryType?: string,
+): { href: string } {
+  return {
+    href: makeAdminCategoriesHref({
+      [kind]: message,
+      categoryType: categoryType || undefined,
+    }),
+  };
 }
 
 async function getProductGalleryImageCount(
@@ -1173,6 +1199,7 @@ export async function updateProduct(formData: FormData) {
 export async function publishProduct(formData: FormData) {
   const supabase = await getAuthorizedClient();
   const id = getString(formData, adminFormFields.common.id);
+  const listQuery = parseProductsQueryFromFormData(formData);
 
   if (!id) {
     redirectWith("error", "Липсва продукт за публикуване.", "products");
@@ -1180,7 +1207,9 @@ export async function publishProduct(formData: FormData) {
 
   const input = await loadProductPublishValidationInput(supabase, id);
   if (!input) {
-    redirectWithProductEdit("error", "Продуктът не беше намерен.", id);
+    redirectWithProductEdit("error", "Продуктът не беше намерен.", id, {
+      listQuery,
+    });
   }
 
   await assertProductPublishReady(supabase, id, input);
@@ -1191,12 +1220,15 @@ export async function publishProduct(formData: FormData) {
     .eq("id", id);
 
   if (statusError) {
-    redirectWithProductEdit("error", "Продуктът не беше публикуван.", id);
+    redirectWithProductEdit("error", "Продуктът не беше публикуван.", id, {
+      listQuery,
+    });
   }
 
   await revalidateProductPaths(supabase, id);
   redirectWithProductEdit("success", "Продуктът е публикуван.", id, {
     hash: productEditAnchorId(id),
+    listQuery,
   });
 }
 
@@ -1533,6 +1565,7 @@ export async function toggleProductSoldOut(formData: FormData) {
   const supabase = await getAuthorizedClient();
   const activeTab = getAdminTab(formData, "products");
   const id = getString(formData, adminFormFields.common.id);
+  const listQuery = parseProductsQueryFromFormData(formData);
   const soldOutTarget = getString(formData, "sold_out_target");
   const soldOut =
     soldOutTarget === "true"
@@ -1554,12 +1587,16 @@ export async function toggleProductSoldOut(formData: FormData) {
     redirectWith("error", "Статусът на продукта не беше обновен.", activeTab);
   }
 
-  await revalidateProductPaths(supabase,id);
-  redirectWith(
-    "success",
-    soldOut ? "Продуктът е маркиран като изчерпан." : "Продуктът е активиран отново.",
-    activeTab,
-  );
+  await revalidateProductPaths(supabase, id);
+  const params = productsQueryToSearchParams(listQuery, {
+    success: soldOut
+      ? "Продуктът е маркиран като изчерпан."
+      : "Продуктът е активиран отново.",
+  });
+  params.set("_refresh", Date.now().toString());
+  revalidatePath(ADMIN_PATH);
+  revalidatePath(ADMIN_PATH, "layout");
+  redirect(`${ADMIN_PATH}?${params.toString()}`);
 }
 
 export async function duplicateProduct(formData: FormData) {
@@ -1840,9 +1877,8 @@ export async function deleteProductGalleryImage(formData: FormData) {
   redirectWith("success", "Снимката е изтрита.", "products");
 }
 
-export async function createCategory(formData: FormData) {
+export async function createCategory(formData: FormData): Promise<{ href: string }> {
   const supabase = await getAuthorizedClient();
-  const activeTab = getAdminTab(formData, "categories");
   const name = getString(formData, adminFormFields.category.name);
   const slug = normalizeSlug(getString(formData, adminFormFields.category.slug));
   const categoryType = getString(formData, adminFormFields.category.type);
@@ -1866,15 +1902,15 @@ export async function createCategory(formData: FormData) {
   const relatedCategoryIds = parseRelatedCategoryIdsFromFormData(formData);
 
   if (!name || !slug || !isCategoryType(categoryType)) {
-    redirectWith("error", "Попълнете име и slug за категорията.", activeTab);
+    return categoryActionHref("error", "Попълнете име и slug за категорията.");
   }
 
   if (categoryContentError) {
-    redirectWith("error", categoryContentError, activeTab);
+    return categoryActionHref("error", categoryContentError);
   }
 
   if (parentId && !categoryTypeAllowsParent(categoryType)) {
-    redirectWith("error", "Само продуктовите категории могат да имат подкатегории.", activeTab);
+    return categoryActionHref("error", "Само продуктовите категории могат да имат подкатегории.");
   }
 
   if (parentId) {
@@ -1889,7 +1925,7 @@ export async function createCategory(formData: FormData) {
       parentCategory.category_type !== categoryType ||
       parentCategory.parent_id
     ) {
-      redirectWith("error", "Избраната основна категория е невалидна.", activeTab);
+      return categoryActionHref("error", "Избраната основна категория е невалидна.");
     }
   }
 
@@ -1912,12 +1948,11 @@ export async function createCategory(formData: FormData) {
     try {
       uploadedCategoryImage = await uploadAdminImage(supabase, imageFile, "categories");
     } catch (error) {
-      redirectWith(
+      return categoryActionHref(
         "error",
         `Снимката на категорията не беше качена: ${
           error instanceof Error ? error.message : "неочаквана грешка"
         }`,
-        activeTab,
       );
     }
   }
@@ -1928,12 +1963,11 @@ export async function createCategory(formData: FormData) {
       if (uploadedCategoryImage) {
         await deleteProductImage(supabase, uploadedCategoryImage.path).catch(() => undefined);
       }
-      redirectWith(
+      return categoryActionHref(
         "error",
         `Cover снимката не беше качена: ${
           error instanceof Error ? error.message : "неочаквана грешка"
         }`,
-        activeTab,
       );
     }
   }
@@ -1964,7 +1998,7 @@ export async function createCategory(formData: FormData) {
     if (uploadedCoverImage) {
       await deleteProductImage(supabase, uploadedCoverImage.path).catch(() => undefined);
     }
-    redirectWith("error", `Грешка при добавяне на категория: ${error?.message ?? "неочаквана грешка"}`, activeTab);
+    return categoryActionHref("error", `Грешка при добавяне на категория: ${error?.message ?? "неочаквана грешка"}`);
   }
 
   const validationCategories = await loadCategoryRelatedValidationCategories(supabase);
@@ -1982,7 +2016,7 @@ export async function createCategory(formData: FormData) {
     if (uploadedCoverImage) {
       await deleteProductImage(supabase, uploadedCoverImage.path).catch(() => undefined);
     }
-    redirectWith("error", relatedValidationError, activeTab);
+    return categoryActionHref("error", relatedValidationError);
   }
 
   const relatedSyncError = await syncCategoryRelatedCategories(
@@ -1998,18 +2032,19 @@ export async function createCategory(formData: FormData) {
     if (uploadedCoverImage) {
       await deleteProductImage(supabase, uploadedCoverImage.path).catch(() => undefined);
     }
-    redirectWith("error", relatedSyncError, activeTab);
+    return categoryActionHref("error", relatedSyncError);
   }
 
   revalidateCategoryPaths();
-  redirectWith("success", "Категорията е добавена.", activeTab, undefined, {
-    categoryType: isCategoryType(categoryType) ? categoryType : "product",
-  });
+  return categoryActionHref(
+    "success",
+    "Категорията е добавена.",
+    isCategoryType(categoryType) ? categoryType : "product",
+  );
 }
 
-export async function updateCategory(formData: FormData) {
+export async function updateCategory(formData: FormData): Promise<{ href: string }> {
   const supabase = await getAuthorizedClient();
-  const activeTab = getAdminTab(formData, "categories");
   const id = getString(formData, adminFormFields.common.id);
   const name = getString(formData, adminFormFields.category.name);
   const slug = normalizeSlug(getString(formData, adminFormFields.category.slug));
@@ -2034,18 +2069,18 @@ export async function updateCategory(formData: FormData) {
   const relatedCategoryIds = parseRelatedCategoryIdsFromFormData(formData);
 
   if (!id || !name || !slug || !isCategoryType(categoryType)) {
-    redirectWith("error", "Невалидни данни за категория.", activeTab);
+    return categoryActionHref("error", "Невалидни данни за категория.");
   }
 
   if (categoryContentError) {
-    redirectWith("error", categoryContentError, activeTab);
+    return categoryActionHref("error", categoryContentError);
   }
 
   if (parentId === id) {
-    redirectWith("error", "Категорията не може да бъде собствена подкатегория.", activeTab);
+    return categoryActionHref("error", "Категорията не може да бъде собствена подкатегория.");
   }
   if (parentId && !categoryTypeAllowsParent(categoryType)) {
-    redirectWith("error", "Само продуктовите категории могат да имат подкатегории.", activeTab);
+    return categoryActionHref("error", "Само продуктовите категории могат да имат подкатегории.");
   }
   if (parentId) {
     const { data: parentCategory, error: parentError } = await supabase
@@ -2059,7 +2094,7 @@ export async function updateCategory(formData: FormData) {
       parentCategory.category_type !== categoryType ||
       parentCategory.parent_id
     ) {
-      redirectWith("error", "Избраната основна категория е невалидна.", activeTab);
+      return categoryActionHref("error", "Избраната основна категория е невалидна.");
     }
   }
 
@@ -2071,7 +2106,7 @@ export async function updateCategory(formData: FormData) {
     categoryType,
   );
   if (relatedValidationError) {
-    redirectWith("error", relatedValidationError, activeTab);
+    return categoryActionHref("error", relatedValidationError);
   }
 
   const { data: existingCategory, error: existingCategoryError } = await supabase
@@ -2080,7 +2115,7 @@ export async function updateCategory(formData: FormData) {
     .eq("id", id)
     .single();
   if (existingCategoryError || !existingCategory) {
-    redirectWith("error", "Категорията не беше намерена.", activeTab);
+    return categoryActionHref("error", "Категорията не беше намерена.");
   }
 
   let homeSortOrder = existingCategory.home_sort_order;
@@ -2109,12 +2144,11 @@ export async function updateCategory(formData: FormData) {
     try {
       uploadedCategoryImage = await uploadAdminImage(supabase, imageFile, "categories");
     } catch (error) {
-      redirectWith(
+      return categoryActionHref(
         "error",
         `Снимката на категорията не беше качена: ${
           error instanceof Error ? error.message : "неочаквана грешка"
         }`,
-        activeTab,
       );
     }
   }
@@ -2125,12 +2159,11 @@ export async function updateCategory(formData: FormData) {
       if (uploadedCategoryImage) {
         await deleteProductImage(supabase, uploadedCategoryImage.path).catch(() => undefined);
       }
-      redirectWith(
+      return categoryActionHref(
         "error",
         `Cover снимката не беше качена: ${
           error instanceof Error ? error.message : "неочаквана грешка"
         }`,
-        activeTab,
       );
     }
   }
@@ -2160,7 +2193,7 @@ export async function updateCategory(formData: FormData) {
     if (uploadedCoverImage) {
       await deleteProductImage(supabase, uploadedCoverImage.path).catch(() => undefined);
     }
-    redirectWith("error", `Грешка при редакция на категория: ${error.message}`, activeTab);
+    return categoryActionHref("error", `Грешка при редакция на категория: ${error.message}`);
   }
 
   const relatedSyncError = await syncCategoryRelatedCategories(
@@ -2169,7 +2202,7 @@ export async function updateCategory(formData: FormData) {
     relatedCategoryIds,
   );
   if (relatedSyncError) {
-    redirectWith("error", relatedSyncError, activeTab);
+    return categoryActionHref("error", relatedSyncError);
   }
 
   if (uploadedCategoryImage && existingCategory.image_url) {
@@ -2186,14 +2219,15 @@ export async function updateCategory(formData: FormData) {
   }
 
   revalidateCategoryPaths();
-  redirectWith("success", "Категорията е обновена.", activeTab, undefined, {
-    categoryType: isCategoryType(categoryType) ? categoryType : "product",
-  });
+  return categoryActionHref(
+    "success",
+    "Категорията е обновена.",
+    isCategoryType(categoryType) ? categoryType : "product",
+  );
 }
 
-export async function moveCategory(formData: FormData) {
+export async function moveCategory(formData: FormData): Promise<{ href: string }> {
   const supabase = await getAuthorizedClient();
-  const activeTab = getAdminTab(formData, "categories");
   const id = getString(formData, adminFormFields.common.id);
   const direction = getString(formData, adminFormFields.category.direction);
   const categoryType = getString(formData, adminFormFields.category.type);
@@ -2202,7 +2236,7 @@ export async function moveCategory(formData: FormData) {
   };
 
   if (!id || !["up", "down"].includes(direction)) {
-    redirectWith("error", "Невалидна заявка за преместване.", activeTab);
+    return categoryActionHref("error", "Невалидна заявка за преместване.");
   }
 
   const { data: moved, error } = await supabase.rpc("admin_move_home_category", {
@@ -2210,14 +2244,14 @@ export async function moveCategory(formData: FormData) {
     p_direction: direction,
   });
   if (error) {
-    redirectWith("error", "Позицията не беше променена.", activeTab, undefined, redirectParams);
+    return categoryActionHref("error", "Позицията не беше променена.", redirectParams.categoryType);
   }
   if (moved !== true) {
-    redirectWith("success", "Категорията вече е в края на списъка.", activeTab, undefined, redirectParams);
+    return categoryActionHref("success", "Категорията вече е в края на списъка.", redirectParams.categoryType);
   }
 
   revalidateCategoryPaths();
-  redirectWith("success", "Позицията е променена.", activeTab, undefined, redirectParams);
+  return categoryActionHref("success", "Позицията е променена.", redirectParams.categoryType);
 }
 
 export async function deleteCategory(formData: FormData) {
