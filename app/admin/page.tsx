@@ -10,6 +10,7 @@ import { CategoryManagementPanel } from "@/components/admin/category-management-
 import { ColorManagementPanel } from "@/components/admin/color-management-panel";
 import { MaterialManagementPanel } from "@/components/admin/material-management-panel";
 import { ProductCreatePanel } from "@/components/admin/product-create-panel";
+import { ProductJsonImportPanel } from "@/components/admin/product-json-import-panel";
 import { ProductListPanel } from "@/components/admin/product-list-panel";
 import { ProductOrderingPanel } from "@/components/admin/product-ordering-panel";
 import { OrdersPanel } from "@/components/admin/orders-panel";
@@ -893,7 +894,20 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     );
   }
 
-  if (activeTab === "products" && productsView !== "ordering") {
+  if (activeTab === "products" && productsView === "import") {
+    return (
+      <section className="pb-24 pt-10">
+        <PageContainer>
+          <div className="mx-auto max-w-6xl space-y-8">
+            <AdminHeader activeTab={activeTab} />
+            <ProductJsonImportPanel />
+          </div>
+        </PageContainer>
+      </section>
+    );
+  }
+
+  if (activeTab === "products" && productsView !== "ordering" && productsView !== "import") {
     const productsQuery = parseProductsQuery({
       q: firstValue(params.q),
       category: firstValue(params.category),
