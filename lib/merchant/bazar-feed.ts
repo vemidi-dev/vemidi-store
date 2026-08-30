@@ -17,6 +17,8 @@ export const BAZAR_MERCHANT_FACEBOOK_URL =
 export const BAZAR_MERCHANT_STORE_LABEL = "vemidi-crafts.com";
 export const BAZAR_MERCHANT_SHIPPING_LINE =
   "Изпращаме с Еконт и Спиди до цялата страна.";
+export const BAZAR_MERCHANT_PICKUP_LINE =
+  "Или вземете своята поръчка от място - Младост 2, София, след предварителна уговорка.";
 
 const LITERAL_ESCAPED_NEWLINES = /\\r\\n|\\n|\\r/gi;
 const HTML_TAG_PATTERN = /<[^>]*>/g;
@@ -116,6 +118,7 @@ export function resolveBazarMerchantDescription(
       `Facebook: ${BAZAR_MERCHANT_FACEBOOK_URL}`,
       `Магазин: ${BAZAR_MERCHANT_STORE_LABEL}`,
       BAZAR_MERCHANT_SHIPPING_LINE,
+      BAZAR_MERCHANT_PICKUP_LINE,
     ].join("\n"),
   );
 
