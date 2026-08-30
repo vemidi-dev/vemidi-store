@@ -38,11 +38,8 @@ Plain text, без HTML, с празен ред между блоковете. �
 [description — абзаци запазени, HTML премахнат]
 
 Разгледайте продукта тук: [product link от feed item]
-
-Facebook: https://www.facebook.com/profile.php?id=100090185474431
-
-Магазин: https://vemidi-crafts.com
-
+Facebook: VeMiDi Crafts
+Магазин: vemidi-crafts.com
 Изпращаме с Еконт и Спиди до цялата страна.
 ```
 
@@ -52,13 +49,14 @@ Facebook: https://www.facebook.com/profile.php?id=100090185474431
 - `dimensions_materials` → „Размери и материали“
 - `description` → „За продукта“
 - product link (същият като `g:link`)
-- фиксирани footer редове: Facebook, магазин URL, shipping line
+- фиксирани footer редове: Facebook име, магазин домейн, shipping line
 
 ### Форматиране
 
 - `g:description` се рендерира като CDATA, за да се запазят реалните нови редове.
 - Всеки продуктов блок е отделен с един празен ред.
-- Footer редовете за линковете са компактни (`label: URL`), защото Bazar визуализира отделните label/URL редове с прекалено големи разстояния.
+- Footer редовете са компактни, защото Bazar визуализира отделните label/URL редове с прекалено големи разстояния.
+- В description остава само продуктовият URL. Facebook и магазинът са кратки текстови насоки, защото Bazar не ги превръща надеждно в кликаеми линкове.
 
 ### Полета, които **не** влизат
 
@@ -182,14 +180,18 @@ Sample live footer (first item):
 
 ```
 Разгледайте продукта тук: https://vemidi-crafts.com/produkti/...
-
-Facebook: https://www.facebook.com/profile.php?id=100090185474431
-
-Магазин: https://vemidi-crafts.com
-
+Facebook: VeMiDi Crafts
+Магазин: vemidi-crafts.com
 Изпращаме с Еконт и Спиди до цялата страна.
 ```
 
 ### Final Bazar.bg feed URL
 
 **https://vemidi-crafts.com/api/merchant/bazar.xml**
+
+## Readable contact labels hotfix
+
+- **Branch:** `codex/bazar-readable-contact-labels`
+- **Reason:** Bazar.bg не превръща URL-ите в description в кликаеми линкове и пълният Facebook URL изглежда тежко в обявата.
+- **Bazar-only change:** продуктовият URL остава в `g:description`; Facebook редът става `Facebook: VeMiDi Crafts`, а магазинът става `Магазин: vemidi-crafts.com`.
+- **Google feed:** непроменен.

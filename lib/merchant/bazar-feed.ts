@@ -12,9 +12,8 @@ import {
   type GoogleMerchantFeedItem,
 } from "@/lib/merchant/google-feed";
 
-export const BAZAR_MERCHANT_FACEBOOK_URL =
-  "https://www.facebook.com/profile.php?id=100090185474431";
-export const BAZAR_MERCHANT_STORE_URL = "https://vemidi-crafts.com";
+export const BAZAR_MERCHANT_FACEBOOK_LABEL = "VeMiDi Crafts";
+export const BAZAR_MERCHANT_STORE_LABEL = "vemidi-crafts.com";
 export const BAZAR_MERCHANT_SHIPPING_LINE =
   "Изпращаме с Еконт и Спиди до цялата страна.";
 
@@ -110,10 +109,14 @@ export function resolveBazarMerchantDescription(
     preserveParagraphs: true,
   });
 
-  sections.push(`Разгледайте продукта тук: ${link.trim()}`);
-  sections.push(`Facebook: ${BAZAR_MERCHANT_FACEBOOK_URL}`);
-  sections.push(`Магазин: ${BAZAR_MERCHANT_STORE_URL}`);
-  sections.push(BAZAR_MERCHANT_SHIPPING_LINE);
+  sections.push(
+    [
+      `Разгледайте продукта тук: ${link.trim()}`,
+      `Facebook: ${BAZAR_MERCHANT_FACEBOOK_LABEL}`,
+      `Магазин: ${BAZAR_MERCHANT_STORE_LABEL}`,
+      BAZAR_MERCHANT_SHIPPING_LINE,
+    ].join("\n"),
+  );
 
   return sections.join("\n\n");
 }
