@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 
 import {
   BAZAR_MERCHANT_FACEBOOK_URL,
+  BAZAR_MERCHANT_PICKUP_LINE,
   BAZAR_MERCHANT_SHIPPING_LINE,
   BAZAR_MERCHANT_STORE_LABEL,
   buildBazarMerchantFeedXml,
@@ -133,11 +134,12 @@ test("resolveBazarMerchantDescription builds readable plain-text blocks", () => 
   assert.match(description, /Дърво, 15 см\n\nПърви абзац с HTML \.\n\nВтори абзац\./);
   assert.match(
     description,
-    /Разгледайте продукта тук: https:\/\/shop\.example\.com\/produkti\/demo-product\nFacebook: https:\/\/www\.facebook\.com\/profile\.php\?id=100090185474431\nМагазин: vemidi-crafts\.com\nИзпращаме с Еконт и Спиди до цялата страна\./,
+    /Разгледайте продукта тук: https:\/\/shop\.example\.com\/produkti\/demo-product\nFacebook: https:\/\/www\.facebook\.com\/profile\.php\?id=100090185474431\nМагазин: vemidi-crafts\.com\nИзпращаме с Еконт и Спиди до цялата страна\.\nИли вземете своята поръчка от място - Младост 2, София, след предварителна уговорка\./,
   );
   assert.ok(description.includes(`Facebook: ${BAZAR_MERCHANT_FACEBOOK_URL}`));
   assert.ok(description.includes(`Магазин: ${BAZAR_MERCHANT_STORE_LABEL}`));
   assert.ok(description.includes(BAZAR_MERCHANT_SHIPPING_LINE));
+  assert.ok(description.includes(BAZAR_MERCHANT_PICKUP_LINE));
   assert.doesNotMatch(description, /<[^>]+>/);
   assert.doesNotMatch(description, /personalization|ordering_info|additional_info|meta_title|og_title/i);
 });

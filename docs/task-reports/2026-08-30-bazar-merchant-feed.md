@@ -41,6 +41,7 @@ Plain text, без HTML, с празен ред между блоковете. �
 Facebook: https://www.facebook.com/profile.php?id=100090185474431
 Магазин: vemidi-crafts.com
 Изпращаме с Еконт и Спиди до цялата страна.
+Или вземете своята поръчка от място - Младост 2, София, след предварителна уговорка.
 ```
 
 ### Полета, които влизат
@@ -49,7 +50,7 @@ Facebook: https://www.facebook.com/profile.php?id=100090185474431
 - `dimensions_materials` → „Размери и материали“
 - `description` → „За продукта“
 - product link (същият като `g:link`)
-- фиксирани footer редове: Facebook име, магазин домейн, shipping line
+- фиксирани footer редове: Facebook URL, магазин домейн, shipping line, pickup line
 
 ### Форматиране
 
@@ -183,6 +184,7 @@ Sample live footer (first item):
 Facebook: https://www.facebook.com/profile.php?id=100090185474431
 Магазин: vemidi-crafts.com
 Изпращаме с Еконт и Спиди до цялата страна.
+Или вземете своята поръчка от място - Младост 2, София, след предварителна уговорка.
 ```
 
 ### Final Bazar.bg feed URL
@@ -202,3 +204,10 @@ Facebook: https://www.facebook.com/profile.php?id=100090185474431
 - **Reason:** Bazar.bg не прави URL-ите в description кликаеми, но пълният Facebook адрес трябва да присъства като текст.
 - **Bazar-only change:** footer блокът съдържа `Facebook: https://www.facebook.com/profile.php?id=100090185474431`.
 - **Known platform limitation:** кликаемостта на URL-и вътре в описанието зависи от Bazar.bg. Feed-ът може да подаде URL като plain text, но не може да принуди Bazar да го визуализира като anchor link.
+
+## Pickup line hotfix
+
+- **Branch:** `codex/bazar-pickup-line`
+- **Reason:** Bazar.bg показва описанието като plain text, затова финалният блок трябва да е информативен дори без кликаеми линкове.
+- **Bazar-only change:** след shipping line се добавя отделен ред: `Или вземете своята поръчка от място - Младост 2, София, след предварителна уговорка.`
+- **Google feed:** непроменен.
