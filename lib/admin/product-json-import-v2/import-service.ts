@@ -123,6 +123,41 @@ export async function runImportProductsFromJson(
   const created: ProductJsonImportSummaryResult["created"] = [];
 
   for (const importable of validation.importableProducts) {
+    if (imageFiles.length === 0) {
+      warnings.push({
+        code: "NO_IMAGES_UPLOADED",
+        severity: "warning",
+        slug: importable.normalized.slug,
+        message:
+          "Не са качени снимки. Черновата ще се създаде без галерия; снимките могат да се добавят по-късно.",
+      });
+
+      const result = await createDraft(supabase, {
+        mutationInput: toMutationInput(importable),
+        postCreate: importable.payload.postCreate,
+        imageFiles: [],
+        imageAltTexts: [],
+      });
+
+      if (!result.ok) {
+        failed.push({
+          slug: importable.normalized.slug,
+          stage: mapDraftFailureStage(result.stage),
+          message: result.message,
+          productId: result.productId,
+        });
+        continue;
+      }
+
+      created.push({
+        slug: importable.normalized.slug,
+        productId: result.productId,
+        editUrl: buildProductEditUrl(result.productId),
+        imageCount: 0,
+      });
+      continue;
+    }
+
     const { files, altTexts, errors } = resolveProductImportImageFiles(
       importable.normalized.slug,
       importable.normalized.images,

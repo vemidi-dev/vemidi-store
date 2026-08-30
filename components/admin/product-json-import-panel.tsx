@@ -3,10 +3,7 @@
 import Link from "next/link";
 import { useCallback, useMemo, useState } from "react";
 
-import {
-  importProductsFromJson,
-  validateProductJsonImport,
-} from "@/app/admin/product-import-actions";
+import { validateProductJsonImport } from "@/app/admin/product-import-actions";
 import { ProductJsonImportPreviewTable } from "@/components/admin/product-json-import-preview-table";
 import { ProductJsonImportSummary } from "@/components/admin/product-json-import-summary";
 import {
@@ -15,12 +12,27 @@ import {
   adminPanelClass,
 } from "@/components/admin/styles";
 import { makeAdminProductsHref } from "@/lib/admin/products-query";
+import {
+  formatProductImportBytes,
+  prepareProductImportImages,
+} from "@/lib/admin/product-json-import-v2/client-image-compress";
+import type { ProductJsonImportSubmitResult } from "@/lib/admin/product-json-import-v2/import-submit";
 import type {
   ProductJsonImportSummaryResult,
   ProductJsonImportValidationResult,
 } from "@/lib/admin/product-json-import-v2/types";
 
 const backHref = makeAdminProductsHref({ productsView: undefined });
+const IMPORT_SUBMIT_PATH = "/admin/product-import";
+
+const IMPORT_UNEXPECTED_RESPONSE_MESSAGE =
+  "Импортът не успя — сървърът върна неочакван отговор. Опитайте отново или намалете размера на снимките.";
+
+const IMPORT_TIMEOUT_MESSAGE =
+  "Импортът надхвърли времевия лимит на сървъра. Опитайте с по-малки снимки или по-малко файлове наведнъж.";
+
+const IMPORT_PAYLOAD_TOO_LARGE_MESSAGE =
+  "Импортът не беше изпратен, защото снимките са прекалено големи за една заявка. Снимките се оптимизират автоматично преди import; ако пак виждате тази грешка, качете по-малко снимки наведнъж.";
 
 function isValidationResult(
   value: ProductJsonImportValidationResult | { ok: false; message: string },
@@ -28,10 +40,69 @@ function isValidationResult(
   return "previews" in value;
 }
 
-function isSummaryResult(
-  value: ProductJsonImportSummaryResult | { ok: false; message: string },
-): value is ProductJsonImportSummaryResult {
-  return "created" in value;
+function isAuthFailure(
+  value: ProductJsonImportSubmitResult,
+): value is Extract<ProductJsonImportSubmitResult, { message: string }> {
+  return (
+    !value.ok &&
+    "message" in value &&
+    value.created.length === 0 &&
+    value.failed.length === 0
+  );
+}
+
+function isSummaryResult(value: ProductJsonImportSubmitResult): value is ProductJsonImportSummaryResult {
+  return !isAuthFailure(value) && "created" in value && Array.isArray(value.created);
+}
+
+function getSubmitErrorMessage(value: ProductJsonImportSubmitResult): string | null {
+  if (isAuthFailure(value)) {
+    return value.message;
+  }
+
+  if (!value.ok) {
+    if (value.failed.length > 0) {
+      return value.failed.map((entry) => entry.message).join(" ");
+    }
+
+    return "Импортът не създаде продукти.";
+  }
+
+  return null;
+}
+
+async function submitProductJsonImportRequest(
+  formData: FormData,
+): Promise<ProductJsonImportSubmitResult> {
+  const response = await fetch(IMPORT_SUBMIT_PATH, {
+    method: "POST",
+    body: formData,
+  });
+
+  if (response.status === 413) {
+    throw new Error(IMPORT_PAYLOAD_TOO_LARGE_MESSAGE);
+  }
+
+  let payload: unknown;
+  try {
+    payload = await response.json();
+  } catch {
+    if (response.status === 504) {
+      throw new Error(IMPORT_TIMEOUT_MESSAGE);
+    }
+    throw new Error(IMPORT_UNEXPECTED_RESPONSE_MESSAGE);
+  }
+
+  if (
+    typeof payload !== "object" ||
+    payload === null ||
+    !("ok" in payload) ||
+    typeof (payload as { ok: unknown }).ok !== "boolean"
+  ) {
+    throw new Error(IMPORT_UNEXPECTED_RESPONSE_MESSAGE);
+  }
+
+  return payload as ProductJsonImportSubmitResult;
 }
 
 export function ProductJsonImportPanel() {
@@ -44,6 +115,9 @@ export function ProductJsonImportPanel() {
   const [pendingValidate, setPendingValidate] = useState(false);
   const [pendingImport, setPendingImport] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [imagePreparationMessage, setImagePreparationMessage] = useState<string | null>(
+    null,
+  );
 
   const uploadedFilenames = useMemo(
     () => imageFiles.map((file) => file.name),
@@ -54,6 +128,7 @@ export function ProductJsonImportPanel() {
     setValidation(null);
     setSummary(null);
     setErrorMessage(null);
+    setImagePreparationMessage(null);
   }, []);
 
   const handleJsonFileChange = useCallback(
@@ -128,21 +203,41 @@ export function ProductJsonImportPanel() {
 
     setPendingImport(true);
     setErrorMessage(null);
+    setImagePreparationMessage(null);
 
     try {
+      const preparedImages = await prepareProductImportImages(imageFiles);
+      if (preparedImages.compressedCount > 0) {
+        setImagePreparationMessage(
+          `Подготвени ${preparedImages.compressedCount} снимки: ${formatProductImportBytes(
+            preparedImages.originalBytes,
+          )} → ${formatProductImportBytes(preparedImages.preparedBytes)}.`,
+        );
+      }
+
       const formData = new FormData();
       formData.set("json", jsonText);
-      for (const file of imageFiles) {
+      for (const file of preparedImages.files) {
         formData.append("image_files", file);
       }
 
-      const result = await importProductsFromJson(formData);
+      const result = await submitProductJsonImportRequest(formData);
+      const submitError = getSubmitErrorMessage(result);
+
+      if (isAuthFailure(result)) {
+        setErrorMessage(submitError ?? IMPORT_UNEXPECTED_RESPONSE_MESSAGE);
+        return;
+      }
+
       if (!isSummaryResult(result)) {
-        setErrorMessage(result.message);
+        setErrorMessage(IMPORT_UNEXPECTED_RESPONSE_MESSAGE);
         return;
       }
 
       setSummary(result);
+      if (submitError) {
+        setErrorMessage(submitError);
+      }
     } catch (error) {
       setErrorMessage(
         error instanceof Error ? error.message : "Неуспешен импорт на продукти.",
@@ -217,14 +312,20 @@ export function ProductJsonImportPanel() {
           />
           <p className={adminHelperClass}>
             {imageFiles.length > 0
-              ? `Избрани ${imageFiles.length} файла. Match по original_filename.`
-              : "Изберете всички снимки от bundle-а преди проверка."}
+              ? `Избрани ${imageFiles.length} файла. Първо се търси match по original_filename; при един продукт може и по реда на качване.`
+              : "Може да качите колкото снимки имате. Ако липсват снимки, черновата ще се създаде без тях и ще ги добавите по-късно."}
           </p>
         </div>
 
         {errorMessage ? (
           <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {errorMessage}
+          </div>
+        ) : null}
+
+        {imagePreparationMessage ? (
+          <div className="rounded-xl border border-boutique-line bg-boutique-bg px-4 py-3 text-sm text-boutique-muted">
+            {imagePreparationMessage}
           </div>
         ) : null}
 
@@ -243,7 +344,7 @@ export function ProductJsonImportPanel() {
             disabled={!canImport}
             className="rounded-lg border border-boutique-line px-4 py-2 text-sm font-semibold text-boutique-ink transition hover:border-boutique-sage-deep/40 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {pendingImport ? "Импортира се…" : "Импорт като чернови"}
+            {pendingImport ? "Подготвя се…" : "Импорт като чернови"}
           </button>
         </div>
       </section>

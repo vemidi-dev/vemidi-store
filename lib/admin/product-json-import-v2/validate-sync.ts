@@ -388,6 +388,7 @@ export function validateProductJsonImportSync(
           product.slug,
           product.images,
           uploadedFilenames,
+          { allowUploadOrderFallback: file.products.length === 1 },
         );
         errors.push(...imageMatch.errors);
         warnings.push(...imageMatch.warnings);

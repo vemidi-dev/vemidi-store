@@ -270,8 +270,12 @@ Uploaded file matches JSON row when `normalize(uploaded.name) === normalize(orig
 
 - Path components в `original_filename` се игнорират — само basename.
 - Duplicate `original_filename` в един продукт → error.
-- File referenced but not uploaded → blocking error at validate.
-- Uploaded file not referenced → warning (ignored) or optional strict mode error.
+- При **един продукт** import-ът е гъвкав: ако имената не съвпадат, снимките се използват по реда на качване.
+- При **един продукт** може да качите повече снимки от описаните в JSON — допълнителните се добавят в края на галерията с автоматичен alt текст.
+- При **един продукт** може да качите по-малко снимки от описаните в JSON — черновата се създава с наличните снимки и warning; останалите се добавят ръчно по-късно.
+- При **един продукт** може да не качите снимки — черновата се създава без галерия и warning.
+- При **batch с повече продукти** matching остава строг по `original_filename`, за да не се разпределят снимки към грешен продукт.
+- Uploaded file not referenced → warning (ignored) при strict match; при гъвкав single-product fallback допълнителните uploads се използват.
 
 ### 10.2 `target_filename`
 

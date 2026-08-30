@@ -63,6 +63,68 @@ test("matchProductImagesToUploads reports missing files", () => {
   );
 });
 
+test("matchProductImagesToUploads falls back to upload order when names differ", () => {
+  const result = matchProductImagesToUploads(
+    "demo-product",
+    [
+      { original_filename: "json-hero.png", alt: "Hero alt", primary: true },
+      { original_filename: "json-detail.png", alt: "Detail alt" },
+    ],
+    ["renamed-1.png", "renamed-2.png", "renamed-3.png"],
+  );
+
+  assert.equal(result.errors.length, 0);
+  assert.ok(
+    result.warnings.some(
+      (warning) => warning.code === "IMAGE_MATCHED_BY_UPLOAD_ORDER",
+    ),
+  );
+  assert.ok(
+    result.warnings.some((warning) => warning.code === "EXTRA_UPLOADS_USED"),
+  );
+  assert.deepEqual(
+    result.sortedImages.map((image) => image.original_filename),
+    ["renamed-1.png", "renamed-2.png", "renamed-3.png"],
+  );
+  assert.deepEqual(
+    result.sortedImages.map((image) => image.alt),
+    ["Hero alt", "Detail alt", "demo-product - допълнителна снимка 3"],
+  );
+});
+
+test("matchProductImagesToUploads allows fewer uploads by order", () => {
+  const result = matchProductImagesToUploads(
+    "demo-product",
+    [
+      { original_filename: "json-hero.png", alt: "Hero alt", primary: true },
+      { original_filename: "json-detail.png", alt: "Detail alt" },
+    ],
+    ["renamed-1.png"],
+  );
+
+  assert.equal(result.errors.length, 0);
+  assert.ok(
+    result.warnings.some((warning) => warning.code === "FEWER_UPLOADS_USED"),
+  );
+  assert.deepEqual(
+    result.sortedImages.map((image) => image.original_filename),
+    ["renamed-1.png"],
+  );
+});
+
+test("matchProductImagesToUploads can keep strict filename matching", () => {
+  const result = matchProductImagesToUploads(
+    "demo-product",
+    [{ original_filename: "json-hero.png", alt: "Hero alt", primary: true }],
+    ["renamed-1.png"],
+    { allowUploadOrderFallback: false },
+  );
+
+  assert.ok(
+    result.errors.some((error) => error.code === "IMAGE_FILE_MISSING"),
+  );
+});
+
 test("buildUploadFilenameIndex detects duplicate upload basenames", () => {
   const { duplicateBasenames } = buildUploadFilenameIndex([
     "photos/a.png",

@@ -73,13 +73,43 @@ test("validate rejects primary_category outside categories", () => {
   );
 });
 
-test("validate rejects missing image upload", () => {
+test("validate allows renamed uploads for a single product by upload order", () => {
   const file = loadDarvenaFile();
-  const result = validateProductJsonImportSync(file, ["1Asset 6.png"]);
+  const result = validateProductJsonImportSync(file, [
+    "renamed-hero.png",
+    "renamed-detail.png",
+  ]);
+
+  assert.equal(result.ok, true);
+  assert.ok(
+    result.previews[0]?.warnings.some(
+      (warning) => warning.code === "IMAGE_MATCHED_BY_UPLOAD_ORDER",
+    ),
+  );
+  assert.ok(
+    result.previews[0]?.warnings.some(
+      (warning) => warning.code === "FEWER_UPLOADS_USED",
+    ),
+  );
+  assert.deepEqual(
+    result.normalizedProducts[0]?.images.map((image) => image.original_filename),
+    ["renamed-hero.png", "renamed-detail.png"],
+  );
+});
+
+test("validate keeps filename matching strict for multi-product imports", () => {
+  const file = loadDarvenaFile();
+  const secondProduct = structuredClone(file.products[0]!);
+  secondProduct.slug = "darvena-liniyka-s-ime-moliv-2";
+  file.products.push(secondProduct);
+
+  const result = validateProductJsonImportSync(file, ["renamed-hero.png"]);
 
   assert.equal(result.ok, false);
   assert.ok(
-    result.previews[0]?.errors.some((error) => error.code === "IMAGE_FILE_MISSING"),
+    result.previews.some((preview) =>
+      preview.errors.some((error) => error.code === "IMAGE_FILE_MISSING"),
+    ),
   );
 });
 

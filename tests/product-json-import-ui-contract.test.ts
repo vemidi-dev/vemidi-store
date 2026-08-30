@@ -28,16 +28,17 @@ test("products list links to import view", () => {
   assert.match(slimPanelSource, /Импорт от JSON/);
 });
 
-test("import panel uses validate and import server actions", () => {
+test("import panel uses validate action and import route submit", () => {
   const panelSource = readFileSync(
     path.join(root, "components/admin/product-json-import-panel.tsx"),
     "utf8",
   );
 
   assert.match(panelSource, /validateProductJsonImport/);
-  assert.match(panelSource, /importProductsFromJson/);
+  assert.match(panelSource, /\/admin\/product-import/);
   assert.match(panelSource, /Импорт като чернови/);
   assert.match(panelSource, /disabled=\{!canImport\}/);
+  assert.match(panelSource, /сървърът върна неочакван отговор/);
 });
 
 test("import summary edit links use admin editProduct contract", () => {

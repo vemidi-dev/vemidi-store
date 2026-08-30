@@ -709,6 +709,139 @@ Promo WIP: **не е пипан**
 
 ---
 
+## Preview import submit bugfix
+
+Дата: 2026-08-30  
+Branch: `fix/product-json-import-submit` @ `D:\Cursor\src-admin-products-perf`  
+Promo WIP: **не е пипан** · Production: **не е deploy-нат**
+
+### Симптом
+
+- Validation: „1 готови за import · 0 с грешки“
+- **Импорт като чернови** → UI: `An unexpected response was received from the server.`
+- Preview: `dpl_F2mkec58PP1BZsZgMRVwdzo7RMz3`
+
+### Диагноза
+
+1. **Validate** (`validateProductJsonImport`) изпраща само JSON + filename list — работи стабилно като server action.
+2. **Import submit** качва `FormData` + `File[]` през директен server action call от client component — на Vercel preview това често връща non-RSC отговор (timeout при image processing/sharp, или multipart action boundary), което Next.js показва като generic English error.
+3. `runImportProductsFromJson` / `createProductDraftWithGallery` вече връщат structured `{ ok: false, failed: [...] }` при DB/RPC/upload/gallery грешки — **не** хвърлят — но uncaught runtime throw или non-JSON HTTP отговор bypass-ваха UI error handling.
+4. `promo_code_eligible` post-create update: при липсваща колона връща structured status-stage failure (не throw); не е root cause на generic error, но се вижда в summary след fix-а.
+5. Vercel runtime logs за deployment-а не показаха historical stack trace (streaming only); симптомът съвпада с action multipart/timeout pattern.
+
+### Fix
+
+| Промяна | Файл |
+|---------|------|
+| Shared submit helper + runtime catch | `lib/admin/product-json-import-v2/import-submit.ts` |
+| Dedicated multipart route `POST /admin/product-import` (`maxDuration=60`, `runtime=nodejs`) | `app/admin/product-import/route.ts` |
+| Action delegate + catch (backward compat) | `app/admin/product-import-actions.ts` |
+| UI submit → `fetch("/admin/product-import")` + BG error messages | `components/admin/product-json-import-panel.tsx` |
+| Regression tests (throw → structured failure, route contract) | `tests/product-json-import-submit-error.test.ts` |
+
+**Поведение след fix:**
+
+- Server action / route **никога** не остават uncaught throw към client.
+- Runtime грешки → `{ ok: false, created: [], failed: [{ stage: "create", message: "..." }], warnings: [] }`.
+- Auth грешки → `{ ok: false, message: "...", created: [], failed: [], warnings: [] }`.
+- UI показва български съобщения; при 504/non-JSON → „надхвърли времевия лимит“ / „неочакван отговор“.
+
+### Tests
+
+```
+npm run typecheck → pass
+product-json-import-v2 + submit-error + UI contract → 49/49 pass
+```
+
+### Нов preview deploy
+
+Commit: `60f1cd1`  
+Deployment: `dpl_5HWvFubWzigqy6PQmh46xC1SCgaH`  
+Preview URL: https://vemidi-store-9wzardxdc-ve-mi-di.vercel.app  
+Inspect: https://vercel.com/ve-mi-di/vemidi-store/5HWvFubWzigqy6PQmh46xC1SCgaH  
+Production: **не е промотиран**
+
+---
+
+## Preview import payload hardening
+
+Дата: 2026-08-30  
+Branch: `codex/product-json-import-client-compress` @ `D:\Cursor\src\.worktrees\import-submit-fix`  
+Base: `origin/fix/product-json-import-submit`  
+Promo WIP: **не е пипан** · Production: **не е deploy-нат**
+
+### Симптом
+
+След route-handler fix-а preview все още можеше да покаже:
+
+`Импортът не успя — сървърът върна неочакван отговор. Опитайте отново или намалете размера на снимките.`
+
+Това означава, че заявката се чупи преди приложението да върне JSON summary — най-често от multipart payload лимит или timeout при твърде големи снимки.
+
+### Fix
+
+| Промяна | Файл |
+|---------|------|
+| Client-side image preparation/compression преди multipart submit | `lib/admin/product-json-import-v2/client-image-compress.ts` |
+| Import panel submit използва подготвените файлове, запазва оригиналните filenames за `original_filename` matching | `components/admin/product-json-import-panel.tsx` |
+| По-точно BG съобщение при HTTP `413 Payload Too Large` | `components/admin/product-json-import-panel.tsx` |
+| Regression tests за compression contract и UI wiring | `tests/product-json-import-client-image-compress.test.ts` |
+
+### Поведение
+
+- Големи снимки се resize-ват в браузъра до max edge `1800px` и WebP target около `900 KB`.
+- Ако целият bundle е голям, оптимизират се и средните снимки, за да не се удари Vercel multipart limit.
+- Имената на файловете се запазват, така че JSON `original_filename` match-ът остава валиден.
+- Малки снимки не се променят.
+
+### Tests
+
+```
+npm run typecheck → pass
+npx tsx --test tests/product-json-import-*.test.ts tests/product-create-pipeline.test.ts → 55/55 pass
+```
+
+---
+
+## Flexible single-product image matching
+
+Дата: 2026-08-30  
+Branch: `codex/product-json-import-client-compress` @ `D:\Cursor\src\.worktrees\import-submit-fix`  
+Promo WIP: **не е пипан** · Production: **не е deploy-нат**
+
+### Симптом
+
+Реалните снимки често се преименуват от Windows/browser/download flow (`(1)`, различен timestamp и др.). Старият import изискваше точен `original_filename`, което блокираше черновата въпреки че снимките са правилните.
+
+### Fix
+
+| Промяна | Файл |
+|---------|------|
+| Single-product fallback: ако filename match липсва, използвай снимките по upload order | `lib/admin/product-json-import-v2/match-images.ts` |
+| Повече uploads от JSON images → добавят се в края с fallback alt | `lib/admin/product-json-import-v2/match-images.ts` |
+| По-малко uploads от JSON images → създай чернова с наличните снимки + warning | `lib/admin/product-json-import-v2/match-images.ts` |
+| Нула uploads → създай чернова без галерия + warning | `lib/admin/product-json-import-v2/import-service.ts` |
+| Multi-product imports остават strict по filename, за да няма грешно разпределяне между продукти | `lib/admin/product-json-import-v2/validate-sync.ts` |
+| Admin helper text описва гъвкавото поведение | `components/admin/product-json-import-panel.tsx` |
+| Spec update | `docs/product-json-import-v2.md` |
+
+### Поведение
+
+- Exact filename match продължава да е първи избор.
+- За един продукт exact filenames вече не са задължителни.
+- Първата качена снимка става hero при fallback.
+- Alt текстовете от JSON се прилагат по ред; допълнителните снимки получават fallback alt.
+- Всички разминавания се показват като warnings, не blocking errors.
+
+### Tests
+
+```
+npm run typecheck → pass
+npx tsx --test tests/product-json-import-*.test.ts tests/product-create-pipeline.test.ts → 61/61 pass
+```
+
+---
+
 ## Свързани документи
 
 - Spec: `docs/product-json-import-v2.md`
