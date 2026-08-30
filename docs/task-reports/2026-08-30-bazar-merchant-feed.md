@@ -222,3 +222,47 @@ Facebook: https://www.facebook.com/profile.php?id=100090185474431
   - всеки footer URL завършва с интервал: `label: https://… `;
   - `Магазин` е `https://vemidi-crafts.com`, не гол домейн.
 - **Google feed:** непроменен.
+
+## Autolink trailing-space production closure
+
+- **PR:** #47 — merged
+- **Merge commit:** `a0c7a96` — Merge pull request #47 from vemidi-dev/fix/bazar-autolink-trailing-space
+- **Feature commit:** `00ea3b1` — fix(merchant): trailing space so Bazar autolinks footer URLs
+- **Production deployment:** `dpl_B63zqpTdT5g3yQhvBaMuZciUZSz1`
+- **Production URL:** https://vemidi-store-psjqmm446-ve-mi-di.vercel.app
+- **Live aliases:**
+  - https://vemidi-crafts.com
+  - https://www.vemidi-crafts.com
+  - https://vemidi-store.vercel.app
+- **Live endpoint:** https://vemidi-crafts.com/api/merchant/bazar.xml
+- **Google feed (unchanged):** https://vemidi-crafts.com/api/merchant/google.xml
+
+### Live verification (2026-08-30, post PR #47)
+
+| Check | Result |
+|-------|--------|
+| `bazar.xml` HTTP 200 | pass |
+| `google.xml` HTTP 200 | pass |
+| Product count | **62** in both feeds |
+| `g:id`, `g:title`, `g:link`, `g:image_link`, `g:price`, `g:availability`, `g:product_type` | match |
+| `g:description` differs from Google | pass |
+| Description has no HTML | pass |
+| Footer URLs end with a trailing space | pass |
+| Shop line is `https://vemidi-crafts.com` plus trailing space | pass |
+| Google feed unchanged | pass |
+
+Sample live footer:
+
+```
+Разгледайте продукта тук: https://vemidi-crafts.com/produkti/... 
+Facebook: https://www.facebook.com/profile.php?id=100090185474431 
+Магазин: https://vemidi-crafts.com 
+Изпращаме с Еконт и Спиди до цялата страна.
+Или вземете своята поръчка от място - Младост 2, София, след предварителна уговорка.
+```
+
+### Next operational step
+
+Обнови feed-а в Bazar.bg към:
+
+**https://vemidi-crafts.com/api/merchant/bazar.xml**
