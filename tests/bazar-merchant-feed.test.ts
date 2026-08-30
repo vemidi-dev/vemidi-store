@@ -8,7 +8,8 @@ import {
   BAZAR_MERCHANT_FACEBOOK_URL,
   BAZAR_MERCHANT_PICKUP_LINE,
   BAZAR_MERCHANT_SHIPPING_LINE,
-  BAZAR_MERCHANT_STORE_LABEL,
+  BAZAR_MERCHANT_STORE_URL,
+  formatBazarAutolinkUrl,
   buildBazarMerchantFeedXml,
   renderBazarMerchantItemXml,
   resolveBazarMerchantDescription,
@@ -108,6 +109,13 @@ test("bazar merchant route exists and returns XML response", () => {
   assert.doesNotMatch(googleRouteSource, /buildBazarMerchantFeedXml/);
 });
 
+test("formatBazarAutolinkUrl appends a trailing space so Bazar can autolink", () => {
+  assert.equal(
+    formatBazarAutolinkUrl("https://shop.example.com/produkti/demo-product"),
+    "https://shop.example.com/produkti/demo-product ",
+  );
+});
+
 test("stripHtmlPreserveParagraphs removes tags and keeps paragraph breaks", () => {
   const text = stripHtmlPreserveParagraphs(
     "<p>Един</p><p>Два</p><br/>Три",
@@ -134,10 +142,10 @@ test("resolveBazarMerchantDescription builds readable plain-text blocks", () => 
   assert.match(description, /Дърво, 15 см\n\nПърви абзац с HTML \.\n\nВтори абзац\./);
   assert.match(
     description,
-    /Разгледайте продукта тук: https:\/\/shop\.example\.com\/produkti\/demo-product\nFacebook: https:\/\/www\.facebook\.com\/profile\.php\?id=100090185474431\nМагазин: vemidi-crafts\.com\nИзпращаме с Еконт и Спиди до цялата страна\.\nИли вземете своята поръчка от място - Младост 2, София, след предварителна уговорка\./,
+    /Разгледайте продукта тук: https:\/\/shop\.example\.com\/produkti\/demo-product \nFacebook: https:\/\/www\.facebook\.com\/profile\.php\?id=100090185474431 \nМагазин: https:\/\/vemidi-crafts\.com \nИзпращаме с Еконт и Спиди до цялата страна\.\nИли вземете своята поръчка от място - Младост 2, София, след предварителна уговорка\./,
   );
-  assert.ok(description.includes(`Facebook: ${BAZAR_MERCHANT_FACEBOOK_URL}`));
-  assert.ok(description.includes(`Магазин: ${BAZAR_MERCHANT_STORE_LABEL}`));
+  assert.ok(description.includes(`Facebook: ${formatBazarAutolinkUrl(BAZAR_MERCHANT_FACEBOOK_URL)}`));
+  assert.ok(description.includes(`Магазин: ${formatBazarAutolinkUrl(BAZAR_MERCHANT_STORE_URL)}`));
   assert.ok(description.includes(BAZAR_MERCHANT_SHIPPING_LINE));
   assert.ok(description.includes(BAZAR_MERCHANT_PICKUP_LINE));
   assert.doesNotMatch(description, /<[^>]+>/);
@@ -155,7 +163,7 @@ test("resolveBazarMerchantDescription omits empty optional blocks", () => {
     "https://shop.example.com/produkti/demo-product",
   );
 
-  assert.match(description, /^Разгледайте продукта тук: https:\/\/shop\.example\.com\/produkti\/demo-product/m);
+  assert.match(description, /^Разгледайте продукта тук: https:\/\/shop\.example\.com\/produkti\/demo-product /m);
   assert.doesNotMatch(description, /Име:/);
   assert.doesNotMatch(description, /Подзаглавие:/);
   assert.doesNotMatch(description, /Кратко резюме:/);
@@ -240,7 +248,7 @@ test("bazar feed only changes g:description compared with google feed", () => {
   assert.doesNotMatch(bazarDescription, /Име:/);
   assert.doesNotMatch(bazarDescription, /За продукта:/);
   assert.ok(bazarDescription.includes(BAZAR_MERCHANT_FACEBOOK_URL));
-  assert.ok(bazarDescription.includes(BAZAR_MERCHANT_STORE_LABEL));
+  assert.ok(bazarDescription.includes(BAZAR_MERCHANT_STORE_URL));
 
   const stripItemDescriptions = (xml: string) =>
     [...xml.matchAll(/<item>[\s\S]*?<\/item>/g)]

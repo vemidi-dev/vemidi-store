@@ -37,9 +37,9 @@ Plain text, без HTML, с празен ред между блоковете. �
 
 [description — абзаци запазени, HTML премахнат]
 
-Разгледайте продукта тук: [product link от feed item]
-Facebook: https://www.facebook.com/profile.php?id=100090185474431
-Магазин: vemidi-crafts.com
+Разгледайте продукта тук: [product URL]<space>
+Facebook: https://www.facebook.com/profile.php?id=100090185474431<space>
+Магазин: https://vemidi-crafts.com<space>
 Изпращаме с Еконт и Спиди до цялата страна.
 Или вземете своята поръчка от място - Младост 2, София, след предварителна уговорка.
 ```
@@ -57,7 +57,8 @@ Facebook: https://www.facebook.com/profile.php?id=100090185474431
 - `g:description` се рендерира като CDATA, за да се запазят реалните нови редове.
 - Всеки продуктов блок е отделен с един празен ред.
 - Footer редовете са компактни, защото Bazar визуализира отделните label/URL редове с прекалено големи разстояния.
-- В description остават продуктовият URL и Facebook URL като plain text. Bazar не ги превръща надеждно в кликаеми линкове, но адресите присъстват за копиране.
+- Bazar.bg не приема HTML (`<a href>`) в `g:description`. URL-ите се превръщат в линкове само от техния autolinker, който изисква разделител след адреса. Затова всеки URL във footer-а завършва с интервал (същият ръчен трик: space след линка).
+- `Магазин` е пълен `https://` URL, за да може да се autolink-не (гол домейн без схема остава текст).
 
 ### Полета, които **не** влизат
 
@@ -210,4 +211,14 @@ Facebook: https://www.facebook.com/profile.php?id=100090185474431
 - **Branch:** `codex/bazar-pickup-line`
 - **Reason:** Bazar.bg показва описанието като plain text, затова финалният блок трябва да е информативен дори без кликаеми линкове.
 - **Bazar-only change:** след shipping line се добавя отделен ред: `Или вземете своята поръчка от място - Младост 2, София, след предварителна уговорка.`
+- **Google feed:** непроменен.
+
+## Autolink trailing-space hotfix
+
+- **Branch:** `fix/bazar-autolink-trailing-space`
+- **Reason:** ръчна проверка в Bazar.bg — URL в края на реда се показва като текст; space след URL го прави кликаем.
+- **Feed limitation:** `g:description` е plain text в CDATA. HTML `<a href>` не се използва (и би се показал като текст или би бил изчистен).
+- **Bazar-only change:**
+  - всеки footer URL завършва с интервал: `label: https://… `;
+  - `Магазин` е `https://vemidi-crafts.com`, не гол домейн.
 - **Google feed:** непроменен.
