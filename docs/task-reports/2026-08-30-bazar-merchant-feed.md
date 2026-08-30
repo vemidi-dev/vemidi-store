@@ -31,8 +31,6 @@ Branch: `feat/bazar-merchant-feed`
 Plain text, без HTML, с празен ред между блоковете. Продуктовите блокове са **без label-и**, за да не изглежда описанието като техническа таблица в Bazar:
 
 ```
-[products.name / title]
-
 [subtitle]                  ← admin „Кратко резюме“
 
 [dimensions_materials]
@@ -53,7 +51,6 @@ https://vemidi-crafts.com
 
 ### Полета, които влизат
 
-- `name` / `title`
 - `subtitle` → „Кратко резюме“
 - `dimensions_materials` → „Размери и материали“
 - `description` → „За продукта“

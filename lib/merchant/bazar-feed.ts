@@ -104,7 +104,6 @@ export function resolveBazarMerchantDescription(
 ): string {
   const sections: string[] = [];
 
-  appendTextBlock(sections, product.title);
   appendTextBlock(sections, product.subtitle);
   appendTextBlock(sections, product.dimensionsMaterials);
   appendTextBlock(sections, product.description, {

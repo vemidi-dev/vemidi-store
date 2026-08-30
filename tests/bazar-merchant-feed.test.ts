@@ -121,7 +121,8 @@ test("resolveBazarMerchantDescription builds readable plain-text blocks", () => 
   const link = "https://shop.example.com/produkti/demo-product";
   const description = resolveBazarMerchantDescription(makeProduct(), link);
 
-  assert.match(description, /^Demo Product\n\nКратко резюме за продукта/m);
+  assert.match(description, /^Кратко резюме за продукта\n\nДърво, 15 см/m);
+  assert.doesNotMatch(description, /^Demo Product/m);
   assert.doesNotMatch(description, /Име:/);
   assert.doesNotMatch(description, /Подзаглавие:/);
   assert.doesNotMatch(description, /H2 подзаглавие/);
@@ -149,7 +150,7 @@ test("resolveBazarMerchantDescription omits empty optional blocks", () => {
     "https://shop.example.com/produkti/demo-product",
   );
 
-  assert.match(description, /^Demo Product\n\nРазгледайте продукта тук:/m);
+  assert.match(description, /^Разгледайте продукта тук:/m);
   assert.doesNotMatch(description, /Име:/);
   assert.doesNotMatch(description, /Подзаглавие:/);
   assert.doesNotMatch(description, /Кратко резюме:/);
@@ -161,7 +162,7 @@ test("bazar item renders description as CDATA with readable new lines", () => {
   const item = {
     id: "VM-000001",
     title: "Demo Product",
-    description: "Demo Product\n\nКратко резюме\n\nРазгледайте продукта тук:\nhttps://shop.example.com/p",
+    description: "Кратко резюме\n\nРазгледайте продукта тук:\nhttps://shop.example.com/p",
     link: "https://shop.example.com/p",
     imageLink: "https://cdn.example.com/p.jpg",
     additionalImageLinks: [],
@@ -177,7 +178,7 @@ test("bazar item renders description as CDATA with readable new lines", () => {
   const xml = renderBazarMerchantItemXml(item);
   assert.match(
     xml,
-    /<g:description><!\[CDATA\[Demo Product\n\nКратко резюме\n\nРазгледайте продукта тук:/,
+    /<g:description><!\[CDATA\[Кратко резюме\n\nРазгледайте продукта тук:/,
   );
 });
 
