@@ -189,7 +189,7 @@ async function fetchStorefrontCatalog(): Promise<StorefrontCatalog> {
       supabase
         .from("products")
         .select(
-          "id,slug,product_code,name,heading_subtitle,subtitle,description,price,image_url,is_customizable,is_sold_out,show_quantity_selector,quantity_price_tiers,fulfillment_type,stock_quantity,card_badge,primary_category_id,meta_title,meta_description,og_title,og_description,status,visibility,catalog_sort_order,created_at,updated_at",
+          "id,slug,product_code,name,heading_subtitle,subtitle,description,dimensions_materials,price,image_url,is_customizable,is_sold_out,show_quantity_selector,quantity_price_tiers,fulfillment_type,stock_quantity,card_badge,primary_category_id,meta_title,meta_description,og_title,og_description,status,visibility,catalog_sort_order,created_at,updated_at",
         )
         .eq("status", "published")
         .eq("visibility", "public"),
