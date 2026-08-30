@@ -2,12 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 
+import { runValidateProductJsonImport } from "@/lib/admin/product-json-import-v2/import-service";
 import {
-  runImportProductsFromJson,
-  runValidateProductJsonImport,
-} from "@/lib/admin/product-json-import-v2/import-service";
+  buildProductJsonImportAuthFailure,
+  submitProductJsonImport,
+  type ProductJsonImportSubmitResult,
+} from "@/lib/admin/product-json-import-v2/import-submit";
 import type {
-  ProductJsonImportSummaryResult,
   ProductJsonImportValidationResult,
   ValidateProductJsonImportInput,
 } from "@/lib/admin/product-json-import-v2/types";
@@ -48,27 +49,26 @@ export async function validateProductJsonImport(
     return auth;
   }
 
-  return runValidateProductJsonImport(auth.supabase, input);
+  try {
+    return await runValidateProductJsonImport(auth.supabase, input);
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Неуспешна проверка на JSON импорта.";
+    return { ok: false, message };
+  }
 }
 
 export async function importProductsFromJson(
   formData: FormData,
-): Promise<ProductJsonImportSummaryResult | { ok: false; message: string }> {
+): Promise<ProductJsonImportSubmitResult> {
   const auth = await getImportAuthorizedClient();
   if (!auth.ok) {
-    return auth;
+    return buildProductJsonImportAuthFailure(auth.message);
   }
 
-  const json = String(formData.get("json") ?? "").trim();
-  if (!json) {
-    return { ok: false, message: "Липсва JSON payload." };
-  }
-
-  const imageFiles = formData
-    .getAll("image_files")
-    .filter((value): value is File => value instanceof File && value.size > 0);
-
-  const summary = await runImportProductsFromJson(auth.supabase, json, imageFiles);
+  const summary = await submitProductJsonImport(auth.supabase, formData);
   revalidatePath("/admin");
   return summary;
 }
