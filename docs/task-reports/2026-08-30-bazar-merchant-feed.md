@@ -147,3 +147,49 @@ Sample Bazar description opening (first item): subtitle → dimensions → produ
 Configure Bazar.bg merchant feed URL to:
 
 **https://vemidi-crafts.com/api/merchant/bazar.xml**
+
+## Compact footer links production closure
+
+- **PR:** #40 — merged
+- **Merge commit:** `e278c42` — Merge pull request #40 from vemidi-dev/codex/bazar-compact-footer-links
+- **Feature commit:** `30db8c3` — fix(merchant): compact bazar footer links
+- **Production deployment:** `dpl_FvMxqMv31AgyQNnHHxvRkVuDVzCP`
+- **Production URL:** https://vemidi-store-8v69cgsz2-ve-mi-di.vercel.app
+- **Live aliases (production):**
+  - https://vemidi-crafts.com
+  - https://www.vemidi-crafts.com
+  - https://vemidi-store.vercel.app
+- **Live endpoint:** https://vemidi-crafts.com/api/merchant/bazar.xml
+- **Google feed (unchanged):** https://vemidi-crafts.com/api/merchant/google.xml
+
+### Live verification (2026-08-30, post PR #40)
+
+| Check | Result |
+|-------|--------|
+| `bazar.xml` HTTP 200 | pass |
+| `google.xml` HTTP 200 | pass |
+| XML content-type + declaration + RSS channel | pass (both feeds) |
+| Product count | **61** in both feeds |
+| `g:id`, `g:title`, `g:link`, `g:image_link`, `g:price`, `g:availability`, `g:product_type` | match between feeds |
+| `g:description` differs from Google | pass |
+| Description has no HTML tags | pass |
+| No exact duplicate of `g:title` at description start | pass (0/61) |
+| Footer links compact (`label: URL`, no line break between label and URL) | pass |
+| Product body blocks separated by blank line | pass |
+| Google feed unchanged | pass |
+
+Sample live footer (first item):
+
+```
+Разгледайте продукта тук: https://vemidi-crafts.com/produkti/...
+
+Facebook: https://www.facebook.com/profile.php?id=100090185474431
+
+Магазин: https://vemidi-crafts.com
+
+Изпращаме с Еконт и Спиди до цялата страна.
+```
+
+### Final Bazar.bg feed URL
+
+**https://vemidi-crafts.com/api/merchant/bazar.xml**
