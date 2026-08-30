@@ -3,7 +3,7 @@
 Дата: 2026-08-30  
 Проект: `vemidi-dev/vemidi-store`  
 Spec: [PR #33](https://github.com/vemidi-dev/vemidi-store/pull/33) (merged → `main`) → `docs/product-json-import-v2.md`  
-Статус: **Phase 3 complete** — Admin UI wizard; no deploy yet  
+Статус: **Phase 3 Preview QA ready** — merged to main, preview deployed; production **не** е промотиран  
 Deploy: **не**  
 Template: **не**  
 Promo WIP (`D:\Cursor\src\supabase\product_promo_code_eligible.sql` и свързани локални промени): **не се включва**
@@ -667,6 +667,45 @@ Phase 1 + Phase 2 + UI contract tests → pass
 - Manual QA on preview environment with real admin auth + Supabase
 - Optional: docs/admin-panel.md section
 - **Deploy only when explicitly requested**
+
+---
+
+## Phase 3 Preview QA ready
+
+Дата: 2026-08-30  
+Merge commit: `a362094` (PR #36 → `main`)  
+Preview deployment: `dpl_F2mkec58PP1BZsZgMRVwdzo7RMz3`  
+Preview URL: https://vemidi-store-qi55elan4-ve-mi-di.vercel.app  
+Production: **не е промотиран** · custom domain alias: **не е пипан**  
+Promo WIP: **не е пипан**
+
+### Unauth smoke (preview)
+
+| Route | Result | Time |
+|-------|--------|------|
+| `/admin?tab=products&productsView=import` | `307` → `/admin/login` | ~1.5s |
+| `/admin?tab=products` | `307` → `/admin/login` | ~1.0s |
+| `/admin?tab=categories` | `307` → `/admin/login` | ~0.6s |
+
+Няма `504` / timeout на smoke paths.
+
+### Manual QA checklist (за теб)
+
+1. Login в preview admin: https://vemidi-store-qi55elan4-ve-mi-di.vercel.app/admin/login
+2. Отвори https://vemidi-store-qi55elan4-ve-mi-di.vercel.app/admin?tab=products&productsView=import
+3. Качи `tests/fixtures/product-import-v2/darvena-liniyka.json` (или реалния v2 JSON)
+4. Качи снимките с **същите** `original_filename` от JSON-а
+5. Натисни **Провери** — очакван preview с warnings (product_code ignored), без blocking errors
+6. Прегледай preview table (slug, категории, primary, брой снимки)
+7. Натисни **Импорт като чернови**
+8. От summary отвори **Редакция** на създадения draft
+9. Провери: текстове, SEO, категории, primary category, personalization field, галерия (hero + ред)
+
+### След manual QA
+
+- [ ] QA pass → production promote (отделна задача, изрично одобрение)
+- [ ] QA fail → fix + нов preview deploy
+- [ ] Optional: `docs/admin-panel.md` import section
 
 ---
 
