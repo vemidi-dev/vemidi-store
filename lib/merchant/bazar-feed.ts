@@ -110,9 +110,9 @@ export function resolveBazarMerchantDescription(
     preserveParagraphs: true,
   });
 
-  sections.push(`Разгледайте продукта тук:\n${link.trim()}`);
-  sections.push(`Facebook:\n${BAZAR_MERCHANT_FACEBOOK_URL}`);
-  sections.push(`Магазин:\n${BAZAR_MERCHANT_STORE_URL}`);
+  sections.push(`Разгледайте продукта тук: ${link.trim()}`);
+  sections.push(`Facebook: ${BAZAR_MERCHANT_FACEBOOK_URL}`);
+  sections.push(`Магазин: ${BAZAR_MERCHANT_STORE_URL}`);
   sections.push(BAZAR_MERCHANT_SHIPPING_LINE);
 
   return sections.join("\n\n");
