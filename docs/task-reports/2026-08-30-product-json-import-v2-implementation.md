@@ -755,7 +755,11 @@ product-json-import-v2 + submit-error + UI contract → 49/49 pass
 
 ### Нов preview deploy
 
-*(попълва се след push + `vercel deploy`)*
+Commit: `60f1cd1`  
+Deployment: `dpl_5HWvFubWzigqy6PQmh46xC1SCgaH`  
+Preview URL: https://vemidi-store-9wzardxdc-ve-mi-di.vercel.app  
+Inspect: https://vercel.com/ve-mi-di/vemidi-store/5HWvFubWzigqy6PQmh46xC1SCgaH  
+Production: **не е промотиран**
 
 ---
 
