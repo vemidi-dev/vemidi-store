@@ -44,16 +44,19 @@ test("validate action path returns happy validation result", async () => {
   assert.equal(result.importableProducts.length, 1);
 });
 
-test("validate action path blocks missing image file", async () => {
+test("validate action path allows renamed uploads for one product", async () => {
   const supabase = createMockProductImportSupabase({ categories });
   const result = await runValidateProductJsonImport(supabase, {
     json,
-    uploadedFilenames: ["1Asset 6.png"],
+    uploadedFilenames: ["renamed-hero.png", "renamed-detail.png"],
   });
 
-  assert.equal(result.ok, false);
+  assert.equal(result.ok, true);
+  assert.equal(result.importableProducts.length, 1);
   assert.ok(
-    result.previews[0]?.errors.some((error) => error.code === "IMAGE_FILE_MISSING"),
+    result.previews[0]?.warnings.some(
+      (warning) => warning.code === "IMAGE_MATCHED_BY_UPLOAD_ORDER",
+    ),
   );
 });
 
@@ -81,6 +84,72 @@ test("import happy path creates draft product", async () => {
   assert.equal(summary.created.length, 1);
   assert.equal(summary.created[0]?.slug, "darvena-liniyka-s-ime-moliv");
   assert.match(summary.created[0]?.editUrl ?? "", /editProduct=created-product-id/);
+});
+
+test("import uses renamed files by upload order for one product", async () => {
+  const supabase = createMockProductImportSupabase({
+    categories,
+    createProductId: "created-product-id",
+  });
+
+  const summary = await runImportProductsFromJson(
+    supabase,
+    json,
+    [
+      new File(["hero"], "renamed-hero.png", { type: "image/png" }),
+      new File(["detail"], "renamed-detail.png", { type: "image/png" }),
+      new File(["extra"], "renamed-extra.png", { type: "image/png" }),
+    ],
+    {
+      createDraft: async (_client, input) => {
+        assert.deepEqual(
+          input.imageFiles.map((file) => file.name),
+          ["renamed-hero.png", "renamed-detail.png", "renamed-extra.png"],
+        );
+        assert.equal(input.imageAltTexts.length, 3);
+        return {
+          ok: true,
+          productId: "created-product-id",
+          imageCount: input.imageFiles.length,
+          uploadedImages: [],
+        };
+      },
+    },
+  );
+
+  assert.equal(summary.ok, true);
+  assert.equal(summary.created[0]?.imageCount, 3);
+  assert.ok(
+    summary.warnings.some(
+      (warning) => warning.code === "IMAGE_MATCHED_BY_UPLOAD_ORDER",
+    ),
+  );
+});
+
+test("import can create a draft without uploaded images", async () => {
+  const supabase = createMockProductImportSupabase({
+    categories,
+    createProductId: "created-product-id",
+  });
+
+  const summary = await runImportProductsFromJson(supabase, json, [], {
+    createDraft: async (_client, input) => {
+      assert.deepEqual(input.imageFiles, []);
+      assert.deepEqual(input.imageAltTexts, []);
+      return {
+        ok: true,
+        productId: "created-product-id",
+        imageCount: 0,
+        uploadedImages: [],
+      };
+    },
+  });
+
+  assert.equal(summary.ok, true);
+  assert.equal(summary.created[0]?.imageCount, 0);
+  assert.ok(
+    summary.warnings.some((warning) => warning.code === "NO_IMAGES_UPLOADED"),
+  );
 });
 
 test("import continues when one product gallery fails", async () => {
@@ -147,13 +216,37 @@ test("import continues when one product gallery fails", async () => {
   assert.equal(summary.failed[0]?.stage, "gallery");
 });
 
-test("import blocks product when image file is missing", async () => {
+test("import keeps strict filename matching for multi-product imports", async () => {
+  const multiProductJson = JSON.stringify({
+    version: 2,
+    products: [
+      {
+        name: "Product A",
+        slug: "product-a",
+        price: 1,
+        description: "A",
+        categories: ["liniyki"],
+        primary_category: "liniyki",
+        images: [{ original_filename: "a.png", alt: "A" }],
+      },
+      {
+        name: "Product B",
+        slug: "product-b",
+        price: 2,
+        description: "B",
+        categories: ["liniyki"],
+        primary_category: "liniyki",
+        images: [{ original_filename: "b.png", alt: "B" }],
+      },
+    ],
+  });
+
   const supabase = createMockProductImportSupabase({ categories });
 
   const summary = await runImportProductsFromJson(
     supabase,
-    json,
-    [new File(["only"], "1Asset 6.png", { type: "image/png" })],
+    multiProductJson,
+    [new File(["only"], "renamed.png", { type: "image/png" })],
   );
 
   assert.equal(summary.created.length, 0);

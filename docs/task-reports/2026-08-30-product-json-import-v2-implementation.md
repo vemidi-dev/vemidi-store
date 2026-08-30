@@ -803,6 +803,45 @@ npx tsx --test tests/product-json-import-*.test.ts tests/product-create-pipeline
 
 ---
 
+## Flexible single-product image matching
+
+Дата: 2026-08-30  
+Branch: `codex/product-json-import-client-compress` @ `D:\Cursor\src\.worktrees\import-submit-fix`  
+Promo WIP: **не е пипан** · Production: **не е deploy-нат**
+
+### Симптом
+
+Реалните снимки често се преименуват от Windows/browser/download flow (`(1)`, различен timestamp и др.). Старият import изискваше точен `original_filename`, което блокираше черновата въпреки че снимките са правилните.
+
+### Fix
+
+| Промяна | Файл |
+|---------|------|
+| Single-product fallback: ако filename match липсва, използвай снимките по upload order | `lib/admin/product-json-import-v2/match-images.ts` |
+| Повече uploads от JSON images → добавят се в края с fallback alt | `lib/admin/product-json-import-v2/match-images.ts` |
+| По-малко uploads от JSON images → създай чернова с наличните снимки + warning | `lib/admin/product-json-import-v2/match-images.ts` |
+| Нула uploads → създай чернова без галерия + warning | `lib/admin/product-json-import-v2/import-service.ts` |
+| Multi-product imports остават strict по filename, за да няма грешно разпределяне между продукти | `lib/admin/product-json-import-v2/validate-sync.ts` |
+| Admin helper text описва гъвкавото поведение | `components/admin/product-json-import-panel.tsx` |
+| Spec update | `docs/product-json-import-v2.md` |
+
+### Поведение
+
+- Exact filename match продължава да е първи избор.
+- За един продукт exact filenames вече не са задължителни.
+- Първата качена снимка става hero при fallback.
+- Alt текстовете от JSON се прилагат по ред; допълнителните снимки получават fallback alt.
+- Всички разминавания се показват като warnings, не blocking errors.
+
+### Tests
+
+```
+npm run typecheck → pass
+npx tsx --test tests/product-json-import-*.test.ts tests/product-create-pipeline.test.ts → 61/61 pass
+```
+
+---
+
 ## Свързани документи
 
 - Spec: `docs/product-json-import-v2.md`

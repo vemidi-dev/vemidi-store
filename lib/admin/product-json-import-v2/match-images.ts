@@ -57,6 +57,7 @@ export function matchProductImagesToUploads(
   slug: string,
   images: ImageImportV2[],
   uploadedFilenames: string[],
+  options: { allowUploadOrderFallback?: boolean } = {},
 ): {
   sortedImages: ImageImportV2[];
   matchedOriginalFilenames: string[];
@@ -66,33 +67,88 @@ export function matchProductImagesToUploads(
   const errors: ProductJsonImportIssue[] = [];
   const warnings: ProductJsonImportIssue[] = [];
   const { index, duplicateBasenames } = buildUploadFilenameIndex(uploadedFilenames);
+  const sortedImages = sortProductImages(images);
 
   if (duplicateBasenames.length > 0) {
-    errors.push({
+    warnings.push({
       code: "DUPLICATE_UPLOAD_BASENAME",
-      severity: "error",
+      severity: "warning",
       slug,
-      message: `Качени са няколко файла с едно и също име: ${duplicateBasenames.join(", ")}.`,
+      message: `Качени са няколко файла с едно и също име: ${duplicateBasenames.join(", ")}. Ако original_filename не съвпада, ще се използва редът на качване.`,
     });
   }
 
-  const sortedImages = sortProductImages(images);
   const matchedOriginalFilenames: string[] = [];
+  const missingImages: ImageImportV2[] = [];
 
   for (const image of sortedImages) {
     const key = normalizeImageBasename(image.original_filename);
     const matches = index.get(key) ?? [];
     if (matches.length === 0) {
-      errors.push({
-        code: "IMAGE_FILE_MISSING",
-        severity: "error",
-        slug,
-        message: `Липсва качен файл за „${image.original_filename}".`,
-      });
+      missingImages.push(image);
       continue;
     }
 
     matchedOriginalFilenames.push(matches[0]!);
+  }
+
+  if (
+    missingImages.length > 0 &&
+    uploadedFilenames.length > 0 &&
+    options.allowUploadOrderFallback !== false
+  ) {
+    const uploadOrderImages = uploadedFilenames.map((filename, index) => {
+      const source = sortedImages[index];
+      return {
+        ...(source ?? {
+          alt: `${slug} - допълнителна снимка ${index + 1}`,
+        }),
+        original_filename: filename,
+        ...(index === 0 ? { primary: true } : { primary: undefined }),
+      };
+    });
+
+    warnings.push({
+      code: "IMAGE_MATCHED_BY_UPLOAD_ORDER",
+      severity: "warning",
+      slug,
+      message:
+        "Имената на снимките не съвпадат напълно с JSON. Снимките ще се използват по реда на качване.",
+    });
+
+    if (uploadedFilenames.length > sortedImages.length) {
+      warnings.push({
+        code: "EXTRA_UPLOADS_USED",
+        severity: "warning",
+        slug,
+        message: `Качени са ${uploadedFilenames.length - sortedImages.length} допълнителни снимки. Те ще се добавят в края на галерията с автоматичен alt текст.`,
+      });
+    }
+
+    if (uploadedFilenames.length < sortedImages.length) {
+      warnings.push({
+        code: "FEWER_UPLOADS_USED",
+        severity: "warning",
+        slug,
+        message: `Качени са ${uploadedFilenames.length} от ${sortedImages.length} описани снимки. Черновата ще се създаде с наличните снимки; останалите могат да се добавят по-късно.`,
+      });
+    }
+
+    return {
+      sortedImages: uploadOrderImages,
+      matchedOriginalFilenames: uploadedFilenames,
+      errors,
+      warnings,
+    };
+  }
+
+  for (const image of missingImages) {
+    errors.push({
+      code: "IMAGE_FILE_MISSING",
+      severity: "error",
+      slug,
+      message: `Липсва качен файл за „${image.original_filename}".`,
+    });
   }
 
   return {

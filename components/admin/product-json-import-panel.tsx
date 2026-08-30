@@ -312,8 +312,8 @@ export function ProductJsonImportPanel() {
           />
           <p className={adminHelperClass}>
             {imageFiles.length > 0
-              ? `Избрани ${imageFiles.length} файла. Match по original_filename.`
-              : "Изберете всички снимки от bundle-а преди проверка."}
+              ? `Избрани ${imageFiles.length} файла. Първо се търси match по original_filename; при един продукт може и по реда на качване.`
+              : "Може да качите колкото снимки имате. Ако липсват снимки, черновата ще се създаде без тях и ще ги добавите по-късно."}
           </p>
         </div>
 
