@@ -116,4 +116,5 @@ tests/google-merchant-feed.test.ts   (regression — google unchanged)
 ## Deploy
 
 - **Production:** не е deploy-нат (по задача)
-- Preview: _(попълва се след PR, ако има)_
+- **PR:** #38
+- **Preview:** https://vemidi-store-or6ny95uo-ve-mi-di.vercel.app/api/merchant/bazar.xml (`dpl_ELSoQcwKJWBN1oyud7f61mVeYxVZ`)
