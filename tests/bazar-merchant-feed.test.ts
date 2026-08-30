@@ -131,9 +131,9 @@ test("resolveBazarMerchantDescription builds readable plain-text blocks", () => 
   assert.doesNotMatch(description, /За продукта:/);
   assert.match(description, /Кратко резюме за продукта\n\nДърво, 15 см/);
   assert.match(description, /Дърво, 15 см\n\nПърви абзац с HTML \.\n\nВтори абзац\./);
-  assert.match(description, /Разгледайте продукта тук:\nhttps:\/\/shop\.example\.com\/produkti\/demo-product/);
-  assert.ok(description.includes(`Facebook:\n${BAZAR_MERCHANT_FACEBOOK_URL}`));
-  assert.ok(description.includes(`Магазин:\n${BAZAR_MERCHANT_STORE_URL}`));
+  assert.match(description, /Разгледайте продукта тук: https:\/\/shop\.example\.com\/produkti\/demo-product/);
+  assert.ok(description.includes(`Facebook: ${BAZAR_MERCHANT_FACEBOOK_URL}`));
+  assert.ok(description.includes(`Магазин: ${BAZAR_MERCHANT_STORE_URL}`));
   assert.ok(description.includes(BAZAR_MERCHANT_SHIPPING_LINE));
   assert.doesNotMatch(description, /<[^>]+>/);
   assert.doesNotMatch(description, /personalization|ordering_info|additional_info|meta_title|og_title/i);
@@ -150,7 +150,7 @@ test("resolveBazarMerchantDescription omits empty optional blocks", () => {
     "https://shop.example.com/produkti/demo-product",
   );
 
-  assert.match(description, /^Разгледайте продукта тук:/m);
+  assert.match(description, /^Разгледайте продукта тук: https:\/\/shop\.example\.com\/produkti\/demo-product/m);
   assert.doesNotMatch(description, /Име:/);
   assert.doesNotMatch(description, /Подзаглавие:/);
   assert.doesNotMatch(description, /Кратко резюме:/);
@@ -162,7 +162,7 @@ test("bazar item renders description as CDATA with readable new lines", () => {
   const item = {
     id: "VM-000001",
     title: "Demo Product",
-    description: "Кратко резюме\n\nРазгледайте продукта тук:\nhttps://shop.example.com/p",
+    description: "Кратко резюме\n\nРазгледайте продукта тук: https://shop.example.com/p",
     link: "https://shop.example.com/p",
     imageLink: "https://cdn.example.com/p.jpg",
     additionalImageLinks: [],
@@ -178,7 +178,7 @@ test("bazar item renders description as CDATA with readable new lines", () => {
   const xml = renderBazarMerchantItemXml(item);
   assert.match(
     xml,
-    /<g:description><!\[CDATA\[Кратко резюме\n\nРазгледайте продукта тук:/,
+    /<g:description><!\[CDATA\[Кратко резюме\n\nРазгледайте продукта тук: https:\/\/shop\.example\.com\/p/,
   );
 });
 

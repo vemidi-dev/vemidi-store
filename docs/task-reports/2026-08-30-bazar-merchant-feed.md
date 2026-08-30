@@ -37,14 +37,11 @@ Plain text, без HTML, с празен ред между блоковете. �
 
 [description — абзаци запазени, HTML премахнат]
 
-Разгледайте продукта тук:
-[product link от feed item]
+Разгледайте продукта тук: [product link от feed item]
 
-Facebook:
-https://www.facebook.com/profile.php?id=100090185474431
+Facebook: https://www.facebook.com/profile.php?id=100090185474431
 
-Магазин:
-https://vemidi-crafts.com
+Магазин: https://vemidi-crafts.com
 
 Изпращаме с Еконт и Спиди до цялата страна.
 ```
@@ -61,7 +58,7 @@ https://vemidi-crafts.com
 
 - `g:description` се рендерира като CDATA, за да се запазят реалните нови редове.
 - Всеки продуктов блок е отделен с един празен ред.
-- Footer labels за линковете (`Разгледайте продукта тук`, `Facebook`, `Магазин`) остават, защото помагат в обявата.
+- Footer редовете за линковете са компактни (`label: URL`), защото Bazar визуализира отделните label/URL редове с прекалено големи разстояния.
 
 ### Полета, които **не** влизат
 
