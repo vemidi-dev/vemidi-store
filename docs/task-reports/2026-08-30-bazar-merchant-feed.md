@@ -34,9 +34,6 @@ Plain text, без HTML, с празен ред между секциите:
 Име:
 [products.name / title]
 
-Подзаглавие:
-[heading_subtitle]          ← admin „Подзаглавие“
-
 Кратко резюме:
 [subtitle]                  ← admin „Кратко резюме“
 
@@ -61,7 +58,6 @@ https://vemidi-crafts.com
 ### Полета, които влизат
 
 - `name` / `title`
-- `heading_subtitle` → „Подзаглавие“
 - `subtitle` → „Кратко резюме“
 - `dimensions_materials` → „Размери и материали“
 - `description` → „За продукта“

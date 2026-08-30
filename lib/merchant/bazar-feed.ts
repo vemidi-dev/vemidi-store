@@ -94,7 +94,6 @@ export function resolveBazarMerchantDescription(
   product: Pick<
     Product,
     | "title"
-    | "headingSubtitle"
     | "subtitle"
     | "description"
     | "dimensionsMaterials"
@@ -104,7 +103,6 @@ export function resolveBazarMerchantDescription(
   const sections: string[] = [];
 
   appendLabeledSection(sections, "Име", product.title);
-  appendLabeledSection(sections, "Подзаглавие", product.headingSubtitle);
   appendLabeledSection(sections, "Кратко резюме", product.subtitle);
   appendLabeledSection(
     sections,

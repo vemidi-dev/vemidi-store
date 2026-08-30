@@ -117,7 +117,8 @@ test("resolveBazarMerchantDescription builds labeled plain-text sections", () =>
   const description = resolveBazarMerchantDescription(makeProduct(), link);
 
   assert.match(description, /^Име:\nDemo Product/m);
-  assert.match(description, /Подзаглавие:\nH2 подзаглавие/);
+  assert.doesNotMatch(description, /Подзаглавие:/);
+  assert.doesNotMatch(description, /H2 подзаглавие/);
   assert.match(description, /Кратко резюме:\nКратко резюме за продукта/);
   assert.match(description, /Размери и материали:\nДърво, 15 см/);
   assert.match(description, /За продукта:\nПърви абзац с HTML \.\n\nВтори абзац\./);
