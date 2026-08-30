@@ -14,7 +14,7 @@ import {
 
 export const BAZAR_MERCHANT_FACEBOOK_URL =
   "https://www.facebook.com/profile.php?id=100090185474431";
-export const BAZAR_MERCHANT_STORE_LABEL = "vemidi-crafts.com";
+export const BAZAR_MERCHANT_STORE_URL = "https://vemidi-crafts.com";
 export const BAZAR_MERCHANT_SHIPPING_LINE =
   "Изпращаме с Еконт и Спиди до цялата страна.";
 export const BAZAR_MERCHANT_PICKUP_LINE =
@@ -94,6 +94,15 @@ function escapeCdata(value: string): string {
   return value.replaceAll("]]>", "]]]]><![CDATA[>");
 }
 
+/**
+ * Bazar.bg autolinks `http(s)://` only when the URL is followed by a delimiter.
+ * A URL at end-of-line (or glued to the next line after newline collapse) stays
+ * as plain text. A trailing space matches the manual listing fix.
+ */
+export function formatBazarAutolinkUrl(url: string): string {
+  return `${url.trim()} `;
+}
+
 export function resolveBazarMerchantDescription(
   product: Pick<
     Product,
@@ -114,9 +123,9 @@ export function resolveBazarMerchantDescription(
 
   sections.push(
     [
-      `Разгледайте продукта тук: ${link.trim()}`,
-      `Facebook: ${BAZAR_MERCHANT_FACEBOOK_URL}`,
-      `Магазин: ${BAZAR_MERCHANT_STORE_LABEL}`,
+      `Разгледайте продукта тук: ${formatBazarAutolinkUrl(link)}`,
+      `Facebook: ${formatBazarAutolinkUrl(BAZAR_MERCHANT_FACEBOOK_URL)}`,
+      `Магазин: ${formatBazarAutolinkUrl(BAZAR_MERCHANT_STORE_URL)}`,
       BAZAR_MERCHANT_SHIPPING_LINE,
       BAZAR_MERCHANT_PICKUP_LINE,
     ].join("\n"),
