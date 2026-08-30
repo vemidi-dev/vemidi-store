@@ -62,3 +62,29 @@ npx tsx --test tests/duplicate-product.test.ts tests/product-gallery-duplicate.t
 - Promo/coupon WIP в `D:\Cursor\src` не е пипан.
 - Scratch файлове не са включени.
 - Ако fallback-ът се активира в production, Vercel logs ще съдържат `[duplicateProduct] admin_duplicate_product failed`, което потвърждава stale/failed RPC.
+
+## Production closure
+
+- **PR:** #42 — merged
+- **Merge commit:** `ab970ea` — Merge pull request #42 from vemidi-dev/codex/admin-product-duplicate-fallback
+- **Feature commit:** `65767d8` — fix(admin): fall back when duplicate product RPC fails
+- **Production deployment:** `dpl_EH3dyQtDX5ab4earEj52VBHwN2ji`
+- **Production URL:** https://vemidi-store-hpvk6t8zm-ve-mi-di.vercel.app
+- **Live aliases (production):**
+  - https://vemidi-crafts.com
+  - https://www.vemidi-crafts.com
+  - https://vemidi-store.vercel.app
+- **Preview QA (pre-merge):** PASS — duplicate without images, duplicate with images, draft opens for edit
+
+### Smoke results (2026-08-30, post deploy)
+
+| Check | Result |
+|-------|--------|
+| `GET /admin` unauth → 307 login | pass (no 504) |
+| `GET /admin?tab=products` unauth → 307 login | pass (no 504) |
+| Authenticated duplicate smoke (production) | not run — requires admin session; preview QA PASS covers duplicate without/with images |
+
+### Notes
+
+- Promo/coupon WIP in `D:\Cursor\src` was not touched during this deployment.
+- Fallback reduces risk from stale `admin_duplicate_product` RPC; Supabase SQL migration for duplicate RPC should still be applied per store setup runbook.
