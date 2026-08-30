@@ -12,6 +12,10 @@ import {
   adminPanelClass,
 } from "@/components/admin/styles";
 import { makeAdminProductsHref } from "@/lib/admin/products-query";
+import {
+  formatProductImportBytes,
+  prepareProductImportImages,
+} from "@/lib/admin/product-json-import-v2/client-image-compress";
 import type { ProductJsonImportSubmitResult } from "@/lib/admin/product-json-import-v2/import-submit";
 import type {
   ProductJsonImportSummaryResult,
@@ -26,6 +30,9 @@ const IMPORT_UNEXPECTED_RESPONSE_MESSAGE =
 
 const IMPORT_TIMEOUT_MESSAGE =
   "Импортът надхвърли времевия лимит на сървъра. Опитайте с по-малки снимки или по-малко файлове наведнъж.";
+
+const IMPORT_PAYLOAD_TOO_LARGE_MESSAGE =
+  "Импортът не беше изпратен, защото снимките са прекалено големи за една заявка. Снимките се оптимизират автоматично преди import; ако пак виждате тази грешка, качете по-малко снимки наведнъж.";
 
 function isValidationResult(
   value: ProductJsonImportValidationResult | { ok: false; message: string },
@@ -72,6 +79,10 @@ async function submitProductJsonImportRequest(
     body: formData,
   });
 
+  if (response.status === 413) {
+    throw new Error(IMPORT_PAYLOAD_TOO_LARGE_MESSAGE);
+  }
+
   let payload: unknown;
   try {
     payload = await response.json();
@@ -104,6 +115,9 @@ export function ProductJsonImportPanel() {
   const [pendingValidate, setPendingValidate] = useState(false);
   const [pendingImport, setPendingImport] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [imagePreparationMessage, setImagePreparationMessage] = useState<string | null>(
+    null,
+  );
 
   const uploadedFilenames = useMemo(
     () => imageFiles.map((file) => file.name),
@@ -114,6 +128,7 @@ export function ProductJsonImportPanel() {
     setValidation(null);
     setSummary(null);
     setErrorMessage(null);
+    setImagePreparationMessage(null);
   }, []);
 
   const handleJsonFileChange = useCallback(
@@ -188,11 +203,21 @@ export function ProductJsonImportPanel() {
 
     setPendingImport(true);
     setErrorMessage(null);
+    setImagePreparationMessage(null);
 
     try {
+      const preparedImages = await prepareProductImportImages(imageFiles);
+      if (preparedImages.compressedCount > 0) {
+        setImagePreparationMessage(
+          `Подготвени ${preparedImages.compressedCount} снимки: ${formatProductImportBytes(
+            preparedImages.originalBytes,
+          )} → ${formatProductImportBytes(preparedImages.preparedBytes)}.`,
+        );
+      }
+
       const formData = new FormData();
       formData.set("json", jsonText);
-      for (const file of imageFiles) {
+      for (const file of preparedImages.files) {
         formData.append("image_files", file);
       }
 
@@ -298,6 +323,12 @@ export function ProductJsonImportPanel() {
           </div>
         ) : null}
 
+        {imagePreparationMessage ? (
+          <div className="rounded-xl border border-boutique-line bg-boutique-bg px-4 py-3 text-sm text-boutique-muted">
+            {imagePreparationMessage}
+          </div>
+        ) : null}
+
         <div className="flex flex-wrap gap-3">
           <button
             type="button"
@@ -313,7 +344,7 @@ export function ProductJsonImportPanel() {
             disabled={!canImport}
             className="rounded-lg border border-boutique-line px-4 py-2 text-sm font-semibold text-boutique-ink transition hover:border-boutique-sage-deep/40 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {pendingImport ? "Импортира се…" : "Импорт като чернови"}
+            {pendingImport ? "Подготвя се…" : "Импорт като чернови"}
           </button>
         </div>
       </section>

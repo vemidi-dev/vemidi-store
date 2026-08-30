@@ -763,6 +763,46 @@ Production: **не е промотиран**
 
 ---
 
+## Preview import payload hardening
+
+Дата: 2026-08-30  
+Branch: `codex/product-json-import-client-compress` @ `D:\Cursor\src\.worktrees\import-submit-fix`  
+Base: `origin/fix/product-json-import-submit`  
+Promo WIP: **не е пипан** · Production: **не е deploy-нат**
+
+### Симптом
+
+След route-handler fix-а preview все още можеше да покаже:
+
+`Импортът не успя — сървърът върна неочакван отговор. Опитайте отново или намалете размера на снимките.`
+
+Това означава, че заявката се чупи преди приложението да върне JSON summary — най-често от multipart payload лимит или timeout при твърде големи снимки.
+
+### Fix
+
+| Промяна | Файл |
+|---------|------|
+| Client-side image preparation/compression преди multipart submit | `lib/admin/product-json-import-v2/client-image-compress.ts` |
+| Import panel submit използва подготвените файлове, запазва оригиналните filenames за `original_filename` matching | `components/admin/product-json-import-panel.tsx` |
+| По-точно BG съобщение при HTTP `413 Payload Too Large` | `components/admin/product-json-import-panel.tsx` |
+| Regression tests за compression contract и UI wiring | `tests/product-json-import-client-image-compress.test.ts` |
+
+### Поведение
+
+- Големи снимки се resize-ват в браузъра до max edge `1800px` и WebP target около `900 KB`.
+- Ако целият bundle е голям, оптимизират се и средните снимки, за да не се удари Vercel multipart limit.
+- Имената на файловете се запазват, така че JSON `original_filename` match-ът остава валиден.
+- Малки снимки не се променят.
+
+### Tests
+
+```
+npm run typecheck → pass
+npx tsx --test tests/product-json-import-*.test.ts tests/product-create-pipeline.test.ts → 55/55 pass
+```
+
+---
+
 ## Свързани документи
 
 - Spec: `docs/product-json-import-v2.md`
