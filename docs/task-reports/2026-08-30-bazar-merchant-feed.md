@@ -2,7 +2,7 @@
 
 Дата: 2026-08-30  
 Repo: `vemidi-dev/vemidi-store`  
-Branch: `feat/bazar-merchant-feed`
+Branch: `feat/bazar-merchant-feed` → merged to `main` (`7ce9a8d`)
 
 ## Endpoint
 
@@ -110,6 +110,43 @@ tests/google-merchant-feed.test.ts   (regression — google unchanged)
 
 ## Deploy
 
-- **Production:** не е deploy-нат (по задача)
-- **PR:** #38
-- **Preview:** https://vemidi-store-or6ny95uo-ve-mi-di.vercel.app/api/merchant/bazar.xml (`dpl_ELSoQcwKJWBN1oyud7f61mVeYxVZ`)
+- **PR:** #38 — merged
+- **Preview (pre-merge):** https://vemidi-store-or6ny95uo-ve-mi-di.vercel.app/api/merchant/bazar.xml (`dpl_ELSoQcwKJWBN1oyud7f61mVeYxVZ`)
+
+## Production closure
+
+- **Merge commit:** `7ce9a8d` — Merge pull request #38 from vemidi-dev/feat/bazar-merchant-feed
+- **Production deployment:** `dpl_BTQcSsHhce3XktyRr6QWnvJkRJ8F`
+- **Production URL:** https://vemidi-store-isd7wk4mm-ve-mi-di.vercel.app
+- **Live aliases (production):**
+  - https://vemidi-crafts.com
+  - https://www.vemidi-crafts.com
+  - https://vemidi-store.vercel.app
+- **Live endpoint:** https://vemidi-crafts.com/api/merchant/bazar.xml
+- **Google feed (unchanged):** https://vemidi-crafts.com/api/merchant/google.xml
+
+### Live verification (2026-08-30)
+
+| Check | Result |
+|-------|--------|
+| `bazar.xml` HTTP 200 | pass |
+| `google.xml` HTTP 200 | pass |
+| XML content-type + declaration + RSS channel | pass (both feeds) |
+| Product count | **61** in both feeds |
+| `g:id`, `g:title`, `g:link`, `g:image_link`, `g:price`, `g:availability`, `g:product_type` | match between feeds |
+| `g:description` differs from Google | pass |
+| Description has no HTML tags | pass |
+| Description does not start with repeated product title | pass |
+| Description includes product link block | pass |
+| Description includes Facebook URL | pass |
+| Description includes shop URL (`https://vemidi-crafts.com`) | pass |
+| Description includes shipping line | pass |
+| Google feed unchanged | pass |
+
+Sample Bazar description opening (first item): subtitle → dimensions → product body, without repeated title prefix.
+
+### Next operational step
+
+Configure Bazar.bg merchant feed URL to:
+
+**https://vemidi-crafts.com/api/merchant/bazar.xml**
