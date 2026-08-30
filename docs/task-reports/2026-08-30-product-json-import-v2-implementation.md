@@ -842,6 +842,48 @@ npx tsx --test tests/product-json-import-*.test.ts tests/product-create-pipeline
 
 ---
 
+## Production closure (PR #37)
+
+Дата: 2026-08-30  
+Merge commit: `c627c17` (PR #37 → `main`)  
+Production deployment: `dpl_4jerjhMHFY5aPWUrxb1nYYfBXpqE`  
+Production URL: https://vemidi-store-qlc58dswq-ve-mi-di.vercel.app  
+Aliases (след explicit `vercel alias set` към deployment-а):
+
+| Alias | Status |
+|-------|--------|
+| `https://vemidi-crafts.com` | → production deployment |
+| `https://www.vemidi-crafts.com` | → production deployment |
+| `https://vemidi-store.vercel.app` | → production deployment |
+| `https://vemidi-store-ve-mi-di.vercel.app` | Vercel project production URL |
+
+Promo/coupon WIP в `D:\Cursor\src`: **не е включен** в merge/deploy.
+
+### Production smoke (vemidi-crafts.com)
+
+| Check | Result |
+|-------|--------|
+| `/admin` | `307` → login |
+| `/admin?tab=products` | `307` → login |
+| `/admin?tab=products&productsView=import` | `307` → login |
+| `POST /admin/product-import` (unauth) | `401` JSON `{ ok: false, message: "Моля, влезте..." }` |
+| `/llms.txt` | `200` |
+| `/robots.txt` | `200` |
+| `/sitemap.xml` | `200` |
+| `/api/merchant/google.xml` | `200` |
+
+Няма `504` на admin smoke paths.
+
+### PR #37 scope (merged)
+
+- Dedicated `POST /admin/product-import` route handler + structured BG errors
+- Client-side image compression before submit
+- Flexible single-product image matching by upload order
+- Zero/fewer/more images support for single-product import
+- Docs/spec/report updates
+
+---
+
 ## Свързани документи
 
 - Spec: `docs/product-json-import-v2.md`
