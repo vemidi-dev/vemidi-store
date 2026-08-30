@@ -84,6 +84,11 @@ import {
   type UploadedProductImage,
 } from "@/lib/admin/product-image-storage";
 import {
+  attachProductGalleryImages,
+  createProductDraftWithGallery,
+  deleteUploadedProductImagesBestEffort,
+} from "@/lib/admin/product-create-pipeline";
+import {
   processAndUploadProductImages,
   validateProductImageUploadBatch,
 } from "@/lib/admin/product-image-upload";
@@ -430,8 +435,7 @@ async function deleteUploadedImagesBestEffort(
   supabase: NonNullable<Awaited<ReturnType<typeof createClient>>>,
   images: UploadedProductImage[],
 ) {
-  const adapter = createSupabaseProductImageStorageAdapter(supabase);
-  await deleteStoragePathsBestEffort(adapter, getUploadedImagePaths(images));
+  await deleteUploadedProductImagesBestEffort(supabase, images);
 }
 
 async function attachProductImages(
@@ -440,18 +444,7 @@ async function attachProductImages(
   images: UploadedProductImage[],
   altTexts: string[] = [],
 ) {
-  if (images.length === 0) {
-    return null;
-  }
-
-  const { error } = await supabase.rpc("admin_attach_product_images", {
-    p_product_id: productId,
-    p_images: images.map((image, index) => ({
-      image_url: image.url,
-      alt_text: altTexts[index]?.trim() || null,
-    })),
-  });
-  return error;
+  return attachProductGalleryImages(supabase, productId, images, altTexts);
 }
 
 function getProductImageAltTexts(formData: FormData) {
@@ -799,65 +792,66 @@ export async function createProduct(formData: FormData) {
     personalizationFields.map((field) => field.label),
   );
 
-  const { data: productId, error: mutationError } = await createProductAtomic(supabase, {
-    name,
-    slug: slug!,
-    subtitle,
-    headingSubtitle,
-    description,
-    additionalInfo,
-    personalizationInfo: pageContent.personalizationInfo,
-    dimensionsMaterials: pageContent.dimensionsMaterials,
-    orderingInfo: pageContent.orderingInfo,
-    fulfillmentNote,
-    price,
-    imageUrl: null,
-    isCustomizable: isCustomizable || personalizationFields.length > 0,
-    isSoldOut,
-    fulfillmentType,
-    stockQuantity,
-    cardBadge,
-    categoryIds,
-    primaryCategoryId,
-    colorFields,
-    personalizationFields,
-    wishTemplateIds,
-    optionGroups,
-    metaTitle: productContent.meta_title,
-    metaDescription: productContent.meta_description,
-    ogTitle: productContent.og_title,
-    ogDescription: productContent.og_description,
+  const draftResult = await createProductDraftWithGallery(supabase, {
+    mutationInput: {
+      name,
+      slug: slug!,
+      subtitle,
+      headingSubtitle,
+      description,
+      additionalInfo,
+      personalizationInfo: pageContent.personalizationInfo,
+      dimensionsMaterials: pageContent.dimensionsMaterials,
+      orderingInfo: pageContent.orderingInfo,
+      fulfillmentNote,
+      price,
+      imageUrl: null,
+      isCustomizable: isCustomizable || personalizationFields.length > 0,
+      isSoldOut,
+      fulfillmentType,
+      stockQuantity,
+      cardBadge,
+      categoryIds,
+      primaryCategoryId,
+      colorFields,
+      personalizationFields,
+      wishTemplateIds,
+      optionGroups,
+      metaTitle: productContent.meta_title,
+      metaDescription: productContent.meta_description,
+      ogTitle: productContent.og_title,
+      ogDescription: productContent.og_description,
+    },
+    postCreate: {
+      visibility,
+      showQuantitySelector,
+      quantityPriceTiers,
+      personalizationOpenByDefault,
+    },
+    imageFiles,
+    imageAltTexts,
   });
 
-  if (mutationError || !productId) {
-    redirectWith(
-      "error",
-      getProductMutationErrorMessage(mutationError),
-      activeTab,
-      draft,
-    );
+  if (!draftResult.ok) {
+    if (draftResult.stage === "create") {
+      redirectWith(
+        "error",
+        draftResult.message,
+        activeTab,
+        draft,
+      );
+    }
+
+    if (draftResult.productId) {
+      await revalidateProductPaths(supabase, draftResult.productId);
+      redirectWithProductEdit("error", draftResult.message, draftResult.productId);
+    }
+
+    redirectWith("error", draftResult.message, activeTab, draft);
   }
 
-  const newProductId = String(productId);
-  const { error: statusError } = await supabase
-    .from("products")
-    .update({
-      status: "draft",
-      visibility,
-      show_quantity_selector: showQuantitySelector,
-      quantity_price_tiers: quantityPriceTiers,
-      personalization_open_by_default: personalizationOpenByDefault,
-    })
-    .eq("id", newProductId);
-
-  if (statusError) {
-    await revalidateProductPaths(supabase, newProductId);
-    redirectWithProductEdit(
-      "error",
-      "Продуктът е създаден, но статусът не беше зададен като чернова.",
-      newProductId,
-    );
-  }
+  const newProductId = draftResult.productId;
+  const uploadedImages = draftResult.uploadedImages;
 
   const faqSyncError = await syncProductFaqAssociations(supabase, newProductId, {
     groupIds: faqGroupIds,
@@ -866,45 +860,6 @@ export async function createProduct(formData: FormData) {
   if (faqSyncError) {
     await revalidateProductPaths(supabase, newProductId);
     redirectWithProductEdit("error", faqSyncError, newProductId);
-  }
-
-  let uploadedImages: UploadedProductImage[] = [];
-  if (imageFiles.length > 0) {
-    try {
-      uploadedImages = await processAndUploadProductImages(
-        supabase,
-        newProductId,
-        imageFiles,
-        0,
-      );
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Неуспешно качване на изображението.";
-      await revalidateProductPaths(supabase, newProductId);
-      redirectWithProductEdit(
-        "error",
-        `Продуктът е създаден, но снимките не бяха качени: ${message}. Изберете ги отново в секцията „Галерия“ по-долу.`,
-        newProductId,
-      );
-    }
-  }
-
-  const galleryError = await attachProductImages(
-    supabase,
-    newProductId,
-    uploadedImages,
-    imageAltTexts,
-  );
-  if (galleryError) {
-    await deleteUploadedImagesBestEffort(supabase, uploadedImages);
-    await revalidateProductPaths(supabase, newProductId);
-    const migrationMissing = galleryError.message.includes("admin_attach_product_images");
-    redirectWithProductEdit(
-      "error",
-      migrationMissing
-        ? "Продуктът е създаден, но галерията не беше записана. Изпълнете product_image_gallery.sql и добавете снимките от секцията „Галерия“."
-        : "Продуктът е създаден, но снимките не бяха записани в галерията. Опитайте отново от секцията „Галерия“.",
-      newProductId,
-    );
   }
 
   await revalidateProductPaths(supabase,newProductId);

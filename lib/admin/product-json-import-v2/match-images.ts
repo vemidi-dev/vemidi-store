@@ -114,3 +114,48 @@ export function collectReferencedImageBasenames(
   }
   return referenced;
 }
+
+export function buildUploadFileIndex(files: File[]): Map<string, File> {
+  const index = new Map<string, File>();
+  for (const file of files) {
+    const key = normalizeImageBasename(file.name);
+    if (!index.has(key)) {
+      index.set(key, file);
+    }
+  }
+  return index;
+}
+
+export function resolveProductImportImageFiles(
+  slug: string,
+  images: ImageImportV2[],
+  uploadIndex: Map<string, File>,
+): {
+  files: File[];
+  altTexts: string[];
+  errors: ProductJsonImportIssue[];
+} {
+  const sortedImages = sortProductImages(images);
+  const files: File[] = [];
+  const altTexts: string[] = [];
+  const errors: ProductJsonImportIssue[] = [];
+
+  for (const image of sortedImages) {
+    const key = normalizeImageBasename(image.original_filename);
+    const file = uploadIndex.get(key);
+    if (!file) {
+      errors.push({
+        code: "IMAGE_FILE_MISSING",
+        severity: "error",
+        slug,
+        message: `Липсва качен файл за „${image.original_filename}".`,
+      });
+      continue;
+    }
+
+    files.push(file);
+    altTexts.push(image.alt.trim().slice(0, 160));
+  }
+
+  return { files, altTexts, errors };
+}

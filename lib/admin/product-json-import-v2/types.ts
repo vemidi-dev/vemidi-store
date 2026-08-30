@@ -167,6 +167,50 @@ export type ProductJsonImportSyncValidationResult = {
   normalizedProducts: NormalizedProductImportV2[];
 };
 
+export type ResolvedImportCategory = {
+  id: string;
+  slug: string;
+  categoryType: string;
+};
+
+export type ImportableProduct = {
+  normalized: NormalizedProductImportV2;
+  payload: ProductImportMutationPayload;
+  categoryIds: string[];
+  primaryCategoryId: string;
+};
+
+export type ProductJsonImportValidationResult = ProductJsonImportSyncValidationResult & {
+  importableProducts: ImportableProduct[];
+};
+
+export type ProductJsonImportSummaryEntry = {
+  slug: string;
+  productId: string;
+  editUrl: string;
+  imageCount: number;
+};
+
+export type ProductJsonImportFailureEntry = {
+  slug: string;
+  stage: "validate" | "create" | "gallery";
+  message: string;
+  productId?: string;
+};
+
+export type ProductJsonImportSummaryResult = {
+  ok: boolean;
+  importKey?: string;
+  created: ProductJsonImportSummaryEntry[];
+  failed: ProductJsonImportFailureEntry[];
+  warnings: ProductJsonImportIssue[];
+};
+
+export type ValidateProductJsonImportInput = {
+  json: string;
+  uploadedFilenames?: string[];
+};
+
 export type ProductImportPostCreateFields = {
   visibility: ProductVisibility;
   showQuantitySelector: boolean;

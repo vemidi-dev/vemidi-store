@@ -3,7 +3,7 @@
 Дата: 2026-08-30  
 Проект: `vemidi-dev/vemidi-store`  
 Spec: [PR #33](https://github.com/vemidi-dev/vemidi-store/pull/33) (merged → `main`) → `docs/product-json-import-v2.md`  
-Статус: **Phase 1 complete** — lib + tests; no UI, no server actions, no deploy  
+Статус: **Phase 2 complete** — async validation + server actions + pipeline; no UI, no deploy  
 Deploy: **не**  
 Template: **не**  
 Promo WIP (`D:\Cursor\src\supabase\product_promo_code_eligible.sql` и свързани локални промени): **не се включва**
@@ -507,7 +507,7 @@ UI: `ProductJsonImportSummary` — list with links; failed rows show stage + mes
 - [x] Out-of-MVP scope listed
 - [x] Promo WIP excluded
 - [x] Phase 1 lib + tests — **complete**
-- [ ] Phase 2 server actions + pipeline extract
+- [x] Phase 2 server actions + pipeline extract — **complete**
 - [ ] Phase 3 admin UI
 
 ---
@@ -559,6 +559,57 @@ npx tsx --test (4 import + quantity validation files) → 27/27 pass
 - `app/admin/product-import-actions.ts` — `validateProductJsonImport`, `importProductsFromJson`
 - Mocked action integration tests
 - **Без UI, без deploy**
+
+---
+
+## Phase 2 — async validation + server actions
+
+Дата: 2026-08-30  
+Branch/worktree: `feat/product-json-import-v2-phase-2` @ `D:\Cursor\src-admin-products-perf` (from `origin/main` after PR #34 merge)  
+Promo WIP: **не е пипан**
+
+### PR #34
+
+- Merged to `main` (`d538106`) — Phase 1 helpers, **без deploy**.
+
+### Добавени / променени файлове
+
+| Path | Роля |
+|------|------|
+| `lib/admin/product-json-import-v2/validate-async.ts` | DB slug/category validation, importable product resolution |
+| `lib/admin/product-json-import-v2/import-service.ts` | Testable validate/import orchestration |
+| `lib/admin/product-create-pipeline.ts` | Shared draft create + gallery attach + rollback |
+| `app/admin/product-import-actions.ts` | `validateProductJsonImport`, `importProductsFromJson` |
+| `app/admin/actions.ts` | `createProduct` delegates to pipeline (minimal refactor) |
+| `lib/admin/product-json-import-v2/match-images.ts` | `buildUploadFileIndex`, `resolveProductImportImageFiles` |
+| `lib/admin/product-json-import-v2/types.ts` | Validation/summary result types |
+| `tests/helpers/mock-product-import-supabase.ts` | Mock Supabase for import tests |
+| `tests/product-json-import-v2-validate-async.test.ts` | Async DB validation tests |
+| `tests/product-json-import-v2-import-action.test.ts` | Import service tests |
+| `tests/product-create-pipeline.test.ts` | Pipeline unit tests |
+
+### Какво работи
+
+- **validateProductJsonImport** — parse → sync → async DB checks; **no writes**; returns previews + `importableProducts`
+- **importProductsFromJson** — re-validates, matches `image_files` by basename, creates drafts sequentially, returns `{ created, failed, warnings }`
+- **Async checks** — `SLUG_TAKEN`, `CATEGORY_NOT_FOUND`, `INVALID_PRIMARY_CATEGORY` (occasion primary blocked)
+- **Pipeline** — `createProductDraftWithGallery` reused by manual `createProduct` and import path
+- **Per-product continue** — gallery/create fail on one product does not stop others
+
+### Tests result
+
+```
+npm run typecheck → pass
+Phase 1 + Phase 2 tests → 42/42 pass
+```
+
+### Какво остава за Phase 3 UI
+
+- `components/admin/product-json-import-panel.tsx` + preview/summary components
+- `/admin?tab=products&productsView=import` entry point
+- Wire client wizard to `validateProductJsonImport` + `importProductsFromJson`
+- Manual QA with darvena-liniyka fixture + real uploads
+- **Без deploy** unless explicitly requested
 
 ---
 
