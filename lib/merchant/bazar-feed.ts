@@ -7,7 +7,6 @@ import {
   buildGoogleMerchantFeedItem,
   escapeXml,
   filterMerchantFeedProducts,
-  renderGoogleMerchantItemXml,
   resolveMerchantProductId,
   type GoogleMerchantFeedInput,
   type GoogleMerchantFeedItem,
@@ -75,9 +74,8 @@ export function stripHtmlPreserveParagraphs(
   return paragraphs.join("\n\n").trim();
 }
 
-function appendLabeledSection(
+function appendTextBlock(
   sections: string[],
-  label: string,
   value: string | null | undefined,
   options: { preserveParagraphs?: boolean } = {},
 ) {
@@ -87,7 +85,11 @@ function appendLabeledSection(
   if (!normalized) {
     return;
   }
-  sections.push(`${label}:\n${normalized}`);
+  sections.push(normalized);
+}
+
+function escapeCdata(value: string): string {
+  return value.replaceAll("]]>", "]]]]><![CDATA[>");
 }
 
 export function resolveBazarMerchantDescription(
@@ -102,14 +104,10 @@ export function resolveBazarMerchantDescription(
 ): string {
   const sections: string[] = [];
 
-  appendLabeledSection(sections, "Име", product.title);
-  appendLabeledSection(sections, "Кратко резюме", product.subtitle);
-  appendLabeledSection(
-    sections,
-    "Размери и материали",
-    product.dimensionsMaterials,
-  );
-  appendLabeledSection(sections, "За продукта", product.description, {
+  appendTextBlock(sections, product.title);
+  appendTextBlock(sections, product.subtitle);
+  appendTextBlock(sections, product.dimensionsMaterials);
+  appendTextBlock(sections, product.description, {
     preserveParagraphs: true,
   });
 
@@ -119,6 +117,45 @@ export function resolveBazarMerchantDescription(
   sections.push(BAZAR_MERCHANT_SHIPPING_LINE);
 
   return sections.join("\n\n");
+}
+
+function renderGTag(name: string, value: string): string {
+  return `<g:${name}>${escapeXml(value)}</g:${name}>`;
+}
+
+function renderBazarDescriptionTag(value: string): string {
+  return `<g:description><![CDATA[${escapeCdata(value)}]]></g:description>`;
+}
+
+export function renderBazarMerchantItemXml(item: GoogleMerchantFeedItem): string {
+  const lines = [
+    "<item>",
+    renderGTag("id", item.id),
+    renderGTag("title", item.title),
+    renderBazarDescriptionTag(item.description),
+    renderGTag("link", item.link),
+    renderGTag("image_link", item.imageLink),
+    ...item.additionalImageLinks.map((url) =>
+      renderGTag("additional_image_link", url),
+    ),
+    renderGTag("availability", item.availability),
+    renderGTag("price", item.price),
+    renderGTag("condition", item.condition),
+    renderGTag("brand", item.brand),
+  ];
+
+  if (item.mpn) {
+    lines.push(renderGTag("mpn", item.mpn));
+  }
+
+  lines.push(renderGTag("identifier_exists", "false"));
+
+  if (item.productType) {
+    lines.push(renderGTag("product_type", item.productType));
+  }
+
+  lines.push("</item>");
+  return lines.join("\n");
 }
 
 export function buildBazarMerchantFeedItem(
@@ -157,7 +194,7 @@ export function buildBazarMerchantFeedXml(input: GoogleMerchantFeedInput): strin
   const channelDescription =
     input.description?.trim() || siteConfig.description;
   const channelLink = new URL("/", siteUrl).toString();
-  const itemXml = items.map(renderGoogleMerchantItemXml).join("");
+  const itemXml = items.map(renderBazarMerchantItemXml).join("\n");
 
   return [
     `<?xml version="1.0" encoding="UTF-8"?>`,
@@ -169,7 +206,7 @@ export function buildBazarMerchantFeedXml(input: GoogleMerchantFeedInput): strin
     itemXml,
     `</channel>`,
     `</rss>`,
-  ].join("");
+  ].join("\n");
 }
 
 export const BAZAR_MERCHANT_FEED_CONTENT_TYPE = "application/xml; charset=utf-8";

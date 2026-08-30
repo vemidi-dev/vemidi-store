@@ -9,6 +9,7 @@ import {
   BAZAR_MERCHANT_SHIPPING_LINE,
   BAZAR_MERCHANT_STORE_URL,
   buildBazarMerchantFeedXml,
+  renderBazarMerchantItemXml,
   resolveBazarMerchantDescription,
   stripHtmlPreserveParagraphs,
 } from "@/lib/merchant/bazar-feed";
@@ -87,6 +88,10 @@ function countItems(xml: string): number {
   return (xml.match(/<item>/g) ?? []).length;
 }
 
+function normalizeXmlTagSpacing(xml: string): string {
+  return xml.replace(/>\s+</g, "><").trim();
+}
+
 test("bazar merchant route exists and returns XML response", () => {
   const routeSource = readFileSync(
     path.join(root, "app/api/merchant/bazar.xml/route.ts"),
@@ -112,16 +117,19 @@ test("stripHtmlPreserveParagraphs removes tags and keeps paragraph breaks", () =
   assert.doesNotMatch(text, /<[^>]+>/);
 });
 
-test("resolveBazarMerchantDescription builds labeled plain-text sections", () => {
+test("resolveBazarMerchantDescription builds readable plain-text blocks", () => {
   const link = "https://shop.example.com/produkti/demo-product";
   const description = resolveBazarMerchantDescription(makeProduct(), link);
 
-  assert.match(description, /^Име:\nDemo Product/m);
+  assert.match(description, /^Demo Product\n\nКратко резюме за продукта/m);
+  assert.doesNotMatch(description, /Име:/);
   assert.doesNotMatch(description, /Подзаглавие:/);
   assert.doesNotMatch(description, /H2 подзаглавие/);
-  assert.match(description, /Кратко резюме:\nКратко резюме за продукта/);
-  assert.match(description, /Размери и материали:\nДърво, 15 см/);
-  assert.match(description, /За продукта:\nПърви абзац с HTML \.\n\nВтори абзац\./);
+  assert.doesNotMatch(description, /Кратко резюме:/);
+  assert.doesNotMatch(description, /Размери и материали:/);
+  assert.doesNotMatch(description, /За продукта:/);
+  assert.match(description, /Кратко резюме за продукта\n\nДърво, 15 см/);
+  assert.match(description, /Дърво, 15 см\n\nПърви абзац с HTML \.\n\nВтори абзац\./);
   assert.match(description, /Разгледайте продукта тук:\nhttps:\/\/shop\.example\.com\/produkti\/demo-product/);
   assert.ok(description.includes(`Facebook:\n${BAZAR_MERCHANT_FACEBOOK_URL}`));
   assert.ok(description.includes(`Магазин:\n${BAZAR_MERCHANT_STORE_URL}`));
@@ -130,7 +138,7 @@ test("resolveBazarMerchantDescription builds labeled plain-text sections", () =>
   assert.doesNotMatch(description, /personalization|ordering_info|additional_info|meta_title|og_title/i);
 });
 
-test("resolveBazarMerchantDescription omits empty optional labels", () => {
+test("resolveBazarMerchantDescription omits empty optional blocks", () => {
   const description = resolveBazarMerchantDescription(
     makeProduct({
       headingSubtitle: "  ",
@@ -141,11 +149,36 @@ test("resolveBazarMerchantDescription omits empty optional labels", () => {
     "https://shop.example.com/produkti/demo-product",
   );
 
-  assert.match(description, /^Име:\nDemo Product/m);
+  assert.match(description, /^Demo Product\n\nРазгледайте продукта тук:/m);
+  assert.doesNotMatch(description, /Име:/);
   assert.doesNotMatch(description, /Подзаглавие:/);
   assert.doesNotMatch(description, /Кратко резюме:/);
   assert.doesNotMatch(description, /Размери и материали:/);
   assert.doesNotMatch(description, /За продукта:/);
+});
+
+test("bazar item renders description as CDATA with readable new lines", () => {
+  const item = {
+    id: "VM-000001",
+    title: "Demo Product",
+    description: "Demo Product\n\nКратко резюме\n\nРазгледайте продукта тук:\nhttps://shop.example.com/p",
+    link: "https://shop.example.com/p",
+    imageLink: "https://cdn.example.com/p.jpg",
+    additionalImageLinks: [],
+    availability: "in_stock" as const,
+    price: "19.90 EUR",
+    condition: "new" as const,
+    brand: "VeMiDi crafts",
+    mpn: "VM-000001",
+    identifierExists: false as const,
+    productType: "Подаръци",
+  };
+
+  const xml = renderBazarMerchantItemXml(item);
+  assert.match(
+    xml,
+    /<g:description><!\[CDATA\[Demo Product\n\nКратко резюме\n\nРазгледайте продукта тук:/,
+  );
 });
 
 test("bazar feed matches google feed ids and product types with same item count", () => {
@@ -198,8 +231,8 @@ test("bazar feed only changes g:description compared with google feed", () => {
   const bazarDescription = extractDescriptions(bazarXml)[0] ?? "";
 
   assert.notEqual(googleDescription, bazarDescription);
-  assert.match(bazarDescription, /Име:/);
-  assert.match(bazarDescription, /За продукта:/);
+  assert.doesNotMatch(bazarDescription, /Име:/);
+  assert.doesNotMatch(bazarDescription, /За продукта:/);
   assert.ok(bazarDescription.includes(BAZAR_MERCHANT_STORE_URL));
 
   const stripItemDescriptions = (xml: string) =>
@@ -209,7 +242,10 @@ test("bazar feed only changes g:description compared with google feed", () => {
       )
       .join("");
 
-  assert.equal(stripItemDescriptions(googleXml), stripItemDescriptions(bazarXml));
+  assert.equal(
+    normalizeXmlTagSpacing(stripItemDescriptions(googleXml)),
+    normalizeXmlTagSpacing(stripItemDescriptions(bazarXml)),
+  );
 });
 
 test("google merchant feed module remains unchanged for google route", () => {
