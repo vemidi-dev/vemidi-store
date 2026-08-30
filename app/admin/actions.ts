@@ -64,6 +64,7 @@ import {
   parseProductOptionGroups,
 } from "@/lib/admin/parse-option-groups";
 import { copyProductGalleryImagesToProduct } from "@/lib/admin/copy-product-gallery";
+import { duplicateProductWithCreateFallback } from "@/lib/admin/duplicate-product-fallback";
 import {
   buildDuplicateSuccessMessage,
   DUPLICATE_IMAGE_WARNING,
@@ -1567,13 +1568,32 @@ export async function duplicateProduct(formData: FormData) {
     redirectWith("error", "Липсва продукт за дублиране.", activeTab);
   }
 
-  const { data: newProductId, error: duplicateError } = await duplicateProductAtomic(
-    supabase,
-    sourceId,
-  );
+  const { data: rpcProductId, error: duplicateError } =
+    await duplicateProductAtomic(supabase, sourceId);
+
+  let newProductId = rpcProductId;
 
   if (duplicateError || !newProductId) {
-    redirectWith("error", getDuplicateProductErrorMessage(duplicateError), activeTab);
+    console.error("[duplicateProduct] admin_duplicate_product failed", {
+      code: duplicateError?.code,
+      message: duplicateError?.message,
+      details: duplicateError?.details,
+      hint: duplicateError?.hint,
+    });
+
+    const fallback = await duplicateProductWithCreateFallback(supabase, sourceId);
+    if (fallback.error || !fallback.data) {
+      console.error("[duplicateProduct] create fallback failed", {
+        error: fallback.error,
+      });
+      redirectWith(
+        "error",
+        fallback.error || getDuplicateProductErrorMessage(duplicateError),
+        activeTab,
+      );
+    }
+
+    newProductId = fallback.data;
   }
 
   const newId = String(newProductId);
