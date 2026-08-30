@@ -5,7 +5,7 @@ import test from "node:test";
 import { fileURLToPath } from "node:url";
 
 import {
-  BAZAR_MERCHANT_FACEBOOK_LABEL,
+  BAZAR_MERCHANT_FACEBOOK_URL,
   BAZAR_MERCHANT_SHIPPING_LINE,
   BAZAR_MERCHANT_STORE_LABEL,
   buildBazarMerchantFeedXml,
@@ -133,12 +133,11 @@ test("resolveBazarMerchantDescription builds readable plain-text blocks", () => 
   assert.match(description, /Дърво, 15 см\n\nПърви абзац с HTML \.\n\nВтори абзац\./);
   assert.match(
     description,
-    /Разгледайте продукта тук: https:\/\/shop\.example\.com\/produkti\/demo-product\nFacebook: VeMiDi Crafts\nМагазин: vemidi-crafts\.com\nИзпращаме с Еконт и Спиди до цялата страна\./,
+    /Разгледайте продукта тук: https:\/\/shop\.example\.com\/produkti\/demo-product\nFacebook: https:\/\/www\.facebook\.com\/profile\.php\?id=100090185474431\nМагазин: vemidi-crafts\.com\nИзпращаме с Еконт и Спиди до цялата страна\./,
   );
-  assert.ok(description.includes(`Facebook: ${BAZAR_MERCHANT_FACEBOOK_LABEL}`));
+  assert.ok(description.includes(`Facebook: ${BAZAR_MERCHANT_FACEBOOK_URL}`));
   assert.ok(description.includes(`Магазин: ${BAZAR_MERCHANT_STORE_LABEL}`));
   assert.ok(description.includes(BAZAR_MERCHANT_SHIPPING_LINE));
-  assert.doesNotMatch(description, /profile\.php\?id=/);
   assert.doesNotMatch(description, /<[^>]+>/);
   assert.doesNotMatch(description, /personalization|ordering_info|additional_info|meta_title|og_title/i);
 });
@@ -238,8 +237,8 @@ test("bazar feed only changes g:description compared with google feed", () => {
   assert.notEqual(googleDescription, bazarDescription);
   assert.doesNotMatch(bazarDescription, /Име:/);
   assert.doesNotMatch(bazarDescription, /За продукта:/);
+  assert.ok(bazarDescription.includes(BAZAR_MERCHANT_FACEBOOK_URL));
   assert.ok(bazarDescription.includes(BAZAR_MERCHANT_STORE_LABEL));
-  assert.doesNotMatch(bazarDescription, /profile\.php\?id=/);
 
   const stripItemDescriptions = (xml: string) =>
     [...xml.matchAll(/<item>[\s\S]*?<\/item>/g)]

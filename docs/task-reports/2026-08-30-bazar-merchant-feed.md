@@ -38,7 +38,7 @@ Plain text, без HTML, с празен ред между блоковете. �
 [description — абзаци запазени, HTML премахнат]
 
 Разгледайте продукта тук: [product link от feed item]
-Facebook: VeMiDi Crafts
+Facebook: https://www.facebook.com/profile.php?id=100090185474431
 Магазин: vemidi-crafts.com
 Изпращаме с Еконт и Спиди до цялата страна.
 ```
@@ -56,7 +56,7 @@ Facebook: VeMiDi Crafts
 - `g:description` се рендерира като CDATA, за да се запазят реалните нови редове.
 - Всеки продуктов блок е отделен с един празен ред.
 - Footer редовете са компактни, защото Bazar визуализира отделните label/URL редове с прекалено големи разстояния.
-- В description остава само продуктовият URL. Facebook и магазинът са кратки текстови насоки, защото Bazar не ги превръща надеждно в кликаеми линкове.
+- В description остават продуктовият URL и Facebook URL като plain text. Bazar не ги превръща надеждно в кликаеми линкове, но адресите присъстват за копиране.
 
 ### Полета, които **не** влизат
 
@@ -180,7 +180,7 @@ Sample live footer (first item):
 
 ```
 Разгледайте продукта тук: https://vemidi-crafts.com/produkti/...
-Facebook: VeMiDi Crafts
+Facebook: https://www.facebook.com/profile.php?id=100090185474431
 Магазин: vemidi-crafts.com
 Изпращаме с Еконт и Спиди до цялата страна.
 ```
@@ -193,5 +193,12 @@ Facebook: VeMiDi Crafts
 
 - **Branch:** `codex/bazar-readable-contact-labels`
 - **Reason:** Bazar.bg не превръща URL-ите в description в кликаеми линкове и пълният Facebook URL изглежда тежко в обявата.
-- **Bazar-only change:** продуктовият URL остава в `g:description`; Facebook редът става `Facebook: VeMiDi Crafts`, а магазинът става `Магазин: vemidi-crafts.com`.
+- **Bazar-only change:** продуктовият URL остава в `g:description`; Facebook редът отново съдържа пълния Facebook URL, а магазинът остава кратък домейн `Магазин: vemidi-crafts.com`.
 - **Google feed:** непроменен.
+
+## Facebook URL restore hotfix
+
+- **Branch:** `codex/bazar-restore-facebook-url`
+- **Reason:** Bazar.bg не прави URL-ите в description кликаеми, но пълният Facebook адрес трябва да присъства като текст.
+- **Bazar-only change:** footer блокът съдържа `Facebook: https://www.facebook.com/profile.php?id=100090185474431`.
+- **Known platform limitation:** кликаемостта на URL-и вътре в описанието зависи от Bazar.bg. Feed-ът може да подаде URL като plain text, но не може да принуди Bazar да го визуализира като anchor link.
