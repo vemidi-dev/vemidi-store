@@ -3,7 +3,7 @@
 Дата: 2026-08-30  
 Проект: `vemidi-dev/vemidi-store`  
 Spec: [PR #33](https://github.com/vemidi-dev/vemidi-store/pull/33) (merged → `main`) → `docs/product-json-import-v2.md`  
-Статус: **Phase 2 complete** — async validation + server actions + pipeline; no UI, no deploy  
+Статус: **Phase 3 complete** — Admin UI wizard; no deploy yet  
 Deploy: **не**  
 Template: **не**  
 Promo WIP (`D:\Cursor\src\supabase\product_promo_code_eligible.sql` и свързани локални промени): **не се включва**
@@ -508,7 +508,7 @@ UI: `ProductJsonImportSummary` — list with links; failed rows show stage + mes
 - [x] Promo WIP excluded
 - [x] Phase 1 lib + tests — **complete**
 - [x] Phase 2 server actions + pipeline extract — **complete**
-- [ ] Phase 3 admin UI
+- [x] Phase 3 admin UI — **complete**
 
 ---
 
@@ -610,6 +610,63 @@ Phase 1 + Phase 2 tests → 42/42 pass
 - Wire client wizard to `validateProductJsonImport` + `importProductsFromJson`
 - Manual QA with darvena-liniyka fixture + real uploads
 - **Без deploy** unless explicitly requested
+
+---
+
+## Phase 3 — Admin UI wizard
+
+Дата: 2026-08-30  
+Branch/worktree: `feat/product-json-import-v2-phase-3-ui` @ `D:\Cursor\src-admin-products-perf` (from `origin/main` after PR #35 merge)  
+Promo WIP: **не е пипан**
+
+### PR #35
+
+- Merged to `main` (`8587af7`) — Phase 2 actions/pipeline, **без deploy**.
+
+### Добавени / променени файлове
+
+| Path | Роля |
+|------|------|
+| `components/admin/product-json-import-panel.tsx` | Wizard: JSON + images → validate → import → summary |
+| `components/admin/product-json-import-preview-table.tsx` | Preview table + status badges |
+| `components/admin/product-json-import-summary.tsx` | Created/failed/warnings + edit links |
+| `app/admin/page.tsx` | `productsView=import` branch (lightweight, no list/create panels) |
+| `components/admin/product-list-slim-panel.tsx` | Link „Импорт от JSON“ |
+| `tests/product-json-import-ui-contract.test.ts` | Page/panel/action contract checks |
+
+### UI flow
+
+1. `/admin?tab=products&productsView=import`
+2. JSON file или textarea paste
+3. Multi-file image picker (client state до confirm)
+4. **Провери** → `validateProductJsonImport`
+5. Preview table (име, slug, цена, категории, снимки, статус)
+6. **Импорт като чернови** (disabled при blocking errors) → `importProductsFromJson`
+7. Summary in-page (без redirect) с edit links към `/admin?tab=products&editProduct=...`
+
+### Tests result
+
+```
+npm run typecheck → pass
+Phase 1 + Phase 2 + UI contract tests → pass
+```
+
+### Manual QA checklist (pre-deploy)
+
+- [ ] Open import view from products list link
+- [ ] Upload darvena-liniyka v2 JSON + 4 images → validate shows warnings only
+- [ ] Import creates draft with gallery
+- [ ] Edit link opens product in admin
+- [ ] Re-import same slug → blocking error in preview
+- [ ] Missing image file → import blocked for product
+- [ ] Back link returns to standard products view
+
+### Преди preview/deploy
+
+- Merge Phase 3 PR to main
+- Manual QA on preview environment with real admin auth + Supabase
+- Optional: docs/admin-panel.md section
+- **Deploy only when explicitly requested**
 
 ---
 

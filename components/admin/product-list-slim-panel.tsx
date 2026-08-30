@@ -111,12 +111,20 @@ export function ProductListSlimPanel({
             {total} продукта · server-side търсене, филтри и пагинация
           </p>
         </div>
-        <Link
-          href="/admin?tab=products&productsView=ordering&orderingScope=home"
-          className="rounded-lg border border-boutique-line px-3 py-1.5 text-xs font-semibold text-boutique-ink transition hover:border-boutique-sage-deep/40"
-        >
-          Подредба на продукти
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href="/admin?tab=products&productsView=import"
+            className="rounded-lg border border-boutique-line px-3 py-1.5 text-xs font-semibold text-boutique-ink transition hover:border-boutique-sage-deep/40"
+          >
+            Импорт от JSON
+          </Link>
+          <Link
+            href="/admin?tab=products&productsView=ordering&orderingScope=home"
+            className="rounded-lg border border-boutique-line px-3 py-1.5 text-xs font-semibold text-boutique-ink transition hover:border-boutique-sage-deep/40"
+          >
+            Подредба на продукти
+          </Link>
+        </div>
       </div>
 
       <ProductListFilters query={query} categories={categories} />
