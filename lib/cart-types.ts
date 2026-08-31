@@ -39,6 +39,11 @@ export type CartLine = {
   displaySnapshot?: CartLineDisplaySnapshot;
   /** Snapshot of stocked quantity limit when the line was added. */
   maxCartQuantity?: number;
+  /**
+   * Whether percentage promo codes apply to this line.
+   * Missing / undefined means eligible (legacy cart lines).
+   */
+  promoCodeEligible?: boolean;
   /** Snapshot when the item was added from a product upsell offer. */
   upsell?: CartLineUpsell;
 };

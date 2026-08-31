@@ -146,6 +146,8 @@ export function prepareCartLineInput(
       quantityPriceTiers,
       quantity: normalizedQuantity,
       maxCartQuantity: input.maxCartQuantityOverride ?? input.product.maxCartQuantity,
+      // Missing product flag → eligible (legacy / pre-migration).
+      promoCodeEligible: input.product.promoCodeEligible !== false,
       campaign: storedAttribution?.campaign,
       source: storedAttribution?.source,
       landingUrl: storedAttribution?.landingUrl,
@@ -199,6 +201,8 @@ export function mergeCartLineForAdd(
         prepared.line.personalizationDelta ?? line.personalizationDelta,
       quantityPriceTiers:
         prepared.line.quantityPriceTiers ?? line.quantityPriceTiers,
+      promoCodeEligible:
+        prepared.line.promoCodeEligible ?? line.promoCodeEligible,
       campaign: mergedAttribution?.campaign ?? line.campaign,
       source: mergedAttribution?.source ?? line.source,
       landingUrl: mergedAttribution?.landingUrl ?? line.landingUrl,

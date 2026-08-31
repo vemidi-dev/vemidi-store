@@ -52,6 +52,8 @@ export const checkoutErrorMessages: Record<string, string> = {
   coupon_used: "Този код за отстъпка вече е използван.",
   coupon_inactive: "Този код за отстъпка не е активен.",
   coupon_expired: "Срокът на валидност на кода за отстъпка е изтекъл.",
+  coupon_not_applicable:
+    "Този код не важи за избраните продукти. За заготовки и материали се използват отделни отстъпки според количество.",
 };
 
 export function mapCheckoutError(message: string) {

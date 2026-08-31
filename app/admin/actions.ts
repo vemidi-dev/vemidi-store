@@ -714,6 +714,10 @@ export async function createProduct(formData: FormData) {
     formData,
     adminFormFields.product.showQuantitySelector,
   );
+  const promoCodeEligible = isChecked(
+    formData,
+    adminFormFields.product.promoCodeEligible,
+  );
   const quantityPriceTiers = getQuantityPriceTiers(formData);
   const {
     fulfillmentType,
@@ -826,6 +830,7 @@ export async function createProduct(formData: FormData) {
     postCreate: {
       visibility,
       showQuantitySelector,
+      promoCodeEligible,
       quantityPriceTiers,
       personalizationOpenByDefault,
     },
@@ -932,6 +937,10 @@ export async function updateProduct(formData: FormData) {
   const showQuantitySelector = isChecked(
     formData,
     adminFormFields.product.showQuantitySelector,
+  );
+  const promoCodeEligible = isChecked(
+    formData,
+    adminFormFields.product.promoCodeEligible,
   );
   const quantityPriceTiers = getQuantityPriceTiers(formData);
   const {
@@ -1084,6 +1093,7 @@ export async function updateProduct(formData: FormData) {
       status: publicationStatus,
       visibility,
       show_quantity_selector: showQuantitySelector,
+      promo_code_eligible: promoCodeEligible,
       quantity_price_tiers: quantityPriceTiers,
       personalization_open_by_default: personalizationOpenByDefault,
     })
