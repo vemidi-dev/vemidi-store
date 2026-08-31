@@ -189,7 +189,7 @@ async function fetchStorefrontCatalog(): Promise<StorefrontCatalog> {
       supabase
         .from("products")
         .select(
-          "id,slug,product_code,name,heading_subtitle,subtitle,description,dimensions_materials,price,image_url,is_customizable,is_sold_out,show_quantity_selector,quantity_price_tiers,fulfillment_type,stock_quantity,card_badge,primary_category_id,meta_title,meta_description,og_title,og_description,status,visibility,catalog_sort_order,created_at,updated_at",
+          "id,slug,product_code,name,heading_subtitle,subtitle,description,dimensions_materials,price,image_url,is_customizable,is_sold_out,show_quantity_selector,promo_code_eligible,quantity_price_tiers,fulfillment_type,stock_quantity,card_badge,primary_category_id,meta_title,meta_description,og_title,og_description,status,visibility,catalog_sort_order,created_at,updated_at",
         )
         .eq("status", "published")
         .eq("visibility", "public"),
@@ -562,7 +562,7 @@ async function loadProductDetails(
   let productQuery = supabase
     .from("products")
     .select(
-      "id,slug,product_code,name,heading_subtitle,subtitle,description,additional_info,fulfillment_note,personalization_info,dimensions_materials,ordering_info,price,image_url,is_customizable,is_sold_out,show_quantity_selector,quantity_price_tiers,fulfillment_type,stock_quantity,card_badge,meta_title,meta_description,og_title,og_description,status,visibility,show_ready_product_cta,ready_product_cta_label,ready_product_cta_product_id,personalization_open_by_default",
+      "id,slug,product_code,name,heading_subtitle,subtitle,description,additional_info,fulfillment_note,personalization_info,dimensions_materials,ordering_info,price,image_url,is_customizable,is_sold_out,show_quantity_selector,promo_code_eligible,quantity_price_tiers,fulfillment_type,stock_quantity,card_badge,meta_title,meta_description,og_title,og_description,status,visibility,show_ready_product_cta,ready_product_cta_label,ready_product_cta_product_id,personalization_open_by_default",
     )
     .eq("id", productId);
 

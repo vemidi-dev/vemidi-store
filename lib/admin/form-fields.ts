@@ -22,6 +22,7 @@ export const adminFormFields = {
     isCustomizable: "is_customizable",
     isSoldOut: "is_sold_out",
     showQuantitySelector: "show_quantity_selector",
+    promoCodeEligible: "promo_code_eligible",
     quantityPriceTiers: "quantity_price_tiers",
     fulfillmentType: "fulfillment_type",
     stockQuantity: "stock_quantity",

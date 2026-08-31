@@ -247,6 +247,12 @@ export function parseStoredCart(raw: string | null): CartLine[] {
           ? value.personalizationDelta
           : undefined;
       const quantityPriceTiers = normalizeQuantityPriceTiers(value.quantityPriceTiers);
+      const promoCodeEligible =
+        value.promoCodeEligible === false
+          ? false
+          : value.promoCodeEligible === true
+            ? true
+            : undefined;
 
       lines.push({
         lineId: makeCartLineId(
@@ -273,6 +279,7 @@ export function parseStoredCart(raw: string | null): CartLine[] {
         ...(quantityPriceTiers.length ? { quantityPriceTiers } : {}),
         quantity: cappedQuantity,
         ...(maxCartQuantity !== undefined ? { maxCartQuantity } : {}),
+        ...(promoCodeEligible !== undefined ? { promoCodeEligible } : {}),
         campaign,
         source,
         landingUrl,

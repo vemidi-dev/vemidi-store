@@ -18,6 +18,7 @@ import { PageContainer } from "@/components/layout/page-container";
 import { formatEur } from "@/lib/format-eur";
 import {
   describeInvalidCouponCheckoutMessage,
+  getCartCouponSubtotals,
   type CouponPreviewResult,
 } from "@/lib/checkout/coupon";
 import {
@@ -64,6 +65,7 @@ function SubmitOrderButton({
 
 export function CheckoutPanel({ content }: { content: CheckoutPageContent }) {
   const { lines, subtotal, clear } = useCart();
+  const couponSubtotals = getCartCouponSubtotals(lines);
   const router = useRouter();
   const landingReturnUrl = resolveCheckoutLandingReturnUrl(lines);
   const landingReturnLinkProps = landingReturnUrl
@@ -91,7 +93,7 @@ export function CheckoutPanel({ content }: { content: CheckoutPageContent }) {
   useEffect(() => {
     setAppliedCoupon(null);
     setCouponError("");
-  }, [subtotal]);
+  }, [subtotal, couponSubtotals.eligibleSubtotal]);
 
   const clearCouponState = () => {
     setCouponInput("");
@@ -113,7 +115,8 @@ export function CheckoutPanel({ content }: { content: CheckoutPageContent }) {
     try {
       const result = await previewDiscountCoupon({
         code: couponInput,
-        subtotal,
+        subtotal: couponSubtotals.subtotal,
+        eligibleSubtotal: couponSubtotals.eligibleSubtotal,
       });
       if (!result.ok) {
         setAppliedCoupon(null);
@@ -470,6 +473,11 @@ export function CheckoutPanel({ content }: { content: CheckoutPageContent }) {
                     {appliedCoupon.code} · {appliedCoupon.discountPercentage}% · −
                     {formatEur(appliedCoupon.discountAmount)}
                   </p>
+                  {appliedCoupon.eligibilityMessage ? (
+                    <p className="mt-1 text-emerald-700/90">
+                      {appliedCoupon.eligibilityMessage}
+                    </p>
+                  ) : null}
                   <p className="mt-1 text-emerald-700/90">
                     Крайната сума се потвърждава отново при поръчка.
                   </p>

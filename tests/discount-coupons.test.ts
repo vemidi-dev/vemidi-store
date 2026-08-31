@@ -5,16 +5,33 @@ import {
   buildOrdersCustomerSearchOrFilter,
   parseOrdersQuery,
 } from "@/lib/admin/orders";
+import type { CartLine } from "@/lib/cart-types";
 import {
   buildCouponPreviewFailure,
   buildCouponPreviewSuccess,
+  COUPON_ELIGIBILITY_MESSAGES,
   computeCouponDiscount,
+  computeCouponOrderTotals,
   describeInvalidCouponCheckoutMessage,
   extractOrderCouponSummary,
+  getCartCouponSubtotals,
+  isCartLinePromoCodeEligible,
   isCouponExpired,
   normalizeCouponCode,
 } from "@/lib/checkout/coupon";
 import { checkoutErrorMessages, mapCheckoutError } from "@/lib/checkout/errors";
+
+function line(partial: Partial<CartLine> & Pick<CartLine, "price" | "quantity">): CartLine {
+  return {
+    lineId: partial.lineId ?? "line",
+    productId: partial.productId ?? "00000000-0000-4000-8000-000000000001",
+    slug: partial.slug ?? "product",
+    title: partial.title ?? "Product",
+    price: partial.price,
+    quantity: partial.quantity,
+    promoCodeEligible: partial.promoCodeEligible,
+  };
+}
 
 test("normalizeCouponCode trims uppercases and validates format", () => {
   assert.equal(normalizeCouponCode("  save10 "), "SAVE10");
@@ -30,6 +47,10 @@ test("mapCheckoutError localizes coupon failures including expired", () => {
   assert.equal(mapCheckoutError("coupon_used"), checkoutErrorMessages.coupon_used);
   assert.equal(mapCheckoutError("coupon_inactive"), checkoutErrorMessages.coupon_inactive);
   assert.equal(mapCheckoutError("coupon_expired"), checkoutErrorMessages.coupon_expired);
+  assert.equal(
+    mapCheckoutError("coupon_not_applicable"),
+    checkoutErrorMessages.coupon_not_applicable,
+  );
 });
 
 test("describeInvalidCouponCheckoutMessage explains code will not be applied", () => {
@@ -49,6 +70,10 @@ test("describeInvalidCouponCheckoutMessage explains code will not be applied", (
     describeInvalidCouponCheckoutMessage("coupon_inactive"),
     "Кодът е неактивен и няма да бъде приложен.",
   );
+  assert.equal(
+    describeInvalidCouponCheckoutMessage("coupon_not_applicable"),
+    COUPON_ELIGIBILITY_MESSAGES.none,
+  );
 });
 
 test("computeCouponDiscount rounds preview amounts and never goes below zero", () => {
@@ -66,6 +91,139 @@ test("computeCouponDiscount rounds preview amounts and never goes below zero", (
   });
 });
 
+test("all eligible products keep full-subtotal coupon math", () => {
+  const cart = getCartCouponSubtotals([
+    line({ price: 40, quantity: 1, promoCodeEligible: true }),
+    line({
+      lineId: "b",
+      productId: "00000000-0000-4000-8000-000000000002",
+      price: 40,
+      quantity: 1,
+      promoCodeEligible: true,
+    }),
+  ]);
+  assert.equal(cart.eligibility, "all");
+  assert.equal(cart.subtotal, 80);
+  assert.equal(cart.eligibleSubtotal, 80);
+
+  const preview = buildCouponPreviewSuccess({
+    code: "SAVE10",
+    discountPercentage: 10,
+    subtotal: cart.subtotal,
+    eligibleSubtotal: cart.eligibleSubtotal,
+  });
+  assert.equal(preview.discountAmount, 8);
+  assert.equal(preview.total, 72);
+  assert.equal(preview.eligibility, "all");
+  assert.equal(preview.eligibilityMessage, null);
+
+  assert.deepEqual(
+    computeCouponOrderTotals(cart.subtotal, cart.eligibleSubtotal, 10),
+    { subtotal: 80, eligibleSubtotal: 80, discountAmount: 8, total: 72 },
+  );
+});
+
+test("mixed cart applies percent only to eligible subtotal", () => {
+  const cart = getCartCouponSubtotals([
+    line({ price: 60, quantity: 1, promoCodeEligible: true }),
+    line({
+      lineId: "materials",
+      productId: "00000000-0000-4000-8000-000000000003",
+      price: 40,
+      quantity: 1,
+      promoCodeEligible: false,
+    }),
+  ]);
+  assert.equal(cart.eligibility, "partial");
+  assert.equal(cart.subtotal, 100);
+  assert.equal(cart.eligibleSubtotal, 60);
+
+  const preview = buildCouponPreviewSuccess({
+    code: "SAVE10",
+    discountPercentage: 10,
+    subtotal: cart.subtotal,
+    eligibleSubtotal: cart.eligibleSubtotal,
+  });
+  assert.equal(preview.discountAmount, 6);
+  assert.equal(preview.total, 94);
+  assert.equal(preview.eligibility, "partial");
+  assert.equal(preview.eligibilityMessage, COUPON_ELIGIBILITY_MESSAGES.partial);
+
+  assert.deepEqual(
+    computeCouponOrderTotals(cart.subtotal, cart.eligibleSubtotal, 10),
+    { subtotal: 100, eligibleSubtotal: 60, discountAmount: 6, total: 94 },
+  );
+});
+
+test("only non-eligible products yield zero discount and clear message", () => {
+  const cart = getCartCouponSubtotals([
+    line({ price: 25, quantity: 2, promoCodeEligible: false }),
+  ]);
+  assert.equal(cart.eligibility, "none");
+  assert.equal(cart.eligibleSubtotal, 0);
+
+  const totals = computeCouponOrderTotals(cart.subtotal, cart.eligibleSubtotal, 15);
+  assert.equal(totals.discountAmount, 0);
+  assert.equal(totals.total, 50);
+
+  const failure = buildCouponPreviewFailure("coupon_not_applicable");
+  assert.equal(failure.ok, false);
+  assert.equal(failure.message, COUPON_ELIGIBILITY_MESSAGES.none);
+  assert.equal(
+    describeInvalidCouponCheckoutMessage("coupon_not_applicable"),
+    COUPON_ELIGIBILITY_MESSAGES.none,
+  );
+});
+
+test("legacy cart lines without promoCodeEligible are treated as eligible", () => {
+  assert.equal(isCartLinePromoCodeEligible({}), true);
+  assert.equal(isCartLinePromoCodeEligible({ promoCodeEligible: undefined }), true);
+  assert.equal(isCartLinePromoCodeEligible({ promoCodeEligible: true }), true);
+  assert.equal(isCartLinePromoCodeEligible({ promoCodeEligible: false }), false);
+
+  const cart = getCartCouponSubtotals([
+    line({ price: 30, quantity: 1 }),
+    line({
+      lineId: "excluded",
+      productId: "00000000-0000-4000-8000-000000000004",
+      price: 20,
+      quantity: 1,
+      promoCodeEligible: false,
+    }),
+  ]);
+  assert.equal(cart.subtotal, 50);
+  assert.equal(cart.eligibleSubtotal, 30);
+  assert.equal(cart.eligibility, "partial");
+});
+
+test("preview and order coupon totals stay aligned for eligible bases", () => {
+  const cases = [
+    { full: 80, eligible: 80, pct: 10 },
+    { full: 100, eligible: 60, pct: 10 },
+    { full: 50, eligible: 0, pct: 15 },
+    { full: 33.33, eligible: 33.33, pct: 10 },
+  ];
+
+  for (const entry of cases) {
+    const orderMath = computeCouponOrderTotals(entry.full, entry.eligible, entry.pct);
+    if (entry.eligible <= 0) {
+      assert.equal(orderMath.discountAmount, 0);
+      assert.equal(orderMath.total, entry.full);
+      continue;
+    }
+    const preview = buildCouponPreviewSuccess({
+      code: "SAVE",
+      discountPercentage: entry.pct,
+      subtotal: entry.full,
+      eligibleSubtotal: entry.eligible,
+    });
+    assert.equal(preview.discountAmount, orderMath.discountAmount);
+    assert.equal(preview.total, orderMath.total);
+    assert.equal(preview.subtotal, orderMath.subtotal);
+    assert.equal(preview.eligibleSubtotal, orderMath.eligibleSubtotal);
+  }
+});
+
 test("coupon preview helpers never imply used marking", () => {
   const success = buildCouponPreviewSuccess({
     code: "SAVE10",
@@ -77,6 +235,8 @@ test("coupon preview helpers never imply used marking", () => {
   assert.equal(success.code, "SAVE10");
   assert.equal(success.discountAmount, 8);
   assert.equal(success.total, 72);
+  assert.equal(success.eligibleSubtotal, 80);
+  assert.equal(success.eligibility, "all");
   assert.equal(success.expiresAt, "2026-12-31T21:00:00.000Z");
   assert.equal("used_at" in success, false);
   assert.equal("used_order_id" in success, false);

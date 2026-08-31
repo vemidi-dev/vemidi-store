@@ -57,6 +57,11 @@ export type Product = {
   soldOut?: boolean;
   /** When true, customers can choose more than one item on the product page. */
   allowQuantitySelector?: boolean;
+  /**
+   * When false, percentage discount coupons do not apply to this product.
+   * Missing / undefined is treated as eligible (legacy carts and products).
+   */
+  promoCodeEligible?: boolean;
   /** Optional unit-price tiers selected by total line quantity. */
   quantityPriceTiers?: ProductQuantityPriceTier[];
   fulfillmentType: ProductFulfillmentType;

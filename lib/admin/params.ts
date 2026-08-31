@@ -79,6 +79,7 @@ export function parseProductCreateDraft(raw: string): ProductCreateDraft | null 
       is_customizable?: unknown;
       is_sold_out?: unknown;
       show_quantity_selector?: unknown;
+      promo_code_eligible?: unknown;
       quantity_price_tiers?: unknown;
       fulfillment_type?: unknown;
       stock_quantity?: unknown;
@@ -328,6 +329,8 @@ export function parseProductCreateDraft(raw: string): ProductCreateDraft | null 
       isCustomizable: parsed.is_customizable === true,
       isSoldOut: parsed.is_sold_out === true,
       showQuantitySelector: parsed.show_quantity_selector === true,
+      // Legacy drafts without the field stay eligible (default true).
+      promoCodeEligible: parsed.promo_code_eligible !== false,
       quantityPriceTiers: normalizeQuantityPriceTiers(parsed.quantity_price_tiers),
       fulfillmentType:
         parsed.fulfillment_type === "stocked" || parsed.fulfillment_type === "unavailable"
