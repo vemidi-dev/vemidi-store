@@ -12,6 +12,8 @@ import { createServiceClient } from "@/lib/supabase/service";
 export async function previewDiscountCoupon(input: {
   code: string;
   subtotal: number;
+  /** Line totals eligible for percentage coupons. Defaults to full subtotal. */
+  eligibleSubtotal?: number;
 }): Promise<CouponPreviewResult> {
   const code = normalizeCouponCode(input.code);
   if (!code) {
@@ -20,6 +22,14 @@ export async function previewDiscountCoupon(input: {
 
   const subtotal = Number(input.subtotal);
   if (!Number.isFinite(subtotal) || subtotal < 0) {
+    return buildCouponPreviewFailure("coupon_invalid");
+  }
+
+  const eligibleSubtotal =
+    input.eligibleSubtotal === undefined
+      ? subtotal
+      : Number(input.eligibleSubtotal);
+  if (!Number.isFinite(eligibleSubtotal) || eligibleSubtotal < 0) {
     return buildCouponPreviewFailure("coupon_invalid");
   }
 
@@ -64,10 +74,15 @@ export async function previewDiscountCoupon(input: {
     return buildCouponPreviewFailure("coupon_invalid");
   }
 
+  if (eligibleSubtotal <= 0) {
+    return buildCouponPreviewFailure("coupon_not_applicable");
+  }
+
   return buildCouponPreviewSuccess({
     code: String(data.code),
     discountPercentage: percentage,
     subtotal,
+    eligibleSubtotal,
     expiresAt,
   });
 }

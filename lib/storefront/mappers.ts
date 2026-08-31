@@ -74,6 +74,7 @@ export type ProductRow = {
   is_customizable: boolean;
   is_sold_out?: boolean;
   show_quantity_selector?: boolean | null;
+  promo_code_eligible?: boolean | null;
   quantity_price_tiers?: unknown;
   fulfillment_type?: ProductFulfillmentType;
   stock_quantity?: number | null;
@@ -148,6 +149,8 @@ export function toProduct(
     customizable: row.is_customizable,
     soldOut: Boolean(row.is_sold_out),
     allowQuantitySelector: Boolean(row.show_quantity_selector),
+    // Missing column / null → eligible (legacy rows and pre-migration carts).
+    promoCodeEligible: row.promo_code_eligible !== false,
     quantityPriceTiers: normalizeQuantityPriceTiers(row.quantity_price_tiers),
     fulfillmentType: row.fulfillment_type ?? "made_to_order",
     stockQuantity: row.stock_quantity ?? null,

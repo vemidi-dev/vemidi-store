@@ -1,10 +1,20 @@
 import { checkoutErrorMessages } from "@/lib/checkout/errors";
+import type { CartLine } from "@/lib/cart-types";
 
 export type CouponFailureCode =
   | "coupon_invalid"
   | "coupon_used"
   | "coupon_inactive"
-  | "coupon_expired";
+  | "coupon_expired"
+  | "coupon_not_applicable";
+
+export type CouponEligibilityKind = "all" | "partial" | "none";
+
+export const COUPON_ELIGIBILITY_MESSAGES = {
+  partial:
+    "Кодът е приложен само към продуктите, за които важи. За заготовки и материали се използват отделни отстъпки според количество.",
+  none: "Този код не важи за избраните продукти. За заготовки и материали се използват отделни отстъпки според количество.",
+} as const;
 
 export type CouponPreviewResult =
   | {
@@ -12,9 +22,12 @@ export type CouponPreviewResult =
       code: string;
       discountPercentage: number;
       subtotal: number;
+      eligibleSubtotal: number;
+      eligibility: Exclude<CouponEligibilityKind, "none">;
       discountAmount: number;
       total: number;
       expiresAt: string | null;
+      eligibilityMessage: string | null;
     }
   | {
       ok: false;
@@ -30,6 +43,50 @@ export type OrderCouponSummary = {
   totalPrice: number | null;
   couponExpiresAt: string | null;
 };
+
+function roundMoney(value: number) {
+  return Math.round(value * 100) / 100;
+}
+
+/** Missing / legacy cart lines are treated as eligible. */
+export function isCartLinePromoCodeEligible(
+  line: Pick<CartLine, "promoCodeEligible">,
+): boolean {
+  return line.promoCodeEligible !== false;
+}
+
+export function getCartCouponSubtotals(lines: CartLine[]) {
+  let subtotal = 0;
+  let eligibleSubtotal = 0;
+  let hasIneligibleLines = false;
+
+  for (const line of lines) {
+    const lineTotal = line.price * line.quantity;
+    subtotal += lineTotal;
+    if (isCartLinePromoCodeEligible(line)) {
+      eligibleSubtotal += lineTotal;
+    } else {
+      hasIneligibleLines = true;
+    }
+  }
+
+  const roundedSubtotal = roundMoney(Math.max(0, subtotal));
+  const roundedEligible = roundMoney(Math.max(0, eligibleSubtotal));
+  const eligibility: CouponEligibilityKind =
+    roundedEligible <= 0
+      ? "none"
+      : hasIneligibleLines
+        ? "partial"
+        : "all";
+
+  return {
+    subtotal: roundedSubtotal,
+    eligibleSubtotal: roundedEligible,
+    hasIneligibleLines,
+    hasEligibleLines: roundedEligible > 0,
+    eligibility,
+  };
+}
 
 export function normalizeCouponCode(raw: unknown): string | null {
   if (typeof raw !== "string") {
@@ -81,14 +138,62 @@ export function computeCouponDiscount(
   };
 }
 
+/** Percent coupon on eligible subtotal; order total uses full cart subtotal. */
+export function computeCouponOrderTotals(
+  fullSubtotal: number,
+  eligibleSubtotal: number,
+  discountPercentage: number,
+): {
+  subtotal: number;
+  eligibleSubtotal: number;
+  discountAmount: number;
+  total: number;
+} {
+  const safeFull = Number.isFinite(fullSubtotal) ? Math.max(0, fullSubtotal) : 0;
+  const safeEligible = Number.isFinite(eligibleSubtotal)
+    ? Math.max(0, Math.min(eligibleSubtotal, safeFull))
+    : 0;
+  const { discountAmount } = computeCouponDiscount(safeEligible, discountPercentage);
+
+  return {
+    subtotal: roundMoney(safeFull),
+    eligibleSubtotal: roundMoney(safeEligible),
+    discountAmount,
+    total: roundMoney(Math.max(0, safeFull - discountAmount)),
+  };
+}
+
+export function resolveCouponEligibility(
+  fullSubtotal: number,
+  eligibleSubtotal: number,
+): CouponEligibilityKind {
+  const safeFull = Number.isFinite(fullSubtotal) ? Math.max(0, fullSubtotal) : 0;
+  const safeEligible = Number.isFinite(eligibleSubtotal)
+    ? Math.max(0, eligibleSubtotal)
+    : 0;
+
+  if (safeEligible <= 0) {
+    return "none";
+  }
+  if (safeEligible + 0.0001 < safeFull) {
+    return "partial";
+  }
+  return "all";
+}
+
 export function buildCouponPreviewSuccess(input: {
   code: string;
   discountPercentage: number;
   subtotal: number;
+  eligibleSubtotal?: number;
   expiresAt?: string | null;
 }): Extract<CouponPreviewResult, { ok: true }> {
-  const { discountAmount, total } = computeCouponDiscount(
+  const eligibleSubtotal =
+    input.eligibleSubtotal === undefined ? input.subtotal : input.eligibleSubtotal;
+  const eligibility = resolveCouponEligibility(input.subtotal, eligibleSubtotal);
+  const totals = computeCouponOrderTotals(
     input.subtotal,
+    eligibleSubtotal,
     input.discountPercentage,
   );
 
@@ -96,10 +201,14 @@ export function buildCouponPreviewSuccess(input: {
     ok: true,
     code: input.code,
     discountPercentage: input.discountPercentage,
-    subtotal: Math.round(Math.max(0, input.subtotal) * 100) / 100,
-    discountAmount,
-    total,
+    subtotal: totals.subtotal,
+    eligibleSubtotal: totals.eligibleSubtotal,
+    eligibility: eligibility === "none" ? "all" : eligibility,
+    discountAmount: totals.discountAmount,
+    total: totals.total,
     expiresAt: input.expiresAt ?? null,
+    eligibilityMessage:
+      eligibility === "partial" ? COUPON_ELIGIBILITY_MESSAGES.partial : null,
   };
 }
 
@@ -109,7 +218,10 @@ export function buildCouponPreviewFailure(
   return {
     ok: false,
     code,
-    message: checkoutErrorMessages[code],
+    message:
+      code === "coupon_not_applicable"
+        ? COUPON_ELIGIBILITY_MESSAGES.none
+        : checkoutErrorMessages[code],
   };
 }
 
@@ -124,6 +236,8 @@ export function describeInvalidCouponCheckoutMessage(
       return "Кодът е вече използван и няма да бъде приложен.";
     case "coupon_inactive":
       return "Кодът е неактивен и няма да бъде приложен.";
+    case "coupon_not_applicable":
+      return COUPON_ELIGIBILITY_MESSAGES.none;
     case "coupon_invalid":
     default:
       return "Кодът е невалиден и няма да бъде приложен.";
