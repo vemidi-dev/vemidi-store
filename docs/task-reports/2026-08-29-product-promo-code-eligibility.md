@@ -142,3 +142,30 @@ npx tsx --test tests/discount-coupons.test.ts tests/admin-form-data.test.ts test
 - Въвежда купон.
 - Ако купонът е невалиден или не важи за текущите продукти, се показва съобщение, но вече попълнените checkout данни остават на екрана.
 - Ако купонът е валиден, summary-то се обновява без загуба на delivery state.
+
+## Coupon preview invalid-state polish — 2026-09-08
+
+При ръчен mixed-cart тест беше видяно съобщение `Кодът е невалиден и няма да бъде приложен.` вместо expected partial message. Този текст може да идва от две различни причини: реално липсващ/невалиден код или технически проблем при проверката на купона.
+
+### Fix
+
+- Добавен отделен failure code `coupon_unavailable`.
+- Preview route/helper вече връщат `coupon_unavailable`, когато service client липсва или Supabase query върне грешка.
+- Истински липсващ код остава `coupon_invalid`.
+- Lookup-ът на купони вече е case-insensitive:
+  - checkout preview използва `.ilike("code", code)`;
+  - SQL `create_store_order` използва `where upper(code) = v_coupon_code`.
+
+### Проверки
+
+```text
+npx tsx --test tests/discount-coupons.test.ts tests/checkout-coupon-preview-ux.test.ts tests/admin-form-data.test.ts → 24/24 pass
+npm run typecheck → pass
+```
+
+### Следващ ръчен smoke
+
+1. Пробвай същия купон отново със смесена количка.
+2. Ако вече показва partial message, проблемът е бил lookup/preview.
+3. Ако пак пише `Кодът е невалиден...`, конкретният код не се намира в `discount_coupons` или не минава формата `A-Z/0-9`, 4–32 символа.
+4. Ако пише `Купонът временно не може да бъде проверен...`, има проблем с Preview env/Supabase достъпа, не с логиката на eligible продуктите.

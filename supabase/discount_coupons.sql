@@ -534,7 +534,7 @@ begin
       expires_at
       into v_coupon
       from public.discount_coupons
-      where code = v_coupon_code
+      where upper(code) = v_coupon_code
       for update;
 
     if not found then

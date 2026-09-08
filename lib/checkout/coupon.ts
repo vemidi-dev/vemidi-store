@@ -6,7 +6,8 @@ export type CouponFailureCode =
   | "coupon_used"
   | "coupon_inactive"
   | "coupon_expired"
-  | "coupon_not_applicable";
+  | "coupon_not_applicable"
+  | "coupon_unavailable";
 
 export type CouponEligibilityKind = "all" | "partial" | "none";
 
@@ -238,6 +239,8 @@ export function describeInvalidCouponCheckoutMessage(
       return "Кодът е неактивен и няма да бъде приложен.";
     case "coupon_not_applicable":
       return COUPON_ELIGIBILITY_MESSAGES.none;
+    case "coupon_unavailable":
+      return "Купонът временно не може да бъде проверен. Опитайте отново след малко.";
     case "coupon_invalid":
     default:
       return "Кодът е невалиден и няма да бъде приложен.";

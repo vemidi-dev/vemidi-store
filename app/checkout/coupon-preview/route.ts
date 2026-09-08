@@ -28,11 +28,7 @@ export async function POST(request: Request) {
     return NextResponse.json(result);
   } catch {
     return NextResponse.json(
-      {
-        ok: false,
-        code: "coupon_invalid",
-        message: "Купонът временно не може да бъде проверен.",
-      },
+      buildCouponPreviewFailure("coupon_unavailable"),
       { status: 200 },
     );
   }

@@ -21,3 +21,17 @@ test("checkout coupon preview uses fetch endpoint so form state is not remounted
   assert.match(routeSource, /previewDiscountCouponForCheckout/);
   assert.match(routeSource, /NextResponse\.json/);
 });
+
+test("coupon lookup keeps preview and order case-insensitive", () => {
+  const previewSource = readFileSync(
+    path.join(root, "lib/checkout/coupon-preview.ts"),
+    "utf8",
+  );
+  const migrationSource = readFileSync(
+    path.join(root, "supabase/product_promo_code_eligible.sql"),
+    "utf8",
+  );
+
+  assert.match(previewSource, /\.ilike\("code", code\)/);
+  assert.match(migrationSource, /where upper\(code\) = v_coupon_code/);
+});

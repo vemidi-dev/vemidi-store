@@ -37,20 +37,20 @@ export async function previewDiscountCouponForCheckout(
 
   const supabase = createServiceClient();
   if (!supabase) {
-    return {
-      ok: false,
-      code: "coupon_invalid",
-      message: "Купонът временно не може да бъде проверен.",
-    };
+    return buildCouponPreviewFailure("coupon_unavailable");
   }
 
   const { data, error } = await supabase
     .from("discount_coupons")
     .select("code,discount_percentage,is_active,used_at,used_order_id,expires_at")
-    .eq("code", code)
+    .ilike("code", code)
     .maybeSingle();
 
-  if (error || !data) {
+  if (error) {
+    return buildCouponPreviewFailure("coupon_unavailable");
+  }
+
+  if (!data) {
     return buildCouponPreviewFailure("coupon_invalid");
   }
 

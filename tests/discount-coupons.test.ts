@@ -48,6 +48,10 @@ test("mapCheckoutError localizes coupon failures including expired", () => {
   assert.equal(mapCheckoutError("coupon_inactive"), checkoutErrorMessages.coupon_inactive);
   assert.equal(mapCheckoutError("coupon_expired"), checkoutErrorMessages.coupon_expired);
   assert.equal(
+    mapCheckoutError("coupon_unavailable"),
+    checkoutErrorMessages.coupon_unavailable,
+  );
+  assert.equal(
     mapCheckoutError("coupon_not_applicable"),
     checkoutErrorMessages.coupon_not_applicable,
   );
@@ -73,6 +77,10 @@ test("describeInvalidCouponCheckoutMessage explains code will not be applied", (
   assert.equal(
     describeInvalidCouponCheckoutMessage("coupon_not_applicable"),
     COUPON_ELIGIBILITY_MESSAGES.none,
+  );
+  assert.equal(
+    describeInvalidCouponCheckoutMessage("coupon_unavailable"),
+    "Купонът временно не може да бъде проверен. Опитайте отново след малко.",
   );
 });
 
@@ -249,6 +257,11 @@ test("coupon preview helpers never imply used marking", () => {
   assert.equal(expired.ok, false);
   assert.equal(expired.code, "coupon_expired");
   assert.equal(expired.message, checkoutErrorMessages.coupon_expired);
+
+  const unavailable = buildCouponPreviewFailure("coupon_unavailable");
+  assert.equal(unavailable.ok, false);
+  assert.equal(unavailable.code, "coupon_unavailable");
+  assert.equal(unavailable.message, checkoutErrorMessages.coupon_unavailable);
 });
 
 test("isCouponExpired treats missing expiry as never expired", () => {

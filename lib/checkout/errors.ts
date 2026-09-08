@@ -54,6 +54,7 @@ export const checkoutErrorMessages: Record<string, string> = {
   coupon_expired: "Срокът на валидност на кода за отстъпка е изтекъл.",
   coupon_not_applicable:
     "Този код не важи за избраните продукти. За заготовки и материали се използват отделни отстъпки според количество.",
+  coupon_unavailable: "Купонът временно не може да бъде проверен.",
 };
 
 export function mapCheckoutError(message: string) {
