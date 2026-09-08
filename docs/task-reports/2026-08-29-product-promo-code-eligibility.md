@@ -123,3 +123,22 @@ npx tsx --test tests/discount-coupons.test.ts tests/admin-form-data.test.ts test
 3. Ръчно изпълнение на `supabase/product_promo_code_eligible.sql` в production Supabase **преди** production deploy на app кода.
 4. Admin smoke: за заготовки/материали отметката `Промо кодовете важат за този продукт` трябва да се махне.
 5. Checkout smoke с eligible, mixed и само non-eligible количка.
+
+## Checkout coupon preview UX fix — 2026-09-08
+
+При ръчен preview тест беше установено, че натискане на `Приложи` за купон може да изчисти вече въведените данни за доставка. Причината е, че `CheckoutPanel` извикваше `previewDiscountCoupon()` директно като server action от client component; това може да предизвика RSC refresh/remount на checkout формата, а `CheckoutDeliveryFields` държи delivery state локално.
+
+### Fix
+
+- Добавен shared server helper: `lib/checkout/coupon-preview.ts`.
+- `app/checkout/coupon-actions.ts` остава wrapper за съвместимост.
+- Добавен JSON endpoint: `POST /checkout/coupon-preview`.
+- `components/checkout/checkout-panel.tsx` вече използва `fetch("/checkout/coupon-preview")`, което проверява купона без refresh на страницата.
+- Добавен regression test: `tests/checkout-coupon-preview-ux.test.ts`.
+
+### Очакван UX след fix-а
+
+- Клиентът попълва име/телефон/имейл/доставка.
+- Въвежда купон.
+- Ако купонът е невалиден или не важи за текущите продукти, се показва съобщение, но вече попълнените checkout данни остават на екрана.
+- Ако купонът е валиден, summary-то се обновява без загуба на delivery state.

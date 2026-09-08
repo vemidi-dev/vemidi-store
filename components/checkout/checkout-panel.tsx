@@ -9,7 +9,6 @@ import {
   createStoreOrder,
   type CheckoutActionState,
 } from "@/app/checkout/actions";
-import { previewDiscountCoupon } from "@/app/checkout/coupon-actions";
 import { CheckoutDeliveryFields } from "@/components/checkout/checkout-delivery-fields";
 import { MetaPixelInitiateCheckoutBridge } from "@/components/consent/meta-pixel-initiate-checkout-bridge";
 import { CartLineSummaryDetails } from "@/components/cart/cart-line-summary-details";
@@ -113,11 +112,22 @@ export function CheckoutPanel({ content }: { content: CheckoutPageContent }) {
     setCouponPending(true);
     setCouponError("");
     try {
-      const result = await previewDiscountCoupon({
-        code: couponInput,
-        subtotal: couponSubtotals.subtotal,
-        eligibleSubtotal: couponSubtotals.eligibleSubtotal,
+      const response = await fetch("/checkout/coupon-preview", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          code: couponInput,
+          subtotal: couponSubtotals.subtotal,
+          eligibleSubtotal: couponSubtotals.eligibleSubtotal,
+        }),
       });
+      if (!response.ok) {
+        throw new Error("coupon_preview_failed");
+      }
+
+      const result = (await response.json()) as CouponPreviewResult;
       if (!result.ok) {
         setAppliedCoupon(null);
         setCouponError(describeInvalidCouponCheckoutMessage(result.code));
