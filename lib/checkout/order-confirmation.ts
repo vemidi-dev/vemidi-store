@@ -16,7 +16,7 @@ export type PurchaseAnalyticsPayload = {
   value: number;
   currency: string;
   itemCount: number;
-  /** Non-PII product identifiers (storefront slugs). */
+  /** Non-PII product identifiers matching Google Merchant / Meta catalog IDs. */
   contentIds?: string[];
   contents?: PurchaseAnalyticsContentItem[];
   /** Short public order reference — safe for Meta `eventID` / future CAPI dedup. */

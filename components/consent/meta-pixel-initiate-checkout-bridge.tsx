@@ -5,7 +5,12 @@ import { useEffect, useRef } from "react";
 import { trackMetaInitiateCheckout } from "@/lib/consent/meta-pixel-client";
 
 type MetaPixelInitiateCheckoutBridgeProps = {
-  lines: Array<{ slug: string; quantity: number; price: number }>;
+  lines: Array<{
+    catalogProductId?: string;
+    productId?: string;
+    quantity: number;
+    price: number;
+  }>;
   subtotal: number;
 };
 

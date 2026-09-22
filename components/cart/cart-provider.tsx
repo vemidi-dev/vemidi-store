@@ -39,6 +39,7 @@ import {
   type CartLineUpsell,
 } from "@/lib/cart-types";
 import { trackMetaAddToCart } from "@/lib/consent/meta-pixel-client";
+import { resolveMerchantProductId } from "@/lib/merchant/product-id";
 import type { SelectedProductColor } from "@/lib/product-colors";
 import type { ProductPersonalizationValue } from "@/lib/product-personalization";
 import type { ProductOptionSelection } from "@/lib/product-options";
@@ -218,7 +219,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         showAddedToast(product, prepared.normalizedQuantity, prepared.line.price);
       }
       trackMetaAddToCart({
-        slug: product.slug,
+        catalogProductId:
+          prepared.line.catalogProductId ?? resolveMerchantProductId(product),
         title: product.title,
         price: prepared.line.price,
         quantity: prepared.normalizedQuantity,

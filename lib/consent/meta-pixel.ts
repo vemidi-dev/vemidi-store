@@ -52,17 +52,19 @@ function normalizeQuantity(value: number): number {
 }
 
 export function buildMetaViewContentPayload(input: {
-  slug: string;
+  catalogProductId: string;
   title: string;
   price: number;
 }): MetaPixelEcommercePayload {
+  const productId = input.catalogProductId.trim();
+
   return {
-    content_ids: [input.slug],
+    content_ids: [productId],
     content_type: "product",
     content_name: input.title,
     contents: [
       {
-        id: input.slug,
+        id: productId,
         quantity: 1,
         item_price: input.price,
       },
@@ -73,20 +75,21 @@ export function buildMetaViewContentPayload(input: {
 }
 
 export function buildMetaAddToCartPayload(input: {
-  slug: string;
+  catalogProductId: string;
   title: string;
   price: number;
   quantity: number;
 }): MetaPixelEcommercePayload {
   const quantity = normalizeQuantity(input.quantity);
+  const productId = input.catalogProductId.trim();
 
   return {
-    content_ids: [input.slug],
+    content_ids: [productId],
     content_type: "product",
     content_name: input.title,
     contents: [
       {
-        id: input.slug,
+        id: productId,
         quantity,
         item_price: input.price,
       },
@@ -98,14 +101,21 @@ export function buildMetaAddToCartPayload(input: {
 }
 
 export function buildMetaInitiateCheckoutPayload(input: {
-  lines: Array<{ slug: string; quantity: number; price: number }>;
+  lines: Array<{
+    catalogProductId?: string;
+    productId?: string;
+    quantity: number;
+    price: number;
+  }>;
   subtotal: number;
 }): MetaPixelEcommercePayload {
-  const contents = input.lines.map((line) => ({
-    id: line.slug,
-    quantity: normalizeQuantity(line.quantity),
-    item_price: line.price,
-  }));
+  const contents = input.lines
+    .map((line) => ({
+      id: (line.catalogProductId ?? line.productId ?? "").trim(),
+      quantity: normalizeQuantity(line.quantity),
+      item_price: line.price,
+    }))
+    .filter((item) => item.id);
 
   return {
     content_ids: contents.map((item) => item.id),

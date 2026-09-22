@@ -10,6 +10,7 @@ import {
   isProductCatalogVisible,
   type ProductVisibility,
 } from "@/lib/product-visibility";
+import { resolveMerchantProductId } from "@/lib/merchant/product-id";
 import { buildProductMetaDescription } from "@/lib/seo/product-description-seo";
 import { normalizeSeoPlainText } from "@/lib/seo/seo-text";
 import type { StorefrontCategory, StorefrontProduct } from "@/lib/storefront/types";
@@ -41,6 +42,8 @@ export type GoogleMerchantFeedInput = {
   title?: string;
   description?: string;
 };
+
+export { resolveMerchantProductId };
 
 /** Escape text for XML element/attribute content. */
 export function escapeXml(value: string): string {
@@ -74,13 +77,6 @@ export function mapMerchantAvailability(
     return "in_stock";
   }
   return "out_of_stock";
-}
-
-export function resolveMerchantProductId(
-  product: Pick<Product, "id" | "productCode">,
-): string {
-  const code = product.productCode?.trim();
-  return code || product.id;
 }
 
 export function resolveMerchantDescription(

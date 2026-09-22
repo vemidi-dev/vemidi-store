@@ -10,6 +10,7 @@ import { normalizeCartQuantityWithLimit } from "@/lib/cart/quantity-limits";
 import { applyQuantityTierPricesForProduct } from "@/lib/cart/update-cart-line-quantity";
 import type { CartLine, CartLineUpsell } from "@/lib/cart-types";
 import type { Product } from "@/lib/catalog";
+import { resolveMerchantProductId } from "@/lib/merchant/product-id";
 import { calculateOptionDelta } from "@/lib/product-option-pricing";
 import {
   normalizeQuantityPriceTiers,
@@ -136,6 +137,7 @@ export function prepareCartLineInput(
     line: {
       lineId,
       productId: input.product.id,
+      catalogProductId: resolveMerchantProductId(input.product),
       slug: input.product.slug,
       title: input.product.title,
       imageSrc: input.product.images.find((image) => image.src)?.src,

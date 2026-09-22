@@ -76,18 +76,18 @@ test("canSendMetaPixelEvent requires fbq and marketing consent", () => {
   );
 });
 
-test("meta pixel ecommerce payloads avoid PII and use product slugs", () => {
+test("meta pixel ecommerce payloads avoid PII and use catalog product IDs", () => {
   const viewContent = buildMetaViewContentPayload({
-    slug: "darvena-kartichka",
+    catalogProductId: "VM-000015",
     title: "Дървена картичка",
     price: 24.5,
   });
   assert.deepEqual(viewContent, {
-    content_ids: ["darvena-kartichka"],
+    content_ids: ["VM-000015"],
     content_type: "product",
     content_name: "Дървена картичка",
     contents: [
-      { id: "darvena-kartichka", quantity: 1, item_price: 24.5 },
+      { id: "VM-000015", quantity: 1, item_price: 24.5 },
     ],
     value: 24.5,
     currency: "EUR",
@@ -95,17 +95,17 @@ test("meta pixel ecommerce payloads avoid PII and use product slugs", () => {
   assert.deepEqual(assertNoPiiInMetaPayload(viewContent), []);
 
   const addToCart = buildMetaAddToCartPayload({
-    slug: "darvena-kartichka",
+    catalogProductId: "VM-000015",
     title: "Дървена картичка",
     price: 24.5,
     quantity: 2,
   });
   assert.deepEqual(addToCart, {
-    content_ids: ["darvena-kartichka"],
+    content_ids: ["VM-000015"],
     content_type: "product",
     content_name: "Дървена картичка",
     contents: [
-      { id: "darvena-kartichka", quantity: 2, item_price: 24.5 },
+      { id: "VM-000015", quantity: 2, item_price: 24.5 },
     ],
     value: 49,
     currency: "EUR",
@@ -115,17 +115,17 @@ test("meta pixel ecommerce payloads avoid PII and use product slugs", () => {
 
   const initiateCheckout = buildMetaInitiateCheckoutPayload({
     lines: [
-      { slug: "a", quantity: 1, price: 10 },
-      { slug: "b", quantity: 2, price: 5 },
+      { catalogProductId: "VM-000001", quantity: 1, price: 10 },
+      { catalogProductId: "VM-000002", quantity: 2, price: 5 },
     ],
     subtotal: 20,
   });
   assert.deepEqual(initiateCheckout, {
-    content_ids: ["a", "b"],
+    content_ids: ["VM-000001", "VM-000002"],
     content_type: "product",
     contents: [
-      { id: "a", quantity: 1, item_price: 10 },
-      { id: "b", quantity: 2, item_price: 5 },
+      { id: "VM-000001", quantity: 1, item_price: 10 },
+      { id: "VM-000002", quantity: 2, item_price: 5 },
     ],
     value: 20,
     currency: "EUR",

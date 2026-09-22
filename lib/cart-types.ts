@@ -18,6 +18,8 @@ export type CartLine = {
   lineId: string;
   /** Stable UUID identity for checkout and cart merging. */
   productId: Product["id"];
+  /** Product identifier used by Google Merchant / Meta Commerce Catalog. */
+  catalogProductId?: string;
   /** Current SEO slug for storefront links. */
   slug: Product["slug"];
   title: string;

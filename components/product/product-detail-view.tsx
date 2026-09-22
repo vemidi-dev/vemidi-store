@@ -17,6 +17,7 @@ import { ProductCard } from "@/components/product/product-card";
 import { JsonLd } from "@/components/seo/json-ld";
 import { VisibleBreadcrumbs } from "@/components/seo/visible-breadcrumbs";
 import type { Product } from "@/lib/catalog";
+import { resolveMerchantProductId } from "@/lib/merchant/product-id";
 import type { CampaignAttribution } from "@/lib/campaign-attribution";
 import { getCategoryListingHref } from "@/lib/category-url";
 import type { ProductOptionSelection } from "@/lib/product-options";
@@ -80,6 +81,7 @@ export function ProductDetailView({
   includeStructuredData = true,
 }: ProductDetailViewProps) {
   const productUrl = new URL(getProductPath(product.slug), getSiteUrl()).toString();
+  const catalogProductId = resolveMerchantProductId(product);
   const productImage = product.images.find((item) => item.src)?.src;
   const onPromotion = isProductOnPromotion(product);
   const schemaAvailability = resolveSchemaOrgProductAvailability({
@@ -153,7 +155,7 @@ export function ProductDetailView({
       ) : null}
       {!previewBanner ? (
         <MetaPixelViewContentBridge
-          slug={product.slug}
+          catalogProductId={catalogProductId}
           title={product.title}
           price={product.price}
         />

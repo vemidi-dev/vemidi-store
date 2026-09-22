@@ -161,6 +161,10 @@ export function parseStoredCart(raw: string | null): CartLine[] {
         typeof value.productId === "string" ? value.productId.trim() : "";
       const productId =
         explicitProductId || (isUuid(legacySlug) ? legacySlug : "");
+      const catalogProductId =
+        typeof value.catalogProductId === "string" && value.catalogProductId.trim()
+          ? value.catalogProductId.trim().slice(0, 120)
+          : productId;
       const slug =
         typeof value.slug === "string" && value.slug.trim() && !isUuid(value.slug)
           ? value.slug.trim()
@@ -263,6 +267,7 @@ export function parseStoredCart(raw: string | null): CartLine[] {
             : undefined,
         ),
         productId,
+        catalogProductId,
         slug: slug || productId,
         title,
         imageSrc,

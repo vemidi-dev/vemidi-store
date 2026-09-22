@@ -5,26 +5,26 @@ import { useEffect, useRef } from "react";
 import { trackMetaViewContent } from "@/lib/consent/meta-pixel-client";
 
 type MetaPixelViewContentBridgeProps = {
-  slug: string;
+  catalogProductId: string;
   title: string;
   price: number;
 };
 
 export function MetaPixelViewContentBridge({
-  slug,
+  catalogProductId,
   title,
   price,
 }: MetaPixelViewContentBridgeProps) {
-  const trackedSlugRef = useRef<string | null>(null);
+  const trackedProductIdRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (trackedSlugRef.current === slug) {
+    if (trackedProductIdRef.current === catalogProductId) {
       return;
     }
 
-    trackedSlugRef.current = slug;
-    trackMetaViewContent({ slug, title, price });
-  }, [slug, title, price]);
+    trackedProductIdRef.current = catalogProductId;
+    trackMetaViewContent({ catalogProductId, title, price });
+  }, [catalogProductId, title, price]);
 
   return null;
 }

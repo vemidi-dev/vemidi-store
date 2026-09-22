@@ -145,7 +145,7 @@ export function CheckoutPanel({ content }: { content: CheckoutPageContent }) {
     if (state.ok) {
       if (state.purchase) {
         // Enrich analytics payload client-side (no checkout RPC changes).
-        // Uses cart line slugs/qty/price + confirmation orderRef for Meta Purchase.
+        // Uses Merchant catalog IDs/qty/price + confirmation orderRef for Meta Purchase.
         window.sessionStorage.setItem(
           PURCHASE_STORAGE_KEY,
           JSON.stringify({
@@ -153,9 +153,11 @@ export function CheckoutPanel({ content }: { content: CheckoutPageContent }) {
             ...(state.confirmation?.orderRef
               ? { orderRef: state.confirmation.orderRef }
               : {}),
-            contentIds: lines.map((line) => line.slug).filter(Boolean),
+            contentIds: lines
+              .map((line) => line.catalogProductId ?? line.productId)
+              .filter(Boolean),
             contents: lines.map((line) => ({
-              id: line.slug,
+              id: line.catalogProductId ?? line.productId,
               quantity: line.quantity,
               item_price: line.price,
             })),
