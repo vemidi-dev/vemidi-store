@@ -9,7 +9,6 @@ import {
   createStoreOrder,
   type CheckoutActionState,
 } from "@/app/checkout/actions";
-import { previewDiscountCoupon } from "@/app/checkout/coupon-actions";
 import { CheckoutDeliveryFields } from "@/components/checkout/checkout-delivery-fields";
 import { MetaPixelInitiateCheckoutBridge } from "@/components/consent/meta-pixel-initiate-checkout-bridge";
 import { CartLineSummaryDetails } from "@/components/cart/cart-line-summary-details";
@@ -18,6 +17,7 @@ import { PageContainer } from "@/components/layout/page-container";
 import { formatEur } from "@/lib/format-eur";
 import {
   describeInvalidCouponCheckoutMessage,
+  getCartCouponSubtotals,
   type CouponPreviewResult,
 } from "@/lib/checkout/coupon";
 import {
@@ -64,6 +64,7 @@ function SubmitOrderButton({
 
 export function CheckoutPanel({ content }: { content: CheckoutPageContent }) {
   const { lines, subtotal, clear } = useCart();
+  const couponSubtotals = getCartCouponSubtotals(lines);
   const router = useRouter();
   const landingReturnUrl = resolveCheckoutLandingReturnUrl(lines);
   const landingReturnLinkProps = landingReturnUrl
@@ -91,7 +92,7 @@ export function CheckoutPanel({ content }: { content: CheckoutPageContent }) {
   useEffect(() => {
     setAppliedCoupon(null);
     setCouponError("");
-  }, [subtotal]);
+  }, [subtotal, couponSubtotals.eligibleSubtotal]);
 
   const clearCouponState = () => {
     setCouponInput("");
@@ -111,10 +112,22 @@ export function CheckoutPanel({ content }: { content: CheckoutPageContent }) {
     setCouponPending(true);
     setCouponError("");
     try {
-      const result = await previewDiscountCoupon({
-        code: couponInput,
-        subtotal,
+      const response = await fetch("/checkout/coupon-preview", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          code: couponInput,
+          subtotal: couponSubtotals.subtotal,
+          eligibleSubtotal: couponSubtotals.eligibleSubtotal,
+        }),
       });
+      if (!response.ok) {
+        throw new Error("coupon_preview_failed");
+      }
+
+      const result = (await response.json()) as CouponPreviewResult;
       if (!result.ok) {
         setAppliedCoupon(null);
         setCouponError(describeInvalidCouponCheckoutMessage(result.code));
@@ -472,6 +485,11 @@ export function CheckoutPanel({ content }: { content: CheckoutPageContent }) {
                     {appliedCoupon.code} · {appliedCoupon.discountPercentage}% · −
                     {formatEur(appliedCoupon.discountAmount)}
                   </p>
+                  {appliedCoupon.eligibilityMessage ? (
+                    <p className="mt-1 text-emerald-700/90">
+                      {appliedCoupon.eligibilityMessage}
+                    </p>
+                  ) : null}
                   <p className="mt-1 text-emerald-700/90">
                     Крайната сума се потвърждава отново при поръчка.
                   </p>

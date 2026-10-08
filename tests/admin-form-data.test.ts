@@ -78,6 +78,7 @@ test("admin form field names stay aligned with product draft parsing", () => {
     is_customizable: true,
     is_sold_out: false,
     show_quantity_selector: false,
+    promo_code_eligible: false,
     quantity_price_tiers: [],
     fulfillment_type: "made_to_order",
     stock_quantity: "",
@@ -330,4 +331,5 @@ test("legacy product drafts without subtitle remain compatible", () => {
   assert.equal(draft?.subtitle, "");
   assert.equal(draft?.description, "Legacy description");
   assert.equal(draft?.publicationStatus, "draft");
+  assert.equal(draft?.promoCodeEligible, true);
 });

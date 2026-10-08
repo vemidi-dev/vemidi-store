@@ -1006,6 +1006,21 @@ export function ProductListPanel({
                       </span>
                     </label>
 
+                    <label className="inline-flex items-start gap-2 text-sm font-medium text-boutique-ink md:col-span-2">
+                      <input
+                        name={adminFormFields.product.promoCodeEligible}
+                        type="checkbox"
+                        defaultChecked={product.promo_code_eligible !== false}
+                        className="mt-1 h-4 w-4 rounded border-boutique-line text-boutique-accent"
+                      />
+                      <span>
+                        Промо кодовете важат за този продукт
+                        <span className="mt-1 block text-xs font-normal leading-5 text-boutique-muted">
+                          Изключете за заготовки и материали или други продукти с отделни намаления по количество.
+                        </span>
+                      </span>
+                    </label>
+
                     {hasNoGalleryImages ? (
                       <div className="md:col-span-2">
                         <ProductImageFileInput

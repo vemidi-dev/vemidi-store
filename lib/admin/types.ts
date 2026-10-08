@@ -188,6 +188,8 @@ export type ProductRow = {
   is_customizable: boolean;
   is_sold_out: boolean;
   show_quantity_selector?: boolean;
+  /** When false, discount coupons skip this product. Default true. */
+  promo_code_eligible?: boolean;
   quantity_price_tiers?: ProductQuantityPriceTier[] | null;
   fulfillment_type?: ProductFulfillmentType;
   stock_quantity?: number | null;
@@ -359,6 +361,8 @@ export type ProductCreateDraft = {
   isCustomizable: boolean;
   isSoldOut: boolean;
   showQuantitySelector: boolean;
+  /** Default true — discount coupons apply unless admin unchecks. */
+  promoCodeEligible: boolean;
   quantityPriceTiers: ProductQuantityPriceTier[];
   fulfillmentType: ProductFulfillmentType;
   stockQuantity: number | null;
