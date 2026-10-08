@@ -193,3 +193,46 @@ POST /checkout/coupon-preview със safe dummy code → 200 + coupon_invalid JS
 ### Production blocker
 
 Преди production deploy трябва да е изпълнен `supabase/product_promo_code_eligible.sql` в production Supabase. App кодът чете `products.promo_code_eligible`; ако колоната липсва, storefront/admin заявки могат да паднат.
+
+## Production deployment — 2026-10-08
+
+Production Supabase SQL беше потвърдено изпълнен преди merge/deploy.
+
+### Merge / deploy
+
+```text
+PR #49 → merged
+Merge commit → 9b97b1b0da51d5e840cca3a49ed1140283f9f154
+Production deployment → https://vemidi-store-9szspnl82-ve-mi-di.vercel.app
+Deployment id → dpl_8j8fadRuwfcWdpm8njAAY2gJxrAX
+```
+
+### Production checks
+
+```text
+GitHub Release Tests on main → pass
+Vercel production deployment → Ready
+https://vemidi-crafts.com/ HEAD → 200
+POST https://vemidi-crafts.com/checkout/coupon-preview with dummy code → 200 + coupon_invalid JSON
+```
+
+### Alias fix
+
+След production build custom domain-ът първоначално още сочеше стар build и `/checkout/coupon-preview` връщаше 404 HTML. Alias-ите бяха ръчно пренасочени към новия production deployment:
+
+```text
+vemidi-crafts.com
+www.vemidi-crafts.com
+vemidi-store.vercel.app
+```
+
+След alias update endpoint-ът на custom domain-а върна правилен JSON отговор.
+
+### Remaining manual smoke
+
+Authenticated checkout smoke с реален активен купон остава за ръчна проверка:
+
+1. eligible продукт + купон → нормална отстъпка;
+2. само non-eligible заготовки/материали → ясно съобщение без отстъпка;
+3. смесена количка → отстъпка само върху eligible subtotal;
+4. въведените delivery данни остават при `Приложи купон`.
