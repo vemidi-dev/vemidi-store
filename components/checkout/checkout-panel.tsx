@@ -121,6 +121,10 @@ export function CheckoutPanel({ content }: { content: CheckoutPageContent }) {
           code: couponInput,
           subtotal: couponSubtotals.subtotal,
           eligibleSubtotal: couponSubtotals.eligibleSubtotal,
+          items: lines.map((line) => ({
+            productId: line.productId,
+            lineTotal: line.price * line.quantity,
+          })),
         }),
       });
       if (!response.ok) {
