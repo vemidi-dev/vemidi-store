@@ -236,3 +236,21 @@ Authenticated checkout smoke с реален активен купон оста�
 2. само non-eligible заготовки/материали → ясно съобщение без отстъпка;
 3. смесена количка → отстъпка само върху eligible subtotal;
 4. въведените delivery данни остават при `Приложи купон`.
+
+## Checkout preview server eligibility hotfix — 2026-10-08
+
+При production smoke със смесена количка беше видяно, че checkout preview прилага купона върху целия subtotal, когато cart snapshot-ът смята заготовката за eligible. Backend preview математиката беше коректна, но клиентът подаваше `eligibleSubtotal` от localStorage/cart snapshot.
+
+### Fix
+
+- `CheckoutPanel` вече изпраща към `/checkout/coupon-preview` и `items: [{ productId, lineTotal }]`.
+- `previewDiscountCouponForCheckout()` сверява `products.promo_code_eligible` през service client и пресмята eligible subtotal server-side.
+- Ако products lookup-ът не може да бъде потвърден, preview връща `coupon_unavailable`, вместо да over-discount-ва.
+- Старият `eligibleSubtotal` остава fallback за съвместимост, когато няма `items`.
+
+### Проверки
+
+```text
+npx tsx --test tests/discount-coupons.test.ts tests/checkout-coupon-preview-ux.test.ts tests/admin-form-data.test.ts → 25/25 pass
+npm run typecheck → pass
+```
