@@ -169,3 +169,27 @@ npm run typecheck → pass
 2. Ако вече показва partial message, проблемът е бил lookup/preview.
 3. Ако пак пише `Кодът е невалиден...`, конкретният код не се намира в `discount_coupons` или не минава формата `A-Z/0-9`, 4–32 символа.
 4. Ако пише `Купонът временно не може да бъде проверен...`, има проблем с Preview env/Supabase достъпа, не с логиката на eligible продуктите.
+
+## Pre-production refresh — 2026-10-08
+
+Branch-ът `codex/product-promo-code-eligibility` беше обновен върху актуален `origin/main` след последния Meta Pixel catalog id fix.
+
+### Проверки
+
+```text
+git rebase origin/main → pass, без конфликти
+npx tsx --test tests/discount-coupons.test.ts tests/checkout-coupon-preview-ux.test.ts tests/admin-form-data.test.ts → 24/24 pass
+npm run typecheck → pass
+GitHub release-tests → pass
+Vercel preview → pass
+Preview home HEAD smoke → 200
+POST /checkout/coupon-preview със safe dummy code → 200 + coupon_invalid JSON
+```
+
+### Preview за ръчен smoke
+
+`https://vemidi-store-git-codex-product-promo-code-eligibility-ve-mi-di.vercel.app`
+
+### Production blocker
+
+Преди production deploy трябва да е изпълнен `supabase/product_promo_code_eligible.sql` в production Supabase. App кодът чете `products.promo_code_eligible`; ако колоната липсва, storefront/admin заявки могат да паднат.
