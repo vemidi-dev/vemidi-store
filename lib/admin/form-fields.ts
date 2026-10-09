@@ -187,6 +187,8 @@ export const adminFormFields = {
   discountCoupon: {
     id: "discount_coupon_id",
     code: "discount_coupon_code",
+    bulkPrefix: "discount_coupon_bulk_prefix",
+    bulkCount: "discount_coupon_bulk_count",
     discountPercentage: "discount_coupon_percentage",
     isActive: "discount_coupon_is_active",
     expiresAt: "discount_coupon_expires_at",

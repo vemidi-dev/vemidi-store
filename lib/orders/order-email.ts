@@ -9,6 +9,7 @@ import { buildStoreOrderItemDetailLines } from "@/lib/admin/order-item-display";
 import { siteConfig } from "@/config/site";
 
 export type StoreOrderEmailItem = {
+  productCode: string | null;
   name: string;
   unitPrice: number | null;
   quantity: number;
@@ -37,6 +38,7 @@ function labelDeliveryType(value: string | null) {
 
 export function getStoreOrderEmailItems(order: OrderRow): StoreOrderEmailItem[] {
   return parseStoreOrderItems(order).map((item) => ({
+    productCode: item.productCode,
     name: item.name,
     unitPrice: item.unitPrice,
     quantity: item.quantity,
@@ -54,7 +56,19 @@ function renderItemDetailLinesHtml(detailLines: string[]) {
     .join("<br />")}</p>`;
 }
 
-function renderItemsHtml(order: OrderRow) {
+function renderProductCodeHtml(productCode: string | null) {
+  const normalized = productCode?.trim();
+  if (!normalized) {
+    return "";
+  }
+
+  return `<p style="margin:6px 0 0;color:#5e5a54;font-size:13px;"><strong>Код:</strong> ${escapeHtml(normalized)}</p>`;
+}
+
+function renderItemsHtml(
+  order: OrderRow,
+  options: { includeProductCode?: boolean } = {},
+) {
   const items = getStoreOrderEmailItems(order);
   if (items.length === 0) {
     return `<p>${escapeHtml(order.product_name || "—")}</p>`;
@@ -63,10 +77,14 @@ function renderItemsHtml(order: OrderRow) {
   return items
     .map((item) => {
       const detailBlock = renderItemDetailLinesHtml(item.detailLines);
+      const productCodeBlock = options.includeProductCode
+        ? renderProductCodeHtml(item.productCode)
+        : "";
 
       return `
         <div style="border:1px solid #e4ddd4;border-radius:12px;padding:16px;margin:0 0 12px;">
           <p style="margin:0;font-weight:600;color:#2a2824;">${escapeHtml(item.name)}</p>
+          ${productCodeBlock}
           <p style="margin:8px 0 0;color:#2a2824;">${item.quantity} × ${escapeHtml(formatOrderPrice(item.unitPrice, order.currency))}</p>
           ${detailBlock}
         </div>
@@ -128,7 +146,7 @@ export function buildAdminOrderEmail(order: OrderRow, adminOrdersUrl: string) {
       <strong>Общо:</strong> ${escapeHtml(formatOrderPrice(order.total_price, order.currency))}
     </p>
     <h2 style="margin:24px 0 12px;font-size:18px;color:#2a2824;">Артикули</h2>
-    ${renderItemsHtml(order)}
+    ${renderItemsHtml(order, { includeProductCode: true })}
     <h2 style="margin:24px 0 12px;font-size:18px;color:#2a2824;">Данни за доставка</h2>
     <table style="width:100%;border-collapse:collapse;">${renderDetailsRows(order)}</table>
     <p style="margin:24px 0 0;">

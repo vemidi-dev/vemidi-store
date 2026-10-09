@@ -49,6 +49,7 @@ function orderWithItem(item: Record<string, unknown>): OrderRow {
 }
 
 const legacyPersonalizationOrder = orderWithItem({
+  productCode: "VM-TEST01",
   name: "Кутия за спомени",
   unitPrice: 42.5,
   quantity: 1,
@@ -170,6 +171,18 @@ test("buildAdminOrderEmail includes customer and admin link", () => {
   assert.match(email.html, /Мария Иванова/);
   assert.match(email.html, /Кутия за спомени/);
   assert.match(email.html, /https:\/\/example.com\/admin\?tab=orders/);
+});
+
+test("buildAdminOrderEmail includes product code only for admin", () => {
+  const adminEmail = buildAdminOrderEmail(
+    legacyPersonalizationOrder,
+    "https://example.com/admin?tab=orders",
+  );
+  const customerEmail = buildCustomerOrderEmail(legacyPersonalizationOrder);
+
+  assert.match(adminEmail.html, /<strong>Код:<\/strong> VM-TEST01/);
+  assert.doesNotMatch(customerEmail.html, /VM-TEST01/);
+  assert.doesNotMatch(customerEmail.html, /<strong>Код:<\/strong>/);
 });
 
 test("buildCustomerOrderEmail includes confirmation copy", () => {
