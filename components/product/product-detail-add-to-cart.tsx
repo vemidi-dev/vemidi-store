@@ -599,25 +599,34 @@ export function ProductDetailAddToCart({
   }, [useMaterialCards]);
 
   useEffect(() => {
-    if (!optionGroups.length || useMaterialCards) {
+    if (!optionGroups.length) {
       return;
     }
 
-    const selectedImageUrl =
-      optionSelections
-        .flatMap((selection) => {
-          const group = optionGroups.find((candidate) => candidate.id === selection.groupId);
-          return selection.valueIds
-            .map((valueId) => group?.values.find((value) => value.id === valueId)?.imageUrl)
-            .filter((imageUrl): imageUrl is string => Boolean(imageUrl));
-        })[0] ?? null;
+    const selectedOptionValues = optionSelections.flatMap((selection) => {
+      const group = optionGroups.find((candidate) => candidate.id === selection.groupId);
+      return selection.valueIds
+        .map((valueId) => group?.values.find((value) => value.id === valueId) ?? null)
+        .filter((optionValue): optionValue is NonNullable<typeof optionValue> =>
+          Boolean(optionValue),
+        );
+    });
+    const directOptionImageUrl =
+      selectedOptionValues
+        .map((optionValue) => optionValue.imageUrl)
+        .find((imageUrl): imageUrl is string => Boolean(imageUrl)) ?? null;
+    const materialImageUrl =
+      selectedOptionValues
+        .map((optionValue) => optionValue.material?.imageUrl)
+        .find((imageUrl): imageUrl is string => Boolean(imageUrl)) ?? null;
+    const selectedImageUrl = directOptionImageUrl ?? materialImageUrl;
 
     window.dispatchEvent(
       new CustomEvent("vemidi:product-option-image", {
         detail: { productId: product.id, imageUrl: selectedImageUrl },
       }),
     );
-  }, [optionGroups, optionSelections, product.id, useMaterialCards]);
+  }, [optionGroups, optionSelections, product.id]);
 
   useEffect(() => {
     const configurator = configuratorRef.current;

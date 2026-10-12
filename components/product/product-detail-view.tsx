@@ -171,7 +171,6 @@ export function ProductDetailView({
                 <ProductDetailGallery
                   images={product.images}
                   syncKey={product.id}
-                  syncOptionImages={false}
                 />
                 <div id={PRODUCT_LEFT_COLORS_SLOT_ID} className="hidden min-w-0 lg:block" />
                 <ProductDetailGalleryAside

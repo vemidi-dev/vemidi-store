@@ -193,6 +193,18 @@ test("related products section uses neutral copy and category link placement", (
   assert.equal(firstCategoryLink, categoryInRelated);
 });
 
+test("material option cards keep gallery image sync enabled", () => {
+  const view = readSource("../components/product/product-detail-view.tsx");
+  const addToCart = readSource("../components/product/product-detail-add-to-cart.tsx");
+
+  assert.doesNotMatch(view, /syncOptionImages=\{false\}/);
+  assert.doesNotMatch(addToCart, /!optionGroups\.length \|\| useMaterialCards/);
+  assert.match(addToCart, /const directOptionImageUrl =/);
+  assert.match(addToCart, /const materialImageUrl =/);
+  assert.match(addToCart, /const selectedImageUrl = directOptionImageUrl \?\? materialImageUrl/);
+  assert.match(addToCart, /new CustomEvent\("vemidi:product-option-image"/);
+});
+
 test("ready product CTA renders only when configured", () => {
   const view = readSource("../components/product/product-detail-view.tsx");
 
