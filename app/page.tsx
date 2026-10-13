@@ -61,7 +61,7 @@ export default async function HomePage() {
     ...featuredProducts,
     ...products.filter((product) => !featuredProductIdSet.has(product.id)),
   ];
-  const latestPosts = blogPosts.slice(0, 3);
+  const featuredPosts = blogPosts.filter((post) => post.is_featured).slice(0, 3);
   const now = Date.now();
   const getEventTime = (event: (typeof events)[number]) =>
     event.ends_at ?? event.starts_at;
@@ -193,7 +193,7 @@ export default async function HomePage() {
       <HomeContentGrid
         faqItems={globalFaqItems}
         pastEvents={pastEvents}
-        posts={latestPosts}
+        posts={featuredPosts}
         upcomingEvents={upcomingEvents}
       />
     </div>

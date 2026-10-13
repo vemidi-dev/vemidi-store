@@ -112,7 +112,7 @@ export function HomeContentGrid({
         <PageContainer className="grid gap-14 md:max-w-7xl lg:grid-cols-2 lg:gap-0">
           <div className="lg:border-r lg:border-boutique-line lg:pr-12">
             <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
-              <h2 className="font-heading text-3xl tracking-tight text-boutique-ink md:text-4xl">Последни от блога</h2>
+              <h2 className="font-heading text-3xl tracking-tight text-boutique-ink md:text-4xl">Водещи от блога</h2>
               <Link
                 href="/blog"
                 className="text-xs font-semibold text-boutique-sage-deep underline-offset-4 hover:underline"
@@ -148,7 +148,7 @@ export function HomeContentGrid({
               </div>
             ) : (
               <p className="mt-8 rounded-xl border border-dashed border-boutique-line p-6 text-sm text-boutique-muted">
-                Първите истории и творчески идеи скоро ще се появят тук.
+                Изберете водещи статии от админ панела, за да се покажат тук.
               </p>
             )}
           </div>
