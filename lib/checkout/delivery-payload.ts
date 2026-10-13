@@ -1,4 +1,5 @@
 import { formatEcontOfficeLabel, type EcontOffice } from "@/lib/shipping/econt";
+import { formatSpeedyOfficeLabel, type SpeedyOffice } from "@/lib/shipping/speedy";
 
 export type CheckoutDeliveryType = "office" | "automat" | "address";
 export type CheckoutCourier = "econt" | "speedy" | "";
@@ -10,7 +11,10 @@ export type BuildDeliveryPayloadInput = {
   officeOrPostcode: string;
   address?: string;
   deliveryNote?: string;
-  selectedOffice?: Pick<EcontOffice, "name" | "fullAddress" | "isAPS"> | null;
+  selectedOffice?:
+    | Pick<EcontOffice, "id" | "name" | "fullAddress" | "isAPS">
+    | Pick<SpeedyOffice, "id" | "name" | "fullAddress" | "isAPS">
+    | null;
 };
 
 export type CheckoutDeliveryPayload = {
@@ -87,6 +91,34 @@ export function buildCheckoutDeliveryPayload(
       city,
       officeOrPostcode: input.officeOrPostcode.trim(),
       details: formatEcontAddressDeliveryDetails(input.address ?? "", deliveryNote),
+    };
+  }
+
+  if (input.courier === "speedy" && input.deliveryType === "automat" && input.selectedOffice) {
+    const officeLabel = formatSpeedyOfficeLabel(input.selectedOffice);
+    const officeReference = `${officeLabel} (ID: ${input.selectedOffice.id})`;
+    return {
+      courier: "speedy",
+      deliveryType: "office",
+      city,
+      officeOrPostcode: officeReference,
+      details: deliveryNote
+        ? `Автомат на Спиди: ${officeReference}\n${deliveryNote}`
+        : `Автомат на Спиди: ${officeReference}`,
+    };
+  }
+
+  if (input.courier === "speedy" && input.deliveryType === "office") {
+    const officeLabel = input.selectedOffice
+      ? `${formatSpeedyOfficeLabel(input.selectedOffice)} (ID: ${input.selectedOffice.id})`
+      : input.officeOrPostcode.trim();
+
+    return {
+      courier: "speedy",
+      deliveryType: "office",
+      city,
+      officeOrPostcode: officeLabel,
+      details: deliveryNote,
     };
   }
 

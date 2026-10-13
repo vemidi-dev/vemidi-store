@@ -104,6 +104,52 @@ test("Speedy address uses postcode and combined address details", () => {
   assert.equal(validateDeliveryPayload(payload), null);
 });
 
+test("Speedy office delivery stores selected office name, address, and id", () => {
+  const payload = buildCheckoutDeliveryPayload({
+    courier: "speedy",
+    deliveryType: "office",
+    city: "София",
+    officeOrPostcode: "",
+    address: "",
+    deliveryNote: "Получателят ще вземе пратката след 17:00",
+    selectedOffice: {
+      id: 68134,
+      name: "СОФИЯ - МЛАДОСТ 2",
+      isAPS: false,
+      fullAddress: "София, ж.к. Младост 2",
+    },
+  });
+
+  assert.equal(payload.deliveryType, "office");
+  assert.match(payload.officeOrPostcode, /СОФИЯ - МЛАДОСТ 2/);
+  assert.match(payload.officeOrPostcode, /ID: 68134/);
+  assert.equal(payload.details, "Получателят ще вземе пратката след 17:00");
+  assert.equal(validateDeliveryPayload(payload), null);
+});
+
+test("Speedy automat maps to office delivery type with automat details and id", () => {
+  const payload = buildCheckoutDeliveryPayload({
+    courier: "speedy",
+    deliveryType: "automat",
+    city: "София",
+    officeOrPostcode: "",
+    address: "",
+    deliveryNote: "",
+    selectedOffice: {
+      id: 12001,
+      name: "APT СОФИЯ МЛАДОСТ",
+      isAPS: true,
+      fullAddress: "София, ж.к. Младост 1",
+    },
+  });
+
+  assert.equal(payload.deliveryType, "office");
+  assert.match(payload.officeOrPostcode, /ID: 12001/);
+  assert.match(payload.details, /Автомат на Спиди/);
+  assert.match(payload.details, /ID: 12001/);
+  assert.equal(validateDeliveryPayload(payload), null);
+});
+
 test("empty address fails server-side validation", () => {
   const payload = buildCheckoutDeliveryPayload({
     courier: "econt",

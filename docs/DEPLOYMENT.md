@@ -33,6 +33,10 @@ orders, but no email is sent. Verify the sender domain in Resend before producti
 Use the same API credentials as the campaign landing pages. Without them checkout falls back to
 manual delivery fields.
 
+`SPEEDY_USERNAME` and `SPEEDY_PASSWORD` enable live city/office/automat lookup for Speedy checkout.
+The integration only collects delivery details; it does not calculate delivery prices or create
+shipments. Optional `SPEEDY_API_BASE_URL` defaults to `https://api.speedy.bg/v1`.
+
 Use `https://vemidi-store.vercel.app` for `NEXT_PUBLIC_SITE_URL` while the store is on the temporary
 domain. Change it to `https://vemidi-crafts.com` only when the domain is moved to this project.
 

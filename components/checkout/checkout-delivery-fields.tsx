@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { buildCheckoutDeliveryPayload, formatEcontAddressDeliveryDetails } from "@/lib/checkout/delivery-payload";
 import type { EcontCity, EcontOffice } from "@/lib/shipping/econt";
+import type { SpeedyCity, SpeedyOffice } from "@/lib/shipping/speedy";
 import {
   ECONT_LOOKUP_UNAVAILABLE_MESSAGE,
   getEcontLookupErrorMessage,
@@ -11,14 +12,23 @@ import {
   parseEcontOfficesResponse,
   shouldFallbackToManualEcont,
 } from "@/lib/shipping/econt-lookup";
+import {
+  SPEEDY_LOOKUP_UNAVAILABLE_MESSAGE,
+  getSpeedyLookupErrorMessage,
+  parseSpeedyCitiesResponse,
+  parseSpeedyOfficesResponse,
+  shouldFallbackToManualSpeedy,
+} from "@/lib/shipping/speedy-lookup";
 
 const fieldClass =
   "mt-2 w-full rounded-xl border border-boutique-line bg-boutique-bg px-4 py-3 text-sm text-boutique-ink outline-none transition placeholder:text-boutique-muted/60 focus:border-boutique-accent/50 focus:ring-2 focus:ring-boutique-accent/10";
 
 type DeliveryType = "office" | "automat" | "address";
 type Courier = "" | "econt" | "speedy";
+type LookupCity = EcontCity | SpeedyCity;
+type PickupLocation = EcontOffice | SpeedyOffice;
 
-function CityOptionLabel({ city }: { city: EcontCity }) {
+function CityOptionLabel({ city }: { city: LookupCity }) {
   return (
     <span>
       {city.name}
@@ -39,9 +49,9 @@ export function CheckoutDeliveryFields({
   const [courier, setCourier] = useState<Courier>("");
   const [deliveryType, setDeliveryType] = useState<DeliveryType>("office");
   const [cityQuery, setCityQuery] = useState("");
-  const [cityResults, setCityResults] = useState<EcontCity[]>([]);
-  const [selectedCity, setSelectedCity] = useState<EcontCity | null>(null);
-  const [offices, setOffices] = useState<EcontOffice[]>([]);
+  const [cityResults, setCityResults] = useState<LookupCity[]>([]);
+  const [selectedCity, setSelectedCity] = useState<LookupCity | null>(null);
+  const [offices, setOffices] = useState<PickupLocation[]>([]);
   const [selectedOfficeId, setSelectedOfficeId] = useState("");
   const [manualCity, setManualCity] = useState("");
   const [manualOffice, setManualOffice] = useState("");
@@ -51,11 +61,15 @@ export function CheckoutDeliveryFields({
   const [loadingOffices, setLoadingOffices] = useState(false);
   const [lookupError, setLookupError] = useState<string | null>(null);
   const [econtAvailable, setEcontAvailable] = useState(true);
+  const [speedyAvailable, setSpeedyAvailable] = useState(true);
 
-  const useEcontLookup = courier === "econt";
+  const useCarrierLookup =
+    (courier === "econt" && econtAvailable) || (courier === "speedy" && speedyAvailable);
+  const selectedCarrierAvailable =
+    courier === "speedy" ? speedyAvailable : courier === "econt" ? econtAvailable : false;
   const needsOfficePicker =
-    useEcontLookup && (deliveryType === "office" || deliveryType === "automat");
-  const useHiddenDeliveryFields = useEcontLookup && econtAvailable;
+    useCarrierLookup && (deliveryType === "office" || deliveryType === "automat");
+  const useHiddenDeliveryFields = useCarrierLookup;
 
   const selectedOffice = useMemo(
     () => offices.find((office) => String(office.id) === selectedOfficeId) ?? null,
@@ -65,8 +79,8 @@ export function CheckoutDeliveryFields({
   const deliveryPayload = buildCheckoutDeliveryPayload({
     courier,
     deliveryType,
-    city: useEcontLookup ? selectedCity?.name ?? "" : manualCity,
-    officeOrPostcode: useEcontLookup
+    city: useCarrierLookup ? selectedCity?.name ?? "" : manualCity,
+    officeOrPostcode: useCarrierLookup
       ? selectedOffice
         ? `${selectedOffice.name} — ${selectedOffice.fullAddress}`
         : manualOffice
@@ -82,7 +96,7 @@ export function CheckoutDeliveryFields({
       : manualDetails;
 
   useEffect(() => {
-    if (!useEcontLookup) {
+    if (!useCarrierLookup) {
       setCityResults([]);
       setLookupError(null);
       return;
@@ -100,35 +114,58 @@ export function CheckoutDeliveryFields({
 
       try {
         const response = await fetch(
-          `/api/shipping/econt/cities?q=${encodeURIComponent(cityQuery.trim())}`,
+          `/api/shipping/${courier}/cities?q=${encodeURIComponent(cityQuery.trim())}`,
           { signal: controller.signal },
         );
 
-        const result = await parseEcontCitiesResponse(response);
+        const result =
+          courier === "speedy"
+            ? await parseSpeedyCitiesResponse(response)
+            : await parseEcontCitiesResponse(response);
         if (!result.ok) {
-          setEcontAvailable(false);
+          if (courier === "speedy") {
+            setSpeedyAvailable(false);
+          } else {
+            setEcontAvailable(false);
+          }
           setCityResults([]);
           setLookupError(
-            shouldFallbackToManualEcont(response)
-              ? ECONT_LOOKUP_UNAVAILABLE_MESSAGE
-              : getEcontLookupErrorMessage(result.reason),
+            courier === "speedy"
+              ? shouldFallbackToManualSpeedy(response)
+                ? SPEEDY_LOOKUP_UNAVAILABLE_MESSAGE
+                : getSpeedyLookupErrorMessage(result.reason)
+              : shouldFallbackToManualEcont(response)
+                ? ECONT_LOOKUP_UNAVAILABLE_MESSAGE
+                : getEcontLookupErrorMessage(result.reason),
           );
           return;
         }
 
-        setEcontAvailable(true);
+        if (courier === "speedy") {
+          setSpeedyAvailable(true);
+        } else {
+          setEcontAvailable(true);
+        }
         setCityResults(result.cities);
       } catch (error) {
         if (controller.signal.aborted) {
           return;
         }
 
-        setEcontAvailable(false);
+        if (courier === "speedy") {
+          setSpeedyAvailable(false);
+        } else {
+          setEcontAvailable(false);
+        }
         setCityResults([]);
-        setLookupError(
+        const reason =
           error instanceof DOMException && error.name === "AbortError"
-            ? getEcontLookupErrorMessage("timeout")
-            : getEcontLookupErrorMessage("network"),
+            ? "timeout"
+            : "network";
+        setLookupError(
+          courier === "speedy"
+            ? getSpeedyLookupErrorMessage(reason)
+            : getEcontLookupErrorMessage(reason),
         );
       } finally {
         if (!controller.signal.aborted) {
@@ -141,7 +178,7 @@ export function CheckoutDeliveryFields({
       controller.abort();
       window.clearTimeout(timeout);
     };
-  }, [cityQuery, useEcontLookup]);
+  }, [cityQuery, courier, useCarrierLookup]);
 
   useEffect(() => {
     if (!needsOfficePicker || !selectedCity) {
@@ -163,19 +200,30 @@ export function CheckoutDeliveryFields({
 
       try {
         const response = await fetch(
-          `/api/shipping/econt/offices?cityId=${city.id}&deliveryType=${deliveryType}`,
+          `/api/shipping/${courier}/offices?cityId=${city.id}&deliveryType=${deliveryType}`,
           { signal: controller.signal },
         );
 
-        const result = await parseEcontOfficesResponse(response);
+        const result =
+          courier === "speedy"
+            ? await parseSpeedyOfficesResponse(response)
+            : await parseEcontOfficesResponse(response);
         if (!result.ok) {
-          setEcontAvailable(false);
+          if (courier === "speedy") {
+            setSpeedyAvailable(false);
+          } else {
+            setEcontAvailable(false);
+          }
           setOffices([]);
           setSelectedOfficeId("");
           setLookupError(
-            result.reason === "unavailable"
-              ? ECONT_LOOKUP_UNAVAILABLE_MESSAGE
-              : getEcontLookupErrorMessage(result.reason),
+            courier === "speedy"
+              ? result.reason === "unavailable"
+                ? SPEEDY_LOOKUP_UNAVAILABLE_MESSAGE
+                : getSpeedyLookupErrorMessage(result.reason)
+              : result.reason === "unavailable"
+                ? ECONT_LOOKUP_UNAVAILABLE_MESSAGE
+                : getEcontLookupErrorMessage(result.reason),
           );
           return;
         }
@@ -187,13 +235,21 @@ export function CheckoutDeliveryFields({
           return;
         }
 
-        setEcontAvailable(false);
+        if (courier === "speedy") {
+          setSpeedyAvailable(false);
+        } else {
+          setEcontAvailable(false);
+        }
         setOffices([]);
         setSelectedOfficeId("");
-        setLookupError(
+        const reason =
           error instanceof DOMException && error.name === "AbortError"
-            ? getEcontLookupErrorMessage("timeout")
-            : getEcontLookupErrorMessage("network"),
+            ? "timeout"
+            : "network";
+        setLookupError(
+          courier === "speedy"
+            ? getSpeedyLookupErrorMessage(reason)
+            : getEcontLookupErrorMessage(reason),
         );
       } finally {
         if (!controller.signal.aborted) {
@@ -207,7 +263,7 @@ export function CheckoutDeliveryFields({
     return () => {
       controller.abort();
     };
-  }, [deliveryType, needsOfficePicker, selectedCity]);
+  }, [courier, deliveryType, needsOfficePicker, selectedCity]);
 
   function handleCourierChange(value: Courier) {
     setCourier(value);
@@ -221,9 +277,12 @@ export function CheckoutDeliveryFields({
     if (value === "econt") {
       setEcontAvailable(true);
     }
+    if (value === "speedy") {
+      setSpeedyAvailable(true);
+    }
   }
 
-  function handleCitySelect(city: EcontCity) {
+  function handleCitySelect(city: LookupCity) {
     setSelectedCity(city);
     setCityQuery(city.name);
     setCityResults([]);
@@ -292,7 +351,7 @@ export function CheckoutDeliveryFields({
             }}
           >
             <option value="office">До офис</option>
-            {courier === "econt" && econtAvailable ? (
+            {courier && selectedCarrierAvailable ? (
               <option value="automat">До автомат</option>
             ) : null}
             <option value="address">До адрес</option>
@@ -350,7 +409,9 @@ export function CheckoutDeliveryFields({
                     {loadingOffices
                       ? "Зареждане..."
                       : selectedCity
-                        ? "Изберете офис"
+                        ? deliveryType === "automat"
+                          ? "Изберете автомат"
+                          : "Изберете офис"
                         : "Първо изберете населено място"}
                   </option>
                   {offices.map((office) => (
@@ -408,6 +469,11 @@ export function CheckoutDeliveryFields({
             {courier === "econt" && !econtAvailable ? (
               <p className="sm:col-span-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
                 {ECONT_LOOKUP_UNAVAILABLE_MESSAGE}
+              </p>
+            ) : null}
+            {courier === "speedy" && !speedyAvailable ? (
+              <p className="sm:col-span-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                {SPEEDY_LOOKUP_UNAVAILABLE_MESSAGE}
               </p>
             ) : null}
 
