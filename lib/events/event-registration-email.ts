@@ -1,8 +1,11 @@
+import { siteConfig } from "@/config/site";
+
 export type EventRegistrationEmailInput = {
   eventTitle: string;
   eventSlug: string;
   eventStartsAt: string | null;
   eventLocation: string | null;
+  eventAddress?: string | null;
   fullName: string;
   phone: string;
   email: string | null;
@@ -30,7 +33,7 @@ function formatEventDate(value: string | null) {
   }
 
   return new Intl.DateTimeFormat("bg-BG", {
-    dateStyle: "medium",
+    dateStyle: "long",
     timeStyle: "short",
     timeZone: "Europe/Sofia",
   }).format(new Date(value));
@@ -63,6 +66,7 @@ export function buildAdminEventRegistrationEmail(
           ${detailRow("Събитие", input.eventTitle)}
           ${detailRow("Дата", formatEventDate(input.eventStartsAt))}
           ${detailRow("Локация", input.eventLocation)}
+          ${input.eventAddress ? detailRow("Адрес", input.eventAddress) : ""}
           ${detailRow("Име", input.fullName)}
           ${detailRow("Телефон", input.phone)}
           ${detailRow("Имейл", input.email)}
@@ -78,4 +82,35 @@ export function buildAdminEventRegistrationEmail(
   `;
 
   return { subject, html };
+}
+
+export function buildCustomerEventRegistrationEmail(
+  input: EventRegistrationEmailInput,
+  eventUrl: string,
+): EmailMessage {
+  return {
+    subject: `Потвърждение за участие: ${input.eventTitle.replace(/[\r\n]/g, " ")}`,
+    html: `
+      <div lang="bg" style="font-family:Arial,sans-serif;line-height:1.55;color:#2d2a26;max-width:680px;margin:auto;">
+        <h1 style="font-size:22px;margin:0 0 16px;">Успешно записване</h1>
+        <p>Здравейте, ${escapeHtml(input.fullName)}!</p>
+        <p>Записването ви е прието. Ще ви очакваме на място.</p>
+        <table style="border-collapse:collapse;width:100%;border:1px solid #e7ded5;">
+          <tbody>
+            ${detailRow("Събитие", input.eventTitle)}
+            ${input.eventStartsAt ? detailRow("Дата и час", formatEventDate(input.eventStartsAt)) : ""}
+            ${input.eventLocation ? detailRow("Място", input.eventLocation) : ""}
+            ${input.eventAddress && input.eventAddress !== input.eventLocation ? detailRow("Адрес", input.eventAddress) : ""}
+            ${detailRow("Брой участници", input.participantCount)}
+          </tbody>
+        </table>
+        <p style="margin:20px 0;"><a href="${escapeHtml(eventUrl)}" style="color:#5f7558;">Разгледайте подробностите за събитието</a></p>
+        <p>При въпрос или ако не можете да присъствате, свържете се с нас:
+          <br /><a href="mailto:${escapeHtml(siteConfig.business.email)}">${escapeHtml(siteConfig.business.email)}</a>
+          <br /><a href="tel:${escapeHtml(siteConfig.business.phoneHref)}">${escapeHtml(siteConfig.business.phoneDisplay)}</a>
+        </p>
+        <p>${escapeHtml(siteConfig.name)}</p>
+      </div>
+    `,
+  };
 }

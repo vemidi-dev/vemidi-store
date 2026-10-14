@@ -104,11 +104,11 @@ export function EventManagementPanel({
           </label>
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="text-sm font-medium text-boutique-ink">
-              Начало
+              Начало (час София)
               <input name="starts_at" type="datetime-local" className={adminFieldClass} />
             </label>
             <label className="text-sm font-medium text-boutique-ink">
-              Край
+              Край (час София)
               <input name="ends_at" type="datetime-local" className={adminFieldClass} />
             </label>
           </div>

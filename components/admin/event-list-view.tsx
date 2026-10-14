@@ -3,7 +3,8 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 
-import { deleteEvent, updateEvent } from "@/app/admin/content-actions";
+import { deleteEvent } from "@/app/admin/content-actions";
+import { EventEditForm } from "@/components/admin/event-edit-form";
 import { AdminConfirmForm } from "@/components/admin/admin-confirm-form";
 import { AdminOpenDetailsButton } from "@/components/admin/admin-open-details-button";
 import { ImageFileInput } from "@/components/admin/image-file-input";
@@ -25,6 +26,7 @@ import {
   type EventSortKey,
 } from "@/lib/event-admin";
 import type { EventRow } from "@/lib/admin/types";
+import { toEventDateTimeLocal } from "@/lib/events/event-datetime";
 
 const STATUS_BADGE: Record<string, string> = {
   draft: "bg-boutique-bg text-boutique-muted",
@@ -34,14 +36,6 @@ const STATUS_BADGE: Record<string, string> = {
   "no-date": "bg-amber-50 text-amber-800",
 };
 
-function toDateTimeLocal(value: string | null) {
-  if (!value) return "";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-  const offset = date.getTimezoneOffset() * 60_000;
-  return new Date(date.getTime() - offset).toISOString().slice(0, 16);
-}
-
 const PAGE_SIZE = 25;
 
 export function EventListView({ events }: { events: EventRow[] }) {
@@ -50,15 +44,16 @@ export function EventListView({ events }: { events: EventRow[] }) {
   const [periodFilter, setPeriodFilter] = useState<EventPeriodFilter>("all");
   const [sortKey, setSortKey] = useState<EventSortKey>("starts-desc");
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [savedEvents, setSavedEvents] = useState<Record<string, EventRow>>({});
 
   const visibleEvents = useMemo(() => {
-    const filtered = filterEvents(events, {
+    const filtered = filterEvents(events.map((event) => savedEvents[event.id] ?? event), {
       search: query,
       publish: publishFilter,
       period: periodFilter,
     });
     return sortEvents(filtered, sortKey);
-  }, [events, periodFilter, publishFilter, query, sortKey]);
+  }, [events, savedEvents, periodFilter, publishFilter, query, sortKey]);
 
   const shownEvents = visibleEvents.slice(0, visibleCount);
 
@@ -226,7 +221,7 @@ export function EventListView({ events }: { events: EventRow[] }) {
                       <summary className="cursor-pointer text-xs font-semibold text-boutique-ink">
                         Форма за редакция
                       </summary>
-                      <form action={updateEvent} className="mt-4 grid gap-4 md:grid-cols-2">
+                      <EventEditForm version={event.updated_at} onSaved={(saved) => setSavedEvents((previous) => ({ ...previous, [saved.id]: saved }))}>
                         <input type="hidden" name="tab" value="events" />
                         <input type="hidden" name="id" value={event.id} />
                         <input type="hidden" name="existing_image_url" value={event.image_url ?? ""} />
@@ -279,12 +274,12 @@ export function EventListView({ events }: { events: EventRow[] }) {
                         </label>
                         <div className="grid gap-4 sm:grid-cols-2">
                           <label className="text-sm font-medium text-boutique-ink">
-                            Начало
-                            <input name="starts_at" type="datetime-local" defaultValue={toDateTimeLocal(event.starts_at)} className={adminFieldClass} />
+                            Начало (час София)
+                            <input name="starts_at" type="datetime-local" defaultValue={toEventDateTimeLocal(event.starts_at)} className={adminFieldClass} />
                           </label>
                           <label className="text-sm font-medium text-boutique-ink">
-                            Край
-                            <input name="ends_at" type="datetime-local" defaultValue={toDateTimeLocal(event.ends_at)} className={adminFieldClass} />
+                            Край (час София)
+                            <input name="ends_at" type="datetime-local" defaultValue={toEventDateTimeLocal(event.ends_at)} className={adminFieldClass} />
                           </label>
                         </div>
                         <ImageFileInput
@@ -298,12 +293,7 @@ export function EventListView({ events }: { events: EventRow[] }) {
                           <input name="is_published" type="checkbox" defaultChecked={event.is_published} className="h-4 w-4 accent-boutique-ink" />
                           Публикувано
                         </label>
-                        <div className="md:col-span-2">
-                          <button type="submit" className="rounded-full bg-boutique-ink px-6 py-2.5 text-xs font-semibold uppercase tracking-wider text-boutique-paper hover:bg-boutique-accent">
-                            Запази промените
-                          </button>
-                        </div>
-                      </form>
+                      </EventEditForm>
                     </details>
                   </td>
                 </tr>

@@ -57,8 +57,8 @@ export function EventRegistrationForm({
           <input name="phone" type="tel" required maxLength={30} className="mt-2 w-full rounded-xl border border-boutique-line bg-white px-4 py-3" />
         </label>
         <label className="text-sm font-medium text-boutique-ink">
-          Имейл (по избор)
-          <input name="email" type="email" maxLength={160} className="mt-2 w-full rounded-xl border border-boutique-line bg-white px-4 py-3" />
+          Имейл
+          <input name="email" type="email" required autoComplete="email" maxLength={160} className="mt-2 w-full rounded-xl border border-boutique-line bg-white px-4 py-3" />
         </label>
         <label className="text-sm font-medium text-boutique-ink">
           Брой участници

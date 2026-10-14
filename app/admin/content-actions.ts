@@ -17,6 +17,8 @@ import {
 import type { AdminTab } from "@/lib/admin/types";
 import { checkIsAdmin } from "@/lib/supabase/admin-auth";
 import { createClient } from "@/lib/supabase/server";
+import { parseEventDateTime } from "@/lib/events/event-datetime";
+import type { EventRow } from "@/lib/admin/types";
 
 type ContentKind = "blog" | "events";
 type PreviousContentRow = {
@@ -230,14 +232,6 @@ async function getAuthorizedClient(tab: AdminTab) {
   return supabase;
 }
 
-function parseDateTime(value: string) {
-  if (!value) {
-    return null;
-  }
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
-}
-
 function normalizeEventEndDate(startsAt: string | null, endsAt: string | null) {
   if (!startsAt || !endsAt) {
     return endsAt;
@@ -334,8 +328,8 @@ async function createContent(formData: FormData, kind: ContentKind) {
   } else {
     const startsAtRaw = getString(formData, "starts_at");
     const endsAtRaw = getString(formData, "ends_at");
-    const startsAt = parseDateTime(startsAtRaw);
-    const endsAt = parseDateTime(endsAtRaw);
+    const startsAt = parseEventDateTime(startsAtRaw);
+    const endsAt = parseEventDateTime(endsAtRaw);
     const { capacity, availableSpots } = getEventCapacity(formData, tab, true);
     if (startsAt === undefined || endsAt === undefined) {
       redirectWith("error", "Датата или часът на събитието не е валиден.", tab);
@@ -467,8 +461,8 @@ async function updateContent(
   } else {
     const startsAtRaw = getString(formData, "starts_at");
     const endsAtRaw = getString(formData, "ends_at");
-    const startsAt = parseDateTime(startsAtRaw);
-    const endsAt = parseDateTime(endsAtRaw);
+    const startsAt = parseEventDateTime(startsAtRaw);
+    const endsAt = parseEventDateTime(endsAtRaw);
     const { capacity, availableSpots } = getEventCapacity(formData, tab, false);
     if (startsAt === undefined || endsAt === undefined) {
       redirectWith("error", "Датата или часът на събитието не е валиден.", tab);
@@ -585,6 +579,68 @@ export async function createEvent(formData: FormData) {
 }
 export async function updateEvent(formData: FormData) {
   return updateContent(formData, "events");
+}
+
+export async function saveEventChanges(formData: FormData): Promise<{ ok: boolean; message: string; event?: EventRow }> {
+  const supabase = await createClient();
+  if (!supabase) return { ok: false, message: "Supabase не е конфигуриран." };
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false, message: "Сесията е изтекла. Влезте отново като администратор." };
+  const { isAdmin } = await checkIsAdmin(supabase, user.id);
+  if (!isAdmin) return { ok: false, message: "Нямате администраторски права." };
+
+  const id = getString(formData, "id");
+  const title = getString(formData, "title");
+  const slug = normalizeSlug(getString(formData, "slug"));
+  const excerpt = getString(formData, "excerpt");
+  const content = getString(formData, "content");
+  if (!id || !title || !excerpt || !content) return { ok: false, message: "Попълнете заглавие, кратко описание и пълен текст." };
+  if (!isValidSlug(slug)) return { ok: false, message: "Slug трябва да съдържа само малки латински букви, цифри и тирета." };
+  const startsAt = parseEventDateTime(getString(formData, "starts_at"));
+  const endsAt = parseEventDateTime(getString(formData, "ends_at"));
+  if (startsAt === undefined || endsAt === undefined) return { ok: false, message: "Датата или часът не е валиден за часовата зона София." };
+  const capacity = parseOptionalNumber(formData, "capacity", true);
+  const availableSpots = parseOptionalNumber(formData, "available_spots", true);
+  if (getString(formData, "capacity") && (capacity === null || capacity < 1)) return { ok: false, message: "Капацитетът трябва да бъде поне 1." };
+  if (getString(formData, "available_spots") && availableSpots === null) return { ok: false, message: "Свободните места трябва да бъдат 0 или положително число." };
+  if (capacity !== null && availableSpots !== null && availableSpots > capacity) return { ok: false, message: "Свободните места не могат да надвишават капацитета." };
+
+  const { data: previous, error: lookupError } = await supabase.from("events").select("image_url,slug").eq("id", id).maybeSingle();
+  if (lookupError || !previous) return { ok: false, message: "Събитието не може да бъде заредено за редакция." };
+  const row: Record<string, unknown> = {
+    title, slug, excerpt, content, capacity, available_spots: availableSpots,
+    starts_at: startsAt, ends_at: normalizeEventEndDate(startsAt, endsAt),
+    is_published: isChecked(formData, "is_published"),
+    image_url: previous.image_url, updated_at: new Date().toISOString(),
+    price: parseOptionalNumber(formData, "price"),
+    duration_minutes: parseOptionalNumber(formData, "duration_minutes", true),
+    format: getOptionalString(formData, "format") ?? "in_person",
+  };
+  for (const name of ["location", "event_type", "audience", "age_group", "address", "includes_text", "materials_text", "host_name", "cancellation_policy", "registration_url"]) {
+    row[name] = getOptionalString(formData, name);
+  }
+  const imageFile = getFile(formData, "image_file");
+  let uploaded: Awaited<ReturnType<typeof uploadAdminImage>> | null = null;
+  if (imageFile) {
+    try {
+      uploaded = await uploadAdminImage(supabase, imageFile, "events");
+      row.image_url = uploaded.url;
+    } catch {
+      return { ok: false, message: "Снимката не беше качена. Данните във формата са запазени; опитайте отново." };
+    }
+  }
+  const { data: saved, error } = await supabase.from("events").update(row).eq("id", id).select("*").single();
+  if (error || !saved) {
+    if (uploaded) await deleteProductImage(supabase, uploaded.path).catch(() => undefined);
+    return { ok: false, message: error?.code === "23505" ? "Този slug вече се използва от друго събитие." : `Промените не бяха запазени: ${error?.message ?? "неизвестна грешка"}` };
+  }
+  if (uploaded && previous.image_url) {
+    const oldPath = getProductImagePath(previous.image_url);
+    if (oldPath) await deleteProductImage(supabase, oldPath).catch(() => undefined);
+  }
+  revalidateContent("events", previous.slug);
+  revalidateContent("events", slug);
+  return { ok: true, message: "Промените са запазени успешно.", event: saved as EventRow };
 }
 export async function deleteEvent(formData: FormData) {
   return deleteContent(formData, "events");

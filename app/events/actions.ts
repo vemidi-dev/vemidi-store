@@ -3,9 +3,10 @@
 import { revalidatePath } from "next/cache";
 
 import { getRequestFingerprint } from "@/lib/request-fingerprint";
-import { buildAdminEventRegistrationEmail } from "@/lib/events/event-registration-email";
+import { sendEventRegistrationNotifications } from "@/lib/events/send-event-registration-notifications";
 import { getResendConfig, sendEmail } from "@/lib/orders/send-order-notifications";
 import { createServiceClient } from "@/lib/supabase/service";
+import { getSiteUrl } from "@/lib/site-url";
 
 export type EventRegistrationState = {
   ok: boolean;
@@ -47,6 +48,15 @@ export async function registerForEvent(
     };
   }
 
+  const submittedEmail = formData.get("email");
+  const customerEmail = typeof submittedEmail === "string" ? submittedEmail.trim() : "";
+  if (!customerEmail) {
+    return { ok: false, message: "Добавете имейл, на който да получите потвърждение за записването." };
+  }
+  if (customerEmail.length > 160 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail)) {
+    return { ok: false, message: errorMessages.invalid_email };
+  }
+
   const eventId = text(formData, "event_id", 36);
   const eventSlug = text(formData, "event_slug", 160);
   const idempotencyKey = text(formData, "idempotency_key", 36);
@@ -77,11 +87,11 @@ export async function registerForEvent(
     return { ok: false, message: "Направени са твърде много опити. Опитайте след 15 минути." };
   }
 
-  const { error } = await supabase.rpc("register_for_event", {
+  const { data: registrationId, error } = await supabase.rpc("register_for_event", {
     p_event_id: eventId,
     p_full_name: text(formData, "full_name", 120),
     p_phone: text(formData, "phone", 30),
-    p_email: text(formData, "email", 160) || null,
+    p_email: customerEmail,
     p_participant_count: participantCount,
     p_note: text(formData, "note", 1000) || null,
     p_idempotency_key: idempotencyKey,
@@ -91,42 +101,42 @@ export async function registerForEvent(
     return { ok: false, message: mapRegistrationError(error.message) };
   }
 
+  // Read the saved registration so retries use the original recipient and details.
+  const { data: registration } = await supabase
+    .from("event_registrations")
+    .select("id, event_id, full_name, phone, email, participant_count, note, status")
+    .eq("id", registrationId)
+    .single();
   const { data: event } = await supabase
     .from("events")
     .select("title, slug, starts_at, location, address")
-    .eq("id", eventId)
+    .eq("id", registration?.event_id ?? eventId)
     .single();
 
-  if (event) {
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim() || "http://localhost:3000";
-    const adminEventsUrl = new URL("/admin?tab=events", siteUrl).toString();
+  let customerEmailSent = false;
+  if (event && registration && registration.status !== "cancelled") {
     const { adminTo } = getResendConfig();
-    const email = buildAdminEventRegistrationEmail(
+    const results = await sendEventRegistrationNotifications(
+      registration.id,
       {
         eventTitle: event.title,
         eventSlug: event.slug,
         eventStartsAt: event.starts_at,
-        eventLocation: event.location || event.address,
-        fullName: text(formData, "full_name", 120),
-        phone: text(formData, "phone", 30),
-        email: text(formData, "email", 160) || null,
-        participantCount,
-        note: text(formData, "note", 1000) || null,
+        eventLocation: event.location,
+        eventAddress: event.address,
+        fullName: registration.full_name,
+        phone: registration.phone,
+        email: registration.email,
+        participantCount: registration.participant_count,
+        note: registration.note,
       },
-      adminEventsUrl,
+      { siteUrl: getSiteUrl(), adminTo, send: sendEmail },
     );
-    const result = await sendEmail({
-      to: [adminTo],
-      subject: email.subject,
-      html: email.html,
-      idempotencyKey: `event-registration:${idempotencyKey}:admin`,
-    });
-
-    if (!result.sent && !result.skipped) {
-      console.error("Event registration admin email failed", {
-        eventId,
-        error: result.error,
-      });
+    customerEmailSent = results.customer.sent;
+    for (const [channel, result] of Object.entries(results)) {
+      if (!result.sent && result.error !== "no_customer_email") {
+        console.error("Event registration email failed", { registrationId, channel, error: result.error });
+      }
     }
   }
 
@@ -136,6 +146,12 @@ export async function registerForEvent(
 
   return {
     ok: true,
-    message: "Записването е прието. Ще ви очакваме на място.",
+    message: "Записването е прието. Ще ви очакваме на място." + (
+      customerEmailSent
+        ? " Изпратихме потвърждение на вашия имейл."
+        : (registration?.email || text(formData, "email", 160))
+          ? " Потвърждението по имейл не беше изпратено. Регистрацията ви е запазена. При въпрос се свържете с нас."
+          : ""
+    ),
   };
 }
