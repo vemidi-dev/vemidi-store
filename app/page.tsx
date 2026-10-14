@@ -75,7 +75,7 @@ export default async function HomePage() {
         new Date(a.starts_at ?? "9999-12-31").getTime() -
         new Date(b.starts_at ?? "9999-12-31").getTime(),
     )
-    .slice(0, 3);
+    .slice(0, 6);
   const pastEvents = events
     .filter((event) => {
       const eventTime = getEventTime(event);
@@ -85,7 +85,7 @@ export default async function HomePage() {
       (a, b) =>
         new Date(b.starts_at ?? 0).getTime() - new Date(a.starts_at ?? 0).getTime(),
     )
-    .slice(0, 3);
+    .slice(0, 10);
 
   return (
     <div>

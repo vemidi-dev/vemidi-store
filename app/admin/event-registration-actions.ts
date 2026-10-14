@@ -1,26 +1,25 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 
 import { getString } from "@/lib/admin/form-data";
 import { checkIsAdmin } from "@/lib/supabase/admin-auth";
 import { createClient } from "@/lib/supabase/server";
 
-export async function updateEventRegistrationStatus(formData: FormData) {
+export async function updateEventRegistrationStatus(formData: FormData): Promise<{ ok: boolean; message: string }> {
   const id = getString(formData, "id");
   const status = getString(formData, "status");
-  if (!id || !["new", "confirmed", "cancelled"].includes(status)) {
-    redirect("/admin?tab=events&error=Невалиден статус на записването.");
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id) || !["new", "confirmed", "cancelled"].includes(status)) {
+    return { ok: false, message: "Невалиден статус на записването." };
   }
 
   const supabase = await createClient();
-  if (!supabase) redirect("/admin?tab=events&error=Supabase не е конфигуриран.");
+  if (!supabase) return { ok: false, message: "Supabase не е конфигуриран." };
 
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/admin/login");
+  if (!user) return { ok: false, message: "Сесията е изтекла. Влезте отново като администратор." };
   const { isAdmin } = await checkIsAdmin(supabase, user.id);
-  if (!isAdmin) redirect("/admin/login");
+  if (!isAdmin) return { ok: false, message: "Нямате администраторски права." };
 
   const { error } = await supabase.rpc("update_event_registration_status", {
     p_registration_id: id,
@@ -28,9 +27,19 @@ export async function updateEventRegistrationStatus(formData: FormData) {
   });
 
   if (error) {
-    redirect(`/admin?tab=events&error=${encodeURIComponent(`Статусът не беше обновен: ${error.message}`)}`);
+    const message = error.message.includes("not_enough_spots")
+      ? "Няма достатъчно свободни места за възстановяване на регистрацията."
+      : error.message.includes("registration_not_found")
+        ? "Регистрацията вече не съществува. Обновете списъка."
+        : error.message.includes("admin_required")
+          ? "Сесията няма администраторски права. Влезте отново."
+          : `Статусът не беше обновен: ${error.message}`;
+    return { ok: false, message };
   }
 
   revalidatePath("/admin");
-  redirect("/admin?tab=events&success=Статусът на записването е обновен.");
+  revalidatePath("/");
+  revalidatePath("/sabitiya");
+  revalidatePath("/sabitiya/[slug]", "page");
+  return { ok: true, message: status === "cancelled" ? "Регистрацията е отказана. Местата са освободени." : "Статусът на регистрацията е обновен." };
 }
