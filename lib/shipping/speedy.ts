@@ -170,7 +170,6 @@ export async function getSpeedyOfficesForDelivery(
   const response = await postSpeedy<SpeedyOfficeResponse>("location/office/", {
     siteId: cityId,
     officeType: [deliveryType === "automat" ? "APT" : "OFFICE"],
-    limit: 120,
   });
 
   const offices = mapOffices(response);

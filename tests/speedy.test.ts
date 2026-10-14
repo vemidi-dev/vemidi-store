@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { formatSpeedyOfficeLabel, isSpeedyConfigured } from "@/lib/shipping/speedy";
+import {
+  formatSpeedyOfficeLabel,
+  getSpeedyOfficesForDelivery,
+  isSpeedyConfigured,
+} from "@/lib/shipping/speedy";
 
 test("formatSpeedyOfficeLabel includes address when available", () => {
   const label = formatSpeedyOfficeLabel({
@@ -49,6 +53,41 @@ test("isSpeedyConfigured accepts primary environment variables", () => {
       delete process.env.SPEEDY_API_PASSWORD;
     } else {
       process.env.SPEEDY_API_PASSWORD = oldApiPassword;
+    }
+  }
+});
+
+test("getSpeedyOfficesForDelivery does not cap office results", async () => {
+  const oldUsername = process.env.SPEEDY_USERNAME;
+  const oldPassword = process.env.SPEEDY_PASSWORD;
+  const originalFetch = globalThis.fetch;
+  let requestBodyJson = "";
+
+  process.env.SPEEDY_USERNAME = "user";
+  process.env.SPEEDY_PASSWORD = "pass";
+  globalThis.fetch = (async (_input, init) => {
+    requestBodyJson = String(init?.body ?? "{}");
+    return new Response(JSON.stringify({ offices: [] }), { status: 200 });
+  }) as typeof fetch;
+
+  try {
+    await getSpeedyOfficesForDelivery(68134, "automat");
+    const requestBody = JSON.parse(requestBodyJson) as Record<string, unknown>;
+    assert.equal(requestBody.limit, undefined);
+    assert.deepEqual(requestBody.officeType, ["APT"]);
+  } finally {
+    globalThis.fetch = originalFetch;
+
+    if (oldUsername === undefined) {
+      delete process.env.SPEEDY_USERNAME;
+    } else {
+      process.env.SPEEDY_USERNAME = oldUsername;
+    }
+
+    if (oldPassword === undefined) {
+      delete process.env.SPEEDY_PASSWORD;
+    } else {
+      process.env.SPEEDY_PASSWORD = oldPassword;
     }
   }
 });
