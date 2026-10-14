@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 
 import { getRequestFingerprint } from "@/lib/request-fingerprint";
+import { buildAdminEventRegistrationEmail } from "@/lib/events/event-registration-email";
+import { getResendConfig, sendEmail } from "@/lib/orders/send-order-notifications";
 import { createServiceClient } from "@/lib/supabase/service";
 
 export type EventRegistrationState = {
@@ -89,12 +91,51 @@ export async function registerForEvent(
     return { ok: false, message: mapRegistrationError(error.message) };
   }
 
+  const { data: event } = await supabase
+    .from("events")
+    .select("title, slug, starts_at, location, address")
+    .eq("id", eventId)
+    .single();
+
+  if (event) {
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim() || "http://localhost:3000";
+    const adminEventsUrl = new URL("/admin?tab=events", siteUrl).toString();
+    const { adminTo } = getResendConfig();
+    const email = buildAdminEventRegistrationEmail(
+      {
+        eventTitle: event.title,
+        eventSlug: event.slug,
+        eventStartsAt: event.starts_at,
+        eventLocation: event.location || event.address,
+        fullName: text(formData, "full_name", 120),
+        phone: text(formData, "phone", 30),
+        email: text(formData, "email", 160) || null,
+        participantCount,
+        note: text(formData, "note", 1000) || null,
+      },
+      adminEventsUrl,
+    );
+    const result = await sendEmail({
+      to: [adminTo],
+      subject: email.subject,
+      html: email.html,
+      idempotencyKey: `event-registration:${idempotencyKey}:admin`,
+    });
+
+    if (!result.sent && !result.skipped) {
+      console.error("Event registration admin email failed", {
+        eventId,
+        error: result.error,
+      });
+    }
+  }
+
   revalidatePath("/sabitiya");
   revalidatePath(`/sabitiya/${eventSlug}`);
   revalidatePath("/admin");
 
   return {
     ok: true,
-    message: "Записването е прието. Ще се свържем с вас за потвърждение.",
+    message: "Записването е прието. Ще ви очакваме на място.",
   };
 }

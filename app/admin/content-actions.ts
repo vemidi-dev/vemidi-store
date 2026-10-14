@@ -238,6 +238,14 @@ function parseDateTime(value: string) {
   return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
 }
 
+function normalizeEventEndDate(startsAt: string | null, endsAt: string | null) {
+  if (!startsAt || !endsAt) {
+    return endsAt;
+  }
+
+  return new Date(endsAt).getTime() < new Date(startsAt).getTime() ? null : endsAt;
+}
+
 function parseOptionalNumber(formData: FormData, key: string, integer = false) {
   const rawValue = getString(formData, key);
   if (!rawValue) return null;
@@ -324,8 +332,10 @@ async function createContent(formData: FormData, kind: ContentKind) {
     row.recommendation_description = recommendationDescription;
     row.published_at = isPublished ? new Date().toISOString() : null;
   } else {
-    const startsAt = parseDateTime(getString(formData, "starts_at"));
-    const endsAt = parseDateTime(getString(formData, "ends_at"));
+    const startsAtRaw = getString(formData, "starts_at");
+    const endsAtRaw = getString(formData, "ends_at");
+    const startsAt = parseDateTime(startsAtRaw);
+    const endsAt = parseDateTime(endsAtRaw);
     const { capacity, availableSpots } = getEventCapacity(formData, tab, true);
     if (startsAt === undefined || endsAt === undefined) {
       redirectWith("error", "Датата или часът на събитието не е валиден.", tab);
@@ -346,7 +356,7 @@ async function createContent(formData: FormData, kind: ContentKind) {
     row.cancellation_policy = getOptionalString(formData, "cancellation_policy");
     row.registration_url = getOptionalString(formData, "registration_url");
     row.starts_at = startsAt;
-    row.ends_at = endsAt;
+    row.ends_at = normalizeEventEndDate(startsAt, endsAt);
   }
 
   let uploaded: Awaited<ReturnType<typeof uploadAdminImage>> | null = null;
@@ -455,8 +465,10 @@ async function updateContent(
       ? (previousRow?.published_at ?? new Date().toISOString())
       : null;
   } else {
-    const startsAt = parseDateTime(getString(formData, "starts_at"));
-    const endsAt = parseDateTime(getString(formData, "ends_at"));
+    const startsAtRaw = getString(formData, "starts_at");
+    const endsAtRaw = getString(formData, "ends_at");
+    const startsAt = parseDateTime(startsAtRaw);
+    const endsAt = parseDateTime(endsAtRaw);
     const { capacity, availableSpots } = getEventCapacity(formData, tab, false);
     if (startsAt === undefined || endsAt === undefined) {
       redirectWith("error", "Датата или часът на събитието не е валиден.", tab);
@@ -477,7 +489,7 @@ async function updateContent(
     row.cancellation_policy = getOptionalString(formData, "cancellation_policy");
     row.registration_url = getOptionalString(formData, "registration_url");
     row.starts_at = startsAt;
-    row.ends_at = endsAt;
+    row.ends_at = normalizeEventEndDate(startsAt, endsAt);
   }
 
   let uploaded: Awaited<ReturnType<typeof uploadAdminImage>> | null = null;

@@ -1,4 +1,5 @@
 import { createEvent } from "@/app/admin/content-actions";
+import { AdminFormDraftKeeper } from "@/components/admin/admin-form-draft-keeper";
 import { AdminSectionAccordion } from "@/components/admin/admin-section-accordion";
 import { EventListView } from "@/components/admin/event-list-view";
 import { ImageFileInput } from "@/components/admin/image-file-input";
@@ -24,8 +25,16 @@ export function EventManagementPanel({
         title="Добавяне на събитие"
         countLabel="свиване / разгъване"
       >
-        <form action={createEvent} className="grid gap-5 md:grid-cols-2">
+        <form
+          id="admin-event-create-form"
+          action={createEvent}
+          className="grid gap-5 md:grid-cols-2"
+        >
           <input type="hidden" name="tab" value="events" />
+          <AdminFormDraftKeeper
+            formId="admin-event-create-form"
+            storageKey="vemidi:admin:event-create-draft"
+          />
           <label className="text-sm font-medium text-boutique-ink">
             Заглавие
             <input name="title" required maxLength={160} className={adminFieldClass} />

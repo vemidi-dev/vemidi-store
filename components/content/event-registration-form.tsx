@@ -38,7 +38,7 @@ export function EventRegistrationForm({
     <section className="rounded-2xl border border-boutique-line bg-boutique-paper p-6">
       <h2 className="font-heading text-2xl text-boutique-ink">Запиши се</h2>
       <p className="mt-2 text-sm text-boutique-muted">
-        Изпратете заявка за място. Записването се потвърждава след обратна връзка от нас.
+        Попълнете данните за участие. След успешно записване ще ви очакваме на място.
       </p>
       <form action={formAction} className="mt-6 grid gap-4 sm:grid-cols-2">
         <input type="hidden" name="event_id" value={eventId} />
@@ -69,8 +69,14 @@ export function EventRegistrationForm({
           </select>
         </label>
         <label className="text-sm font-medium text-boutique-ink sm:col-span-2">
-          Бележка (по избор)
-          <textarea name="note" rows={3} maxLength={1000} className="mt-2 w-full resize-y rounded-xl border border-boutique-line bg-white px-4 py-3" />
+          Бележка / име и възраст на дете (по избор)
+          <textarea
+            name="note"
+            rows={3}
+            maxLength={1000}
+            placeholder="Например: Мария, 7 г.; алергии, придружител или друг детайл"
+            className="mt-2 w-full resize-y rounded-xl border border-boutique-line bg-white px-4 py-3"
+          />
         </label>
         <label className="flex items-start gap-3 text-sm text-boutique-muted sm:col-span-2">
           <input name="privacy_consent" type="checkbox" required className="mt-1 h-4 w-4 accent-boutique-ink" />

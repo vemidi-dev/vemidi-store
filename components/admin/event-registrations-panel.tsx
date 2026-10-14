@@ -20,6 +20,17 @@ export function EventRegistrationsPanel({
   error,
 }: EventRegistrationsPanelProps) {
   const eventNames = new Map(events.map((event) => [event.id, event.title]));
+  const totalParticipants = registrations.reduce(
+    (sum, registration) => sum + registration.participant_count,
+    0,
+  );
+  const statusCounts = registrations.reduce<Record<EventRegistrationRow["status"], number>>(
+    (counts, registration) => ({
+      ...counts,
+      [registration.status]: counts[registration.status] + 1,
+    }),
+    { new: 0, confirmed: 0, cancelled: 0 },
+  );
 
   return (
     <section className={adminPanelClass}>
@@ -32,6 +43,24 @@ export function EventRegistrationsPanel({
         <p className="mt-4 text-sm text-boutique-muted">Все още няма получени записвания.</p>
       ) : (
         <div className="mt-6 space-y-4">
+          <div className="grid gap-3 sm:grid-cols-4">
+            <div className="rounded-xl border border-boutique-line bg-boutique-bg p-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-boutique-muted">Всички</p>
+              <p className="mt-1 text-2xl font-semibold text-boutique-ink">{registrations.length}</p>
+            </div>
+            <div className="rounded-xl border border-boutique-line bg-boutique-bg p-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-boutique-muted">Участници</p>
+              <p className="mt-1 text-2xl font-semibold text-boutique-ink">{totalParticipants}</p>
+            </div>
+            <div className="rounded-xl border border-boutique-line bg-boutique-bg p-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-boutique-muted">Нови</p>
+              <p className="mt-1 text-2xl font-semibold text-boutique-ink">{statusCounts.new}</p>
+            </div>
+            <div className="rounded-xl border border-boutique-line bg-boutique-bg p-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-boutique-muted">Потвърдени</p>
+              <p className="mt-1 text-2xl font-semibold text-boutique-ink">{statusCounts.confirmed}</p>
+            </div>
+          </div>
           {registrations.map((registration) => (
             <article key={registration.id} className="rounded-xl border border-boutique-line bg-boutique-bg p-5">
               <div className="flex flex-wrap items-start justify-between gap-4">

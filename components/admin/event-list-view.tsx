@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 
 import { deleteEvent, updateEvent } from "@/app/admin/content-actions";
 import { AdminConfirmForm } from "@/components/admin/admin-confirm-form";
@@ -197,6 +198,13 @@ export function EventListView({ events }: { events: EventRow[] }) {
                       >
                         Редактирай
                       </AdminOpenDetailsButton>
+                      <Link
+                        href={`/admin/events/${event.id}/preview`}
+                        target="_blank"
+                        className="rounded-full border border-boutique-line px-3 py-1.5 text-[11px] font-semibold text-boutique-ink hover:border-boutique-accent/40"
+                      >
+                        Preview
+                      </Link>
                       <AdminConfirmForm
                         action={deleteEvent}
                         confirmMessage={`Сигурни ли сте, че искате да изтриете „${event.title}"?`}
