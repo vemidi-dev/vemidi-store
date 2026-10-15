@@ -1,5 +1,7 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
+
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -19,6 +21,8 @@ import { checkIsAdmin } from "@/lib/supabase/admin-auth";
 import { createClient } from "@/lib/supabase/server";
 import { parseEventDateTime } from "@/lib/events/event-datetime";
 import type { EventRow } from "@/lib/admin/types";
+import { prepareEventFormExtensions } from "@/lib/admin/event-form-extensions";
+import { getEventMapMigrationError } from "@/lib/events/map-link";
 
 type ContentKind = "blog" | "events";
 type PreviousContentRow = {
@@ -367,6 +371,17 @@ async function createContent(formData: FormData, kind: ContentKind) {
     }
   }
 
+  let eventPaths: string[] = [];
+  if (kind === "events") {
+    try {
+      const extensions = await prepareEventFormExtensions(supabase, formData, title);
+      Object.assign(row, extensions.row);
+      eventPaths = extensions.uploadedPaths;
+    } catch (error) {
+      if (uploaded) await deleteProductImage(supabase, uploaded.path).catch(() => undefined);
+      redirectWith("error", error instanceof Error ? error.message : "Настройките не бяха запазени.", tab);
+    }
+  }
   const blogProductIds = Array.isArray(row.__blogProductIds)
     ? (row.__blogProductIds as string[])
     : [];
@@ -378,10 +393,11 @@ async function createContent(formData: FormData, kind: ContentKind) {
     .select("id")
     .maybeSingle();
   if (error) {
+    await Promise.all(eventPaths.map((path) => deleteProductImage(supabase, path).catch(() => undefined)));
     if (uploaded) {
       await deleteProductImage(supabase, uploaded.path).catch(() => undefined);
     }
-    redirectWith("error", `Съдържанието не беше добавено: ${error.message}`, tab);
+    redirectWith("error", (kind === "events" && getEventMapMigrationError(error.message)) || `Съдържанието не беше добавено: ${error.message}`, tab);
   }
 
   if (kind === "blog" && inserted?.id) {
@@ -500,6 +516,17 @@ async function updateContent(
     }
   }
 
+  let eventPaths: string[] = [];
+  if (kind === "events") {
+    try {
+      const extensions = await prepareEventFormExtensions(supabase, formData, title);
+      Object.assign(row, extensions.row);
+      eventPaths = extensions.uploadedPaths;
+    } catch (error) {
+      if (uploaded) await deleteProductImage(supabase, uploaded.path).catch(() => undefined);
+      redirectWith("error", error instanceof Error ? error.message : "Настройките не бяха запазени.", tab);
+    }
+  }
   const blogProductIds = Array.isArray(row.__blogProductIds)
     ? (row.__blogProductIds as string[])
     : [];
@@ -507,10 +534,11 @@ async function updateContent(
 
   const { error } = await supabase.from(config[kind].table).update(row).eq("id", id);
   if (error) {
+    await Promise.all(eventPaths.map((path) => deleteProductImage(supabase, path).catch(() => undefined)));
     if (uploaded) {
       await deleteProductImage(supabase, uploaded.path).catch(() => undefined);
     }
-    redirectWith("error", `Промените не бяха запазени: ${error.message}`, tab);
+    redirectWith("error", (kind === "events" && getEventMapMigrationError(error.message)) || `Промените не бяха запазени: ${error.message}`, tab);
   }
 
   if (uploaded && previousRow?.image_url && previousRow.image_url !== uploaded.url) {
@@ -629,10 +657,20 @@ export async function saveEventChanges(formData: FormData): Promise<{ ok: boolea
       return { ok: false, message: "Снимката не беше качена. Данните във формата са запазени; опитайте отново." };
     }
   }
+  let eventPaths: string[] = [];
+  try {
+    const extensions = await prepareEventFormExtensions(supabase, formData, title);
+    Object.assign(row, extensions.row);
+    eventPaths = extensions.uploadedPaths;
+  } catch (error) {
+    if (uploaded) await deleteProductImage(supabase, uploaded.path).catch(() => undefined);
+    return { ok: false, message: error instanceof Error ? error.message : "Настройките не бяха запазени." };
+  }
   const { data: saved, error } = await supabase.from("events").update(row).eq("id", id).select("*").single();
   if (error || !saved) {
+    await Promise.all(eventPaths.map((path) => deleteProductImage(supabase, path).catch(() => undefined)));
     if (uploaded) await deleteProductImage(supabase, uploaded.path).catch(() => undefined);
-    return { ok: false, message: error?.code === "23505" ? "Този slug вече се използва от друго събитие." : `Промените не бяха запазени: ${error?.message ?? "неизвестна грешка"}` };
+    return { ok: false, message: getEventMapMigrationError(error?.message ?? "") || (error?.code === "23505" ? "Този slug вече се използва от друго събитие." : `Промените не бяха запазени: ${error?.message ?? "неизвестна грешка"}`) };
   }
   if (uploaded && previous.image_url) {
     const oldPath = getProductImagePath(previous.image_url);
@@ -644,4 +682,21 @@ export async function saveEventChanges(formData: FormData): Promise<{ ok: boolea
 }
 export async function deleteEvent(formData: FormData) {
   return deleteContent(formData, "events");
+}
+
+export async function copyEventAsDraft(id: string): Promise<{ ok: boolean; message: string; event?: EventRow }> {
+  const supabase = await createClient();
+  if (!supabase) return { ok: false, message: "Supabase не е конфигуриран." };
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user || !(await checkIsAdmin(supabase, user.id)).isAdmin) return { ok: false, message: "Влезте като администратор." };
+  const { data: source } = await supabase.from("events").select("*").eq("id", id).maybeSingle();
+  if (!source) return { ok: false, message: "Събитието не е намерено." };
+  const row: Record<string, unknown> = { ...source };
+  for (const name of ["id", "created_at", "updated_at"]) delete row[name];
+  Object.assign(row, { title: `${source.title} (копие)`, slug: `${String(source.slug).slice(0, 140)}-copy-${randomUUID().slice(0, 8)}`, is_published: false, starts_at: null, ends_at: null, available_spots: source.capacity, image_url: null, registration_url: null });
+  if ("gallery_images" in source) row.gallery_images = [];
+  const { data, error } = await supabase.from("events").insert(row).select("*").single();
+  if (error || !data) return { ok: false, message: "Копието не беше създадено. Опитайте отново." };
+  revalidatePath("/admin");
+  return { ok: true, message: "Създадена е чернова с копирани текстове и настройки. Добавете дата и снимки.", event: data as EventRow };
 }

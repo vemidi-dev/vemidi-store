@@ -7,6 +7,20 @@ const tsxCmd = process.platform === "win32" ? "tsx.cmd" : "tsx";
 
 const releaseTestGroups = [
   {
+    label: "Workshop registration & event editing",
+    files: [
+      "tests/event-admin.test.ts",
+      "tests/event-datetime.test.ts",
+      "tests/event-form-extensions.test.ts",
+      "tests/event-phone-map.test.ts",
+      "tests/event-registration-email.test.ts",
+      "tests/event-registration-forms.test.ts",
+      "tests/event-registrations.test.ts",
+      "tests/event-schema.test.ts",
+      "tests/blog-rich-text.test.ts",
+    ],
+  },
+  {
     label: "Pricing, cart & quantity tiers",
     files: [
       "tests/cart-quantity-price-tiers.test.ts",

@@ -6,7 +6,9 @@ import { useRouter } from "next/navigation";
 import { updateEventRegistrationStatus } from "@/app/admin/event-registration-actions";
 import { adminFieldClass, adminPanelClass } from "@/components/admin/styles";
 import type { EventRegistrationRow, EventRow } from "@/lib/admin/types";
-import { eventRegistrationStatusLabels, filterEventRegistrations, getEventRegistrationCounts } from "@/lib/admin/event-registrations";
+import { eventRegistrationsCsv, eventPreparationSummary, eventRegistrationStatusLabels, filterEventRegistrations, getEventRegistrationCounts } from "@/lib/admin/event-registrations";
+import { participantSummaryLines } from "@/lib/events/participant-summary";
+import { formatEur } from "@/lib/format-eur";
 
 type Status = EventRegistrationRow["status"];
 
@@ -52,6 +54,8 @@ function RegistrationRow({ registration, onSaved }: { registration: EventRegistr
           </div>
           <p className="mt-1 text-xs text-boutique-muted">{new Intl.DateTimeFormat("bg-BG", { dateStyle: "medium", timeStyle: "short", timeZone: "Europe/Sofia" }).format(new Date(registration.created_at))}</p>
           {registration.note ? <p className="mt-2 whitespace-pre-wrap break-words text-sm text-boutique-ink">{registration.note}</p> : null}
+          {registration.participants?.length ? <ul className="mt-3 space-y-1 text-sm text-boutique-ink">{participantSummaryLines(registration.participants, registration.registration_answers).map((line, index) => <li key={index} className="break-words">{line}</li>)}</ul> : null}
+          {registration.total_amount != null ? <p className="mt-2 text-sm font-semibold text-boutique-ink">На място: {formatEur(registration.total_amount)}</p> : null}
         </div>
         <div className="flex flex-wrap gap-2">
           {registration.status === "new" ? <button type="button" disabled={pending} onClick={() => changeStatus("confirmed")} className="rounded-lg border border-boutique-line px-3 py-2 text-sm font-semibold text-boutique-ink disabled:opacity-50">Потвърди</button> : null}
@@ -77,6 +81,11 @@ export function EventRegistrationsPanel({ events, registrations, error }: { even
   return (
     <section className={adminPanelClass}>
       <h2 className="font-heading text-2xl text-boutique-ink">Записвания за събития</h2>
+      <button type="button" disabled={!filtered.length} onClick={() => {
+        const url = URL.createObjectURL(new Blob([eventRegistrationsCsv(filtered, events)], { type: "text/csv;charset=utf-8" }));
+        const link = document.createElement("a"); link.href = url; link.download = "uchastnici.csv"; link.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      }} className="mt-3 rounded-lg border border-boutique-line px-4 py-2 text-sm font-semibold text-boutique-ink disabled:opacity-40">Свали списъка</button>
       {error ? <p role="alert" className="mt-4 text-sm text-red-700">Записванията не могат да се заредят: {error.message}</p> : (
         <>
           <div className="mt-5 grid gap-4 md:grid-cols-[minmax(0,2fr)_minmax(0,2fr)_minmax(0,1fr)_auto]">
@@ -91,8 +100,10 @@ export function EventRegistrationsPanel({ events, registrations, error }: { even
           <div className="mt-5 space-y-5">
             {groups.map((group) => {
               const groupCounts = getEventRegistrationCounts(group.rows);
+              const preparation = eventPreparationSummary(group.rows);
               return <details key={group.id} open className="min-w-0 border-b border-boutique-line pb-3">
                 <summary className="cursor-pointer py-3 text-boutique-ink"><span className="font-semibold">{group.event?.title ?? "Недостъпно събитие"}</span><span className="ml-3 text-sm text-boutique-muted">{groupCounts.total} регистрации · {groupCounts.participants} активни участници</span></summary>
+                {preparation.length ? <div className="flex flex-wrap gap-x-5 gap-y-2 py-3 text-sm text-boutique-muted">{preparation.map((item, index) => <span key={index}>{item.label} {item.value}: <strong className="text-boutique-ink">{item.count} бр.</strong></span>)}</div> : null}
                 <ul>{group.rows.map((row) => <RegistrationRow key={row.id} registration={row} onSaved={(id, nextStatus) => setUpdates((previous) => ({ ...previous, [id]: nextStatus }))} />)}</ul>
               </details>;
             })}

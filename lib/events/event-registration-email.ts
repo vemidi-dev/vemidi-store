@@ -1,6 +1,12 @@
 import { siteConfig } from "@/config/site";
+import { participantSummaryLines } from "@/lib/events/participant-summary";
+import { EVENT_PAYMENT_LABEL, type EventParticipant, type EventAnswer } from "@/lib/events/registration-config";
+import { formatEur } from "@/lib/format-eur";
 
 export type EventRegistrationEmailInput = {
+  participants?: EventParticipant[];
+  answers?: EventAnswer[];
+  totalAmount?: number | null;
   eventTitle: string;
   eventSlug: string;
   eventStartsAt: string | null;
@@ -71,6 +77,8 @@ export function buildAdminEventRegistrationEmail(
           ${detailRow("Телефон", input.phone)}
           ${detailRow("Имейл", input.email)}
           ${detailRow("Брой участници", input.participantCount)}
+          ${input.participants?.length ? detailRow("Участници и уточнения", participantSummaryLines(input.participants, input.answers).join("\n")) : ""}
+          ${input.totalAmount != null ? detailRow("Сума на място", formatEur(input.totalAmount)) : ""}
           ${detailRow("Бележка", input.note)}
         </tbody>
       </table>
@@ -102,6 +110,9 @@ export function buildCustomerEventRegistrationEmail(
             ${input.eventLocation ? detailRow("Място", input.eventLocation) : ""}
             ${input.eventAddress && input.eventAddress !== input.eventLocation ? detailRow("Адрес", input.eventAddress) : ""}
             ${detailRow("Брой участници", input.participantCount)}
+            ${input.participants?.length ? detailRow("Участници и уточнения", participantSummaryLines(input.participants, input.answers).join("\n")) : ""}
+            ${input.totalAmount != null ? detailRow("Сума", formatEur(input.totalAmount)) : ""}
+            ${detailRow("Плащане", EVENT_PAYMENT_LABEL)}
           </tbody>
         </table>
         <p style="margin:20px 0;"><a href="${escapeHtml(eventUrl)}" style="color:#5f7558;">Разгледайте подробностите за събитието</a></p>

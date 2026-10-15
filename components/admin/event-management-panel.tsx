@@ -1,7 +1,9 @@
-import { createEvent } from "@/app/admin/content-actions";
+import { EventCreateForm } from "@/components/admin/event-create-form";
 import { AdminFormDraftKeeper } from "@/components/admin/admin-form-draft-keeper";
 import { AdminSectionAccordion } from "@/components/admin/admin-section-accordion";
 import { EventListView } from "@/components/admin/event-list-view";
+import { EventSettingsEditor } from "@/components/admin/event-settings-editor";
+import { BlogRichTextEditor } from "@/components/admin/blog-rich-text-editor";
 import { ImageFileInput } from "@/components/admin/image-file-input";
 import { adminFieldClass, adminHelperClass, adminPanelClass } from "@/components/admin/styles";
 import type { EventRow } from "@/lib/admin/types";
@@ -25,11 +27,7 @@ export function EventManagementPanel({
         title="Добавяне на събитие"
         countLabel="свиване / разгъване"
       >
-        <form
-          id="admin-event-create-form"
-          action={createEvent}
-          className="grid gap-5 md:grid-cols-2"
-        >
+        <EventCreateForm>
           <input type="hidden" name="tab" value="events" />
           <AdminFormDraftKeeper
             formId="admin-event-create-form"
@@ -47,11 +45,10 @@ export function EventManagementPanel({
             Кратко описание
             <textarea name="excerpt" required rows={2} maxLength={320} className={`${adminFieldClass} resize-y`} />
           </label>
-          <label className="text-sm font-medium text-boutique-ink md:col-span-2">
-            Пълен текст
-            <textarea name="content" required rows={9} className={`${adminFieldClass} resize-y`} />
-            <p className={adminHelperClass}>Натискайте Enter за нов ред. Празен ред добавя по-голям интервал между абзаците.</p>
-          </label>
+          <div className="min-w-0 text-sm font-medium text-boutique-ink md:col-span-2">
+            <label htmlFor="event-create-content">Пълен текст</label>
+            <BlogRichTextEditor id="event-create-content" name="content" required preserveLineBreaks rows={9} className={`${adminFieldClass} resize-y`} helperClassName={adminHelperClass} />
+          </div>
           <label className="text-sm font-medium text-boutique-ink">
             Тип
             <select name="event_type" className={adminFieldClass} defaultValue="">
@@ -92,6 +89,7 @@ export function EventManagementPanel({
           </label>
           <label className="text-sm font-medium text-boutique-ink">Възрастова група<input name="age_group" className={adminFieldClass} /></label>
           <label className="text-sm font-medium text-boutique-ink">Адрес<input name="address" className={adminFieldClass} /></label>
+          <label className="text-sm font-medium text-boutique-ink md:col-span-2">Точен линк към Google Maps (по избор)<input name="maps_url" type="url" placeholder="https://maps.app.goo.gl/..." className={adminFieldClass} /></label>
           <label className="text-sm font-medium text-boutique-ink">Продължителност (минути)<input name="duration_minutes" type="number" min="1" className={adminFieldClass} /></label>
           <label className="text-sm font-medium text-boutique-ink">Водещ<input name="host_name" className={adminFieldClass} /></label>
           <label className="text-sm font-medium text-boutique-ink md:col-span-2">Какво е включено<textarea name="includes_text" rows={2} className={`${adminFieldClass} resize-y`} /></label>
@@ -123,12 +121,13 @@ export function EventManagementPanel({
             <input name="is_published" type="checkbox" className="h-4 w-4 accent-boutique-ink" />
             Публикувай веднага
           </label>
+          <EventSettingsEditor />
           <div className="md:col-span-2">
             <button type="submit" className="rounded-full bg-boutique-ink px-6 py-3 text-xs font-semibold uppercase tracking-wider text-boutique-paper transition hover:bg-boutique-accent">
               Добави събитие
             </button>
           </div>
-        </form>
+        </EventCreateForm>
       </AdminSectionAccordion>
 
       <section className={adminPanelClass}>

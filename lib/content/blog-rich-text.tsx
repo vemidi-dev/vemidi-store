@@ -159,13 +159,13 @@ function parseInline(text: string): InlineToken[] {
   return tokens;
 }
 
-export function parseBlogRichText(text: string): BlockToken[] {
+export function parseBlogRichText(text: string, { preserveLineBreaks = false }: { preserveLineBreaks?: boolean } = {}): BlockToken[] {
   const blocks: BlockToken[] = [];
   const paragraphLines: string[] = [];
   let list: { ordered: boolean; items: InlineToken[][] } | null = null;
 
   function flushParagraph() {
-    const paragraph = paragraphLines.join(" ").trim();
+    const paragraph = paragraphLines.join(preserveLineBreaks ? "\n" : " ").trim();
     paragraphLines.length = 0;
     if (paragraph) {
       blocks.push({ type: "paragraph", children: parseInline(paragraph) });
@@ -331,8 +331,8 @@ function renderInline(tokens: InlineToken[], keyPrefix: string): ReactNode[] {
   });
 }
 
-export function BlogRichText({ content }: { content: string }) {
-  const blocks = parseBlogRichText(content);
+export function BlogRichText({ content, preserveLineBreaks = false }: { content: string; preserveLineBreaks?: boolean }) {
+  const blocks = parseBlogRichText(content, { preserveLineBreaks });
   const headingIds = getBlogTableOfContents(content);
   let headingIndex = 0;
 
@@ -392,7 +392,7 @@ export function BlogRichText({ content }: { content: string }) {
           );
         }
 
-        return <p key={index}>{renderInline(block.children, `p-${index}`)}</p>;
+        return <p key={index} className={preserveLineBreaks ? "whitespace-pre-line" : undefined}>{renderInline(block.children, `p-${index}`)}</p>;
       })}
     </div>
   );

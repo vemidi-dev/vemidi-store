@@ -120,6 +120,9 @@ export type BlogPostProductRow = {
 };
 
 export type EventRow = {
+  maps_url?: string | null;
+  registration_settings?: import("@/lib/events/registration-config").EventRegistrationSettings | Record<string, never>;
+  gallery_images?: import("@/lib/events/registration-config").EventPhoto[];
   id: string;
   title: string;
   slug: string;
@@ -158,6 +161,9 @@ export type EventGalleryImageRow = {
 };
 
 export type EventRegistrationRow = {
+  participants?: import("@/lib/events/registration-config").EventParticipant[];
+  registration_answers?: import("@/lib/events/registration-config").EventAnswer[];
+  total_amount?: number | null;
   id: string;
   event_id: string;
   full_name: string;

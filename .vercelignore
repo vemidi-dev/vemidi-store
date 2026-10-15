@@ -1,0 +1,10 @@
+.git
+.vercel
+.env*
+.next*
+.npm-cache
+node_modules
+out
+*.tsbuildinfo
+tmp-*
+vemidi-organization

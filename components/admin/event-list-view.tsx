@@ -1,12 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
 import { deleteEvent } from "@/app/admin/content-actions";
 import { EventEditForm } from "@/components/admin/event-edit-form";
+import { EventSettingsEditor } from "@/components/admin/event-settings-editor";
+import { EventCopyButton } from "@/components/admin/event-copy-button";
+import { BlogRichTextEditor } from "@/components/admin/blog-rich-text-editor";
 import { AdminConfirmForm } from "@/components/admin/admin-confirm-form";
-import { AdminOpenDetailsButton } from "@/components/admin/admin-open-details-button";
 import { ImageFileInput } from "@/components/admin/image-file-input";
 import {
   adminFieldClass,
@@ -45,9 +47,14 @@ export function EventListView({ events }: { events: EventRow[] }) {
   const [sortKey, setSortKey] = useState<EventSortKey>("starts-desc");
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [savedEvents, setSavedEvents] = useState<Record<string, EventRow>>({});
+  const [editingId, setEditingId] = useState<string | null>(null);
+  useEffect(() => {
+    if (editingId) document.getElementById(`event-edit-${editingId}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [editingId]);
 
   const visibleEvents = useMemo(() => {
-    const filtered = filterEvents(events.map((event) => savedEvents[event.id] ?? event), {
+    const allEvents = [...events.map((event) => savedEvents[event.id] ?? event), ...Object.values(savedEvents).filter((saved) => !events.some((event) => event.id === saved.id))];
+    const filtered = filterEvents(allEvents, {
       search: query,
       publish: publishFilter,
       period: periodFilter,
@@ -151,14 +158,14 @@ export function EventListView({ events }: { events: EventRow[] }) {
       </div>
 
       <div className="mt-4 overflow-x-auto rounded-xl border border-boutique-line">
-        <table className="min-w-[52rem] w-full text-left text-sm">
+        <table className="w-full table-fixed text-left text-sm">
           <thead>
             <tr className={adminTableHeadClass}>
-              <th className="px-3 py-2.5 font-semibold">Заглавие</th>
-              <th className="px-3 py-2.5 font-semibold">Период</th>
-              <th className="px-3 py-2.5 font-semibold">Статус</th>
-              <th className="px-3 py-2.5 font-semibold">Снимка</th>
-              <th className="px-3 py-2.5 text-right font-semibold">Действия</th>
+              <th className="px-3 py-2.5 font-semibold md:w-[30%]">Заглавие</th>
+              <th className="hidden px-3 py-2.5 font-semibold md:table-cell md:w-[20%]">Период</th>
+              <th className="hidden px-3 py-2.5 font-semibold md:table-cell md:w-[12%]">Статус</th>
+              <th className="hidden px-3 py-2.5 font-semibold md:table-cell md:w-[8%]">Снимка</th>
+              <th className="px-3 py-2.5 text-right font-semibold md:w-[30%]">Действия</th>
             </tr>
           </thead>
           <tbody>
@@ -167,32 +174,37 @@ export function EventListView({ events }: { events: EventRow[] }) {
               const detailsId = `event-edit-${event.id}`;
 
               return (
-                <tr key={event.id} className={adminTableRowClass}>
-                  <td className="px-3 py-2.5 align-top">
+                <Fragment key={event.id}>
+                <tr className={adminTableRowClass}>
+                  <td className="break-words px-3 py-2.5 align-top [overflow-wrap:anywhere]">
                     <p className="font-medium text-boutique-ink">{event.title}</p>
                     <p className="mt-0.5 text-xs text-boutique-muted">{event.slug}</p>
+                    <p className="mt-2 text-xs text-boutique-muted md:hidden">{formatEventLifecycleStatus(lifecycle)} · {formatEventPeriod(event.starts_at, event.ends_at)}</p>
                   </td>
-                  <td className="px-3 py-2.5 align-top text-xs text-boutique-muted">
+                  <td className="hidden px-3 py-2.5 align-top text-xs text-boutique-muted md:table-cell">
                     {formatEventPeriod(event.starts_at, event.ends_at)}
                   </td>
-                  <td className="px-3 py-2.5 align-top">
+                  <td className="hidden px-3 py-2.5 align-top md:table-cell">
                     <span
                       className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${STATUS_BADGE[lifecycle] ?? STATUS_BADGE.draft}`}
                     >
                       {formatEventLifecycleStatus(lifecycle)}
                     </span>
                   </td>
-                  <td className="px-3 py-2.5 align-top text-xs text-boutique-muted">
+                  <td className="hidden px-3 py-2.5 align-top text-xs text-boutique-muted md:table-cell">
                     {eventHasCoverImage(event) ? "1" : "0"}
                   </td>
                   <td className="px-3 py-2.5 align-top">
                     <div className="flex flex-wrap justify-end gap-1.5">
-                      <AdminOpenDetailsButton
-                        detailsId={detailsId}
+                      <button
+                        type="button"
+                        aria-expanded={editingId === event.id}
+                        aria-controls={detailsId}
+                        onClick={() => setEditingId((previous) => previous === event.id ? null : event.id)}
                         className="rounded-full border border-boutique-line px-3 py-1.5 text-[11px] font-semibold text-boutique-ink hover:border-boutique-accent/40"
                       >
                         Редактирай
-                      </AdminOpenDetailsButton>
+                      </button>
                       <Link
                         href={`/admin/events/${event.id}/preview`}
                         target="_blank"
@@ -215,12 +227,17 @@ export function EventListView({ events }: { events: EventRow[] }) {
                           Изтрий
                         </button>
                       </AdminConfirmForm>
+                      <EventCopyButton id={event.id} onSaved={(saved) => setSavedEvents((previous) => ({ ...previous, [saved.id]: saved }))} />
                     </div>
-
-                    <details id={detailsId} className="mt-3 rounded-lg border border-boutique-line bg-boutique-bg p-3">
-                      <summary className="cursor-pointer text-xs font-semibold text-boutique-ink">
-                        Форма за редакция
-                      </summary>
+                  </td>
+                </tr>
+                <tr hidden={editingId !== event.id}>
+                  <td colSpan={5} className="border-b border-boutique-line p-3 sm:p-5">
+                    <section id={detailsId} aria-label={`Редакция на ${event.title}`} className="min-w-0 scroll-mt-28">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <h3 className="min-w-0 break-words font-semibold text-boutique-ink">{event.title}</h3>
+                        <button type="button" onClick={() => setEditingId(null)} className="text-sm text-boutique-muted underline">Затвори редакцията</button>
+                      </div>
                       <EventEditForm version={event.updated_at} onSaved={(saved) => setSavedEvents((previous) => ({ ...previous, [saved.id]: saved }))}>
                         <input type="hidden" name="tab" value="events" />
                         <input type="hidden" name="id" value={event.id} />
@@ -237,10 +254,10 @@ export function EventListView({ events }: { events: EventRow[] }) {
                           Кратко описание
                           <textarea name="excerpt" required rows={2} defaultValue={event.excerpt} className={`${adminFieldClass} resize-y`} />
                         </label>
-                        <label className="text-sm font-medium text-boutique-ink md:col-span-2">
-                          Пълен текст
-                          <textarea name="content" required rows={6} defaultValue={event.content} className={`${adminFieldClass} resize-y`} />
-                        </label>
+                        <div className="min-w-0 text-sm font-medium text-boutique-ink md:col-span-2">
+                          <label htmlFor={`event-content-${event.id}`}>Пълен текст</label>
+                          <BlogRichTextEditor id={`event-content-${event.id}`} name="content" required preserveLineBreaks defaultValue={event.content} rows={9} className={`${adminFieldClass} resize-y`} helperClassName={adminHelperClass} />
+                        </div>
                         <label className="text-sm font-medium text-boutique-ink">Тип<input name="event_type" defaultValue={event.event_type ?? ""} className={adminFieldClass} /></label>
                         <label className="text-sm font-medium text-boutique-ink">Аудитория<input name="audience" defaultValue={event.audience ?? ""} className={adminFieldClass} /></label>
                         <label className="text-sm font-medium text-boutique-ink">
@@ -262,6 +279,10 @@ export function EventListView({ events }: { events: EventRow[] }) {
                         </label>
                         <label className="text-sm font-medium text-boutique-ink">Възраст<input name="age_group" defaultValue={event.age_group ?? ""} className={adminFieldClass} /></label>
                         <label className="text-sm font-medium text-boutique-ink">Адрес<input name="address" defaultValue={event.address ?? ""} className={adminFieldClass} /></label>
+                        <div className="md:col-span-2">
+                          <input type="hidden" name="maps_url_present" value={event.maps_url !== undefined ? "1" : "0"} />
+                          <label className="text-sm font-medium text-boutique-ink">Точен линк към Google Maps (по избор)<input name="maps_url" type="url" defaultValue={event.maps_url ?? ""} placeholder="https://maps.app.goo.gl/..." className={adminFieldClass} /></label>
+                        </div>
                         <label className="text-sm font-medium text-boutique-ink">Продължителност<input name="duration_minutes" type="number" defaultValue={event.duration_minutes ?? ""} className={adminFieldClass} /></label>
                         <label className="text-sm font-medium text-boutique-ink">Водещ<input name="host_name" defaultValue={event.host_name ?? ""} className={adminFieldClass} /></label>
                         <label className="text-sm font-medium text-boutique-ink md:col-span-2">Включено<textarea name="includes_text" defaultValue={event.includes_text ?? ""} className={adminFieldClass} /></label>
@@ -272,7 +293,7 @@ export function EventListView({ events }: { events: EventRow[] }) {
                           Място
                           <input name="location" defaultValue={event.location ?? ""} className={adminFieldClass} />
                         </label>
-                        <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="grid min-w-0 gap-4 xl:grid-cols-2">
                           <label className="text-sm font-medium text-boutique-ink">
                             Начало (час София)
                             <input name="starts_at" type="datetime-local" defaultValue={toEventDateTimeLocal(event.starts_at)} className={adminFieldClass} />
@@ -293,10 +314,12 @@ export function EventListView({ events }: { events: EventRow[] }) {
                           <input name="is_published" type="checkbox" defaultChecked={event.is_published} className="h-4 w-4 accent-boutique-ink" />
                           Публикувано
                         </label>
+                        <EventSettingsEditor settings={event.registration_settings} photos={event.gallery_images} />
                       </EventEditForm>
-                    </details>
+                    </section>
                   </td>
                 </tr>
+                </Fragment>
               );
             })}
           </tbody>

@@ -7,6 +7,8 @@ import { sendEventRegistrationNotifications } from "@/lib/events/send-event-regi
 import { getResendConfig, sendEmail } from "@/lib/orders/send-order-notifications";
 import { createServiceClient } from "@/lib/supabase/service";
 import { getSiteUrl } from "@/lib/site-url";
+import { parseEventRegistrationSettings, validateEventParticipants } from "@/lib/events/registration-config";
+import { EVENT_PHONE_ERROR, isValidEventPhone } from "@/lib/events/phone";
 
 export type EventRegistrationState = {
   ok: boolean;
@@ -23,6 +25,10 @@ const errorMessages: Record<string, string> = {
   external_registration_only: "За това събитие се използва външният линк за записване.",
   registration_not_configured: "Онлайн записването за това събитие още не е активирано.",
   not_enough_spots: "Няма достатъчно свободни места за избрания брой участници.",
+  event_settings_changed: "Данните за работилницата са променени. Обновете страницата и проверете участниците и цената.",
+  invalid_participants: "Проверете данните за всеки участник.",
+  registration_cancelled: "Тази регистрация е отказана. Обновете страницата за ново записване.",
+  invalid_registration: "Невалидна заявка за записване. Обновете страницата.",
 };
 
 function text(formData: FormData, name: string, maxLength: number) {
@@ -46,6 +52,11 @@ export async function registerForEvent(
       ok: false,
       message: "Необходимо е съгласие за обработване на данните за записването.",
     };
+  }
+
+  const submittedPhone = formData.get("phone");
+  if (typeof submittedPhone !== "string" || !isValidEventPhone(submittedPhone)) {
+    return { ok: false, message: EVENT_PHONE_ERROR };
   }
 
   const submittedEmail = formData.get("email");
@@ -87,15 +98,39 @@ export async function registerForEvent(
     return { ok: false, message: "Направени са твърде много опити. Опитайте след 15 минути." };
   }
 
-  const { data: registrationId, error } = await supabase.rpc("register_for_event", {
+  const { data: targetEvent, error: eventError } = await supabase.from("events").select("*").eq("id", eventId).maybeSingle();
+  if (eventError || !targetEvent) return { ok: false, message: errorMessages.event_not_found };
+  const commonArgs = {
     p_event_id: eventId,
     p_full_name: text(formData, "full_name", 120),
-    p_phone: text(formData, "phone", 30),
+    p_phone: submittedPhone.trim(),
     p_email: customerEmail,
-    p_participant_count: participantCount,
     p_note: text(formData, "note", 1000) || null,
     p_idempotency_key: idempotencyKey,
-  });
+  };
+  let registrationResult;
+  if (targetEvent.registration_settings !== undefined) {
+    try {
+      const raw = String(formData.get("participants") ?? "");
+      const rawAnswers = String(formData.get("registration_answers") ?? "{}");
+      if (!raw || raw.length > 150000 || rawAnswers.length > 20000) return { ok: false, message: "Добавете участниците. Ако формата е стара, обновете страницата." };
+      const parsedSettings = parseEventRegistrationSettings(targetEvent.registration_settings);
+      if (parsedSettings.error) return { ok: false, message: "Формата за тази работилница временно не е достъпна. Свържете се с нас." };
+      const shownSettings = parseEventRegistrationSettings(JSON.parse(String(formData.get("expected_settings") ?? "null")));
+      const shownPrice = formData.get("expected_price");
+      if (shownSettings.error || JSON.stringify(shownSettings.settings) !== JSON.stringify(parsedSettings.settings) || shownPrice === null || (shownPrice === "" ? null : Number(shownPrice)) !== targetEvent.price) return { ok: false, message: errorMessages.event_settings_changed };
+      const validated = validateEventParticipants(JSON.parse(raw), JSON.parse(rawAnswers), parsedSettings.settings, targetEvent.price);
+      registrationResult = await supabase.rpc("register_for_event_v2", {
+        ...commonArgs, p_participants: validated.participants, p_answers: validated.answers,
+        p_expected_settings: targetEvent.registration_settings, p_expected_price: targetEvent.price,
+      });
+    } catch (error) {
+      return { ok: false, message: error instanceof SyntaxError ? "Невалидни данни за участниците." : error instanceof Error ? error.message : "Проверете данните за участниците." };
+    }
+  } else {
+    registrationResult = await supabase.rpc("register_for_event", { ...commonArgs, p_participant_count: participantCount });
+  }
+  const { data: registrationId, error } = registrationResult;
 
   if (error) {
     return { ok: false, message: mapRegistrationError(error.message) };
@@ -104,7 +139,7 @@ export async function registerForEvent(
   // Read the saved registration so retries use the original recipient and details.
   const { data: registration } = await supabase
     .from("event_registrations")
-    .select("id, event_id, full_name, phone, email, participant_count, note, status")
+    .select("*")
     .eq("id", registrationId)
     .single();
   const { data: event } = await supabase
@@ -129,6 +164,9 @@ export async function registerForEvent(
         email: registration.email,
         participantCount: registration.participant_count,
         note: registration.note,
+        participants: registration.participants,
+        answers: registration.registration_answers,
+        totalAmount: registration.total_amount,
       },
       { siteUrl: getSiteUrl(), adminTo, send: sendEmail },
     );

@@ -21,6 +21,7 @@ function isDraftControl(
 }
 
 function shouldSkipInput(input: HTMLInputElement) {
+  if (["content", "registration_settings", "event_gallery_images"].includes(input.name)) return false;
   return ["button", "file", "hidden", "image", "reset", "submit"].includes(input.type);
 }
 
@@ -84,6 +85,7 @@ export function AdminFormDraftKeeper({
     if (rawDraft) {
       try {
         restoreFormDraft(form, JSON.parse(rawDraft) as DraftPayload);
+        queueMicrotask(() => form.dispatchEvent(new Event("event-draft-restored")));
         setHasDraft(true);
       } catch {
         window.localStorage.removeItem(storageKey);

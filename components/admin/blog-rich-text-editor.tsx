@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState, useTransition } from "react";
+import { useEffect, useId, useMemo, useRef, useState, useTransition } from "react";
 
 import { uploadBlogInlineImage } from "@/app/admin/blog-inline-image-actions";
 import {
@@ -11,6 +11,8 @@ import {
 } from "@/lib/content/blog-rich-text";
 
 type BlogRichTextEditorProps = {
+  id?: string;
+  preserveLineBreaks?: boolean;
   name: string;
   defaultValue?: string;
   required?: boolean;
@@ -72,6 +74,8 @@ function insertImageBlock(value: string, start: number, end: number, markdown: s
 }
 
 export function BlogRichTextEditor({
+  id,
+  preserveLineBreaks = false,
   name,
   defaultValue = "",
   required,
@@ -85,6 +89,10 @@ export function BlogRichTextEditor({
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [isUploading, startUploadTransition] = useTransition();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const hiddenRef = useRef<HTMLInputElement>(null);
+  const initialRender = useRef(true);
+  const skipDraftNotification = useRef(false);
+  const generatedId = useId();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const valueRef = useRef(value);
   const selectionRef = useRef<{ start: number; end: number }>({
@@ -96,7 +104,26 @@ export function BlogRichTextEditor({
   const toolbarButtonClass =
     "rounded-md border border-boutique-line bg-white px-2.5 py-1.5 text-xs font-semibold text-boutique-ink transition hover:border-boutique-accent/50 hover:bg-boutique-bg disabled:cursor-not-allowed disabled:opacity-50";
 
-  const preview = useMemo(() => <BlogRichText content={value} />, [value]);
+  const preview = useMemo(() => <BlogRichText content={value} preserveLineBreaks={preserveLineBreaks} />, [value, preserveLineBreaks]);
+
+  useEffect(() => {
+    const form = hiddenRef.current?.form;
+    if (!form) return;
+    const restore = () => setValue(hiddenRef.current?.value ?? defaultValue);
+    const reset = () => { skipDraftNotification.current = true; setValue(defaultValue); };
+    form.addEventListener("event-draft-restored", restore);
+    form.addEventListener("reset", reset);
+    return () => {
+      form.removeEventListener("event-draft-restored", restore);
+      form.removeEventListener("reset", reset);
+    };
+  }, [defaultValue]);
+
+  useEffect(() => {
+    if (initialRender.current) { initialRender.current = false; return; }
+    if (skipDraftNotification.current) { skipDraftNotification.current = false; return; }
+    hiddenRef.current?.form?.dispatchEvent(new Event("change", { bubbles: true }));
+  }, [value]);
 
   function rememberSelection() {
     const textarea = textareaRef.current;
@@ -175,8 +202,8 @@ export function BlogRichTextEditor({
   }
 
   return (
-    <div className="mt-2 max-h-[72vh] overflow-hidden rounded-xl border border-boutique-line bg-boutique-paper">
-      <input type="hidden" name={name} value={value} />
+    <div className="mt-2 min-w-0 max-h-[72vh] overflow-hidden rounded-lg border border-boutique-line bg-boutique-paper">
+      <input ref={hiddenRef} type="hidden" name={name} value={value} />
       <input
         ref={fileInputRef}
         type="file"
@@ -252,6 +279,7 @@ export function BlogRichTextEditor({
       {mode === "edit" ? (
         <textarea
           ref={textareaRef}
+          id={id ?? generatedId}
           required={required}
           rows={rows}
           value={value}

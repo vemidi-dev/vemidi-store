@@ -44,7 +44,7 @@ export default async function EventPage({ params }: EventPageProps) {
   ]);
   if (!event) notFound();
   const relatedEvents = events
-    .filter((candidate) => candidate.slug !== slug)
+    .filter((candidate) => candidate.slug !== slug && Boolean(candidate.starts_at) && new Date(candidate.starts_at!).getTime() > Date.now())
     .sort((a, b) => Number(b.event_type === event.event_type) - Number(a.event_type === event.event_type))
     .slice(0, 3);
 
