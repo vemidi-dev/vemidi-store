@@ -1,5 +1,6 @@
 import type { EventRow } from "@/lib/admin/types";
 import { buildAbsoluteUrl } from "@/lib/seo/breadcrumbs";
+import { getEventPriceOptions } from "@/lib/events/pricing";
 
 const FORMAT_ONLINE = "\u043E\u043D\u043B\u0430\u0439\u043D";
 const FORMAT_IN_PERSON = "\u043D\u0430 \u043C\u044F\u0441\u0442\u043E";
@@ -178,8 +179,9 @@ function buildOffers(
   event: EventRow,
   eventUrl: string,
   referenceDate: Date,
-): Record<string, unknown> | undefined {
-  if (event.price === null) {
+): Record<string, unknown> | Record<string, unknown>[] | undefined {
+  const options = getEventPriceOptions(event);
+  if (!options.length) {
     return undefined;
   }
 
@@ -187,27 +189,20 @@ function buildOffers(
     return undefined;
   }
 
-  if (event.available_spots !== null && event.available_spots <= 0) {
-    return {
-      "@type": "Offer",
-      price: event.price.toFixed(2),
-      priceCurrency: "EUR",
-      url: eventUrl,
-      availability: "https://schema.org/SoldOut",
-    };
-  }
-
-  if (!isRegistrationOpen(event, referenceDate)) {
+  const soldOut = event.available_spots !== null && event.available_spots <= 0;
+  if (!soldOut && !isRegistrationOpen(event, referenceDate)) {
     return undefined;
   }
 
-  return {
+  const offers = options.map((option) => ({
     "@type": "Offer",
-    price: event.price.toFixed(2),
+    ...(options.length > 1 ? { name: option.label, description: option.materials } : {}),
+    price: option.price.toFixed(2),
     priceCurrency: "EUR",
     url: eventUrl,
-    availability: "https://schema.org/InStock",
-  };
+    availability: soldOut ? "https://schema.org/SoldOut" : "https://schema.org/InStock",
+  }));
+  return offers.length === 1 ? offers[0] : offers;
 }
 
 function buildOrganizer(event: EventRow): Record<string, unknown> | undefined {

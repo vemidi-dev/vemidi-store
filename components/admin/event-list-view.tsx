@@ -267,7 +267,6 @@ export function EventListView({ events }: { events: EventRow[] }) {
                             <option value="online">Онлайн</option>
                           </select>
                         </label>
-                        <label className="text-sm font-medium text-boutique-ink">Цена<input name="price" type="number" step="0.01" defaultValue={event.price ?? ""} className={adminFieldClass} /></label>
                         <label className="text-sm font-medium text-boutique-ink">
                           Капацитет
                           <input name="capacity" type="number" min="1" defaultValue={event.capacity ?? ""} className={adminFieldClass} />
@@ -314,7 +313,7 @@ export function EventListView({ events }: { events: EventRow[] }) {
                           <input name="is_published" type="checkbox" defaultChecked={event.is_published} className="h-4 w-4 accent-boutique-ink" />
                           Публикувано
                         </label>
-                        <EventSettingsEditor settings={event.registration_settings} photos={event.gallery_images} />
+                        <EventSettingsEditor settings={event.registration_settings} photos={event.gallery_images} price={event.price} />
                       </EventEditForm>
                     </section>
                   </td>

@@ -14,6 +14,7 @@ export async function prepareEventFormExtensions(supabase: SupabaseClient, form:
     const config = readEventSettingsForm(form);
     if (config.error) throw new Error(config.error);
     row.registration_settings = config.settings;
+    if (config.settings.materialsPricing) row.price = Math.min(config.settings.materialsPricing.studio.price, config.settings.materialsPricing.home.price);
   }
   if (form.has("event_gallery_images")) {
     let gallery: EventPhoto[];

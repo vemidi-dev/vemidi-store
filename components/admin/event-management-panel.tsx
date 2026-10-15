@@ -75,10 +75,6 @@ export function EventManagementPanel({
             </select>
           </label>
           <label className="text-sm font-medium text-boutique-ink">
-            Цена (EUR)
-            <input name="price" type="number" min="0" step="0.01" className={adminFieldClass} />
-          </label>
-          <label className="text-sm font-medium text-boutique-ink">
             Максимални места
             <input name="capacity" type="number" min="1" className={adminFieldClass} />
           </label>

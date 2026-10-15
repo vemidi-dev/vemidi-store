@@ -3,33 +3,35 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { updateEventRegistrationStatus } from "@/app/admin/event-registration-actions";
+import { updateEventRegistrationStatus, updateEventParticipantStatus } from "@/app/admin/event-registration-actions";
 import { adminFieldClass, adminPanelClass } from "@/components/admin/styles";
 import type { EventRegistrationRow, EventRow } from "@/lib/admin/types";
-import { eventRegistrationsCsv, eventPreparationSummary, eventRegistrationStatusLabels, filterEventRegistrations, getEventRegistrationCounts } from "@/lib/admin/event-registrations";
+import { activeEventParticipantCount, eventRegistrationsCsv, eventPreparationSummary, eventRegistrationStatusLabels, filterEventRegistrations, getEventRegistrationCounts } from "@/lib/admin/event-registrations";
 import { participantSummaryLines } from "@/lib/events/participant-summary";
 import { formatEur } from "@/lib/format-eur";
 
 type Status = EventRegistrationRow["status"];
 
-function RegistrationRow({ registration, onSaved }: { registration: EventRegistrationRow; onSaved: (id: string, status: Status) => void }) {
+function RegistrationRow({ registration, onSaved }: { registration: EventRegistrationRow; onSaved: (row: EventRegistrationRow) => void }) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [notice, setNotice] = useState<{ ok: boolean; message: string } | null>(null);
 
-  async function changeStatus(status: Status) {
+  async function changeStatus(status: Status, participantIndex?: number) {
     if (pending) return;
-    if (status === "cancelled" && !window.confirm(`Да откажем ли регистрацията на ${registration.full_name} и да освободим ${registration.participant_count} места?`)) return;
+    const person = participantIndex !== undefined ? registration.participants?.[participantIndex] : undefined;
+    if (!window.confirm(person ? `${status === "cancelled" ? "Да откажем ли" : "Да възстановим ли"} участието на ${person.name}?` : status === "cancelled" ? `Да анулираме ли цялото записване на ${registration.full_name} и да освободим ${activeEventParticipantCount(registration)} места?` : registration.status === "cancelled" ? "Да възстановим ли всички участници от това записване?" : "Да потвърдим ли записването?")) return;
     setPending(true);
     setNotice(null);
     try {
       const formData = new FormData();
       formData.set("id", registration.id);
       formData.set("status", status);
-      const result = await updateEventRegistrationStatus(formData);
+      if (participantIndex !== undefined) formData.set("participant_index", String(participantIndex));
+      const result = await (participantIndex !== undefined ? updateEventParticipantStatus(formData) : updateEventRegistrationStatus(formData));
       setNotice(result);
-      if (result.ok) {
-        onSaved(registration.id, status);
+      if (result.ok && result.registration) {
+        onSaved(result.registration);
         router.refresh();
       }
     } catch {
@@ -50,16 +52,23 @@ function RegistrationRow({ registration, onSaved }: { registration: EventRegistr
           <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-boutique-muted">
             <a href={`tel:${registration.phone}`}>{registration.phone}</a>
             {registration.email ? <a className="break-all" href={`mailto:${registration.email}`}>{registration.email}</a> : null}
-            <span>{registration.participant_count} {registration.participant_count === 1 ? "участник" : "участници"}</span>
+            <span>{activeEventParticipantCount(registration)} активни от {registration.participant_count} участници</span>
           </div>
           <p className="mt-1 text-xs text-boutique-muted">{new Intl.DateTimeFormat("bg-BG", { dateStyle: "medium", timeStyle: "short", timeZone: "Europe/Sofia" }).format(new Date(registration.created_at))}</p>
           {registration.note ? <p className="mt-2 whitespace-pre-wrap break-words text-sm text-boutique-ink">{registration.note}</p> : null}
-          {registration.participants?.length ? <ul className="mt-3 space-y-1 text-sm text-boutique-ink">{participantSummaryLines(registration.participants, registration.registration_answers).map((line, index) => <li key={index} className="break-words">{line}</li>)}</ul> : null}
+          {registration.participants?.length ? <ul className="mt-3 divide-y divide-boutique-line text-sm text-boutique-ink">{registration.participants.map((person, index) => {
+            const cancelled = registration.status === "cancelled" || person.status === "cancelled";
+            return <li key={index} className="flex min-w-0 flex-wrap items-start justify-between gap-3 py-3">
+              <div className="min-w-0 flex-1 basis-52"><p className="break-words">{participantSummaryLines([person], [], index)[0]}</p><p className={`mt-1 text-xs font-semibold ${cancelled ? "text-red-700" : "text-emerald-800"}`}>{cancelled ? "Отказано участие" : "Активно участие"}</p>{person.cancelledAt ? <p className="mt-1 text-xs text-boutique-muted">Последен отказ: {new Intl.DateTimeFormat("bg-BG", { dateStyle: "short", timeStyle: "short", timeZone: "Europe/Sofia" }).format(new Date(person.cancelledAt))}</p> : null}</div>
+              <button type="button" disabled={pending} onClick={() => changeStatus(cancelled ? "confirmed" : "cancelled", index)} className={`rounded-lg border px-3 py-2 text-sm font-semibold disabled:opacity-50 ${cancelled ? "border-boutique-line text-boutique-ink" : "border-red-200 text-red-700"}`}>{cancelled ? "Възстанови участието" : "Откажи участието"}</button>
+            </li>;
+          })}</ul> : null}
+          {registration.registration_answers?.length ? <p className="mt-2 whitespace-pre-line text-sm text-boutique-muted">{participantSummaryLines([], registration.registration_answers).join("\n")}</p> : null}
           {registration.total_amount != null ? <p className="mt-2 text-sm font-semibold text-boutique-ink">На място: {formatEur(registration.total_amount)}</p> : null}
         </div>
         <div className="flex flex-wrap gap-2">
           {registration.status === "new" ? <button type="button" disabled={pending} onClick={() => changeStatus("confirmed")} className="rounded-lg border border-boutique-line px-3 py-2 text-sm font-semibold text-boutique-ink disabled:opacity-50">Потвърди</button> : null}
-          {registration.status === "cancelled" ? <button type="button" disabled={pending} onClick={() => changeStatus("confirmed")} className="rounded-lg border border-boutique-line px-3 py-2 text-sm font-semibold text-boutique-ink disabled:opacity-50">Възстанови</button> : <button type="button" disabled={pending} onClick={() => changeStatus("cancelled")} className="rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-700 disabled:opacity-50">Откажи регистрацията</button>}
+          {registration.status === "cancelled" ? <button type="button" disabled={pending} onClick={() => changeStatus("confirmed")} className="rounded-lg border border-boutique-line px-3 py-2 text-sm font-semibold text-boutique-ink disabled:opacity-50">Възстанови цялото записване</button> : <button type="button" disabled={pending} onClick={() => changeStatus("cancelled")} className="rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-700 disabled:opacity-50">Анулирай цялото записване</button>}
         </div>
       </div>
       {pending ? <p role="status" className="mt-2 text-sm text-boutique-muted">Запазване…</p> : notice ? <p role={notice.ok ? "status" : "alert"} className={`mt-2 text-sm ${notice.ok ? "text-emerald-800" : "text-red-700"}`}>{notice.message}</p> : null}
@@ -71,8 +80,8 @@ export function EventRegistrationsPanel({ events, registrations, error }: { even
   const [eventId, setEventId] = useState("");
   const [status, setStatus] = useState("");
   const [search, setSearch] = useState("");
-  const [updates, setUpdates] = useState<Record<string, Status>>({});
-  const rows = useMemo(() => registrations.map((row) => updates[row.id] ? { ...row, status: updates[row.id] } : row), [registrations, updates]);
+  const [updates, setUpdates] = useState<Record<string, EventRegistrationRow>>({});
+  const rows = useMemo(() => registrations.map((row) => updates[row.id] && updates[row.id].updated_at >= row.updated_at ? updates[row.id] : row), [registrations, updates]);
   const filtered = filterEventRegistrations(rows, { eventId, status, search });
   const counts = getEventRegistrationCounts(filtered);
   const groups = [...new Set(filtered.map((row) => row.event_id))].map((id) => ({ event: events.find((event) => event.id === id), id, rows: filtered.filter((row) => row.event_id === id) }));
@@ -104,7 +113,7 @@ export function EventRegistrationsPanel({ events, registrations, error }: { even
               return <details key={group.id} open className="min-w-0 border-b border-boutique-line pb-3">
                 <summary className="cursor-pointer py-3 text-boutique-ink"><span className="font-semibold">{group.event?.title ?? "Недостъпно събитие"}</span><span className="ml-3 text-sm text-boutique-muted">{groupCounts.total} регистрации · {groupCounts.participants} активни участници</span></summary>
                 {preparation.length ? <div className="flex flex-wrap gap-x-5 gap-y-2 py-3 text-sm text-boutique-muted">{preparation.map((item, index) => <span key={index}>{item.label} {item.value}: <strong className="text-boutique-ink">{item.count} бр.</strong></span>)}</div> : null}
-                <ul>{group.rows.map((row) => <RegistrationRow key={row.id} registration={row} onSaved={(id, nextStatus) => setUpdates((previous) => ({ ...previous, [id]: nextStatus }))} />)}</ul>
+                <ul>{group.rows.map((row) => <RegistrationRow key={row.id} registration={row} onSaved={(saved) => setUpdates((previous) => ({ ...previous, [saved.id]: saved }))} />)}</ul>
               </details>;
             })}
             {groups.length === 0 ? <p className="py-4 text-sm text-boutique-muted">{registrations.length ? "Няма записвания по избраните филтри." : "Все още няма получени записвания."}</p> : null}

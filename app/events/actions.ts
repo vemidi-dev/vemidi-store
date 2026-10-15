@@ -29,6 +29,8 @@ const errorMessages: Record<string, string> = {
   invalid_participants: "Проверете данните за всеки участник.",
   registration_cancelled: "Тази регистрация е отказана. Обновете страницата за ново записване.",
   invalid_registration: "Невалидна заявка за записване. Обновете страницата.",
+  invalid_materials_option: "Изберете валидни материали за всеки участник.",
+  invalid_materials_pricing: "Цените за тази работилница временно не могат да се потвърдят. Свържете се с нас.",
 };
 
 function text(formData: FormData, name: string, maxLength: number) {
@@ -120,7 +122,7 @@ export async function registerForEvent(
       const shownPrice = formData.get("expected_price");
       if (shownSettings.error || JSON.stringify(shownSettings.settings) !== JSON.stringify(parsedSettings.settings) || shownPrice === null || (shownPrice === "" ? null : Number(shownPrice)) !== targetEvent.price) return { ok: false, message: errorMessages.event_settings_changed };
       const validated = validateEventParticipants(JSON.parse(raw), JSON.parse(rawAnswers), parsedSettings.settings, targetEvent.price);
-      registrationResult = await supabase.rpc("register_for_event_v2", {
+      registrationResult = await supabase.rpc(parsedSettings.settings.materialsPricing ? "register_for_event_v3" : "register_for_event_v2", {
         ...commonArgs, p_participants: validated.participants, p_answers: validated.answers,
         p_expected_settings: targetEvent.registration_settings, p_expected_price: targetEvent.price,
       });
@@ -133,6 +135,7 @@ export async function registerForEvent(
   const { data: registrationId, error } = registrationResult;
 
   if (error) {
+    if (error.code === "PGRST202") return { ok: false, message: "Онлайн записването за тази работилница временно не е достъпно. Свържете се с нас." };
     return { ok: false, message: mapRegistrationError(error.message) };
   }
 

@@ -8,6 +8,11 @@ export const eventRegistrationStatusLabels = {
   cancelled: "Отказано",
 };
 
+export function activeEventParticipantCount(row: EventRegistrationRow) {
+  if (row.status === "cancelled") return 0;
+  return row.participants?.length ? row.participants.filter((p) => p.status !== "cancelled").length : row.participant_count;
+}
+
 export function filterEventRegistrations(
   registrations: EventRegistrationRow[],
   { eventId, status, search }: { eventId: string; status: string; search: string },
@@ -27,6 +32,11 @@ export function eventPreparationSummary(rows: EventRegistrationRow[]) {
   const counts = new Map<string, { label: string; value: string; count: number }>();
   for (const row of rows.filter((item) => item.status !== "cancelled")) {
     for (const p of row.participants ?? []) {
+      if (p.status === "cancelled") continue;
+      if (p.materialsOption && p.materialsLabel) {
+        const key = JSON.stringify(["materials", p.materialsOption]);
+        counts.set(key, { label: "Материали", value: p.materialsLabel, count: (counts.get(key)?.count ?? 0) + 1 });
+      }
       for (const a of p.answers.filter((answer) => answer.type === "select")) {
         const key = JSON.stringify([a.id, a.label, a.value]);
         counts.set(key, { label: a.label, value: a.value, count: (counts.get(key)?.count ?? 0) + 1 });
@@ -44,14 +54,14 @@ export function eventRegistrationsCsv(rows: EventRegistrationRow[], events: Even
   };
   return "\ufeff" + [
     ["Събитие", "Контактно лице", "Телефон", "Имейл", "Статус", "Участници", "Данни за участниците", "Сума на място EUR", "Бележка"],
-    ...rows.map((row) => [events.find((event) => event.id === row.event_id)?.title ?? "", row.full_name, row.phone, row.email, eventRegistrationStatusLabels[row.status], row.participant_count, participantSummaryLines(row.participants, row.registration_answers).join("\n"), row.total_amount, row.note]),
+    ...rows.map((row) => [events.find((event) => event.id === row.event_id)?.title ?? "", row.full_name, row.phone, row.email, eventRegistrationStatusLabels[row.status], activeEventParticipantCount(row), participantSummaryLines(row.participants, row.registration_answers).join("\n"), row.total_amount, row.note]),
   ].map((row) => row.map(cell).join(",")).join("\r\n");
 }
 
 export function getEventRegistrationCounts(registrations: EventRegistrationRow[]) {
   return {
     total: registrations.length,
-    participants: registrations.reduce((sum, row) => sum + (row.status === "cancelled" ? 0 : row.participant_count), 0),
+    participants: registrations.reduce((sum, row) => sum + activeEventParticipantCount(row), 0),
     new: registrations.filter((row) => row.status === "new").length,
     confirmed: registrations.filter((row) => row.status === "confirmed").length,
     cancelled: registrations.filter((row) => row.status === "cancelled").length,

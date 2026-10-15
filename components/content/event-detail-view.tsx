@@ -14,6 +14,7 @@ import { BlogRichText } from "@/lib/content/blog-rich-text";
 import { getSiteUrl } from "@/lib/site-url";
 import { EVENT_PAYMENT_LABEL, parseEventRegistrationSettings } from "@/lib/events/registration-config";
 import { getEventMapLink } from "@/lib/events/map-link";
+import { formatEventPrice, getEventPriceOptions } from "@/lib/events/pricing";
 
 type EventDetailViewProps = { event: EventRow; relatedEvents?: EventRow[]; idempotencyKey?: string; includeStructuredData?: boolean; previewBanner?: ReactNode };
 
@@ -38,7 +39,9 @@ export function EventDetailView({ event, relatedEvents = [], idempotencyKey, inc
   const mapUrl = getEventMapLink(event);
   const schema = buildEventSchema(event, getSiteUrl());
   const gallery = event.gallery_images ?? [];
-  const supplementary = [["Какво е включено", event.includes_text], ["Необходими материали", event.materials_text], ["Водещ", event.host_name]].filter((row): row is [string, string] => Boolean(row[1]?.trim()));
+  const priceLabel = formatEventPrice(event);
+  const materialDetails = settings.settings.materialsPricing ? getEventPriceOptions(event).map((option) => [`${option.label} · ${formatEur(option.price)}`, option.materials]) : [];
+  const supplementary = [["Какво е включено", event.includes_text], ["Необходими материали", event.materials_text], ["Водещ", event.host_name], ...materialDetails].filter((row): row is [string, string] => Boolean(row[1]?.trim()));
   const upcoming = relatedEvents.filter((item) => new Date(item.starts_at ?? 0).getTime() > now).slice(0, 3);
   const facts: { label: string; value: string | null; Icon: LucideIcon; map?: boolean }[] = [
     { label: "Кога", value: date, Icon: CalendarDays },
@@ -64,7 +67,7 @@ export function EventDetailView({ event, relatedEvents = [], idempotencyKey, inc
             {event.available_spots !== null ? <p className="mb-5 inline-flex items-center gap-2 rounded-md bg-boutique-sage/15 px-3 py-2 text-sm font-semibold text-boutique-sage-deep"><Users aria-hidden="true" className="h-4 w-4 shrink-0" />{full ? "Местата са запълнени" : hasStarted ? "Записването е приключило" : `${event.available_spots} свободни места`}</p> : null}
             <dl className="space-y-4">{facts.filter((fact) => fact.value).map(({ label, value, Icon, map }) => <div key={label}><dt className="sr-only">{label}</dt><dd className="flex items-start gap-3 text-sm text-boutique-ink"><Icon aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-boutique-sage-deep" /><div className="min-w-0 flex-1"><p className="whitespace-pre-line break-words leading-6">{value}</p>{map && mapUrl ? <div className="mt-2"><EventMapLink href={mapUrl} /></div> : null}</div></dd></div>)}</dl>
             <div className="mt-5 border-t border-boutique-line pt-4">
-              {event.price !== null ? <p className="font-heading text-3xl text-boutique-sage-deep">{formatEur(event.price)} <span className="font-sans text-sm text-boutique-muted">на участник</span></p> : null}
+              {priceLabel ? <div><p className="whitespace-pre-line break-words font-heading text-3xl leading-snug text-boutique-sage-deep">{priceLabel}</p><p className="mt-1 text-sm text-boutique-muted">на участник</p></div> : null}
               <p className="mt-2 text-sm text-boutique-muted">{EVENT_PAYMENT_LABEL}</p>
               {canRegister ? <a href="#registration" className="mt-4 flex min-h-12 items-center justify-center rounded-lg bg-boutique-sage-deep px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-boutique-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-boutique-sage-deep/50 focus-visible:ring-offset-2">Запази място</a> : !hasStarted && !full && event.registration_url && !previewBanner ? <a href={event.registration_url} className="mt-4 flex min-h-12 items-center justify-center rounded-lg bg-boutique-sage-deep px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-boutique-ink">Запази място</a> : null}
               <div className="mt-2 text-center"><Link href="/kontakti" className={contactLinkClass}><MessageCircle aria-hidden="true" className="h-4 w-4 shrink-0" />Свържете се с нас</Link></div>

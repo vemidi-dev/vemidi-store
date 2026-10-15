@@ -12,7 +12,7 @@ import {
   getSiteMediaMap,
   resolveSiteMediaFromMap,
 } from "@/lib/content/site-media";
-import { formatEur } from "@/lib/format-eur";
+import { formatEventPrice } from "@/lib/events/pricing";
 import { OG_DEFAULTS } from "@/lib/seo/social-images";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -98,7 +98,7 @@ function UpcomingEvents({ events }: { events: EventRow[] }) {
                 <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm text-boutique-muted">
                   <span>{event.location || event.address || "Ателието на VeMiDi"}</span>
                   {event.age_group ? <span>{event.age_group}</span> : null}
-                  {event.price !== null ? <span>{formatEur(event.price)}</span> : null}
+                  {formatEventPrice(event) ? <span>{formatEventPrice(event)}</span> : null}
                   {event.available_spots !== null ? (
                     <span>{event.available_spots} свободни места</span>
                   ) : null}
