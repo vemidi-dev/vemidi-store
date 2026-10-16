@@ -8,7 +8,7 @@ export async function sendEventRegistrationNotifications(
   input: EventRegistrationEmailInput,
   { siteUrl, adminTo, send }: { siteUrl: URL; adminTo: string; send: EmailSender },
 ) {
-  const adminMessage = buildAdminEventRegistrationEmail(input, new URL("/admin?tab=events", siteUrl).toString());
+  const adminMessage = buildAdminEventRegistrationEmail(input, new URL("/admin?tab=events&eventsView=participants", siteUrl).toString());
   const customerMessage = buildCustomerEventRegistrationEmail(input, new URL(`/sabitiya/${encodeURIComponent(input.eventSlug)}`, siteUrl).toString());
 
   async function deliver(to: string, message: typeof adminMessage, channel: string): Promise<OrderEmailAttempt> {

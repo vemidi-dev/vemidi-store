@@ -1,41 +1,58 @@
 "use client";
 
-import { useFormStatus } from "react-dom";
-
 import { uploadEventGalleryImages } from "@/app/admin/event-gallery-actions";
-import { AdminFormPendingGuard } from "@/components/admin/admin-form-pending-guard";
 import {
   adminFieldClass,
   adminHelperClass,
 } from "@/components/admin/styles";
 import { adminFormFields } from "@/lib/admin/form-fields";
 import { getImageProfile } from "@/lib/images/profiles";
-import { useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
+import { prepareEventGalleryImages, validateEventGallerySelection } from "@/lib/events/prepare-gallery-images";
 
 const profile = getImageProfile("event_gallery");
 
-function UploadSubmitButton() {
-  const { pending } = useFormStatus();
-
-  return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="rounded-full bg-boutique-ink px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-white transition hover:bg-boutique-accent disabled:cursor-not-allowed disabled:opacity-70"
-    >
-      {pending ? "Обработване и качване…" : "Качи в галерията"}
-    </button>
-  );
-}
-
 export function EventGalleryUploadForm() {
   const inputId = useId();
+  const [pending, setPending] = useState(false);
+  const busy = useRef(false);
+  const [error, setError] = useState("");
   const [message, setMessage] = useState(
-    `PNG, JPG или WEBP до ${(profile.maxFileSize / (1024 * 1024)).toFixed(0)} MB. Максимум ${profile.maxImages} снимки в галерията.`,
+    `PNG, JPG или WEBP. До ${profile.maxFilesPerUpload} снимки наведнъж; максимум ${profile.maxImages} в галерията.`,
   );
+  useEffect(() => {
+    if (!pending) return;
+    const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ""; };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [pending]);
 
   return (
-    <form action={uploadEventGalleryImages} className="grid gap-4 border-t border-boutique-line p-4">
+    <form onSubmit={async (event) => {
+      event.preventDefault();
+      if (busy.current) return;
+      const payload = new FormData(event.currentTarget);
+      const files = payload.getAll(adminFormFields.eventGallery.imageFiles).filter((value): value is File => value instanceof File && value.size > 0);
+      busy.current = true; setPending(true); setError("");
+      try {
+        setMessage("Намаляване и компресиране на снимките…");
+        const prepared = await prepareEventGalleryImages(files);
+        payload.delete(adminFormFields.eventGallery.imageFiles);
+        prepared.files.forEach((file) => payload.append(adminFormFields.eventGallery.imageFiles, file));
+        setMessage(`Качване на ${prepared.files.length} снимки…`);
+      } catch (cause) {
+        setError(cause instanceof Error ? cause.message : "Снимките не могат да бъдат обработени.");
+        setMessage(`Избрани ${files.length} файла.`);
+        busy.current = false; setPending(false); return;
+      }
+      try { await uploadEventGalleryImages(payload); }
+      catch (cause) {
+        if (cause && typeof cause === "object" && "digest" in cause && String(cause.digest).startsWith("NEXT_REDIRECT")) throw cause;
+        setError("Не получихме потвърждение за качването. Избраните снимки и текстът остават във формата. Опитайте отново.");
+        setMessage(`Избрани ${files.length} файла.`);
+      } finally { busy.current = false; setPending(false); }
+    }} className="grid gap-4 border-t border-boutique-line p-4">
+      <fieldset disabled={pending} className="contents">
       <div>
         <p className="text-sm font-medium text-boutique-ink">Добави снимки</p>
         <label
@@ -54,22 +71,8 @@ export function EventGalleryUploadForm() {
           className="sr-only"
           onChange={(event) => {
             const files = Array.from(event.currentTarget.files ?? []);
-            if (files.length === 0) {
-              return;
-            }
-
-            if (files.length > profile.maxFilesPerUpload) {
-              setMessage(`Максимум ${profile.maxFilesPerUpload} файла наведнъж.`);
-              return;
-            }
-
-            const oversized = files.find((file) => file.size > profile.maxFileSize);
-            if (oversized) {
-              setMessage(`„${oversized.name}“ надвишава лимита от ${(profile.maxFileSize / (1024 * 1024)).toFixed(0)} MB.`);
-              return;
-            }
-
-            setMessage(`Избрани ${files.length} файла за оптимизирано качване.`);
+            setError(files.length ? validateEventGallerySelection(files) ?? "" : "");
+            setMessage(files.length ? `Избрани ${files.length} файла за оптимизирано качване.` : "Изберете снимки.");
           }}
         />
         <p className={adminHelperClass}>{message}</p>
@@ -89,10 +92,12 @@ export function EventGalleryUploadForm() {
 
       <div className="space-y-3">
         <div className="flex justify-end">
-          <UploadSubmitButton />
+          <button type="submit" disabled={pending} className="rounded-full bg-boutique-ink px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-white transition hover:bg-boutique-accent disabled:cursor-not-allowed disabled:opacity-70">{pending ? "Обработване и качване…" : "Качи в галерията"}</button>
         </div>
-        <AdminFormPendingGuard message="Обработване и качване на снимки… Моля, не затваряйте страницата." />
+        {pending ? <p role="status" className="text-sm text-boutique-muted">{message} Моля, не затваряйте страницата.</p> : null}
       </div>
+      </fieldset>
+      {error ? <p role="alert" className="text-sm text-red-700">{error}</p> : null}
     </form>
   );
 }

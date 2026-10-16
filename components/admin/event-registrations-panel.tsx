@@ -2,8 +2,9 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Trash2 } from "lucide-react";
 
-import { updateEventRegistrationStatus, updateEventParticipantStatus } from "@/app/admin/event-registration-actions";
+import { deleteEventRegistration, updateEventRegistrationStatus, updateEventParticipantStatus } from "@/app/admin/event-registration-actions";
 import { adminFieldClass, adminPanelClass } from "@/components/admin/styles";
 import type { EventRegistrationRow, EventRow } from "@/lib/admin/types";
 import { activeEventParticipantCount, eventRegistrationsCsv, eventPreparationSummary, eventRegistrationStatusLabels, filterEventRegistrations, getEventRegistrationCounts } from "@/lib/admin/event-registrations";
@@ -12,26 +13,29 @@ import { formatEur } from "@/lib/format-eur";
 
 type Status = EventRegistrationRow["status"];
 
-function RegistrationRow({ registration, onSaved }: { registration: EventRegistrationRow; onSaved: (row: EventRegistrationRow) => void }) {
+function RegistrationRow({ registration, onSaved, onDeleted }: { registration: EventRegistrationRow; onSaved: (row: EventRegistrationRow) => void; onDeleted: (id: string, message: string) => void }) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [notice, setNotice] = useState<{ ok: boolean; message: string } | null>(null);
 
-  async function changeStatus(status: Status, participantIndex?: number) {
+  async function changeStatus(status: Status, participantIndex?: number, deleting = false) {
     if (pending) return;
     const person = participantIndex !== undefined ? registration.participants?.[participantIndex] : undefined;
-    if (!window.confirm(person ? `${status === "cancelled" ? "Да откажем ли" : "Да възстановим ли"} участието на ${person.name}?` : status === "cancelled" ? `Да анулираме ли цялото записване на ${registration.full_name} и да освободим ${activeEventParticipantCount(registration)} места?` : registration.status === "cancelled" ? "Да възстановим ли всички участници от това записване?" : "Да потвърдим ли записването?")) return;
+    const confirmation = deleting ? person ? `Да изтрием ли окончателно участника ${person.name}? Действието не може да бъде отменено.${registration.participants?.length === 1 ? " Ще се изтрие и цялата заявка с контактните данни." : " Останалите участници ще бъдат запазени."}` : `Да изтрием ли окончателно цялото записване на ${registration.full_name}, включително участниците и контактните данни? Действието не може да бъде отменено.` : person ? `${status === "cancelled" ? "Да откажем ли" : "Да възстановим ли"} участието на ${person.name}?` : status === "cancelled" ? `Да анулираме ли цялото записване на ${registration.full_name} и да освободим ${activeEventParticipantCount(registration)} места?` : registration.status === "cancelled" ? "Да възстановим ли всички участници от това записване?" : "Да потвърдим ли записването?";
+    if (!window.confirm(confirmation)) return;
     setPending(true);
     setNotice(null);
     try {
       const formData = new FormData();
       formData.set("id", registration.id);
       formData.set("status", status);
+      formData.set("expected_updated_at", registration.updated_at);
       if (participantIndex !== undefined) formData.set("participant_index", String(participantIndex));
-      const result = await (participantIndex !== undefined ? updateEventParticipantStatus(formData) : updateEventRegistrationStatus(formData));
+      const result = await (deleting ? deleteEventRegistration(formData) : participantIndex !== undefined ? updateEventParticipantStatus(formData) : updateEventRegistrationStatus(formData));
       setNotice(result);
-      if (result.ok && result.registration) {
-        onSaved(result.registration);
+      if (result.ok) {
+        if (result.deletedId) onDeleted(result.deletedId, result.message);
+        else if (result.registration) onSaved(result.registration);
         router.refresh();
       }
     } catch {
@@ -60,7 +64,7 @@ function RegistrationRow({ registration, onSaved }: { registration: EventRegistr
             const cancelled = registration.status === "cancelled" || person.status === "cancelled";
             return <li key={index} className="flex min-w-0 flex-wrap items-start justify-between gap-3 py-3">
               <div className="min-w-0 flex-1 basis-52"><p className="break-words">{participantSummaryLines([person], [], index)[0]}</p><p className={`mt-1 text-xs font-semibold ${cancelled ? "text-red-700" : "text-emerald-800"}`}>{cancelled ? "Отказано участие" : "Активно участие"}</p>{person.cancelledAt ? <p className="mt-1 text-xs text-boutique-muted">Последен отказ: {new Intl.DateTimeFormat("bg-BG", { dateStyle: "short", timeStyle: "short", timeZone: "Europe/Sofia" }).format(new Date(person.cancelledAt))}</p> : null}</div>
-              <button type="button" disabled={pending} onClick={() => changeStatus(cancelled ? "confirmed" : "cancelled", index)} className={`rounded-lg border px-3 py-2 text-sm font-semibold disabled:opacity-50 ${cancelled ? "border-boutique-line text-boutique-ink" : "border-red-200 text-red-700"}`}>{cancelled ? "Възстанови участието" : "Откажи участието"}</button>
+              <div className="flex flex-wrap items-center gap-2"><button type="button" disabled={pending} onClick={() => changeStatus(cancelled ? "confirmed" : "cancelled", index)} className={`rounded-lg border px-3 py-2 text-sm font-semibold disabled:opacity-50 ${cancelled ? "border-boutique-line text-boutique-ink" : "border-red-200 text-red-700"}`}>{cancelled ? "Възстанови участието" : "Откажи участието"}</button>{cancelled ? <button type="button" disabled={pending} onClick={() => changeStatus("cancelled", index, true)} aria-label={`Изтрий окончателно участник ${person.name}`} title="Изтрий участника окончателно" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-red-200 text-red-700 hover:bg-red-50 disabled:opacity-50"><Trash2 aria-hidden="true" className="h-4 w-4" /></button> : null}</div>
             </li>;
           })}</ul> : null}
           {registration.registration_answers?.length ? <p className="mt-2 whitespace-pre-line text-sm text-boutique-muted">{participantSummaryLines([], registration.registration_answers).join("\n")}</p> : null}
@@ -69,6 +73,7 @@ function RegistrationRow({ registration, onSaved }: { registration: EventRegistr
         <div className="flex flex-wrap gap-2">
           {registration.status === "new" ? <button type="button" disabled={pending} onClick={() => changeStatus("confirmed")} className="rounded-lg border border-boutique-line px-3 py-2 text-sm font-semibold text-boutique-ink disabled:opacity-50">Потвърди</button> : null}
           {registration.status === "cancelled" ? <button type="button" disabled={pending} onClick={() => changeStatus("confirmed")} className="rounded-lg border border-boutique-line px-3 py-2 text-sm font-semibold text-boutique-ink disabled:opacity-50">Възстанови цялото записване</button> : <button type="button" disabled={pending} onClick={() => changeStatus("cancelled")} className="rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-700 disabled:opacity-50">Анулирай цялото записване</button>}
+          {registration.status === "cancelled" ? <button type="button" disabled={pending} onClick={() => changeStatus("cancelled", undefined, true)} className="inline-flex items-center gap-2 rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-50"><Trash2 aria-hidden="true" className="h-4 w-4 shrink-0" />Изтрий окончателно записването</button> : null}
         </div>
       </div>
       {pending ? <p role="status" className="mt-2 text-sm text-boutique-muted">Запазване…</p> : notice ? <p role={notice.ok ? "status" : "alert"} className={`mt-2 text-sm ${notice.ok ? "text-emerald-800" : "text-red-700"}`}>{notice.message}</p> : null}
@@ -81,7 +86,9 @@ export function EventRegistrationsPanel({ events, registrations, error }: { even
   const [status, setStatus] = useState("");
   const [search, setSearch] = useState("");
   const [updates, setUpdates] = useState<Record<string, EventRegistrationRow>>({});
-  const rows = useMemo(() => registrations.map((row) => updates[row.id] && updates[row.id].updated_at >= row.updated_at ? updates[row.id] : row), [registrations, updates]);
+  const [deletedIds, setDeletedIds] = useState<string[]>([]);
+  const [deletionNotice, setDeletionNotice] = useState("");
+  const rows = useMemo(() => registrations.filter((row) => !deletedIds.includes(row.id)).map((row) => updates[row.id] && updates[row.id].updated_at >= row.updated_at ? updates[row.id] : row), [registrations, updates, deletedIds]);
   const filtered = filterEventRegistrations(rows, { eventId, status, search });
   const counts = getEventRegistrationCounts(filtered);
   const groups = [...new Set(filtered.map((row) => row.event_id))].map((id) => ({ event: events.find((event) => event.id === id), id, rows: filtered.filter((row) => row.event_id === id) }));
@@ -90,6 +97,7 @@ export function EventRegistrationsPanel({ events, registrations, error }: { even
   return (
     <section className={adminPanelClass}>
       <h2 className="font-heading text-2xl text-boutique-ink">Записвания за събития</h2>
+      {deletionNotice ? <p role="status" className="mt-3 text-sm text-emerald-800">{deletionNotice}</p> : null}
       <button type="button" disabled={!filtered.length} onClick={() => {
         const url = URL.createObjectURL(new Blob([eventRegistrationsCsv(filtered, events)], { type: "text/csv;charset=utf-8" }));
         const link = document.createElement("a"); link.href = url; link.download = "uchastnici.csv"; link.click();
@@ -110,13 +118,13 @@ export function EventRegistrationsPanel({ events, registrations, error }: { even
             {groups.map((group) => {
               const groupCounts = getEventRegistrationCounts(group.rows);
               const preparation = eventPreparationSummary(group.rows);
-              return <details key={group.id} open className="min-w-0 border-b border-boutique-line pb-3">
+              return <details key={group.id} className="min-w-0 border-b border-boutique-line pb-3">
                 <summary className="cursor-pointer py-3 text-boutique-ink"><span className="font-semibold">{group.event?.title ?? "Недостъпно събитие"}</span><span className="ml-3 text-sm text-boutique-muted">{groupCounts.total} регистрации · {groupCounts.participants} активни участници</span></summary>
                 {preparation.length ? <div className="flex flex-wrap gap-x-5 gap-y-2 py-3 text-sm text-boutique-muted">{preparation.map((item, index) => <span key={index}>{item.label} {item.value}: <strong className="text-boutique-ink">{item.count} бр.</strong></span>)}</div> : null}
-                <ul>{group.rows.map((row) => <RegistrationRow key={row.id} registration={row} onSaved={(saved) => setUpdates((previous) => ({ ...previous, [saved.id]: saved }))} />)}</ul>
+                <ul>{group.rows.map((row) => <RegistrationRow key={row.id} registration={row} onSaved={(saved) => setUpdates((previous) => ({ ...previous, [saved.id]: saved }))} onDeleted={(id, message) => { setDeletedIds((previous) => [...previous, id]); setDeletionNotice(message); }} />)}</ul>
               </details>;
             })}
-            {groups.length === 0 ? <p className="py-4 text-sm text-boutique-muted">{registrations.length ? "Няма записвания по избраните филтри." : "Все още няма получени записвания."}</p> : null}
+            {groups.length === 0 ? <p className="py-4 text-sm text-boutique-muted">{rows.length ? "Няма записвания по избраните филтри." : "Няма записвания."}</p> : null}
           </div>
         </>
       )}

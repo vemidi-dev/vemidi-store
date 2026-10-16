@@ -14,6 +14,8 @@ const releaseTestGroups = [
       "tests/event-form-extensions.test.ts",
       "tests/event-materials-pricing.test.ts",
       "tests/event-participant-management.test.ts",
+      "tests/event-admin-workspace.test.ts",
+      "tests/event-gallery-compression.test.ts",
       "tests/event-phone-map.test.ts",
       "tests/event-registration-email.test.ts",
       "tests/event-registration-forms.test.ts",

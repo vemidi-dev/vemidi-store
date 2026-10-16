@@ -41,7 +41,8 @@ export const IMAGE_PROFILES: Record<ImageProfileId, ImageProfileConfig> = {
     maxDimension: 1400,
     quality: 77,
     maxFileSize: 10 * 1024 * 1024,
-    minShortEdge: 500,
+    // Archive photos may be small; never require upscaling a compressed image.
+    minShortEdge: 1,
     maxInputPixels: defaultMaxInputPixels(1400),
     maxImages: 30,
     maxFilesPerUpload: 12,

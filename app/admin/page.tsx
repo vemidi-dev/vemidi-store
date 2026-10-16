@@ -20,6 +20,7 @@ import { BlogCategoryManagementPanel } from "@/components/admin/blog-category-ma
 import { EventManagementPanel } from "@/components/admin/event-management-panel";
 import { EventGalleryManagementPanel } from "@/components/admin/event-gallery-management-panel";
 import { EventRegistrationsPanel } from "@/components/admin/event-registrations-panel";
+import { EventAdminTabs } from "@/components/admin/event-admin-tabs";
 import { SubscriberManagementPanel } from "@/components/admin/subscriber-management-panel";
 import { SiteContentManagementPanel } from "@/components/admin/site-content-management-panel";
 import { SiteMediaManagementPanel } from "@/components/admin/site-media-management-panel";
@@ -815,7 +816,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                 />
               </>
             ) : (
-              <>
+              <EventAdminTabs initialView={firstValue(params.eventsView) === "participants" ? "participants" : "events"} eventsContent={<>
                 <EventManagementPanel
                   items={(result.data ?? []) as import("@/lib/admin/types").EventRow[]}
                   error={result.error}
@@ -832,12 +833,11 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                     }
                   />
                 )}
-                <EventRegistrationsPanel
+              </>} participantsContent={<EventRegistrationsPanel
                   events={(result.data ?? []) as import("@/lib/admin/types").EventRow[]}
                   registrations={(registrationsResult.data ?? []) as import("@/lib/admin/types").EventRegistrationRow[]}
                   error={registrationsResult.error}
-                />
-              </>
+                />} />
             )}
           </div>
         </PageContainer>
