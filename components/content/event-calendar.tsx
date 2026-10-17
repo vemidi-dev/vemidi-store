@@ -12,7 +12,7 @@ const statusStyles = { past: "bg-boutique-warm text-boutique-muted", full: "bg-a
 function EventProgram({ events, now, activeId, showDate = false, onEntryRef }: { events: CalendarEvent[]; now: number; activeId?: string; showDate?: boolean; onEntryRef?: (id: string, element: HTMLElement | null) => void }) {
   return <div className="divide-y divide-boutique-line">{events.map((event) => {
     const status = calendarEventStatus(event, now);
-    return <article key={event.id} ref={(element) => { onEntryRef?.(event.id, element); }} data-event-id={event.id} aria-current={activeId === event.id ? "true" : undefined} className={`min-w-0 py-4 first:pt-0 last:pb-0 ${activeId === event.id ? "border-l-2 border-l-boutique-sage-deep bg-boutique-sage/10 pl-3" : ""}`}>
+    return <article key={event.id} ref={(element) => { onEntryRef?.(event.id, element); }} data-event-id={event.id} aria-current={activeId === event.id ? "true" : undefined} className={`min-w-0 scroll-mt-28 py-4 first:pt-0 last:pb-0 lg:scroll-mt-0 ${activeId === event.id ? "border-l-2 border-l-boutique-sage-deep bg-boutique-sage/10 pl-3" : ""}`}>
       {showDate && event.starts_at ? <p className="mb-2 text-xs font-semibold text-boutique-sage-deep first-letter:uppercase"><time dateTime={event.starts_at}>{calendarDateLabel(eventDateKey(event.starts_at)!)}</time></p> : null}
       <div className="flex items-start gap-3">
         <Link href={`/sabitiya/${event.slug}`} tabIndex={-1} aria-hidden="true" className="block h-16 w-20 shrink-0 overflow-hidden rounded-md"><ContentImage src={event.image_url} alt="" label="Работилница" sizes="80px" /></Link>
@@ -35,6 +35,7 @@ export function EventCalendar({ events, now }: { events: CalendarEvent[]; now: n
   const [visibleCount, setVisibleCount] = useState(5);
   const [scrollRequest, setScrollRequest] = useState<{ id: string } | null>(null);
   const entryRefs = useRef(new Map<string, HTMLElement>());
+  const mobileEntryRefs = useRef(new Map<string, HTMLElement>());
   const days = calendarDays(month);
   const monthGroups = [...groups.entries()].filter(([day]) => day.startsWith(month));
   const monthEvents = monthGroups.flatMap(([, items]) => items);
@@ -42,11 +43,13 @@ export function EventCalendar({ events, now }: { events: CalendarEvent[]; now: n
   const undated = events.filter((event) => !event.starts_at || !eventDateKey(event.starts_at));
   const nextDay = [...groups.keys()].find((day) => day >= today && day.slice(0, 7) > month);
   const monthOptions = calendarMonthOptions(month);
-  const weekColumns = "grid grid-cols-[repeat(5,minmax(0,1fr))_repeat(2,minmax(0,2fr))]";
+  const weekColumns = "grid grid-cols-[repeat(5,minmax(0,1fr))_repeat(2,minmax(0,1.4fr))] lg:grid-cols-[repeat(5,minmax(0,1fr))_repeat(2,minmax(0,2fr))]";
 
   useEffect(() => {
     if (!scrollRequest) return;
-    entryRefs.current.get(scrollRequest.id)?.scrollIntoView({ block: "nearest", behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
+    const desktop = window.matchMedia("(min-width: 1024px)").matches;
+    const entries = desktop ? entryRefs.current : mobileEntryRefs.current;
+    entries.get(scrollRequest.id)?.scrollIntoView({ block: desktop ? "nearest" : "start", behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
   }, [scrollRequest]);
 
   function selectCalendarDay(day: string, id?: string) {
@@ -83,16 +86,21 @@ export function EventCalendar({ events, now }: { events: CalendarEvent[]; now: n
       </div>
     </div>
 
-    <div className="mt-5 hidden min-w-0 gap-6 lg:grid xl:grid-cols-[minmax(0,1fr)_20rem]">
-      <div className="min-w-0 self-start overflow-hidden rounded-lg border border-boutique-line bg-white">
-        <div className={`${weekColumns} border-b border-boutique-line bg-boutique-sage/10`}>{["Пон", "Вт", "Ср", "Чет", "Пет", "Събота", "Неделя"].map((day, index) => <div key={day} className={`py-3 text-center text-xs font-semibold ${index >= 5 ? "bg-boutique-sage/10 text-boutique-sage-deep" : "text-boutique-muted"}`}>{day}</div>)}</div>
+    <div className="mt-5 grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1fr)_20rem]">
+      <div className="min-w-0 self-start overflow-hidden rounded-lg border border-boutique-line bg-white" role="region" aria-label="Месечен календар">
+        <div className={`${weekColumns} border-b border-boutique-line bg-boutique-sage/10`}>{["Пон", "Вт", "Ср", "Чет", "Пет", "Събота", "Неделя"].map((day, index) => <div key={day} className={`py-3 text-center text-xs font-semibold ${index >= 5 ? "bg-boutique-sage/10 text-boutique-sage-deep" : "text-boutique-muted"}`}><span className="lg:hidden">{["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд"][index]}</span><span className="hidden lg:inline">{day}</span></div>)}</div>
         <div className={weekColumns}>{days.map((day, index) => {
           const inMonth = day.startsWith(month);
           const items = inMonth ? groups.get(day) ?? [] : [];
           const weekend = index % 7 >= 5;
-          return <div key={day} className={`min-h-20 min-w-0 border-b border-r border-boutique-line p-1.5 ${index % 7 === 6 ? "border-r-0" : ""} ${index >= days.length - 7 ? "border-b-0" : ""} ${!inMonth ? "bg-boutique-paper/70" : selectedDay === day ? "bg-boutique-sage/10 ring-2 ring-inset ring-boutique-sage-deep" : weekend ? "bg-boutique-sage/5" : ""}`}>
-            {inMonth ? <button type="button" aria-label={calendarDateLabel(day)} aria-pressed={selectedDay === day} aria-current={day === today ? "date" : undefined} onClick={() => selectCalendarDay(day)} className={`mb-1 grid h-8 w-8 place-items-center rounded-full text-xs font-semibold transition hover:bg-boutique-sage/20 focus-visible:outline focus-visible:outline-2 ${day === today ? "bg-boutique-sage-deep text-white" : "text-boutique-ink"}`}>{Number(day.slice(-2))}</button> : <span className="mb-1 grid h-8 w-8 place-items-center text-xs text-boutique-muted/50">{Number(day.slice(-2))}</span>}
-            <div className="space-y-1">{items.slice(0, 2).map((event) => {
+          const mobileImage = items.find((event) => event.image_url)?.image_url;
+          return <div key={day} className={`min-h-20 min-w-0 border-b border-r border-boutique-line p-1 lg:p-1.5 ${index % 7 === 6 ? "border-r-0" : ""} ${index >= days.length - 7 ? "border-b-0" : ""} ${!inMonth ? "bg-boutique-paper/70" : selectedDay === day ? "bg-boutique-sage/10 ring-2 ring-inset ring-boutique-sage-deep" : weekend ? "bg-boutique-sage/5" : ""}`}>
+            {inMonth ? <button type="button" aria-label={`${calendarDateLabel(day)}, ${items.length === 1 ? "1 работилница" : `${items.length} работилници`}`} aria-pressed={selectedDay === day} aria-current={day === today ? "date" : undefined} onClick={() => selectCalendarDay(day)} className="flex min-h-[4.5rem] w-full flex-col items-center gap-1 rounded text-xs transition hover:bg-boutique-sage/15 focus-visible:outline focus-visible:outline-2 lg:hidden">
+              <span className={`grid h-7 w-7 shrink-0 place-items-center rounded-full font-semibold ${day === today ? "bg-boutique-sage-deep text-white" : "text-boutique-ink"}`}>{Number(day.slice(-2))}</span>
+              {items.length ? <span className="relative block h-9 w-full max-w-14 overflow-hidden rounded bg-boutique-sage/15">{mobileImage ? <ContentImage src={mobileImage} alt="" label="Работилница" sizes="56px" /> : <CalendarDays aria-hidden="true" className="mx-auto mt-2 h-5 w-5 text-boutique-sage-deep" />}{items.length > 1 ? <span aria-hidden="true" className="absolute right-0 top-0 grid h-4 min-w-4 place-items-center rounded-bl bg-boutique-sage-deep px-0.5 text-[10px] font-semibold text-white">{items.length}</span> : null}</span> : null}
+            </button> : <span className="grid h-7 place-items-center text-xs text-boutique-muted/50 lg:hidden">{Number(day.slice(-2))}</span>}
+            {inMonth ? <button type="button" aria-label={calendarDateLabel(day)} aria-pressed={selectedDay === day} aria-current={day === today ? "date" : undefined} onClick={() => selectCalendarDay(day)} className={`mb-1 hidden h-8 w-8 place-items-center rounded-full text-xs font-semibold transition hover:bg-boutique-sage/20 focus-visible:outline focus-visible:outline-2 lg:grid ${day === today ? "bg-boutique-sage-deep text-white" : "text-boutique-ink"}`}>{Number(day.slice(-2))}</button> : <span className="mb-1 hidden h-8 w-8 place-items-center text-xs text-boutique-muted/50 lg:grid">{Number(day.slice(-2))}</span>}
+            <div className="hidden space-y-1 lg:block">{items.slice(0, 2).map((event) => {
               const status = calendarEventStatus(event, now);
               return <button key={event.id} type="button" title={event.title} aria-label={`${calendarEventTime(event)}, ${event.title}, ${statusLabels[status]}`} aria-pressed={activeId === event.id && selectedDay === day} onClick={() => selectCalendarDay(day, event.id)} className={`w-full min-w-0 rounded border-l-2 bg-white p-1.5 text-left shadow-sm transition hover:shadow-md focus-visible:outline focus-visible:outline-2 ${weekend ? "flex items-start gap-2" : "block"} ${status === "past" ? "border-boutique-line text-boutique-muted" : status === "full" ? "border-amber-500 text-amber-900" : "border-boutique-sage-deep text-boutique-ink"}`}>
                 {event.image_url ? <span className={`block overflow-hidden rounded ${weekend ? "h-14 w-12 shrink-0 2xl:w-14" : "mb-1.5 aspect-[4/3] w-full"}`}><ContentImage src={event.image_url} alt="" label="Работилница" sizes={weekend ? "56px" : "96px"} /></span> : null}
@@ -102,7 +110,7 @@ export function EventCalendar({ events, now }: { events: CalendarEvent[]; now: n
           </div>;
         })}</div>
       </div>
-      <aside className="flex max-h-[44rem] min-w-0 flex-col self-start rounded-lg border border-boutique-line bg-white p-5" aria-label="Работилници през месеца">
+      <aside className="hidden max-h-[44rem] min-w-0 flex-col self-start rounded-lg border border-boutique-line bg-white p-5 lg:flex" aria-label="Работилници през месеца">
         <div className="mb-4 shrink-0 border-b border-boutique-line pb-3"><h3 className="font-heading text-xl text-boutique-ink">Работилници през месеца</h3><p className="mt-1 text-xs text-boutique-muted first-letter:uppercase" aria-live="polite">{calendarDateLabel(month, true)} · {count === 1 ? "1 работилница" : `${count} работилници`}</p></div>
         <div className="min-h-0 overflow-y-auto overscroll-contain pr-1 [scrollbar-gutter:stable] [scrollbar-width:thin]" role="region" aria-label="Списък с работилници за месеца" tabIndex={0}>
           {count ? <EventProgram events={monthEvents.slice(0, visibleCount)} now={now} showDate activeId={activeId} onEntryRef={(id, element) => { if (element) entryRefs.current.set(id, element); else entryRefs.current.delete(id); }} /> : <p className="py-4 text-sm leading-6 text-boutique-muted">Няма работилници през този месец.</p>}
@@ -111,7 +119,7 @@ export function EventCalendar({ events, now }: { events: CalendarEvent[]; now: n
       </aside>
     </div>
 
-    <div className="mt-5 space-y-6 lg:hidden" aria-label="Програма за месеца">{monthGroups.map(([day, items]) => <section key={day} className="border-b border-boutique-line pb-5"><h3 className="mb-4 flex items-center gap-2 font-heading text-xl text-boutique-ink"><CalendarDays aria-hidden="true" className="h-5 w-5 shrink-0 text-boutique-sage-deep" /><span className="first-letter:uppercase">{calendarDateLabel(day)}</span></h3><EventProgram events={items} now={now} /></section>)}</div>
+    <div className="mt-6 space-y-6 lg:hidden" aria-label="Програма за месеца">{count ? <h3 className="font-heading text-2xl text-boutique-ink">Работилници през месеца</h3> : null}{monthGroups.map(([day, items]) => <section key={day} className="scroll-mt-28 border-b border-boutique-line pb-5"><h3 className="mb-4 flex items-center gap-2 font-heading text-xl text-boutique-ink"><CalendarDays aria-hidden="true" className="h-5 w-5 shrink-0 text-boutique-sage-deep" /><span className="first-letter:uppercase">{calendarDateLabel(day)}</span></h3><EventProgram events={items} now={now} activeId={activeId} onEntryRef={(id, element) => { if (element) mobileEntryRefs.current.set(id, element); else mobileEntryRefs.current.delete(id); }} /></section>)}</div>
 
     {!count ? <div className="mt-5 border-y border-dashed border-boutique-line px-4 py-8 text-center"><p className="text-sm text-boutique-muted">Няма работилници през този месец.</p>{nextDay ? <button type="button" onClick={() => { changeMonth(nextDay.slice(0, 7)); setSelectedDay(nextDay); }} className="mt-3 inline-flex min-h-10 items-center gap-2 text-sm font-semibold text-boutique-sage-deep hover:underline">Следваща работилница<ArrowRight aria-hidden="true" className="h-4 w-4" /></button> : null}</div> : null}
     {undated.length ? <section className="mt-8 border-t border-boutique-line pt-5"><h3 className="mb-4 font-heading text-xl text-boutique-ink">Датата предстои</h3><div className="max-w-lg"><EventProgram events={undated} now={now} /></div></section> : null}
