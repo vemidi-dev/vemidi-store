@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CalendarDays } from "lucide-react";
 
 import { FaqSection } from "@/components/faq/faq-section";
 import { ContentImage } from "@/components/content/content-image";
@@ -84,12 +85,10 @@ export function HomeContentGrid({
           <div className="min-w-0 border-t border-boutique-line pt-12">
             <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
               <h2 className="font-heading text-3xl text-boutique-ink md:text-4xl">Предстоящи събития</h2>
-              <Link
-                href="/sabitiya"
-                className="text-xs font-semibold text-boutique-sage-deep underline-offset-4 hover:underline"
-              >
-                Вижте всички събития
-              </Link>
+              <div className="flex flex-wrap items-center gap-4">
+                <Link href="/sabitiya?view=calendar#programa" className="inline-flex min-h-10 items-center gap-2 text-xs font-semibold text-boutique-sage-deep underline-offset-4 hover:underline"><CalendarDays aria-hidden="true" className="h-4 w-4" />Календар на работилниците</Link>
+                <Link href="/sabitiya" className="inline-flex min-h-10 items-center text-xs font-semibold text-boutique-sage-deep underline-offset-4 hover:underline">Вижте всички събития</Link>
+              </div>
             </div>
 
             {upcomingEvents.length ? (

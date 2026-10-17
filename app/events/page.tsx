@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { EventGallerySection } from "@/components/content/event-gallery-section";
 import { EventNotificationForm } from "@/components/content/event-notification-form";
 import { EventCard } from "@/components/content/event-card";
+import { EventsSchedule } from "@/components/content/events-schedule";
 import { PageContainer } from "@/components/layout/page-container";
 import { VisualPageHero } from "@/components/layout/visual-page-hero";
 import type { EventRow } from "@/lib/admin/types";
@@ -12,6 +13,7 @@ import {
   resolveSiteMediaFromMap,
 } from "@/lib/content/site-media";
 import { OG_DEFAULTS } from "@/lib/seo/social-images";
+import { toCalendarEvent } from "@/lib/events/calendar";
 
 export async function generateMetadata(): Promise<Metadata> {
   const siteMediaMap = await getSiteMediaMap();
@@ -48,28 +50,11 @@ function getEventTime(event: EventRow) {
 
 function UpcomingEvents({ events }: { events: EventRow[] }) {
   return (
-    <section className="border-b border-boutique-line bg-boutique-blush/25 py-14 md:py-18">
-      <PageContainer className="2xl:max-w-[1440px]">
-        <div className="text-center">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-boutique-rose-deep">
-            Заповядайте в ателието
-          </p>
-          <h2 className="mt-3 font-heading text-4xl text-boutique-ink">
-            Предстоящи събития
-          </h2>
-          <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-boutique-muted">
-            Малки групи, творчески занимания и уютно време, в което децата създават със
-            собствените си ръце.
-          </p>
-        </div>
-
-        <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
           {events.map((event) => (
             <EventCard key={event.id} event={event} />
           ))}
         </div>
-      </PageContainer>
-    </section>
   );
 }
 
@@ -133,10 +118,11 @@ function NoUpcomingEvents() {
   );
 }
 
-export default async function EventsPage() {
-  const [events, siteMediaMap] = await Promise.all([
+export default async function EventsPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const [events, siteMediaMap, params] = await Promise.all([
     getPublishedEvents(),
     getSiteMediaMap(),
+    searchParams,
   ]);
   const heroImage = resolveSiteMediaFromMap(siteMediaMap, "events.hero");
   const now = Date.now();
@@ -171,7 +157,9 @@ export default async function EventsPage() {
         imageAlt={heroImage.alt}
       />
 
-      {upcomingEvents.length ? <UpcomingEvents events={upcomingEvents} /> : null}
+      <EventsSchedule events={events.map(toCalendarEvent)} now={now} view={params.view === "calendar" ? "calendar" : "cards"}>
+        {upcomingEvents.length ? <UpcomingEvents events={upcomingEvents} /> : <p className="py-6 text-sm text-boutique-muted">В момента няма предстоящи събития.</p>}
+      </EventsSchedule>
       <PastEvents events={pastEvents} />
       <EventGallerySection />
       {upcomingEvents.length === 0 ? <NoUpcomingEvents /> : null}

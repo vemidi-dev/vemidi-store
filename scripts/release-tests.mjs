@@ -18,6 +18,7 @@ const releaseTestGroups = [
       "tests/event-gallery-compression.test.ts",
       "tests/event-phone-map.test.ts",
       "tests/event-social-links.test.ts",
+      "tests/event-calendar.test.ts",
       "tests/event-registration-email.test.ts",
       "tests/event-registration-forms.test.ts",
       "tests/event-registrations.test.ts",
