@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { EventSocialActions } from "@/components/content/event-social-actions";
+import { eventFacebookUrl } from "@/lib/events/social-links";
+import { EventCard } from "@/components/content/event-card";
 import type { ReactNode } from "react";
 import { CalendarDays, Clock3, ExternalLink, MapPin, MessageCircle, Timer, UserRound, Users, type LucideIcon } from "lucide-react";
 import { ContentImage } from "@/components/content/content-image";
@@ -71,6 +74,7 @@ export function EventDetailView({ event, relatedEvents = [], idempotencyKey, inc
               <p className="mt-2 text-sm text-boutique-muted">{EVENT_PAYMENT_LABEL}</p>
               {canRegister ? <a href="#registration" className="mt-4 flex min-h-12 items-center justify-center rounded-lg bg-boutique-sage-deep px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-boutique-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-boutique-sage-deep/50 focus-visible:ring-offset-2">Запази място</a> : !hasStarted && !full && event.registration_url && !previewBanner ? <a href={event.registration_url} className="mt-4 flex min-h-12 items-center justify-center rounded-lg bg-boutique-sage-deep px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-boutique-ink">Запази място</a> : null}
               <div className="mt-2 text-center"><Link href="/kontakti" className={contactLinkClass}><MessageCircle aria-hidden="true" className="h-4 w-4 shrink-0" />Свържете се с нас</Link></div>
+              <EventSocialActions slug={event.slug} title={event.title} facebookUrl={eventFacebookUrl(event.registration_settings)} />
             </div>
           </aside>
         </div>
@@ -87,7 +91,7 @@ export function EventDetailView({ event, relatedEvents = [], idempotencyKey, inc
             <fieldset disabled={Boolean(previewBanner)} className="min-w-0"><EventRegistrationForm eventId={event.id} eventSlug={event.slug} availableSpots={event.available_spots ?? 0} idempotencyKey={idempotencyKey ?? ""} settings={event.registration_settings !== undefined && !settings.error ? settings.settings : undefined} price={event.price} /></fieldset>
           </> : full ? <p className="font-semibold text-boutique-ink">Местата за това събитие са запълнени.</p> : hasStarted ? <p className="text-sm text-boutique-muted">Записването за това събитие е приключило.</p> : !event.registration_url ? <Link href="/kontakti" className="text-sm text-boutique-sage-deep underline">Попитай за записване</Link> : null}
         </div>
-        {upcoming.length ? <section className="pt-10"><div className="flex flex-wrap items-center justify-between gap-3"><h2 className="font-heading text-3xl text-boutique-ink">Още творчески срещи</h2><Link href="/sabitiya" className="text-sm text-boutique-sage-deep underline">Всички събития</Link></div><div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{upcoming.map((related) => <Link key={related.id} href={`/sabitiya/${related.slug}`} className="overflow-hidden rounded-lg border border-boutique-line bg-white"><div className="aspect-[3/2]"><ContentImage src={related.image_url} alt={related.title} label="Снимка на работилницата" /></div><div className="p-4"><p className="text-xs text-boutique-sage-deep">Предстоящо{related.starts_at ? " · " + new Intl.DateTimeFormat("bg-BG", { day: "numeric", month: "long", timeZone: "Europe/Sofia" }).format(new Date(related.starts_at)) : ""}</p><h3 className="mt-2 font-heading text-xl text-boutique-ink">{related.title}</h3><p className="mt-3 text-sm font-semibold text-boutique-sage-deep">Виж работилницата →</p></div></Link>)}</div></section> : null}
+        {upcoming.length ? <section className="pt-10"><div className="flex flex-wrap items-center justify-between gap-3"><h2 className="font-heading text-3xl text-boutique-ink">Още творчески срещи</h2><Link href="/sabitiya" className="text-sm text-boutique-sage-deep underline">Всички събития</Link></div><div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{upcoming.map((related) => <EventCard key={related.id} event={related} />)}</div></section> : null}
       </PageContainer>
     </article>
   </>;

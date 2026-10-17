@@ -1,4 +1,5 @@
 import { calculateEventParticipantTotal, eventMaterialsLabels, parseEventMaterialsPricing, type EventMaterialsOption, type EventMaterialsPricing } from "@/lib/events/pricing";
+import { isEventFacebookUrl } from "@/lib/events/social-links";
 
 export const participantTypeLabels = {
   child: "Дете",
@@ -22,6 +23,7 @@ export type EventRegistrationSettings = {
   questions: EventQuestion[];
   materialsPricing?: EventMaterialsPricing;
   priceDisplayText?: string;
+  facebookEventUrl?: string;
 };
 export type EventAnswer = { id: string; label: string; value: string; type?: EventQuestion["type"] };
 export type EventParticipant = { name: string; type: ParticipantType; age: number | null; answers: EventAnswer[]; materialsOption?: EventMaterialsOption; materialsLabel?: string; materialsText?: string; unitPrice?: number; status?: "active" | "cancelled"; cancelledAt?: string; restoredAt?: string };
@@ -43,6 +45,8 @@ export function parseEventRegistrationSettings(value: unknown): { settings: Even
   if (!["hidden", "optional", "required"].includes(String(value.age))) return fail("Невалидна настройка за възрастта.");
   if (!Array.isArray(value.questions) || value.questions.length > 20) return fail("Допустими са до 20 допълнителни въпроса.");
   const questions: EventQuestion[] = [];
+  const facebookEventUrl = typeof value.facebookEventUrl === "string" ? value.facebookEventUrl.trim() : "";
+  if (value.facebookEventUrl !== undefined && (typeof value.facebookEventUrl !== "string" || (facebookEventUrl && !isEventFacebookUrl(facebookEventUrl)))) return fail("Въведете валиден HTTPS адрес на събитието във Facebook.");
   if (value.priceDisplayText !== undefined && (typeof value.priceDisplayText !== "string" || value.priceDisplayText.length > 1000)) return fail("Текстът за цената трябва да е до 1000 символа.");
   for (const q of value.questions) {
     if (!object(q) || typeof q.id !== "string" || !/^[a-zA-Z0-9_-]{1,80}$/.test(q.id) || questions.some((other) => other.id === q.id) || typeof q.label !== "string" || !q.label.trim() || q.label.length > 120 || !["text", "number", "select"].includes(String(q.type)) || !["participant", "registration"].includes(String(q.scope)) || typeof q.required !== "boolean") return fail("Всеки въпрос трябва да има уникален код, заглавие, вид и обхват.");
@@ -57,7 +61,7 @@ export function parseEventRegistrationSettings(value: unknown): { settings: Even
     try { materialsPricing = parseEventMaterialsPricing(value.materialsPricing); }
     catch (error) { return fail(error instanceof Error ? error.message : "Невалидни цени за материалите."); }
   }
-  return { settings: { allowedTypes: [...new Set(value.allowedTypes)] as ParticipantType[], age: value.age as EventRegistrationSettings["age"], questions, ...(materialsPricing ? { materialsPricing } : {}), ...(typeof value.priceDisplayText === "string" && value.priceDisplayText.trim() ? { priceDisplayText: value.priceDisplayText.trim() } : {}) } };
+  return { settings: { allowedTypes: [...new Set(value.allowedTypes)] as ParticipantType[], age: value.age as EventRegistrationSettings["age"], questions, ...(facebookEventUrl ? { facebookEventUrl } : {}), ...(materialsPricing ? { materialsPricing } : {}), ...(typeof value.priceDisplayText === "string" && value.priceDisplayText.trim() ? { priceDisplayText: value.priceDisplayText.trim() } : {}) } };
 }
 
 export function readEventSettingsForm(form: FormData) {

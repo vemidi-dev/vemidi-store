@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 
 import { ContentImage } from "@/components/content/content-image";
+import { EventSocialActions } from "@/components/content/event-social-actions";
+import { eventFacebookUrl } from "@/lib/events/social-links";
 import type { EventRow } from "@/lib/admin/types";
 
 export function HomePastEvents({ events }: { events: EventRow[] }) {
@@ -71,7 +73,7 @@ export function HomePastEvents({ events }: { events: EventRow[] }) {
       >
         {events.map((event) => (
           <article key={event.id} className="min-w-0 snap-start">
-            <Link href={`/sabitiya/${event.slug}`} className="group flex h-full items-center gap-3 border-b border-boutique-line/70 py-3">
+            <Link href={`/sabitiya/${event.slug}`} className="group flex items-center gap-3 py-3">
               <div className="h-16 w-20 shrink-0 overflow-hidden rounded-md bg-boutique-warm">
                 <ContentImage src={event.image_url} alt={event.title} label="Снимка от събитието" />
               </div>
@@ -80,6 +82,7 @@ export function HomePastEvents({ events }: { events: EventRow[] }) {
                 <h4 className="mt-1 break-words text-sm font-medium leading-snug text-boutique-ink transition group-hover:text-boutique-sage-deep">{event.title}</h4>
               </div>
             </Link>
+            <EventSocialActions slug={event.slug} title={event.title} facebookUrl={eventFacebookUrl(event.registration_settings)} />
           </article>
         ))}
       </div>

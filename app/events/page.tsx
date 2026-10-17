@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
 import { EventGallerySection } from "@/components/content/event-gallery-section";
 import { EventNotificationForm } from "@/components/content/event-notification-form";
-import { ContentImage } from "@/components/content/content-image";
+import { EventCard } from "@/components/content/event-card";
 import { PageContainer } from "@/components/layout/page-container";
 import { VisualPageHero } from "@/components/layout/visual-page-hero";
 import type { EventRow } from "@/lib/admin/types";
@@ -12,7 +11,6 @@ import {
   getSiteMediaMap,
   resolveSiteMediaFromMap,
 } from "@/lib/content/site-media";
-import { formatEventPrice } from "@/lib/events/pricing";
 import { OG_DEFAULTS } from "@/lib/seo/social-images";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -48,19 +46,10 @@ function getEventTime(event: EventRow) {
   return event.ends_at ?? event.starts_at;
 }
 
-function formatEventDate(value: string | null) {
-  if (!value) return "Датата предстои";
-  return new Intl.DateTimeFormat("bg-BG", {
-    dateStyle: "long",
-    timeStyle: "short",
-    timeZone: "Europe/Sofia",
-  }).format(new Date(value));
-}
-
 function UpcomingEvents({ events }: { events: EventRow[] }) {
   return (
     <section className="border-b border-boutique-line bg-boutique-blush/25 py-14 md:py-18">
-      <PageContainer>
+      <PageContainer className="2xl:max-w-[1440px]">
         <div className="text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-boutique-rose-deep">
             Заповядайте в ателието
@@ -74,43 +63,9 @@ function UpcomingEvents({ events }: { events: EventRow[] }) {
           </p>
         </div>
 
-        <div className="mt-10 grid gap-6 lg:grid-cols-2">
+        <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
           {events.map((event) => (
-            <article
-              key={event.id}
-              className="overflow-hidden rounded-3xl border border-boutique-line bg-white shadow-boutique-sm"
-            >
-              <Link href={`/sabitiya/${event.slug}`} className="block aspect-[16/10]">
-                <ContentImage
-                  src={event.image_url}
-                  alt={event.title}
-                  label="Снимка за работилницата"
-                />
-              </Link>
-              <div className="p-6 md:p-7">
-                <p className="text-xs font-semibold uppercase tracking-[0.15em] text-boutique-rose-deep">
-                  {formatEventDate(event.starts_at)}
-                </p>
-                <h3 className="mt-3 font-heading text-3xl text-boutique-ink">
-                  <Link href={`/sabitiya/${event.slug}`}>{event.title}</Link>
-                </h3>
-                <p className="mt-3 text-sm leading-6 text-boutique-muted">{event.excerpt}</p>
-                <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm text-boutique-muted">
-                  <span>{event.location || event.address || "Ателието на VeMiDi"}</span>
-                  {event.age_group ? <span>{event.age_group}</span> : null}
-                  {formatEventPrice(event) ? <span>{formatEventPrice(event)}</span> : null}
-                  {event.available_spots !== null ? (
-                    <span>{event.available_spots} свободни места</span>
-                  ) : null}
-                </div>
-                <Link
-                  href={`/sabitiya/${event.slug}`}
-                  className="mt-6 inline-flex rounded-lg bg-boutique-rose-deep px-6 py-3 text-sm font-semibold text-white transition hover:bg-boutique-ink"
-                >
-                  Вижте подробности
-                </Link>
-              </div>
-            </article>
+            <EventCard key={event.id} event={event} />
           ))}
         </div>
       </PageContainer>
@@ -121,7 +76,7 @@ function UpcomingEvents({ events }: { events: EventRow[] }) {
 function PastEvents({ events }: { events: EventRow[] }) {
   return (
     <section className="py-14 md:py-18">
-      <PageContainer>
+      <PageContainer className="2xl:max-w-[1440px]">
         <div className="text-center">
           <h2 className="font-heading text-4xl text-boutique-ink">Минали събития</h2>
           <div className="mx-auto mt-4 flex max-w-40 items-center gap-3 text-boutique-rose-deep">
@@ -136,35 +91,9 @@ function PastEvents({ events }: { events: EventRow[] }) {
         </div>
 
         {events.length ? (
-          <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
             {events.map((event) => (
-              <Link
-                key={event.id}
-                href={`/sabitiya/${event.slug}`}
-                className="group overflow-hidden rounded-2xl border border-boutique-line bg-white shadow-boutique-sm transition hover:-translate-y-1 hover:shadow-boutique"
-              >
-                <div className="aspect-[4/3] overflow-hidden">
-                  <ContentImage
-                    src={event.image_url}
-                    alt={event.title}
-                    label="Снимка от миналото събитие"
-                  />
-                </div>
-                <div className="p-5">
-                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-boutique-rose-deep">
-                    {formatEventDate(event.starts_at)}
-                  </p>
-                  <h3 className="mt-2 font-heading text-2xl text-boutique-ink transition group-hover:text-boutique-rose-deep">
-                    {event.title}
-                  </h3>
-                  <p className="mt-2 line-clamp-2 text-sm leading-6 text-boutique-muted">
-                    {event.excerpt}
-                  </p>
-                  <span className="mt-4 inline-flex text-sm font-semibold text-boutique-sage-deep">
-                    Вижте събитието →
-                  </span>
-                </div>
-              </Link>
+              <EventCard key={event.id} event={event} past />
             ))}
           </div>
         ) : (

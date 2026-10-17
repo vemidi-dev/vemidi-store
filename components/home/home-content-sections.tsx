@@ -7,7 +7,7 @@ import { PageContainer } from "@/components/layout/page-container";
 import { HomePastEvents } from "@/components/home/home-past-events";
 import type { BlogPostRow, EventRow } from "@/lib/admin/types";
 import type { FaqItem } from "@/lib/faq/types";
-import { formatEventPrice } from "@/lib/events/pricing";
+import { EventCard } from "@/components/content/event-card";
 
 function formatDate(value: string | null, includeTime = false) {
   if (!value) return null;
@@ -20,29 +20,7 @@ function formatDate(value: string | null, includeTime = false) {
 }
 
 function UpcomingEventCard({ event, featured = false }: { event: EventRow; featured?: boolean }) {
-  const date = formatDate(event.starts_at);
-  const location = event.location || event.address || (event.format === "online" ? "Онлайн" : null);
-
-  return (
-    <article className="min-w-0">
-      <Link href={`/sabitiya/${event.slug}`} className={`group flex h-full flex-col overflow-hidden rounded-lg border border-boutique-line bg-white transition hover:border-boutique-sage-deep/50 ${featured ? "sm:grid sm:grid-cols-2" : ""}`}>
-        <div className={`aspect-[4/3] overflow-hidden bg-boutique-warm ${featured ? "sm:aspect-auto sm:min-h-80" : ""}`}>
-          <ContentImage src={event.image_url} alt={event.title} label="Снимка на събитието" />
-        </div>
-        <div className="flex flex-1 flex-col p-5">
-          {date ? <p className="text-sm font-semibold text-boutique-sage-deep"><time dateTime={event.starts_at ?? undefined}>{date}</time></p> : null}
-          <h3 className="mt-3 break-words font-heading text-2xl leading-snug text-boutique-ink transition group-hover:text-boutique-sage-deep">{event.title}</h3>
-          {event.excerpt ? <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-boutique-muted">{event.excerpt}</p> : null}
-          {location ? <p className="mt-3 break-words text-sm text-boutique-muted">{location}</p> : null}
-          <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-2 pt-5 text-sm">
-            {formatEventPrice(event) ? <span className="font-semibold text-boutique-ink">{formatEventPrice(event)}</span> : null}
-            {event.available_spots !== null ? <span className="text-boutique-muted">{event.available_spots === 0 ? "Местата са запълнени" : `${event.available_spots} свободни места`}</span> : null}
-          </div>
-          <span className="mt-4 text-sm font-semibold text-boutique-sage-deep">Разгледайте събитието <span aria-hidden>→</span></span>
-        </div>
-      </Link>
-    </article>
-  );
+  return <EventCard event={event} featured={featured} />;
 }
 
 export function HomeContentGrid({

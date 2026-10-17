@@ -695,6 +695,11 @@ export async function copyEventAsDraft(id: string): Promise<{ ok: boolean; messa
   for (const name of ["id", "created_at", "updated_at"]) delete row[name];
   Object.assign(row, { title: `${source.title} (копие)`, slug: `${String(source.slug).slice(0, 140)}-copy-${randomUUID().slice(0, 8)}`, is_published: false, starts_at: null, ends_at: null, available_spots: source.capacity, image_url: null, registration_url: null });
   if ("gallery_images" in source) row.gallery_images = [];
+  if (source.registration_settings && typeof source.registration_settings === "object") {
+    const settings = { ...source.registration_settings };
+    delete settings.facebookEventUrl;
+    row.registration_settings = settings;
+  }
   const { data, error } = await supabase.from("events").insert(row).select("*").single();
   if (error || !data) return { ok: false, message: "Копието не беше създадено. Опитайте отново." };
   revalidatePath("/admin");

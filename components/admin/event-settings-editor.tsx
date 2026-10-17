@@ -69,6 +69,7 @@ export function EventSettingsEditor({ settings, photos = [], price = null }: { s
   return <div className="space-y-6 border-t border-boutique-line pt-5 md:col-span-2">
     <input ref={settingsInput} type="hidden" name="registration_settings" value={JSON.stringify({ ...submittedConfig, ...(priceDisplayText.trim() ? { priceDisplayText } : {}), ...(pricingEnabled ? { materialsPricing: submittedPricing } : {}) })} />
     <input ref={galleryInput} type="hidden" name="event_gallery_images" value={JSON.stringify(gallery)} />
+    <label className="block text-sm text-boutique-ink">Събитие във Facebook<input type="url" maxLength={2048} value={config.facebookEventUrl ?? ""} onChange={(event) => setConfig((previous) => ({ ...previous, facebookEventUrl: event.target.value }))} placeholder="https://www.facebook.com/events/..." className={adminFieldClass} /></label>
     <fieldset>
       <legend className="font-semibold text-boutique-ink">Цени и материали</legend>
       <label className="mt-3 flex items-center gap-2 text-sm text-boutique-ink"><input type="checkbox" checked={pricingEnabled} onChange={(event) => {
