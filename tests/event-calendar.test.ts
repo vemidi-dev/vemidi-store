@@ -47,6 +47,12 @@ test("event timestamps are grouped by Sofia day across midnight and DST", () => 
   assert.equal([...groups.values()].flat().length, 2);
 });
 
+test("busy calendar days retain every session in chronological order", () => {
+  const sessions = Array.from({ length: 6 }, (_, index) => event({ id: String(index), starts_at: `2026-10-31T${String(8 + index).padStart(2, "0")}:00:00Z` }));
+  const groups = groupCalendarEvents([...sessions].reverse());
+  assert.deepEqual(groups.get("2026-10-31")?.map(item => item.id), ["0", "1", "2", "3", "4", "5"]);
+});
+
 test("past/full status and schedules use saved dates, duration and availability", () => {
   const now = Date.parse("2026-10-18T09:00:00Z");
   assert.equal(calendarEventStatus(event(), now), "upcoming");
