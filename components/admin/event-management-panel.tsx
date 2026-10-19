@@ -1,4 +1,5 @@
 import { EventCreateForm } from "@/components/admin/event-create-form";
+import { EventDateTimeInput } from "@/components/admin/event-datetime-input";
 import { AdminFormDraftKeeper } from "@/components/admin/admin-form-draft-keeper";
 import { AdminSectionAccordion } from "@/components/admin/admin-section-accordion";
 import { EventListView } from "@/components/admin/event-list-view";
@@ -99,11 +100,11 @@ export function EventManagementPanel({
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="text-sm font-medium text-boutique-ink">
               Начало (час София)
-              <input name="starts_at" type="datetime-local" className={adminFieldClass} />
+              <EventDateTimeInput name="starts_at" className={adminFieldClass} />
             </label>
             <label className="text-sm font-medium text-boutique-ink">
               Край (час София)
-              <input name="ends_at" type="datetime-local" className={adminFieldClass} />
+              <EventDateTimeInput name="ends_at" className={adminFieldClass} />
             </label>
           </div>
           <ImageFileInput

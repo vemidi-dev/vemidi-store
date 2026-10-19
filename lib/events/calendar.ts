@@ -36,7 +36,12 @@ export function shiftCalendarMonth(month: string, direction: number): string {
 export function calendarMonthOptions(month: string): string[] {
   if (!isCalendarMonth(month)) return [];
   const date = parseISO(`${month}-01`);
-  return Array.from({ length: 7 }, (_, index) => format(addMonths(date, index - 3), "yyyy-MM")).filter(isCalendarMonth);
+  return Array.from({ length: 3 }, (_, index) => format(addMonths(date, index), "yyyy-MM")).filter(isCalendarMonth);
+}
+
+export function calendarGroupsInView(groups: Map<string, CalendarEvent[]>, month: string): [string, CalendarEvent[]][] {
+  const days = calendarDays(month);
+  return days.length ? [...groups.entries()].filter(([day]) => day >= days[0] && day <= days[days.length - 1]) : [];
 }
 
 export function calendarDateLabel(day: string, monthOnly = false): string {

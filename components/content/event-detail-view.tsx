@@ -64,8 +64,8 @@ export function EventDetailView({ event, relatedEvents = [], idempotencyKey, inc
           <h1 className="break-words font-heading text-3xl leading-tight text-boutique-ink sm:text-4xl">{event.title}</h1>
           <p className="mt-3 whitespace-pre-line text-base text-boutique-muted">{event.excerpt}</p>
         </header>
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,1.6fr)_minmax(18rem,1fr)] lg:items-stretch">
-          <div className="aspect-[4/3] min-w-0 overflow-hidden rounded-lg bg-boutique-warm lg:aspect-auto lg:min-h-96"><ContentImage src={event.image_url} alt={event.title} label="Снимка на работилницата" /></div>
+        <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_19rem] lg:items-stretch xl:grid-cols-[minmax(0,1fr)_20rem]">
+          <div className="aspect-[16/10] min-w-0 overflow-hidden rounded-lg bg-boutique-warm lg:aspect-auto"><ContentImage src={event.image_url} alt={event.title} label="Снимка на работилницата" fit="cover" sizes="(max-width: 1023px) calc(100vw - 40px), (max-width: 1152px) calc(100vw - 388px), 748px" /></div>
           <aside aria-label="Информация и записване" className="min-w-0 rounded-lg border border-boutique-line bg-white p-5 sm:p-6">
             {event.available_spots !== null ? <p className="mb-5 inline-flex items-center gap-2 rounded-md bg-boutique-sage/15 px-3 py-2 text-sm font-semibold text-boutique-sage-deep"><Users aria-hidden="true" className="h-4 w-4 shrink-0" />{full ? "Местата са запълнени" : hasStarted ? "Записването е приключило" : `${event.available_spots} свободни места`}</p> : null}
             <dl className="space-y-4">{facts.filter((fact) => fact.value).map(({ label, value, Icon, map }) => <div key={label}><dt className="sr-only">{label}</dt><dd className="flex items-start gap-3 text-sm text-boutique-ink"><Icon aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-boutique-sage-deep" /><div className="min-w-0 flex-1"><p className="whitespace-pre-line break-words leading-6">{value}</p>{map && mapUrl ? <div className="mt-2"><EventMapLink href={mapUrl} /></div> : null}</div></dd></div>)}</dl>
@@ -74,7 +74,7 @@ export function EventDetailView({ event, relatedEvents = [], idempotencyKey, inc
               <p className="mt-2 text-sm text-boutique-muted">{EVENT_PAYMENT_LABEL}</p>
               {canRegister ? <a href="#registration" className="mt-4 flex min-h-12 items-center justify-center rounded-lg bg-boutique-sage-deep px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-boutique-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-boutique-sage-deep/50 focus-visible:ring-offset-2">Запази място</a> : !hasStarted && !full && event.registration_url && !previewBanner ? <a href={event.registration_url} className="mt-4 flex min-h-12 items-center justify-center rounded-lg bg-boutique-sage-deep px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-boutique-ink">Запази място</a> : null}
               <div className="mt-2 text-center"><Link href="/kontakti" className={contactLinkClass}><MessageCircle aria-hidden="true" className="h-4 w-4 shrink-0" />Свържете се с нас</Link></div>
-              <EventSocialActions slug={event.slug} title={event.title} facebookUrl={eventFacebookUrl(event.registration_settings)} />
+              <EventSocialActions slug={event.slug} title={event.title} facebookUrl={eventFacebookUrl(event.registration_settings)} inline />
             </div>
           </aside>
         </div>

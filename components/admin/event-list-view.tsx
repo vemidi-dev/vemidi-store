@@ -29,6 +29,7 @@ import {
 } from "@/lib/event-admin";
 import type { EventRow } from "@/lib/admin/types";
 import { toEventDateTimeLocal } from "@/lib/events/event-datetime";
+import { EventDateTimeInput } from "@/components/admin/event-datetime-input";
 
 const STATUS_BADGE: Record<string, string> = {
   draft: "bg-boutique-bg text-boutique-muted",
@@ -295,11 +296,11 @@ export function EventListView({ events }: { events: EventRow[] }) {
                         <div className="grid min-w-0 gap-4 xl:grid-cols-2">
                           <label className="text-sm font-medium text-boutique-ink">
                             Начало (час София)
-                            <input name="starts_at" type="datetime-local" defaultValue={toEventDateTimeLocal(event.starts_at)} className={adminFieldClass} />
+                            <EventDateTimeInput name="starts_at" defaultValue={toEventDateTimeLocal(event.starts_at)} className={adminFieldClass} />
                           </label>
                           <label className="text-sm font-medium text-boutique-ink">
                             Край (час София)
-                            <input name="ends_at" type="datetime-local" defaultValue={toEventDateTimeLocal(event.ends_at)} className={adminFieldClass} />
+                            <EventDateTimeInput name="ends_at" defaultValue={toEventDateTimeLocal(event.ends_at)} className={adminFieldClass} />
                           </label>
                         </div>
                         <ImageFileInput

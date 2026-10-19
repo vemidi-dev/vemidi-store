@@ -18,6 +18,8 @@ export function toEventDateTimeLocal(value: string | null) {
 
 export function parseEventDateTime(value: string): string | null | undefined {
   if (!value) return null;
+  const display = /^(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2})$/.exec(value);
+  if (display) value = `${display[3]}-${display[2]}-${display[1]}T${display[4]}:${display[5]}`;
   const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?$/.exec(value);
   if (!match) return undefined;
   const [year, month, day, hour, minute, second] = match.slice(1).map((part) => Number(part ?? 0));
@@ -36,4 +38,9 @@ export function parseEventDateTime(value: string): string | null | undefined {
     return Number(p.year) === year && Number(p.month) === month && Number(p.day) === day && Number(p.hour) === hour && Number(p.minute) === minute && Number(p.second) === second;
   });
   return candidates.length ? new Date(Math.min(...candidates)).toISOString() : undefined;
+}
+
+export function eventDateTimeDisplay(value: string): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::\d{2})?$/.exec(value);
+  return match ? `${match[3]}/${match[2]}/${match[1]} ${match[4]}:${match[5]}` : value;
 }

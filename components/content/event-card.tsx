@@ -19,7 +19,7 @@ export function EventCard({ event, featured = false, past = false }: { event: Ev
   const mapUrl = event.format === "online" ? null : getEventMapLink(event);
   const price = formatEventPrice(event);
   return <article className={`flex min-w-0 h-full flex-col overflow-hidden rounded-lg border border-boutique-line bg-white ${featured ? "sm:grid sm:grid-cols-2" : ""}`}>
-    <Link href={`/sabitiya/${event.slug}`} className={`block aspect-[16/10] overflow-hidden ${featured ? "sm:aspect-auto sm:min-h-80" : ""}`}><ContentImage src={event.image_url} alt={event.title} label="Снимка на събитието" /></Link>
+    <Link href={`/sabitiya/${event.slug}`} className={`block aspect-[16/10] overflow-hidden bg-boutique-warm ${featured ? "sm:aspect-auto sm:min-h-80" : ""}`}><ContentImage src={event.image_url} alt={event.title} label="Снимка на събитието" fit="contain" /></Link>
     <div className="flex min-w-0 flex-1 flex-col p-4">
       <h3 className="min-h-14 break-words font-heading text-xl leading-snug text-boutique-ink"><Link href={`/sabitiya/${event.slug}`} title={event.title} className="line-clamp-2 transition hover:text-boutique-sage-deep">{event.title}</Link></h3>
       <ul className="mt-3 space-y-1 text-sm leading-6 text-boutique-ink">{facts.filter((fact) => fact.text).map(({ icon: Icon, text }, index) => <li key={index} className="flex items-start gap-2"><Icon aria-hidden="true" className="mt-1 h-4 w-4 shrink-0 text-boutique-sage-deep" /><span className="min-w-0 whitespace-pre-line break-words">{text}</span></li>)}

@@ -9,6 +9,8 @@ import {
   updateEvent,
 } from "@/app/admin/content-actions";
 import { BlogRichTextEditor } from "@/components/admin/blog-rich-text-editor";
+import { EventDateTimeInput } from "@/components/admin/event-datetime-input";
+import { toEventDateTimeLocal } from "@/lib/events/event-datetime";
 import { ImageFileInput } from "@/components/admin/image-file-input";
 import { RelatedProductPicker } from "@/components/admin/related-product-picker";
 import { adminFieldClass, adminHelperClass, adminPanelClass } from "@/components/admin/styles";
@@ -27,14 +29,6 @@ type ContentManagementPanelProps =
       error: { message: string } | null;
     }
   | { kind: "events"; items: EventRow[]; error: { message: string } | null };
-
-function toDateTimeLocal(value: string | null) {
-  if (!value) return "";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-  const offset = date.getTimezoneOffset() * 60_000;
-  return new Date(date.getTime() - offset).toISOString().slice(0, 16);
-}
 
 export function ContentManagementPanel(props: ContentManagementPanelProps) {
   const isBlog = props.kind === "blog";
@@ -261,11 +255,11 @@ export function ContentManagementPanel(props: ContentManagementPanelProps) {
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="text-sm font-medium text-boutique-ink">
                   Начало
-                  <input name="starts_at" type="datetime-local" className={adminFieldClass} />
+                  <EventDateTimeInput name="starts_at" className={adminFieldClass} />
                 </label>
                 <label className="text-sm font-medium text-boutique-ink">
                   Край
-                  <input name="ends_at" type="datetime-local" className={adminFieldClass} />
+                  <EventDateTimeInput name="ends_at" className={adminFieldClass} />
                 </label>
               </div>
             </>
@@ -524,11 +518,11 @@ export function ContentManagementPanel(props: ContentManagementPanelProps) {
                           <div className="grid gap-4 sm:grid-cols-2">
                             <label className="text-sm font-medium text-boutique-ink">
                               Начало
-                              <input name="starts_at" type="datetime-local" defaultValue={toDateTimeLocal(event.starts_at)} className={adminFieldClass} />
+                              <EventDateTimeInput name="starts_at" defaultValue={toEventDateTimeLocal(event.starts_at)} className={adminFieldClass} />
                             </label>
                             <label className="text-sm font-medium text-boutique-ink">
                               Край
-                              <input name="ends_at" type="datetime-local" defaultValue={toDateTimeLocal(event.ends_at)} className={adminFieldClass} />
+                              <EventDateTimeInput name="ends_at" defaultValue={toEventDateTimeLocal(event.ends_at)} className={adminFieldClass} />
                             </label>
                           </div>
                         </>

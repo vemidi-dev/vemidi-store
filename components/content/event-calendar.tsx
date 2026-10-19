@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowRight, CalendarDays, ChevronLeft, ChevronRight, Clock3, UserRound } from "lucide-react";
+import { ArrowRight, CalendarDays, Clock3, UserRound } from "lucide-react";
 import { ContentImage } from "@/components/content/content-image";
-import { calendarDateLabel, calendarDays, calendarEventStatus, calendarEventTime, calendarMonthOptions, eventDateKey, groupCalendarEvents, isCalendarMonth, shiftCalendarMonth, type CalendarEvent } from "@/lib/events/calendar";
+import { calendarDateLabel, calendarDays, calendarEventStatus, calendarEventTime, calendarGroupsInView, calendarMonthOptions, eventDateKey, groupCalendarEvents, isCalendarMonth, type CalendarEvent } from "@/lib/events/calendar";
 
 const statusLabels = { past: "Минало", full: "Няма места", upcoming: "Предстоящо" };
 const statusStyles = { past: "bg-boutique-warm text-boutique-muted", full: "bg-amber-50 text-amber-900", upcoming: "bg-boutique-sage/15 text-boutique-sage-deep" };
@@ -37,12 +37,12 @@ export function EventCalendar({ events, now }: { events: CalendarEvent[]; now: n
   const entryRefs = useRef(new Map<string, HTMLElement>());
   const mobileEntryRefs = useRef(new Map<string, HTMLElement>());
   const days = calendarDays(month);
-  const monthGroups = [...groups.entries()].filter(([day]) => day.startsWith(month));
+  const monthGroups = calendarGroupsInView(groups, month);
   const monthEvents = monthGroups.flatMap(([, items]) => items);
   const count = monthGroups.reduce((total, [, items]) => total + items.length, 0);
   const undated = events.filter((event) => !event.starts_at || !eventDateKey(event.starts_at));
-  const nextDay = [...groups.keys()].find((day) => day >= today && day.slice(0, 7) > month);
-  const monthOptions = calendarMonthOptions(month);
+  const monthOptions = calendarMonthOptions(today.slice(0, 7));
+  const nextDay = [...groups.keys()].find((day) => day >= today && day.slice(0, 7) > month && monthOptions.includes(day.slice(0, 7)));
   const weekColumns = "grid grid-cols-[repeat(5,minmax(0,1fr))_repeat(2,minmax(0,1.4fr))] lg:grid-cols-[repeat(5,minmax(0,1fr))_repeat(2,minmax(0,2fr))]";
 
   useEffect(() => {
@@ -72,35 +72,30 @@ export function EventCalendar({ events, now }: { events: CalendarEvent[]; now: n
     setScrollRequest(null);
   }
 
-  const arrowClass = "grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-boutique-line bg-white text-boutique-ink transition hover:border-boutique-sage-deep hover:bg-boutique-sage/10 disabled:opacity-30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-boutique-sage-deep";
   return <div className="min-w-0">
     <div className="flex flex-wrap items-end justify-between gap-4 border-y border-boutique-line py-4">
       <div className="flex min-w-0 flex-wrap items-end gap-x-5 gap-y-3">
-        <label htmlFor="workshop-month" className="block text-xs text-boutique-muted">Избери месец<select id="workshop-month" value={month} onChange={(event) => changeMonth(event.target.value)} className="mt-2 block h-11 w-60 max-w-full rounded-lg border border-boutique-line bg-white px-3 text-sm font-semibold text-boutique-ink focus:border-boutique-sage-deep focus:outline focus:outline-2 focus:outline-boutique-sage/30">{monthOptions.map((value) => { const label = calendarDateLabel(value, true); return <option key={value} value={value}>{label.charAt(0).toUpperCase() + label.slice(1)}</option>; })}</select></label>
-        <p className="pb-3 text-xs text-boutique-muted" aria-live="polite">{count === 1 ? "1 работилница през месеца" : `${count} работилници през месеца`}</p>
+        <div role="group" aria-label="Избери месец" className="flex flex-wrap gap-2">{monthOptions.map((value) => <button key={value} type="button" aria-pressed={month === value} onClick={() => changeMonth(value)} className={`min-h-11 rounded-lg border px-3 py-2 text-sm font-semibold capitalize transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${month === value ? "border-boutique-sage-deep bg-boutique-sage-deep text-white" : "border-boutique-line bg-white text-boutique-ink hover:border-boutique-sage-deep hover:bg-boutique-sage/10"}`}>{new Intl.DateTimeFormat("bg-BG", { month: "long" }).format(new Date(`${value}-01T12:00:00`))}</button>)}</div>
+        <p className="pb-3 text-xs text-boutique-muted" aria-live="polite">{count === 1 ? "1 работилница в календара" : `${count} работилници в календара`}</p>
       </div>
-      <div className="flex items-center gap-2">
-        <button type="button" onClick={() => { changeMonth(today.slice(0, 7)); setSelectedDay(today); }} className="h-10 rounded-lg border border-boutique-line bg-white px-3 text-sm font-semibold text-boutique-sage-deep transition hover:bg-boutique-sage/10">Днес</button>
-        <button type="button" aria-label="Предишен месец" title="Предишен месец" disabled={month === "1900-01"} onClick={() => changeMonth(shiftCalendarMonth(month, -1))} className={arrowClass}><ChevronLeft aria-hidden="true" className="h-4 w-4" /></button>
-        <button type="button" aria-label="Следващ месец" title="Следващ месец" disabled={month === "2100-12"} onClick={() => changeMonth(shiftCalendarMonth(month, 1))} className={arrowClass}><ChevronRight aria-hidden="true" className="h-4 w-4" /></button>
-      </div>
+      <p className="pb-2 font-heading text-2xl text-boutique-ink" aria-label="Година">{month.slice(0, 4)}</p>
     </div>
 
-    <div className="mt-5 grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1fr)_20rem]">
+    <div className="mt-5 grid min-w-0 items-stretch gap-6 lg:grid-cols-[minmax(0,1fr)_18rem] xl:grid-cols-[minmax(0,1fr)_20rem]">
       <div className="min-w-0 self-start overflow-hidden rounded-lg border border-boutique-line bg-white" role="region" aria-label="Месечен календар">
         <div className={`${weekColumns} border-b border-boutique-line bg-boutique-sage/10`}>{["Пон", "Вт", "Ср", "Чет", "Пет", "Събота", "Неделя"].map((day, index) => <div key={day} className={`py-3 text-center text-xs font-semibold ${index >= 5 ? "bg-boutique-sage/10 text-boutique-sage-deep" : "text-boutique-muted"}`}><span className="lg:hidden">{["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд"][index]}</span><span className="hidden lg:inline">{day}</span></div>)}</div>
         <div className={weekColumns}>{days.map((day, index) => {
           const inMonth = day.startsWith(month);
-          const items = inMonth ? groups.get(day) ?? [] : [];
+          const items = groups.get(day) ?? [];
           const weekend = index % 7 >= 5;
-          return <div key={day} className={`min-h-20 min-w-0 border-b border-r border-boutique-line p-1 lg:p-1.5 ${index % 7 === 6 ? "border-r-0" : ""} ${index >= days.length - 7 ? "border-b-0" : ""} ${!inMonth ? "bg-boutique-paper/70" : selectedDay === day ? "bg-boutique-sage/10 ring-2 ring-inset ring-boutique-sage-deep" : weekend ? "bg-boutique-sage/5" : ""}`}>
+          return <div key={day} className={`min-h-20 min-w-0 border-b border-r border-boutique-line p-1 lg:p-1.5 ${index % 7 === 6 ? "border-r-0" : ""} ${index >= days.length - 7 ? "border-b-0" : ""} ${selectedDay === day ? "bg-boutique-sage/10 ring-2 ring-inset ring-boutique-sage-deep" : !inMonth ? "bg-boutique-paper/70" : weekend ? "bg-boutique-sage/5" : ""}`}>
             <div className="lg:hidden">
-              {inMonth ? <button type="button" aria-label={`${calendarDateLabel(day)}, ${items.length === 1 ? "1 работилница" : `${items.length} работилници`}`} aria-pressed={selectedDay === day} aria-current={day === today ? "date" : undefined} onClick={() => selectCalendarDay(day)} className="mb-1 flex h-7 w-full justify-center rounded text-xs transition hover:bg-boutique-sage/15 focus-visible:outline focus-visible:outline-2"><span className={`grid h-7 w-7 place-items-center rounded-full font-semibold ${day === today ? "bg-boutique-sage-deep text-white" : "text-boutique-ink"}`}>{Number(day.slice(-2))}</span></button> : <span className="grid h-7 place-items-center text-xs text-boutique-muted/50">{Number(day.slice(-2))}</span>}
+              <button type="button" aria-label={`${calendarDateLabel(day)}, ${items.length === 1 ? "1 работилница" : `${items.length} работилници`}`} aria-pressed={selectedDay === day} aria-current={day === today ? "date" : undefined} onClick={() => selectCalendarDay(day)} className="mb-1 flex h-7 w-full justify-center rounded text-xs transition hover:bg-boutique-sage/15 focus-visible:outline focus-visible:outline-2"><span className={`grid h-7 w-7 place-items-center rounded-full font-semibold ${day === today ? "bg-boutique-sage-deep text-white" : inMonth ? "text-boutique-ink" : "text-boutique-muted"}`}>{Number(day.slice(-2))}</span></button>
               <div className="space-y-1">{items.map((event) => <button key={event.id} type="button" title={event.title} aria-label={`${calendarEventTime(event)}, ${event.title}, ${statusLabels[calendarEventStatus(event, now)]}`} aria-pressed={activeId === event.id && selectedDay === day} onClick={() => selectCalendarDay(day, event.id)} className="flex min-h-12 w-full flex-col items-center gap-0.5 rounded bg-white p-0.5 text-boutique-ink shadow-sm transition hover:bg-boutique-sage/10 focus-visible:outline focus-visible:outline-2">
                 <span className="block h-9 w-full max-w-14 overflow-hidden rounded bg-boutique-sage/15">{event.image_url ? <ContentImage src={event.image_url} alt="" label="Работилница" sizes="56px" /> : <CalendarDays aria-hidden="true" className="mx-auto mt-2 h-5 w-5 text-boutique-sage-deep" />}</span><span className="text-[10px] font-semibold leading-3">{calendarEventTime(event).split("–")[0]}</span>
               </button>)}</div>
             </div>
-            {inMonth ? <button type="button" aria-label={calendarDateLabel(day)} aria-pressed={selectedDay === day} aria-current={day === today ? "date" : undefined} onClick={() => selectCalendarDay(day)} className={`mb-1 hidden h-8 w-8 place-items-center rounded-full text-xs font-semibold transition hover:bg-boutique-sage/20 focus-visible:outline focus-visible:outline-2 lg:grid ${day === today ? "bg-boutique-sage-deep text-white" : "text-boutique-ink"}`}>{Number(day.slice(-2))}</button> : <span className="mb-1 hidden h-8 w-8 place-items-center text-xs text-boutique-muted/50 lg:grid">{Number(day.slice(-2))}</span>}
+            <button type="button" aria-label={calendarDateLabel(day)} aria-pressed={selectedDay === day} aria-current={day === today ? "date" : undefined} onClick={() => selectCalendarDay(day)} className={`mb-1 hidden h-8 w-8 place-items-center rounded-full text-xs font-semibold transition hover:bg-boutique-sage/20 focus-visible:outline focus-visible:outline-2 lg:grid ${day === today ? "bg-boutique-sage-deep text-white" : inMonth ? "text-boutique-ink" : "text-boutique-muted"}`}>{Number(day.slice(-2))}</button>
             <div className="hidden space-y-1 lg:block">{items.map((event) => {
               const status = calendarEventStatus(event, now);
               return <button key={event.id} type="button" title={event.title} aria-label={`${calendarEventTime(event)}, ${event.title}, ${statusLabels[status]}`} aria-pressed={activeId === event.id && selectedDay === day} onClick={() => selectCalendarDay(day, event.id)} className={`w-full min-w-0 rounded border-l-2 bg-white p-1.5 text-left shadow-sm transition hover:shadow-md focus-visible:outline focus-visible:outline-2 ${weekend ? "flex items-start gap-2" : "block"} ${status === "past" ? "border-boutique-line text-boutique-muted" : status === "full" ? "border-amber-500 text-amber-900" : "border-boutique-sage-deep text-boutique-ink"}`}>
@@ -111,12 +106,14 @@ export function EventCalendar({ events, now }: { events: CalendarEvent[]; now: n
           </div>;
         })}</div>
       </div>
-      <aside className="hidden max-h-[44rem] min-w-0 flex-col self-start rounded-lg border border-boutique-line bg-white p-5 lg:flex" aria-label="Работилници през месеца">
-        <div className="mb-4 shrink-0 border-b border-boutique-line pb-3"><h3 className="font-heading text-xl text-boutique-ink">Работилници през месеца</h3><p className="mt-1 text-xs text-boutique-muted first-letter:uppercase" aria-live="polite">{calendarDateLabel(month, true)} · {count === 1 ? "1 работилница" : `${count} работилници`}</p></div>
+      <aside className="relative hidden min-h-0 min-w-0 rounded-lg border border-boutique-line bg-white lg:block" aria-label="Работилници през месеца">
+        <div className="absolute inset-0 flex min-h-0 flex-col p-5">
+        <div className="mb-4 shrink-0 border-b border-boutique-line pb-3"><h3 className="font-heading text-xl text-boutique-ink">Работилници в календара</h3><p className="mt-1 text-xs text-boutique-muted first-letter:uppercase" aria-live="polite">{calendarDateLabel(month, true)} · {count === 1 ? "1 работилница" : `${count} работилници`}</p></div>
         <div className="min-h-0 overflow-y-auto overscroll-contain pr-1 [scrollbar-gutter:stable] [scrollbar-width:thin]" role="region" aria-label="Списък с работилници за месеца" tabIndex={0}>
           {count ? <EventProgram events={monthEvents.slice(0, visibleCount)} now={now} showDate activeId={activeId} onEntryRef={(id, element) => { if (element) entryRefs.current.set(id, element); else entryRefs.current.delete(id); }} /> : <p className="py-4 text-sm leading-6 text-boutique-muted">Няма работилници през този месец.</p>}
         </div>
         {count > 5 ? <div className="mt-3 shrink-0 border-t border-boutique-line pt-3"><p className="text-xs text-boutique-muted" role="status">Показани {Math.min(visibleCount, count)} от {count}</p>{visibleCount < count ? <button type="button" onClick={() => setVisibleCount((previous) => previous + 5)} className="mt-2 inline-flex min-h-10 w-full items-center justify-center rounded-lg border border-boutique-sage-deep px-3 py-2 text-sm font-semibold text-boutique-sage-deep transition hover:bg-boutique-sage/10">Покажи още</button> : null}</div> : null}
+        </div>
       </aside>
     </div>
 

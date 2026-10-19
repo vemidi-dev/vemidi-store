@@ -1,16 +1,42 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { calendarDays, calendarEventStatus, calendarEventTime, calendarMonthOptions, eventDateKey, groupCalendarEvents, isCalendarMonth, shiftCalendarMonth, toCalendarEvent, type CalendarEvent } from "@/lib/events/calendar";
+import { readFileSync } from "node:fs";
+import { calendarDays, calendarEventStatus, calendarEventTime, calendarGroupsInView, calendarMonthOptions, eventDateKey, groupCalendarEvents, isCalendarMonth, shiftCalendarMonth, toCalendarEvent, type CalendarEvent } from "@/lib/events/calendar";
 import type { EventRow } from "@/lib/admin/types";
 
 const event = (change: Partial<CalendarEvent> = {}): CalendarEvent => ({ id: "one", title: "Работилница", slug: "workshop", image_url: null, starts_at: "2026-10-18T08:30:00Z", ends_at: "2026-10-18T10:00:00Z", age_group: "6+", available_spots: 4, duration_minutes: 90, priceLabel: "12 €", ...change });
 
-test("month dropdown contains only the selected month and three on each side", () => {
-  assert.deepEqual(calendarMonthOptions("2026-10"), ["2026-07", "2026-08", "2026-09", "2026-10", "2026-11", "2026-12", "2027-01"]);
-  assert.deepEqual(calendarMonthOptions("2027-01"), ["2026-10", "2026-11", "2026-12", "2027-01", "2027-02", "2027-03", "2027-04"]);
-  assert.deepEqual(calendarMonthOptions("1900-01"), ["1900-01", "1900-02", "1900-03", "1900-04"]);
-  assert.deepEqual(calendarMonthOptions("2100-12"), ["2100-09", "2100-10", "2100-11", "2100-12"]);
+test("calendar layout shares grid height with its scrolling agenda and anchors three month buttons to today", () => {
+  const source = readFileSync("components/content/event-calendar.tsx", "utf8");
+  assert.match(source, /calendarMonthOptions\(today\.slice\(0, 7\)\)/);
+  assert.match(source, /role="group" aria-label="Избери месец"/);
+  assert.match(source, /aria-pressed=\{month === value\}/);
+  assert.match(source, /aria-label="Година"/);
+  assert.match(source, /grid min-w-0 items-stretch/);
+  assert.match(source, /absolute inset-0 flex min-h-0 flex-col/);
+  assert.match(source, /min-h-0 overflow-y-auto/);
+  assert.doesNotMatch(source, /<select|Предишен месец|Следващ месец|>Днес</);
+  assert.match(source, /const items = groups\.get\(day\) \?\? \[\]/);
+});
+
+test("month buttons contain the current month and next two including year boundaries", () => {
+  assert.deepEqual(calendarMonthOptions("2026-10"), ["2026-10", "2026-11", "2026-12"]);
+  assert.deepEqual(calendarMonthOptions("2026-12"), ["2026-12", "2027-01", "2027-02"]);
+  assert.deepEqual(calendarMonthOptions("1900-01"), ["1900-01", "1900-02", "1900-03"]);
+  assert.deepEqual(calendarMonthOptions("2100-12"), ["2100-12"]);
   assert.deepEqual(calendarMonthOptions("invalid"), []);
+});
+
+test("visible program includes adjacent-month dates in the grid but excludes days outside it", () => {
+  const groups = groupCalendarEvents([
+    event({ id: "before", starts_at: "2026-09-27T10:00:00Z" }),
+    event({ id: "leading", starts_at: "2026-09-28T10:00:00Z" }),
+    event({ id: "inside", starts_at: "2026-10-31T10:00:00Z" }),
+    event({ id: "trailing", starts_at: "2026-11-01T10:00:00Z" }),
+    event({ id: "after", starts_at: "2026-11-02T10:00:00Z" }),
+  ]);
+  assert.deepEqual(calendarGroupsInView(groups, "2026-10").flatMap(([, items]) => items.map(item => item.id)), ["leading", "inside", "trailing"]);
+  assert.deepEqual(calendarGroupsInView(groups, "invalid"), []);
 });
 
 test("month grid has complete Monday-first weeks without unnecessary empty weeks", () => {
