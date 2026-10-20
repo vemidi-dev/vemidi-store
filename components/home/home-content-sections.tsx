@@ -6,8 +6,9 @@ import { ContentImage } from "@/components/content/content-image";
 import { NewsletterForm } from "@/components/content/newsletter-form";
 import { PageContainer } from "@/components/layout/page-container";
 import { HomePastEvents } from "@/components/home/home-past-events";
-import type { BlogPostRow, EventRow } from "@/lib/admin/types";
+import type { EventRow } from "@/lib/admin/types";
 import type { FaqItem } from "@/lib/faq/types";
+import type { HomeBlogPost } from "@/lib/home/repository";
 import { EventCard } from "@/components/content/event-card";
 
 function formatDate(value: string | null, includeTime = false) {
@@ -30,7 +31,7 @@ export function HomeContentGrid({
   pastEvents,
   faqItems = [],
 }: {
-  posts: BlogPostRow[];
+  posts: HomeBlogPost[];
   upcomingEvents: EventRow[];
   pastEvents: EventRow[];
   faqItems?: FaqItem[];
@@ -109,7 +110,7 @@ export function HomeContentGrid({
                   upcomingEvents.length ? "mt-10 border-t border-boutique-line/60 pt-6" : "mt-4"
                 }`}
               >
-                <HomePastEvents events={pastEvents} />
+                <HomePastEvents events={pastEvents.map(({ id, slug, title, starts_at, image_url, registration_settings }) => ({ id, slug, title, starts_at, image_url, registration_settings }))} />
               </div>
             ) : null}
           </div>

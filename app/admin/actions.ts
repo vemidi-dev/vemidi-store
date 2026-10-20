@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { revalidateHomePublicData } from "@/lib/home/revalidate";
 import { redirect } from "next/navigation";
 
 import {
@@ -176,6 +177,7 @@ async function revalidateProductPaths(
   supabase: NonNullable<Awaited<ReturnType<typeof createClient>>>,
   productId?: string,
 ) {
+  revalidateHomePublicData();
   revalidatePath(ADMIN_PATH);
   revalidatePath("/");
   revalidatePath("/produkti");
@@ -304,6 +306,7 @@ function getProductGalleryEditUrl(
 }
 
 function revalidateCategoryPaths(options?: { includeAdmin?: boolean }) {
+  revalidateHomePublicData();
   if (options?.includeAdmin !== false) {
     revalidatePath(ADMIN_PATH);
     revalidatePath(ADMIN_PATH, "layout");

@@ -1,4 +1,5 @@
 import { revalidatePath } from "next/cache";
+import { revalidateHomePublicData } from "@/lib/home/revalidate";
 import { NextResponse } from "next/server";
 
 import {
@@ -43,6 +44,7 @@ export async function POST(request: Request) {
 
     const formData = await request.formData();
     const summary = await submitProductJsonImport(supabase, formData);
+    revalidateHomePublicData();
     revalidatePath("/admin");
     return NextResponse.json(summary);
   } catch (error) {

@@ -3,6 +3,7 @@
 import { randomUUID } from "node:crypto";
 
 import { revalidatePath } from "next/cache";
+import { revalidateHomePublicData } from "@/lib/home/revalidate";
 import { redirect } from "next/navigation";
 
 import { getFile, getOptionalString, getString, isChecked, normalizeSlug } from "@/lib/admin/form-data";
@@ -280,6 +281,7 @@ function getEventCapacity(formData: FormData, tab: AdminTab, useCapacityAsDefaul
 }
 
 function revalidateContent(kind: ContentKind, slug?: string) {
+  revalidateHomePublicData();
   revalidatePath("/admin");
   revalidatePath("/");
   revalidatePath(config[kind].publicPath);

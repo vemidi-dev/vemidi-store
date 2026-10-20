@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { revalidateHomePublicData } from "@/lib/home/revalidate";
 import { redirect } from "next/navigation";
 
 import { getFile, getString } from "@/lib/admin/form-data";
@@ -83,6 +84,7 @@ function isValidSiteMediaKey(key: string): key is SiteMediaKey {
 }
 
 function revalidateSiteMediaPaths() {
+  revalidateHomePublicData();
   revalidatePath("/");
   revalidatePath("/za-nas");
   revalidatePath("/produkti");

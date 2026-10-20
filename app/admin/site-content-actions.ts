@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { revalidateHomePublicData } from "@/lib/home/revalidate";
 import { redirect } from "next/navigation";
 
 import { checkIsAdmin } from "@/lib/supabase/admin-auth";
@@ -65,6 +66,7 @@ export async function updateSiteContent(formData: FormData) {
     redirectWith("error", `Текстовете не бяха запазени: ${error.message}`);
   }
 
+  revalidateHomePublicData();
   revalidatePath("/");
   revalidatePath("/za-nas");
   revalidatePath("/cart");

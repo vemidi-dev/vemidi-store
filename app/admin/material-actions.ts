@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { revalidateHomePublicData } from "@/lib/home/revalidate";
 import { redirect } from "next/navigation";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -24,6 +25,7 @@ import { createClient } from "@/lib/supabase/server";
 const IMAGE_PROFILE = "category" as const;
 
 function done(kind: "success" | "error", message: string): never {
+  revalidateHomePublicData();
   revalidatePath("/admin");
   revalidatePath("/admin", "layout");
   const params = new URLSearchParams({

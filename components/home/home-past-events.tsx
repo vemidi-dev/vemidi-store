@@ -8,7 +8,9 @@ import { EventSocialActions } from "@/components/content/event-social-actions";
 import { eventFacebookUrl } from "@/lib/events/social-links";
 import type { EventRow } from "@/lib/admin/types";
 
-export function HomePastEvents({ events }: { events: EventRow[] }) {
+export type HomePastEvent = Pick<EventRow, "id" | "slug" | "title" | "starts_at" | "image_url" | "registration_settings">;
+
+export function HomePastEvents({ events }: { events: HomePastEvent[] }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const trackId = useId();
   const [canGoBack, setCanGoBack] = useState(false);

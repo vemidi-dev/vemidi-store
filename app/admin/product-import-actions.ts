@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { revalidateHomePublicData } from "@/lib/home/revalidate";
 
 import { runValidateProductJsonImport } from "@/lib/admin/product-json-import-v2/import-service";
 import {
@@ -69,6 +70,7 @@ export async function importProductsFromJson(
   }
 
   const summary = await submitProductJsonImport(auth.supabase, formData);
+  revalidateHomePublicData();
   revalidatePath("/admin");
   return summary;
 }

@@ -1,9 +1,11 @@
 import { revalidatePath } from "next/cache";
+import { revalidateHomePublicData } from "@/lib/home/revalidate";
 
 import { getProductPath } from "@/lib/product-url";
 import { createClient } from "@/lib/supabase/server";
 
 export function revalidateGlobalFaqPaths() {
+  revalidateHomePublicData();
   revalidatePath("/");
   revalidatePath("/products/[slug]", "page");
   revalidatePath("/produkti/[slug]", "page");

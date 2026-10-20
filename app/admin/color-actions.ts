@@ -2,6 +2,7 @@
 
 import { randomUUID } from "crypto";
 import { revalidatePath } from "next/cache";
+import { revalidateHomePublicData } from "@/lib/home/revalidate";
 import { redirect } from "next/navigation";
 
 import { getString } from "@/lib/admin/form-data";
@@ -10,6 +11,7 @@ import { checkIsAdmin } from "@/lib/supabase/admin-auth";
 import { createClient } from "@/lib/supabase/server";
 
 function done(kind: "success" | "error", message: string): never {
+  revalidateHomePublicData();
   revalidatePath("/admin");
   revalidatePath("/produkti");
   revalidatePath("/products/[slug]", "page");

@@ -9,8 +9,11 @@ function readSource(relativePath: string) {
 test("home page uses only featured blog posts", () => {
   const page = readSource("../app/page.tsx");
   const homeContent = readSource("../components/home/home-content-sections.tsx");
+  const repository = readSource("../lib/home/repository.ts");
 
-  assert.match(page, /const featuredPosts = blogPosts\.filter\(\(post\) => post\.is_featured\)\.slice\(0, 3\)/);
+  assert.match(page, /getHomeFeaturedPosts\(\)/);
+  assert.match(repository, /\.eq\("is_published", true\)\.eq\("is_featured", true\)/);
+  assert.match(repository, /\.limit\(3\)/);
   assert.match(page, /posts=\{featuredPosts\}/);
   assert.doesNotMatch(page, /const latestPosts = blogPosts\.slice\(0, 3\)/);
 
