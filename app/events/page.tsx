@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { EventGallerySection } from "@/components/content/event-gallery-section";
 import { EventNotificationForm } from "@/components/content/event-notification-form";
 import { EventCard } from "@/components/content/event-card";
+import { PastEventsGrid } from "@/components/content/past-events-grid";
 import { EventsSchedule } from "@/components/content/events-schedule";
 import { PageContainer } from "@/components/layout/page-container";
 import { VisualPageHero } from "@/components/layout/visual-page-hero";
@@ -14,6 +15,7 @@ import {
 } from "@/lib/content/site-media";
 import { OG_DEFAULTS } from "@/lib/seo/social-images";
 import { toCalendarEvent } from "@/lib/events/calendar";
+import { comparePastEvents, PAST_EVENTS_PAGE_SIZE } from "@/lib/events/past-events";
 
 export async function generateMetadata(): Promise<Metadata> {
   const siteMediaMap = await getSiteMediaMap();
@@ -58,7 +60,7 @@ function UpcomingEvents({ events }: { events: EventRow[] }) {
   );
 }
 
-function PastEvents({ events }: { events: EventRow[] }) {
+function PastEvents({ events, before }: { events: EventRow[]; before: number }) {
   return (
     <section className="py-14 md:py-18">
       <PageContainer className="2xl:max-w-[1440px]">
@@ -76,11 +78,7 @@ function PastEvents({ events }: { events: EventRow[] }) {
         </div>
 
         {events.length ? (
-          <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
-            {events.map((event) => (
-              <EventCard key={event.id} event={event} past />
-            ))}
-          </div>
+          <PastEventsGrid before={before} totalCount={events.length} initialCards={events.slice(0, PAST_EVENTS_PAGE_SIZE).map((event) => ({ id: event.id, content: <EventCard event={event} past /> }))} />
         ) : (
           <div className="mt-10 rounded-3xl border border-dashed border-boutique-line bg-boutique-paper p-10 text-center">
             <p className="font-heading text-2xl text-boutique-ink">
@@ -141,10 +139,7 @@ export default async function EventsPage({ searchParams }: { searchParams: Promi
       const eventTime = getEventTime(event);
       return Boolean(eventTime && new Date(eventTime).getTime() < now);
     })
-    .sort(
-      (a, b) =>
-        new Date(b.starts_at ?? 0).getTime() - new Date(a.starts_at ?? 0).getTime(),
-    );
+    .sort(comparePastEvents);
 
   return (
     <div>
@@ -160,7 +155,7 @@ export default async function EventsPage({ searchParams }: { searchParams: Promi
       <EventsSchedule events={events.map(toCalendarEvent)} now={now} view={params.view === "calendar" ? "calendar" : "cards"}>
         {upcomingEvents.length ? <UpcomingEvents events={upcomingEvents} /> : <p className="py-6 text-sm text-boutique-muted">В момента няма предстоящи събития.</p>}
       </EventsSchedule>
-      <PastEvents events={pastEvents} />
+      <PastEvents events={pastEvents} before={now} />
       <EventGallerySection />
       {upcomingEvents.length === 0 ? <NoUpcomingEvents /> : null}
       <EventNotificationForm />

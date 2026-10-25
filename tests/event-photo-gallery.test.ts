@@ -8,7 +8,7 @@ test("workshop photos use the same portrait ratio as product photos without dist
   assert.match(gallery, /aspect-\[4\/5\]/);
   assert.match(product, /aspect-\[4\/5\]/);
   assert.doesNotMatch(gallery, /aspect-\[3\/2\]|object-fill/);
-  assert.match(gallery, /sm:grid-cols-2/);
+  assert.match(gallery, /grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4/);
   assert.match(gallery, /sizes="\(max-width: 639px\)/);
   assert.match(gallery, /className="object-contain"/);
   assert.match(gallery, /showModal\(\)/);

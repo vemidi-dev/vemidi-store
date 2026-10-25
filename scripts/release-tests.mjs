@@ -21,6 +21,7 @@ const releaseTestGroups = [
       "tests/event-calendar.test.ts",
       "tests/event-cover-layout.test.ts",
       "tests/event-photo-gallery.test.ts",
+      "tests/past-events-pagination.test.ts",
       "tests/event-registration-email.test.ts",
       "tests/event-registration-forms.test.ts",
       "tests/event-registrations.test.ts",
