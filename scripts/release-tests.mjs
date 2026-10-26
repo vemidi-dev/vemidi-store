@@ -64,6 +64,8 @@ const releaseTestGroups = [
   {
     label: "Admin & product lifecycle",
     files: [
+      "tests/product-create-local-draft.test.ts",
+      "tests/product-save-form.test.ts",
       "tests/product-wish-templates.test.ts",
       "tests/product-publish-validation.test.ts",
       "tests/product-publication.test.ts",

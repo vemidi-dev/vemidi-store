@@ -3,7 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { createProduct } from "@/app/admin/actions";
+import { saveNewProductForm } from "@/app/admin/actions";
+import { ProductSaveForm } from "@/components/admin/product-save-form";
 import { AdminUnsavedChangesGuard } from "@/components/admin/admin-unsaved-changes-guard";
 import { AdminFormPendingGuard } from "@/components/admin/admin-form-pending-guard";
 import { AdminSubmitButton } from "@/components/admin/admin-submit-button";
@@ -32,10 +33,10 @@ import {
 import { adminFormFields } from "@/lib/admin/form-fields";
 import {
   clearProductCreateLocalDraft,
+  mergeProductCreateDrafts,
   PRODUCT_CREATE_LOCAL_DRAFT_DEBOUNCE_MS,
   readProductCreateLocalDraft,
   shouldClearProductCreateLocalDraftOnSuccess,
-  validateProductCreateColorFieldsClient,
   writeProductCreateLocalDraft,
   type ProductCreateLocalDraft,
 } from "@/lib/admin/product-create-local-draft";
@@ -71,25 +72,6 @@ type ProductCreatePanelProps = {
   successMessage?: string;
 };
 
-function mergeDrafts(
-  serverDraft: ProductCreateDraft | null,
-  localDraft: ProductCreateLocalDraft | null,
-): ProductCreateLocalDraft | null {
-  if (serverDraft) {
-    return {
-      ...serverDraft,
-      savedAt: localDraft?.savedAt ?? null,
-      metaTitle: localDraft?.metaTitle ?? "",
-      metaDescription: localDraft?.metaDescription ?? "",
-      ogTitle: localDraft?.ogTitle ?? "",
-      ogDescription: localDraft?.ogDescription ?? "",
-      faqGroupIds: localDraft?.faqGroupIds ?? [],
-      faqItemIds: localDraft?.faqItemIds ?? [],
-    };
-  }
-  return localDraft;
-}
-
 export function ProductCreatePanel({
   categories,
   colorGroups,
@@ -111,41 +93,35 @@ export function ProductCreatePanel({
   const [activeDraft, setActiveDraft] = useState<ProductCreateLocalDraft | null>(null);
   const [draftStatus, setDraftStatus] = useState("");
   const [hadLocalDraft, setHadLocalDraft] = useState(false);
-  const [clientError, setClientError] = useState("");
   const [formKey, setFormKey] = useState(0);
 
   useEffect(() => {
-    if (successMessage && shouldClearProductCreateLocalDraftOnSuccess(successMessage)) {
+    const localDraft = readProductCreateLocalDraft();
+    const successTimestamp = new URLSearchParams(window.location.search).get("_refresh");
+    if (successMessage && shouldClearProductCreateLocalDraftOnSuccess(successMessage, localDraft?.savedAt, successTimestamp)) {
       clearProductCreateLocalDraft();
       setActiveDraft(null);
       setDraftStatus("");
       setHadLocalDraft(false);
+      setFormKey((value) => value + 1);
       setHydrated(true);
       return;
     }
 
-    const localDraft = readProductCreateLocalDraft();
-    const merged = mergeDrafts(serverDraft, localDraft);
+    const merged = mergeProductCreateDrafts(serverDraft, localDraft);
     setHadLocalDraft(Boolean(localDraft) && !serverDraft);
     setActiveDraft(merged);
     if (localDraft && !serverDraft) {
       setDraftStatus("Има запазена чернова");
     } else if (serverDraft) {
       setDraftStatus("Възстановени данни след грешка");
-      // Keep local copy so a truncated URL draft is not the only recovery path.
-      queueMicrotask(() => {
-        const form = formRef.current;
-        if (form) {
-          writeProductCreateLocalDraft(new FormData(form));
-        }
-      });
     }
     setHydrated(true);
   }, [serverDraft, successMessage]);
 
   const persistDraft = useCallback(() => {
     const form = formRef.current;
-    if (!form) {
+    if (!form || form.getAttribute("aria-busy") === "true") {
       return;
     }
     if (writeProductCreateLocalDraft(new FormData(form))) {
@@ -179,22 +155,14 @@ export function ProductCreatePanel({
     setActiveDraft(null);
     setHadLocalDraft(false);
     setDraftStatus("");
-    setClientError("");
     setFormKey((value) => value + 1);
     router.replace(makeAdminTabHref("products"));
   };
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     const form = event.currentTarget;
     const formData = new FormData(form);
-    const colorError = validateProductCreateColorFieldsClient(formData);
-    if (colorError) {
-      event.preventDefault();
-      setClientError(colorError);
-      persistDraft();
-      return;
-    }
-    setClientError("");
     writeProductCreateLocalDraft(formData);
   };
 
@@ -262,21 +230,13 @@ export function ProductCreatePanel({
             </div>
           ) : null}
 
-          {clientError ? (
-            <div
-              role="alert"
-              className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
-            >
-              {clientError}
-            </div>
-          ) : null}
-
-      <form
+      <ProductSaveForm
         key={formKey}
         id="admin-create-product-form"
         ref={formRef}
-        action={createProduct}
+        action={saveNewProductForm}
         className="mt-7 space-y-7"
+        fieldsClassName="contents space-y-7"
         onInput={schedulePersist}
         onChange={schedulePersist}
         onSubmit={handleSubmit}
@@ -579,6 +539,7 @@ export function ProductCreatePanel({
         <AdminLazyDetailsMount
           className="border-t border-boutique-line/70 pt-6"
           id="admin-create-product-options"
+          initiallyMounted={Boolean(activeDraft?.optionGroups?.length)}
           summary={
             <span className="cursor-pointer text-xs font-semibold uppercase tracking-[0.16em] text-boutique-muted">
               Опции и ценообразуване
@@ -649,7 +610,7 @@ export function ProductCreatePanel({
           </div>
           <AdminFormPendingGuard />
         </div>
-      </form>
+      </ProductSaveForm>
         </div>
       </details>
     </article>

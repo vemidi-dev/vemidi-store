@@ -18,6 +18,23 @@ export type ProductCreateLocalDraft = ProductCreateDraft & {
   faqItemIds: string[];
 };
 
+export function mergeProductCreateDrafts(
+  serverDraft: ProductCreateDraft | null,
+  localDraft: ProductCreateLocalDraft | null,
+): ProductCreateLocalDraft | null {
+  if (localDraft) return localDraft;
+  return serverDraft ? {
+    ...serverDraft,
+    savedAt: null,
+    metaTitle: "",
+    metaDescription: "",
+    ogTitle: "",
+    ogDescription: "",
+    faqGroupIds: [],
+    faqItemIds: [],
+  } : null;
+}
+
 function getString(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
 }
@@ -138,8 +155,16 @@ export function clearProductCreateLocalDraft(
   }
 }
 
-export function shouldClearProductCreateLocalDraftOnSuccess(successMessage: string) {
-  return /продуктът е добавен/i.test(successMessage);
+export function shouldClearProductCreateLocalDraftOnSuccess(
+  successMessage: string,
+  draftSavedAt?: string | null,
+  successTimestamp?: string | null,
+) {
+  if (!/продуктът е добавен/i.test(successMessage)) return false;
+  if (!draftSavedAt) return true;
+  const savedAt = Date.parse(draftSavedAt);
+  const succeededAt = Number(successTimestamp);
+  return Number.isFinite(savedAt) && Number.isFinite(succeededAt) && succeededAt >= savedAt;
 }
 
 /**

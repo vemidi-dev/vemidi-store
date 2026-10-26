@@ -4,6 +4,7 @@ import test from "node:test";
 import { adminFormFields } from "@/lib/admin/form-fields";
 import {
   clearProductCreateLocalDraft,
+  mergeProductCreateDrafts,
   parseProductCreateLocalDraft,
   PRODUCT_CREATE_LOCAL_DRAFT_KEY,
   readProductCreateLocalDraft,
@@ -104,4 +105,33 @@ test("success message clears local create draft", () => {
     true,
   );
   assert.equal(shouldClearProductCreateLocalDraftOnSuccess("Категорията е добавена."), false);
+});
+
+test("missing color name does not discard long multiline product copy in the local draft", () => {
+  const form = makeFilledFormData();
+  const copy = "Подробно описание на продукта\nВтори ред с важна информация.\n".repeat(600);
+  form.set(adminFormFields.product.description, copy);
+  form.set(adminFormFields.product.orderingInfo, "Първа стъпка\nВтора стъпка");
+  form.set(adminFormFields.colorField.labels, "");
+  assert.equal(validateProductCreateColorFieldsClient(form), "Всеки избор на цвят трябва да има име и палитра.");
+  const draft = parseProductCreateLocalDraft(serializeProductCreateLocalDraft(form));
+  assert.equal(draft?.description, copy.trim());
+  assert.equal(draft?.orderingInfo, "Първа стъпка\nВтора стъпка");
+  assert.equal(draft?.colorFields[0]?.label, "");
+  assert.deepEqual(draft?.colorFields[0]?.optionIds, ["opt-1", "opt-2"]);
+});
+
+test("complete local recovery takes priority over a shorter redirect draft", () => {
+  const local = parseProductCreateLocalDraft(serializeProductCreateLocalDraft(makeFilledFormData()));
+  assert.ok(local);
+  assert.equal(mergeProductCreateDrafts({ ...local, description: "Стар текст" }, local), local);
+  assert.equal(mergeProductCreateDrafts(local, null)?.description, local.description);
+  assert.equal(mergeProductCreateDrafts(null, null), null);
+});
+
+test("an old success URL cannot clear a newer product draft on refresh", () => {
+  const savedAt = "2026-10-26T10:00:00Z";
+  assert.equal(shouldClearProductCreateLocalDraftOnSuccess("Продуктът е добавен като чернова.", savedAt, String(Date.parse(savedAt) - 1000)), false);
+  assert.equal(shouldClearProductCreateLocalDraftOnSuccess("Продуктът е добавен като чернова.", savedAt, String(Date.parse(savedAt) + 1000)), true);
+  assert.equal(shouldClearProductCreateLocalDraftOnSuccess("Продуктът е добавен като чернова.", savedAt, null), false);
 });

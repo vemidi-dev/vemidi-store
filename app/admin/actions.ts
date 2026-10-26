@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { revalidateHomePublicData } from "@/lib/home/revalidate";
 import { redirect } from "next/navigation";
+import { ProductFormValidationError, runProductFormAction } from "@/lib/admin/product-form-result";
 
 import {
   createProductAtomic,
@@ -694,9 +695,21 @@ async function getAuthorizedClient() {
 }
 
 export async function createProduct(formData: FormData) {
+  await createProductImpl(formData);
+}
+
+export async function saveNewProductForm(formData: FormData) {
+  return runProductFormAction(() => createProductImpl(formData, true));
+}
+
+async function createProductImpl(formData: FormData, inlineErrors = false) {
   const supabase = await getAuthorizedClient();
   const activeTab = getAdminTab(formData, "products");
   const draft = makeCreateProductDraft(formData);
+  const fail: (message: string) => never = (message) => {
+    if (inlineErrors) throw new ProductFormValidationError(message);
+    redirectWith("error", message, activeTab, draft);
+  };
   const publicationStatus = parseProductPublicationStatus(formData, "draft");
   const visibility = parseProductVisibility(formData);
   const personalizationOpenByDefault = parsePersonalizationOpenByDefault(formData);
@@ -754,45 +767,35 @@ export async function createProduct(formData: FormData) {
     parseProductContentFromFormData(formData);
 
   if (slugError) {
-    redirectWith("error", slugError, activeTab, draft);
+    fail(slugError);
   }
 
   if (!name || price === null || categoryIds.length === 0) {
-    redirectWith(
-      "error",
-      "Попълнете име, валидна цена и изберете поне една категория.",
-      activeTab,
-      draft,
-    );
+    fail("Попълнете име, валидна цена и изберете поне една категория.");
   }
   if (!(await validatePrimaryProductCategory(supabase, categoryIds, primaryCategoryId))) {
-    redirectWith(
-      "error",
-      "Изберете основна продуктова категория.",
-      activeTab,
-      draft,
-    );
+    fail("Изберете основна продуктова категория.");
   }
   if (colorFieldsError) {
-    redirectWith("error", colorFieldsError, activeTab, draft);
+    fail(colorFieldsError);
   }
   if (personalizationFieldsError) {
-    redirectWith("error", personalizationFieldsError, activeTab, draft);
+    fail(personalizationFieldsError);
   }
   if (optionGroupsError) {
-    redirectWith("error", optionGroupsError, activeTab, draft);
+    fail(optionGroupsError);
   }
   if (productContentError) {
-    redirectWith("error", productContentError, activeTab, draft);
+    fail(productContentError);
   }
   if (pageContentError) {
-    redirectWith("error", pageContentError, activeTab, draft);
+    fail(pageContentError);
   }
   if (fulfillmentError) {
-    redirectWith("error", fulfillmentError, activeTab, draft);
+    fail(fulfillmentError);
   }
   if (galleryUploadError) {
-    redirectWith("error", galleryUploadError, activeTab, draft);
+    fail(galleryUploadError);
   }
   detectDuplicateOptionWarnings(
     optionGroups,
@@ -843,12 +846,7 @@ export async function createProduct(formData: FormData) {
 
   if (!draftResult.ok) {
     if (draftResult.stage === "create") {
-      redirectWith(
-        "error",
-        draftResult.message,
-        activeTab,
-        draft,
-      );
+      fail(draftResult.message);
     }
 
     if (draftResult.productId) {
@@ -856,7 +854,7 @@ export async function createProduct(formData: FormData) {
       redirectWithProductEdit("error", draftResult.message, draftResult.productId);
     }
 
-    redirectWith("error", draftResult.message, activeTab, draft);
+    fail(draftResult.message);
   }
 
   const newProductId = draftResult.productId;
@@ -913,10 +911,21 @@ export async function createProduct(formData: FormData) {
 }
 
 export async function updateProduct(formData: FormData) {
+  await updateProductImpl(formData);
+}
+
+export async function saveExistingProductForm(formData: FormData) {
+  return runProductFormAction(() => updateProductImpl(formData, true));
+}
+
+async function updateProductImpl(formData: FormData, inlineErrors = false) {
   const supabase = await getAuthorizedClient();
-  const activeTab = getAdminTab(formData, "products");
 
   const id = getString(formData, adminFormFields.common.id);
+  const fail: (message: string) => never = (message) => {
+    if (inlineErrors) throw new ProductFormValidationError(message);
+    redirectWithProductEdit("error", message, id);
+  };
   const visibility = parseProductVisibility(formData);
   const personalizationOpenByDefault = parsePersonalizationOpenByDefault(formData);
   const name = getString(formData, adminFormFields.product.name);
@@ -981,49 +990,41 @@ export async function updateProduct(formData: FormData) {
   const upsellSettings = parseProductUpsellSettingsFromFormData(formData);
 
   if (slugError) {
-    redirectWithProductEdit("error", slugError, id);
+    fail(slugError);
   }
 
   if (!id || !name || price === null || categoryIds.length === 0) {
-    redirectWith("error", "Невалидни данни за редакция.", activeTab);
+    fail("Невалидни данни за редакция.");
   }
   if (!hasOptionPayload && (await productHasOptionGroups(supabase, id))) {
-    redirectWithProductEdit(
-      "error",
-      "Опциите на продукта не бяха заредени. Отворете „Опции и ценообразуване“ и опитайте отново.",
-      id,
-    );
+    fail("Опциите на продукта не бяха заредени. Отворете „Опции и ценообразуване“ и опитайте отново.");
   }
   if (!(await validatePrimaryProductCategory(supabase, categoryIds, primaryCategoryId))) {
-    redirectWithProductEdit(
-      "error",
-      "Изберете основна продуктова категория.",
-      id,
-    );
+    fail("Изберете основна продуктова категория.");
   }
   if (galleryUploadError) {
-    redirectWithProductEdit("error", galleryUploadError, id);
+    fail(galleryUploadError);
   }
   if (colorFieldsError) {
-    redirectWith("error", colorFieldsError, activeTab);
+    fail(colorFieldsError);
   }
   if (personalizationFieldsError) {
-    redirectWith("error", personalizationFieldsError, activeTab);
+    fail(personalizationFieldsError);
   }
   if (optionGroupsError) {
-    redirectWith("error", optionGroupsError, activeTab);
+    fail(optionGroupsError);
   }
   if (productContentError) {
-    redirectWithProductEdit("error", productContentError, id);
+    fail(productContentError);
   }
   if (pageContentError) {
-    redirectWithProductEdit("error", pageContentError, id);
+    fail(pageContentError);
   }
   if (fulfillmentError) {
-    redirectWithProductEdit("error", fulfillmentError, id);
+    fail(fulfillmentError);
   }
   if (upsellOffersError) {
-    redirectWithProductEdit("error", upsellOffersError, id);
+    fail(upsellOffersError);
   }
   detectDuplicateOptionWarnings(
     optionGroups,
@@ -1066,11 +1067,7 @@ export async function updateProduct(formData: FormData) {
   );
 
   if (mutationError) {
-    redirectWithProductEdit(
-      "error",
-      getProductMutationErrorMessage(mutationError),
-      id,
-    );
+    fail(getProductMutationErrorMessage(mutationError));
   }
 
   const publicationStatus = parseProductPublicationStatus(formData, "published");

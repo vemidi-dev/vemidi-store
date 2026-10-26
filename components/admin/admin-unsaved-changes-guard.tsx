@@ -31,6 +31,10 @@ export function AdminUnsavedChangesGuard({
       submitted = true;
       dirty = false;
     };
+    const handleFailedProductSave = () => {
+      submitted = false;
+      dirty = true;
+    };
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
       if (!dirty || submitted) {
         return;
@@ -75,6 +79,7 @@ export function AdminUnsavedChangesGuard({
     form.addEventListener("input", markDirty);
     form.addEventListener("change", markDirty);
     form.addEventListener("submit", handleSubmit);
+    form.addEventListener("admin-product-save-failed", handleFailedProductSave);
     window.addEventListener("beforeunload", handleBeforeUnload);
     document.addEventListener("click", handleDocumentClick, true);
     parentDetails?.addEventListener("toggle", handleDetailsToggle);
@@ -83,6 +88,7 @@ export function AdminUnsavedChangesGuard({
       form.removeEventListener("input", markDirty);
       form.removeEventListener("change", markDirty);
       form.removeEventListener("submit", handleSubmit);
+      form.removeEventListener("admin-product-save-failed", handleFailedProductSave);
       window.removeEventListener("beforeunload", handleBeforeUnload);
       document.removeEventListener("click", handleDocumentClick, true);
       parentDetails?.removeEventListener("toggle", handleDetailsToggle);

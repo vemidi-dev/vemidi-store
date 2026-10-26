@@ -7,7 +7,7 @@ import {
   publishProduct,
   setPrimaryProductImage,
   toggleProductSoldOut,
-  updateProduct,
+  saveExistingProductForm,
   updateProductImageAltText,
   updateProductMerchandising,
 } from "@/app/admin/actions";
@@ -27,6 +27,7 @@ import { AdminAutoOpenProductEdit } from "@/components/admin/admin-auto-open-pro
 import { AdminProductEditStickyActions } from "@/components/admin/admin-product-edit-sticky-actions";
 import { AdminConfirmForm } from "@/components/admin/admin-confirm-form";
 import { AdminUnsavedChangesGuard } from "@/components/admin/admin-unsaved-changes-guard";
+import { ProductSaveForm } from "@/components/admin/product-save-form";
 import { ProductLandingPagesPanel } from "@/components/admin/product-landing-pages-panel";
 import { ProductDuplicateButton } from "@/components/admin/product-duplicate-button";
 import { AdminListControls } from "@/components/admin/admin-list-controls";
@@ -658,9 +659,9 @@ export function ProductListPanel({
                     </>
                   }
                 >
-                  <form
+                  <ProductSaveForm
                     id={`admin-edit-product-form-${product.id}`}
-                    action={updateProduct}
+                    action={saveExistingProductForm}
                     className="mt-4 grid gap-4 md:grid-cols-2"
                   >
                     <AdminUnsavedChangesGuard
@@ -1054,7 +1055,7 @@ export function ProductListPanel({
                         }
                       />
                     </div>
-                  </form>
+                  </ProductSaveForm>
 
                   <AdminConfirmForm
                     action={deleteProduct}

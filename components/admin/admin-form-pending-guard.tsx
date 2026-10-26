@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useFormStatus } from "react-dom";
+import { useProductFormPending } from "@/components/admin/product-form-status";
 
 type AdminFormPendingGuardProps = {
   message?: string;
@@ -10,7 +11,8 @@ type AdminFormPendingGuardProps = {
 export function AdminFormPendingGuard({
   message = "Обработване и качване на изображенията… Моля, не затваряйте страницата.",
 }: AdminFormPendingGuardProps) {
-  const { pending } = useFormStatus();
+  const { pending: nativePending } = useFormStatus();
+  const pending = useProductFormPending() || nativePending;
 
   useEffect(() => {
     if (!pending) {
