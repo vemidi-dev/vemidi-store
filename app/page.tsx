@@ -6,7 +6,7 @@ import { HomeFeaturedProducts } from "@/components/home/home-featured-products";
 import { HomeHero } from "@/components/home/home-hero";
 import { resolveHomeHeroPreview } from "@/lib/home/hero-preview";
 import { HomeContentGrid } from "@/components/home/home-content-sections";
-import { HomeAtelier, HomeBenefits, HomeProcess } from "@/components/home/home-story";
+import { HomeAtelier, HomeProcess } from "@/components/home/home-story";
 import { PageContainer } from "@/components/layout/page-container";
 import { getPublishedEvents } from "@/lib/content/repository";
 import type { SiteContent } from "@/lib/content/site-content";
@@ -176,7 +176,6 @@ export default async function HomePage() {
   const atelierImage = resolveSiteMediaFromMap(siteMediaMap, "home.atelier");
   return <div>
     <HomeHero content={content} heroImage={heroImage} />
-    <HomeBenefits />
     <Suspense fallback={<HomeSectionFallback />}><HomeCatalogContent content={content} /></Suspense>
     <HomeProcess content={content} />
     <HomeAtelier content={content} atelierImage={atelierImage} />

@@ -4,6 +4,37 @@ import test from "node:test";
 import { resolveHomeHeroPreview } from "../lib/home/hero-preview";
 import type { ResolvedSiteMedia } from "../lib/content/site-media-types";
 
+test("inner page banners blend uploaded media without tinting their text", () => {
+  const source = readFileSync("components/layout/visual-page-hero.tsx", "utf8");
+  const css = readFileSync("components/layout/visual-page-hero.module.css", "utf8");
+  assert.match(source, /src=\{imageSrc\}/);
+  assert.match(source, /objectPosition: imagePosition/);
+  assert.match(source, /const Description = descriptionAs/);
+  assert.equal((source.match(/\bpriority\b/g) ?? []).length, 1);
+  assert.match(css, /mask-image: linear-gradient\(90deg, transparent/);
+  assert.match(css, /mask-image: linear-gradient\(180deg, transparent/);
+  assert.match(css, /\.copy \{ width: 37%; \}/);
+  assert.match(css, /aspect-ratio: 2 \/ 1/);
+  assert.doesNotMatch(css, /object-fit: fill|font-size:[^;]*vw/);
+});
+
+test("contact order CTA explicitly overrides inherited light text in normal and interactive states", () => {
+  const source = readFileSync("app/contact/page.tsx", "utf8");
+  const css = readFileSync("components/layout/contact-order-cta.module.css", "utf8");
+  assert.match(source, /ctaStyles.link/);
+  assert.match(source, /mailto:\$\{email\}\?subject=/);
+  assert.match(css, /color: #34452d; background: #fff/);
+  assert.match(css, /\.link:hover,/);
+  assert.match(css, /\.link:focus-visible/);
+  assert.match(css, /color: #24351e; background: #edf2e9/);
+});
+
+test("home moves straight from hero discovery links to catalog without a benefits strip", () => {
+  const page = readFileSync("app/page.tsx", "utf8");
+  assert.doesNotMatch(page, /HomeBenefits/);
+  assert.match(page, /<HomeHero[^\n]+\n\s*<Suspense[^\n]+<HomeCatalogContent/);
+});
+
 test("preview banners are fallback-only and never override an uploaded admin image", () => {
   const image: ResolvedSiteMedia = { src: "https://example.com/admin.webp", alt: "Качена снимка", source: "uploaded" };
   const fallback: ResolvedSiteMedia = { src: "/assets/home-hero.webp", alt: "Начална снимка", source: "fallback" };

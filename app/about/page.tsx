@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { PageContainer } from "@/components/layout/page-container";
-import { PageHero } from "@/components/ui/page-hero";
+import { VisualPageHero } from "@/components/layout/visual-page-hero";
 import { splitParagraphs } from "@/lib/content/format-content";
 import { getSiteContent } from "@/lib/content/site-content";
 import {
@@ -42,10 +42,12 @@ export default async function AboutPage() {
 
   return (
     <div>
-      <PageHero
+      <VisualPageHero
         eyebrow={content["about.hero_eyebrow"]}
         title={content["about.hero_title"]}
         description={content["about.hero_description"]}
+        imageSrc={heroImage.src}
+        imageAlt={heroImage.alt}
       />
 
       <section className="py-14 md:py-20">

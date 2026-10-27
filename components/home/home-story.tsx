@@ -5,58 +5,6 @@ import { PageContainer } from "@/components/layout/page-container";
 import type { SiteContent } from "@/lib/content/site-content";
 import type { ResolvedSiteMedia } from "@/lib/content/site-media-types";
 
-const benefits = [
-  {
-    title: "Ръчна изработка",
-    text: "С внимание към детайла",
-    icon: "♧",
-  },
-  {
-    title: "Персонализация",
-    text: "С име, дата и послание",
-    icon: "♡",
-  },
-  {
-    title: "Бърза изработка",
-    text: "Срокът е описан към продукта",
-    icon: "▱",
-  },
-  {
-    title: "Качествени материали",
-    text: "Подбрани за красив завършек",
-    icon: "♢",
-  },
-];
-
-export function HomeBenefits() {
-  return (
-    <section className="border-b border-boutique-line bg-boutique-paper">
-      <PageContainer className="grid grid-cols-2 gap-x-5 gap-y-5 py-6 sm:py-8 md:max-w-7xl md:grid-cols-4 md:gap-0">
-        {benefits.map((benefit, index) => (
-          <article
-            className={`flex items-start gap-3 px-0 sm:items-center sm:px-2 md:px-6 ${
-              index > 0 ? "md:border-l md:border-boutique-line" : ""
-            }`}
-            key={benefit.title}
-          >
-            <span className="mt-0.5 text-xl text-boutique-rose-deep sm:mt-0 sm:text-2xl">
-              {benefit.icon}
-            </span>
-            <div>
-              <p className="text-sm font-semibold leading-snug text-boutique-ink">
-                {benefit.title}
-              </p>
-              <p className="mt-1 text-xs leading-snug text-boutique-muted sm:leading-relaxed">
-                {benefit.text}
-              </p>
-            </div>
-          </article>
-        ))}
-      </PageContainer>
-    </section>
-  );
-}
-
 export function HomeProcess({ content }: { content: SiteContent }) {
   const steps = [
     {

@@ -1,0 +1,3 @@
+.link { color: #34452d; background: #fff; border: 1px solid #fff; }
+.link:hover,
+.link:focus-visible { color: #24351e; background: #edf2e9; border-color: #edf2e9; }

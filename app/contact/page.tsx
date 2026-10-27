@@ -3,8 +3,11 @@ import type { ReactNode } from "react";
 
 import { PageContainer } from "@/components/layout/page-container";
 import { SocialLinks } from "@/components/layout/social-links";
+import { VisualPageHero } from "@/components/layout/visual-page-hero";
+import ctaStyles from "@/components/layout/contact-order-cta.module.css";
 import { siteConfig } from "@/config/site";
 import { getSiteContent } from "@/lib/content/site-content";
+import { getSiteMediaMap, resolveSiteMediaFromMap } from "@/lib/content/site-media";
 import {
   buildInfoPageMetadataWithHomeHero,
   KONTAKTI_PAGE_METADATA,
@@ -66,7 +69,8 @@ function ContactMethod({
 }
 
 export default async function ContactPage() {
-  const content = await getSiteContent();
+  const [content, media] = await Promise.all([getSiteContent(), getSiteMediaMap()]);
+  const atelierImage = resolveSiteMediaFromMap(media, "home.atelier");
   const email = content["business.email"];
   const phoneDisplay = content["business.phone_display"];
   const phoneHref = content["business.phone_href"];
@@ -74,29 +78,13 @@ export default async function ContactPage() {
 
   return (
     <div className="bg-boutique-bg">
-      <section className="relative overflow-hidden border-b border-boutique-line bg-boutique-paper">
-        <div
-          aria-hidden
-          className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-boutique-warm/70 blur-3xl"
-        />
-        <div
-          aria-hidden
-          className="absolute -bottom-32 -left-20 h-72 w-72 rounded-full bg-boutique-rose/15 blur-3xl"
-        />
-        <PageContainer className="relative py-12 md:py-20">
-          <div className="max-w-3xl">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-boutique-accent">
-              {content["contact.eyebrow"]}
-            </p>
-            <h1 className="mt-4 font-heading text-4xl leading-tight text-boutique-ink sm:text-5xl md:text-6xl">
-              {content["contact.hero_title"]}
-            </h1>
-            <p className="mt-5 max-w-2xl text-base leading-8 text-boutique-muted md:text-lg">
-              {content["contact.hero_description"]}
-            </p>
-          </div>
-        </PageContainer>
-      </section>
+      <VisualPageHero
+        eyebrow={content["contact.eyebrow"]}
+        title={content["contact.hero_title"]}
+        description={content["contact.hero_description"]}
+        imageSrc={atelierImage.src}
+        imageAlt={atelierImage.alt}
+      />
 
       <section className="py-10 md:py-16">
         <PageContainer className="grid gap-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(20rem,0.95fr)] lg:gap-8">
@@ -158,7 +146,7 @@ export default async function ContactPage() {
             </div>
             <a
               href={`mailto:${email}?subject=${encodeURIComponent("Запитване за персонална поръчка")}`}
-              className="inline-flex w-fit rounded-full bg-white px-6 py-3 text-sm font-semibold text-boutique-sage-deep transition hover:bg-boutique-warm"
+              className={`${ctaStyles.link} inline-flex w-fit rounded-lg px-6 py-3 text-sm font-semibold transition-colors`}
             >
               Изпратете запитване
             </a>
