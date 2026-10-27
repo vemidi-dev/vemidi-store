@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/retry-order-notifications",
       "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/cron/cleanup-customer-photos",
+      "schedule": "30 3 * * *"
     }
   ]
 }

@@ -68,7 +68,7 @@ export type ProductPersonalizationFieldRow = {
   product_id: string;
   label: string;
   field_key: string;
-  field_type: "text" | "textarea" | "date";
+  field_type: "text" | "textarea" | "date" | "file";
   placeholder: string | null;
   max_length: number;
   price_delta: number;
@@ -344,7 +344,7 @@ export type ProductDraftColorField = {
 export type ProductDraftPersonalizationField = {
   label: string;
   key: string;
-  type: "text" | "textarea" | "date";
+  type: "text" | "textarea" | "date" | "file";
   placeholder: string;
   maxLength: number;
   priceDelta: number;

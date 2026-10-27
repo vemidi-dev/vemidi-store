@@ -118,7 +118,7 @@ function parsePersonalizationFields(
     if (
       !label ||
       !fieldKey ||
-      (fieldType !== "text" && fieldType !== "textarea" && fieldType !== "date")
+      (fieldType !== "text" && fieldType !== "textarea" && fieldType !== "date" && fieldType !== "file")
     ) {
       return null;
     }
@@ -171,7 +171,7 @@ function toParsedPersonalizationFields(
     key: field.field_key,
     type: field.field_type,
     placeholder: field.placeholder ?? "",
-    maxLength: field.field_type === "date" ? 10 : (field.max_length ?? 100),
+    maxLength: field.field_type === "file" ? 100 : field.field_type === "date" ? 10 : (field.max_length ?? 100),
     priceDelta: field.price_delta ?? 0,
     required: field.required ?? false,
     allowsWishTemplates:

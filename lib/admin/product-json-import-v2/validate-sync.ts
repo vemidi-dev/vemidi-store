@@ -61,7 +61,7 @@ function validatePersonalizationFields(
     if (
       !field.label ||
       !/^[a-z][a-z0-9_]{0,63}$/.test(field.key) ||
-      !["text", "textarea", "date"].includes(field.type) ||
+      !["text", "textarea", "date", "file"].includes(field.type) ||
       !Number.isInteger(field.maxLength) ||
       field.maxLength < 1 ||
       field.maxLength > 1000 ||
@@ -290,6 +290,21 @@ function validateRawRequiredFields(
     );
   }
 
+  if (Array.isArray(raw.personalization_fields)) {
+    for (const [index, field] of raw.personalization_fields.entries()) {
+      if (field && typeof field === "object" &&
+          !["text", "textarea", "date", "file"].includes(field.field_type)) {
+        const label = asTrimmedString(field.label) || `#${index + 1}`;
+        errors.push(issue(
+          "UNSUPPORTED_PERSONALIZATION_FIELD_TYPE",
+          `Полето за персонализация „${label}“ е с неподдържан тип „${String(field.field_type)}“. Поддържат се text, textarea, date и file (JPEG/PNG снимка).`,
+          "error",
+          slug,
+        ));
+      }
+    }
+  }
+
   return errors;
 }
 
@@ -352,6 +367,15 @@ export function validateProductJsonImportSync(
 
     const errors = [...rawErrors];
     const warnings = [...normalizeWarnings];
+
+    if (!product && errors.length === 0) {
+      errors.push(issue(
+        "INVALID_PRODUCT_DATA",
+        "Данните на продукта не могат да бъдат обработени. Проверете цената, категориите, снимките и настройките за персонализация.",
+        "error",
+        asTrimmedString(raw.slug).toLowerCase() || slugHint,
+      ));
+    }
 
     if (duplicateSlugs.includes(product?.slug ?? asTrimmedString(raw.slug).toLowerCase())) {
       if (product) {

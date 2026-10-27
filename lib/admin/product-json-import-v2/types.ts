@@ -54,7 +54,7 @@ export type ImageImportV2 = {
 export type PersonalizationFieldImportV2 = {
   label: string;
   field_key: string;
-  field_type: "text" | "textarea" | "date";
+  field_type: "text" | "textarea" | "date" | "file";
   placeholder?: string;
   max_length?: number;
   price_delta?: number;

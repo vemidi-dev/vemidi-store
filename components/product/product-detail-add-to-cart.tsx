@@ -10,6 +10,7 @@ import {
   PRODUCT_LEFT_COLORS_SLOT_ID,
 } from "@/components/product/product-detail-color-fields";
 import { useCart } from "@/components/cart/cart-provider";
+import { CustomerPhotoField } from "@/components/product/customer-photo-field";
 import { ProductOptionsSelector } from "@/components/product/product-options-selector";
 import type { CampaignAttribution } from "@/lib/campaign-attribution";
 import type { Product } from "@/lib/catalog";
@@ -148,6 +149,7 @@ export function ProductDetailAddToCart({
     [fallbackFields, product.personalizationFields],
   );
   const [values, setValues] = useState<Record<string, string>>({});
+  const [uploadingPhotos, setUploadingPhotos] = useState<Set<string>>(() => new Set());
   const [enabledOptionalFields, setEnabledOptionalFields] = useState<Set<string>>(
     () => new Set(),
   );
@@ -469,6 +471,7 @@ export function ProductDetailAddToCart({
   };
 
   const validate = () => {
+    if (uploadingPhotos.size) return "Изчакайте снимката да се качи, преди да добавите продукта.";
     for (const field of fields) {
       if (field.required && !(values[field.id] ?? "").trim()) {
         return `Попълнете полето „${field.label}“.`;
@@ -1010,6 +1013,18 @@ export function ProductDetailAddToCart({
           {fields.map((field) => {
             const value = values[field.id] ?? "";
             const showInput = shouldShowPersonalizationInput(field, enabledOptionalFields);
+            if (field.type === "file") {
+              return <div key={field.id} className="text-sm font-medium text-boutique-ink">
+                {field.required ? <p>{field.label} *</p> : <label className="flex items-center gap-2">
+                  <input type="checkbox" disabled={uploadingPhotos.has(field.id)} checked={enabledOptionalFields.has(field.id)} onChange={event => handleOptionalFieldToggle(field, event.target.checked)} />
+                  {formatPersonalizationToggleLabel(field)}
+                </label>}
+                {showInput ? <CustomerPhotoField productId={product.id} fieldId={field.id} value={value}
+                  onChange={value => { setValues(current => ({ ...current, [field.id]: value })); setError(null); }}
+                  onBusy={busy => setUploadingPhotos(current => { const next = new Set(current); if (busy) next.add(field.id); else next.delete(field.id); return next; })}
+                /> : null}
+              </div>;
+            }
             const panelId = `personalization-panel-${field.id}`;
             const inputId = `personalization-${field.id}`;
             const deltaLabel = formatPriceDelta(field.priceDelta ?? 0);
@@ -1270,7 +1285,7 @@ export function ProductDetailAddToCart({
         <div className={useMaterialCards ? "order-70" : "order-70"}>
           <button
             type="button"
-            disabled={!canPrepareVariant}
+            disabled={!canPrepareVariant || uploadingPhotos.size > 0}
             onClick={handlePrepareVariant}
             className="mt-5 w-full rounded-xl bg-boutique-ink px-8 py-3.5 text-sm font-semibold text-white transition duration-200 ease-out hover:-translate-y-1 hover:bg-boutique-sage-deep hover:shadow-[0_16px_32px_-12px_rgb(44_40_37_/0.22)] active:translate-y-0 active:shadow-sm disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none motion-reduce:transition-none motion-reduce:hover:translate-y-0"
           >
@@ -1337,7 +1352,7 @@ export function ProductDetailAddToCart({
       <button
         type="button"
         aria-live="polite"
-        disabled={!canSubmitAddToCart}
+        disabled={!canSubmitAddToCart || uploadingPhotos.size > 0}
         onClick={handleAddToCart}
         className={`mt-5 w-full rounded-xl px-8 py-3.5 text-sm font-semibold text-white transition duration-200 ease-out hover:-translate-y-1 hover:shadow-[0_16px_32px_-12px_rgb(44_40_37_/0.22)] active:translate-y-0 active:shadow-sm disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none motion-reduce:transition-none motion-reduce:hover:translate-y-0 ${useMaterialCards ? "order-80" : "order-80"} ${
           added
@@ -1536,7 +1551,7 @@ export function ProductDetailAddToCart({
           </div>
           <button
             type="button"
-            disabled={stickyActionDisabled}
+            disabled={stickyActionDisabled || uploadingPhotos.size > 0}
             onClick={stickyActionHandler}
             className={`min-h-12 shrink-0 rounded-xl px-5 text-sm font-semibold text-white transition duration-200 ease-out hover:-translate-y-1 hover:shadow-[0_14px_28px_-10px_rgb(44_40_37_/0.2)] active:translate-y-0 active:shadow-sm disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none motion-reduce:transition-none motion-reduce:hover:translate-y-0 ${
               added

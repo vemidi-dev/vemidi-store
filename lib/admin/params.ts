@@ -185,7 +185,7 @@ export function parseProductCreateDraft(raw: string): ProductCreateDraft | null 
               allows_wish_templates?: unknown;
             };
             const type =
-              candidate.field_type === "textarea" || candidate.field_type === "date"
+              candidate.field_type === "textarea" || candidate.field_type === "date" || candidate.field_type === "file"
                 ? candidate.field_type
                 : "text";
             const maxLength = Math.min(

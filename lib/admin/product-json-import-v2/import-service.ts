@@ -101,15 +101,27 @@ export async function runImportProductsFromJson(
     ...validation.previews.flatMap((preview) => preview.warnings),
   ];
 
-  const failed: ProductJsonImportFailureEntry[] = validation.previews
+  const failed: ProductJsonImportFailureEntry[] = validation.fileErrors.map((error) => ({
+    slug: error.slug ?? "",
+    stage: "validate",
+    message: error.message,
+  }));
+  failed.push(...validation.previews
     .filter((preview) => preview.errors.length > 0)
     .map((preview) => ({
       slug: preview.slug,
       stage: "validate" as const,
       message: preview.errors.map((error) => error.message).join(" "),
-    }));
+    })));
 
-  if (validation.importableProducts.length === 0) {
+  if (validation.fileErrors.length > 0 || validation.importableProducts.length === 0) {
+    if (failed.length === 0) {
+      failed.push({
+        slug: "",
+        stage: "validate",
+        message: "Няма продукти, готови за импорт. Натиснете „Провери“ и прегледайте резултата от проверката.",
+      });
+    }
     return {
       ok: false,
       importKey: validation.importKey,

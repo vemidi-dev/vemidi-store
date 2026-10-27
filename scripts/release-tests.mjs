@@ -78,6 +78,7 @@ const releaseTestGroups = [
     files: [
       "tests/checkout-edge-cases.test.ts",
       "tests/checkout-personalization-restore.test.ts",
+      "tests/customer-photos.test.ts",
       "tests/order-confirmation.test.ts",
       "tests/order-item-display.test.ts",
     ],

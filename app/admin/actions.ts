@@ -628,13 +628,13 @@ function parseProductPersonalizationFields(
     const label = labels[index] ?? "";
     const key = keys[index] ?? "";
     const type = types[index] ?? "";
-    const maxLength = type === "date" ? 10 : maxLengths[index];
+    const maxLength = type === "file" ? 100 : type === "date" ? 10 : maxLengths[index];
     const priceDelta = priceDeltas[index] ?? 0;
 
     if (
       !label ||
       !/^[a-z][a-z0-9_]{0,63}$/.test(key) ||
-      !["text", "textarea", "date"].includes(type) ||
+      !["text", "textarea", "date", "file"].includes(type) ||
       !Number.isInteger(maxLength) ||
       maxLength < 1 ||
       maxLength > 1000 ||

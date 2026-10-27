@@ -80,9 +80,9 @@ export function ProductJsonImportSummary({ summary }: ProductJsonImportSummaryPr
         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3">
           <h3 className="text-sm font-semibold text-red-900">Неуспешни продукти</h3>
           <ul className="mt-2 space-y-2 text-sm text-red-800">
-            {summary.failed.map((entry) => (
-              <li key={`${entry.slug}-${entry.stage}`}>
-                <span className="font-medium">{entry.slug}</span> ({entry.stage}):{" "}
+            {summary.failed.map((entry, index) => (
+              <li key={`${entry.slug}-${entry.stage}-${index}`}>
+                <span className="font-medium">{entry.slug || "JSON файл"}</span> ({entry.stage}):{" "}
                 {entry.message}
               </li>
             ))}

@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { getProductPath } from "@/lib/product-url";
 import { isUuid } from "@/lib/is-uuid";
+import { personalizationDisplayValue } from "@/lib/customer-photos/reference";
 
 import type { ProductOptionSelectionSnapshot } from "@/lib/product-options";
 import { formatOrderOptionLine, parseOrderOptionSelections } from "@/lib/order-option-display";
@@ -493,7 +494,7 @@ export function getOrderPersonalizationSummary(order: OrderRow) {
     }
     for (const field of item.personalizationFields) {
       if (field.label && field.value) {
-        parts.push(`${field.label}: ${field.value}`);
+        parts.push(`${field.label}: ${personalizationDisplayValue(field.value)}`);
       }
     }
     for (const group of item.optionSelections) {

@@ -188,6 +188,10 @@ export function OrderDetailsSection({
                       className="mt-1 whitespace-pre-wrap break-words text-xs text-boutique-muted"
                     >
                       {line.text}
+                      {line.photoId ? <span className="ml-2 inline-flex gap-3">
+                        <a className="font-semibold underline" href={`/api/customer-photos/${line.photoId}`} target="_blank" rel="noreferrer">Отвори снимката</a>
+                        <a className="font-semibold underline" href={`/api/customer-photos/${line.photoId}?download=1`}>Изтегли</a>
+                      </span> : null}
                     </p>
                   ))}
                 </div>

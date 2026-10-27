@@ -1,10 +1,12 @@
 import { formatPriceDelta } from "@/lib/product-option-pricing";
 
+import { personalizationDisplayValue } from "@/lib/customer-photos/reference";
+
 export type ProductPersonalizationField = {
   id: string;
   label: string;
   key: string;
-  type: "text" | "textarea" | "date";
+  type: "text" | "textarea" | "date" | "file";
   placeholder: string | null;
   maxLength: number;
   priceDelta?: number;
@@ -82,7 +84,7 @@ export function buildPersonalizationSummary(
       }
 
       const value = (values[field.id] ?? "").trim();
-      return value ? [`${field.label}: ${value}`] : [];
+      return value ? [`${field.label}: ${personalizationDisplayValue(value)}`] : [];
     })
     .join("\n")
     .slice(0, 1000);

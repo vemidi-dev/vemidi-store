@@ -1,11 +1,13 @@
 import type { ProductPersonalizationValue } from "@/lib/product-personalization";
 
+import { customerPhotoId, personalizationDisplayValue } from "@/lib/customer-photos/reference";
+
 export type PersonalizationFieldDefinition = {
   id: string;
   product_id: string;
   label: string;
   field_key: string;
-  field_type: "text" | "textarea" | "date";
+  field_type: "text" | "textarea" | "date" | "file";
   max_length: number;
   is_required: boolean;
 };
@@ -78,6 +80,9 @@ export function validatePersonalizationFields(
     if (definition.field_type === "date" && !isIsoDate(normalizedValue)) {
       return { ok: false, code: "invalid_personalization_date" };
     }
+    if (definition.field_type === "file" && !customerPhotoId(normalizedValue)) {
+      return { ok: false, code: "invalid_personalization_fields" };
+    }
 
     fields.push({
       fieldId: definition.id,
@@ -102,7 +107,7 @@ export function validatePersonalizationFields(
     fields,
     summary:
       fields.length > 0
-        ? fields.map((field) => `${field.label}: ${field.value}`).join("\n")
+        ? fields.map((field) => `${field.label}: ${personalizationDisplayValue(field.value)}`).join("\n")
         : null,
   };
 }

@@ -28,6 +28,8 @@ import { sendOrderNotifications } from "@/lib/orders/send-order-notifications";
 import { getRequestFingerprint } from "@/lib/request-fingerprint";
 import { isUuid } from "@/lib/is-uuid";
 import { createServiceClient } from "@/lib/supabase/service";
+import { customerPhotoOwnerHash } from "@/lib/customer-photos/session";
+import { verifyCheckoutCustomerPhotos } from "@/lib/customer-photos/checkout";
 
 export type CheckoutActionState = {
   ok: boolean;
@@ -310,6 +312,8 @@ export async function createStoreOrder(
 
   const rpcItems = [];
   const campaigns = new Set<string>();
+  const photoOwnerHash = (fieldRows ?? []).some(field => field.field_type === "file")
+    ? await customerPhotoOwnerHash() : null;
   for (const item of items) {
     const productId = resolveSubmittedProductId(item);
     const definitions = fieldsByProduct.get(productId) ?? [];
@@ -323,6 +327,9 @@ export async function createStoreOrder(
         ok: false,
         message: checkoutErrorMessages[validated.code],
       };
+    }
+    if (!await verifyCheckoutCustomerPhotos(supabase, photoOwnerHash, productId, definitions, validated.fields)) {
+      return { ok: false, message: "Снимката за персонализация липсва или срокът ѝ е изтекъл. Отворете продукта и качете снимката отново." };
     }
 
     const optionGroups = optionGroupsByProduct.get(productId) ?? [];

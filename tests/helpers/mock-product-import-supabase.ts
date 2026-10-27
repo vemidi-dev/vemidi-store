@@ -13,6 +13,8 @@ type MockProductImportSupabaseOptions = {
   attachErrorMessage?: string | null;
   updateError?: boolean;
   createErrorMessage?: string | null;
+  slugLookupError?: boolean;
+  categoryLookupError?: boolean;
 };
 
 export function createMockProductImportSupabase(
@@ -28,6 +30,9 @@ export function createMockProductImportSupabase(
           return {
             in(column: string, values: string[]) {
               if (table === "products" && column === "slug") {
+                if (options.slugLookupError) {
+                  return Promise.resolve({ data: null, error: { message: "lookup failed" } });
+                }
                 const data = (options.existingSlugs ?? [])
                   .filter((slug) => values.includes(slug))
                   .map((slug) => ({ slug }));
@@ -35,6 +40,9 @@ export function createMockProductImportSupabase(
               }
 
               if (table === "categories" && column === "slug") {
+                if (options.categoryLookupError) {
+                  return Promise.resolve({ data: null, error: { message: "lookup failed" } });
+                }
                 const data = (options.categories ?? []).filter((category) =>
                   values.includes(category.slug),
                 );

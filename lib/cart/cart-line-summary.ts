@@ -1,5 +1,6 @@
 import type { CartLineDisplayRow } from "@/lib/cart/build-cart-line-display";
 import type { CartLine } from "@/lib/cart-types";
+import { personalizationDisplayValue } from "@/lib/customer-photos/reference";
 import {
   formatSelectedColorQuantityLabel,
   formatSelectedColorsQuantitySummary,
@@ -95,7 +96,7 @@ export function resolveCartLineSummaryRows(line: CartLine): CartLineSummaryRow[]
   for (const field of line.personalizationFields ?? []) {
     rows.push({
       label: field.label,
-      value: field.value,
+      value: personalizationDisplayValue(field.value),
     });
   }
 

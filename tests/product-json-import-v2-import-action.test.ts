@@ -33,6 +33,39 @@ function makeUploadFiles() {
   );
 }
 
+test("import preserves file-level parse errors rather than returning an empty failure summary", async () => {
+  for (const [invalidJson, expected] of [
+    ["{", /не може да бъде прочетен/],
+    [JSON.stringify({ version: 1, products: [] }), /version 2/],
+    [JSON.stringify({ version: 2, products: [] }), /не съдържа продукти/],
+  ] as const) {
+    const client = createMockProductImportSupabase({ categories });
+    let calls = 0;
+    const result = await runImportProductsFromJson(client, invalidJson, [], {
+      createDraft: async () => { calls++; throw new Error("Must not create"); },
+    });
+    assert.equal(result.ok, false);
+    assert.equal(result.created.length, 0);
+    assert.equal(result.failed[0]?.stage, "validate");
+    assert.match(result.failed[0]?.message ?? "", expected);
+    assert.equal(calls, 0);
+  }
+});
+
+test("file-level database lookup failures prevent writes even when a product preview is valid", async () => {
+  for (const options of [{ slugLookupError: true }, { categoryLookupError: true }]) {
+    const client = createMockProductImportSupabase({ categories, ...options });
+    let calls = 0;
+    const result = await runImportProductsFromJson(client, json, [], {
+      createDraft: async () => { calls++; throw new Error("Must not create"); },
+    });
+    assert.equal(result.ok, false);
+    assert.equal(result.created.length, 0);
+    assert.ok(result.failed.some(entry => /Неуспешна проверка/.test(entry.message)));
+    assert.equal(calls, 0);
+  }
+});
+
 test("validate action path returns happy validation result", async () => {
   const supabase = createMockProductImportSupabase({ categories });
   const result = await runValidateProductJsonImport(supabase, {
@@ -42,6 +75,23 @@ test("validate action path returns happy validation result", async () => {
 
   assert.equal(result.ok, true);
   assert.equal(result.importableProducts.length, 1);
+});
+
+test("import returns unsupported field errors without creating a partial product", async () => {
+  const raw = JSON.parse(json);
+  raw.products[0].personalization_fields = [
+    { label: "Снимка за орнамента", field_key: "photo", field_type: "video", required: true },
+  ];
+  const client = createMockProductImportSupabase({ categories });
+  let calls = 0;
+  const result = await runImportProductsFromJson(client, JSON.stringify(raw), [], {
+    createDraft: async () => { calls++; throw new Error("Must not create"); },
+  });
+  assert.equal(result.ok, false);
+  assert.equal(result.created.length, 0);
+  assert.equal(result.failed[0]?.stage, "validate");
+  assert.match(result.failed[0]?.message ?? "", /Снимка за орнамента/);
+  assert.equal(calls, 0);
 });
 
 test("validate action path allows renamed uploads for one product", async () => {

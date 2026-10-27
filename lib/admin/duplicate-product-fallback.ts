@@ -65,7 +65,7 @@ function normalizePersonalizationType(
   value: unknown,
 ): ParsedPersonalizationField["type"] {
   const normalized = normalizeString(value);
-  return normalized === "textarea" || normalized === "date" ? normalized : "text";
+  return normalized === "textarea" || normalized === "date" || normalized === "file" ? normalized : "text";
 }
 
 async function resolveDuplicateSlug(

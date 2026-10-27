@@ -49,6 +49,51 @@ test("validate reports duplicate slug in file", () => {
   );
 });
 
+test("unsupported personalization type blocks validation with its label instead of silently passing", () => {
+  const file = loadDarvenaFile();
+  const raw = JSON.parse(JSON.stringify(file));
+  raw.products[0].personalization_fields = [
+    { label: "Снимка за орнамента", field_key: "photo", field_type: "video", required: true },
+    { label: "Пожелание за гравиране", field_key: "engraved_message", field_type: "textarea", max_length: 180 },
+  ];
+  const result = validateProductJsonImportSync(raw, ["2.png", "1.png"]);
+  assert.equal(result.ok, false);
+  assert.equal(result.previews[0]?.status, "error");
+  assert.equal(result.normalizedProducts.length, 0);
+  const error = result.previews[0]?.errors.find(entry => entry.code === "UNSUPPORTED_PERSONALIZATION_FIELD_TYPE");
+  assert.match(error?.message ?? "", /Снимка за орнамента/);
+  assert.match(error?.message ?? "", /video/);
+});
+
+test("customer JPEG/PNG photo field is accepted as a required file personalization field", () => {
+  const file = loadDarvenaFile();
+  const raw = JSON.parse(JSON.stringify(file));
+  raw.products[0].personalization_fields = [
+    { label: "Снимка за орнамента", field_key: "photo", field_type: "file", required: true },
+    { label: "Пожелание", field_key: "message", field_type: "textarea", max_length: 180, required: true },
+  ];
+  const result = validateProductJsonImportSync(raw);
+  assert.equal(result.ok, true);
+  assert.equal(result.normalizedProducts[0]?.personalizationFields[0]?.type, "file");
+  assert.equal(result.normalizedProducts[0]?.personalizationFields[0]?.required, true);
+});
+
+test("un-normalizable product data never produces a ready preview", () => {
+  for (const patch of [
+    { price: -1 },
+    { personalization_fields: "invalid" },
+    { images: [{ original_filename: "photo.png", alt: "" }] },
+  ]) {
+    const file = loadDarvenaFile();
+    Object.assign(file.products[0]!, patch);
+    const result = validateProductJsonImportSync(file);
+    assert.equal(result.ok, false);
+    assert.equal(result.previews[0]?.status, "error");
+    assert.ok(result.previews[0]?.errors.length);
+    assert.equal(result.normalizedProducts.length, 0);
+  }
+});
+
 test("validate rejects invalid slug", () => {
   const file = loadDarvenaFile();
   file.products[0]!.slug = "Invalid Slug";

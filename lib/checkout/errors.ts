@@ -1,4 +1,5 @@
 export const checkoutErrorMessages: Record<string, string> = {
+  invalid_personalization_photo: "Снимката за персонализация вече не е достъпна. Качете я отново от страницата на продукта.",
   invalid_customer_name: "Моля, въведете име и фамилия.",
   invalid_customer_phone: "Моля, въведете валиден телефон.",
   invalid_customer_email: "Имейл адресът не е валиден.",

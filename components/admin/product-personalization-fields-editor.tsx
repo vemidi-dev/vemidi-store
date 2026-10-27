@@ -137,6 +137,7 @@ export function ProductPersonalizationFieldsEditor({
                 <option value="text">Кратък текст</option>
                 <option value="textarea">По-дълъг текст</option>
                 <option value="date">Дата</option>
+                <option value="file">Снимка (JPEG/PNG)</option>
               </select>
             </label>
 
@@ -151,7 +152,8 @@ export function ProductPersonalizationFieldsEditor({
             </label>
 
             <label className="text-sm font-medium text-boutique-ink">
-              Максимален брой символи
+              {field.type === "file" ? "Размер на снимката" : "Максимален брой символи"}
+              {field.type === "file" ? <span className={`mt-2 block ${helperClassName}`}>JPEG или PNG до 4 MB</span> : null}
               <input
                 key={`${field.uid}-${field.type}-max-length`}
                 name={adminFormFields.personalizationField.maxLengths}
@@ -159,14 +161,14 @@ export function ProductPersonalizationFieldsEditor({
                 min="1"
                 max="1000"
                 defaultValue={field.maxLength}
-                disabled={field.type === "date"}
-                className={fieldClassName}
+                disabled={field.type === "date" || field.type === "file"}
+                className={field.type === "file" ? "hidden" : fieldClassName}
               />
-              {field.type === "date" ? (
+              {field.type === "date" || field.type === "file" ? (
                 <input
                   type="hidden"
                   name={adminFormFields.personalizationField.maxLengths}
-                  value="10"
+                  value={field.type === "file" ? "100" : "10"}
                 />
               ) : null}
             </label>

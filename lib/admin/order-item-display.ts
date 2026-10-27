@@ -1,5 +1,6 @@
 ﻿import type { StoreOrderItem } from "@/lib/admin/orders";
 import { formatOrderOptionLine } from "@/lib/order-option-display";
+import { customerPhotoId, personalizationDisplayValue } from "@/lib/customer-photos/reference";
 import {
   formatSelectedColorQuantityLabel,
   formatSelectedColorsQuantitySummary,
@@ -7,6 +8,7 @@ import {
 
 export type StoreOrderItemDetailLine = {
   text: string;
+  photoId?: string;
 };
 
 export function buildStoreOrderItemDetailLines(
@@ -25,7 +27,8 @@ export function buildStoreOrderItemDetailLines(
     for (const field of item.personalizationFields) {
       if (field.label?.trim() && field.value?.trim()) {
         lines.push({
-          text: `${field.label}: ${field.value.trim()}`,
+          text: `${field.label}: ${personalizationDisplayValue(field.value.trim())}`,
+          ...(customerPhotoId(field.value.trim()) ? { photoId: customerPhotoId(field.value.trim())! } : {}),
         });
       }
     }
