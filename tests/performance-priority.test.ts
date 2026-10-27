@@ -65,13 +65,13 @@ test("thank-you hero keeps priority within its component", () => {
 });
 
 test("hero containers reserve height with existing min-height classes", () => {
-  const homeHero = readComponent("components/home/home-hero.tsx");
+  const homeHero = readComponent("components/home/home-hero.module.css");
   const visualHero = readComponent("components/layout/visual-page-hero.tsx");
   const thankYou = readComponent("components/thank-you/thank-you-content.tsx");
   const gallery = readComponent("components/product/product-detail-gallery.tsx");
 
-  assert.match(homeHero, /min-h-\[17rem\]/);
-  assert.match(homeHero, /sm:min-h-\[22rem\]/);
+  assert.match(homeHero, /height: calc\(50vw \+ 64px\)/);
+  assert.match(homeHero, /min-height: min\(640px, 50vw, calc\(100svh - 176px\)\)/);
   assert.match(visualHero, /min-h-48/);
   assert.match(visualHero, /sm:min-h-72/);
   assert.match(thankYou, /min-h-72/);

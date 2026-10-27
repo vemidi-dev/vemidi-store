@@ -46,6 +46,7 @@ const releaseTestGroups = [
     label: "Product page UX & copy",
     files: [
       "tests/home-performance.test.ts",
+      "tests/home-hero-layout.test.ts",
       "tests/home-featured-blog-posts.test.ts",
       "tests/product-page-ux-regression.test.ts",
       "tests/product-page-copy.test.ts",

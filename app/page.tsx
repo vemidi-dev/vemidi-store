@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import CategoryShowcaseCard from "@/components/category/category-showcase-card";
 import { HomeFeaturedProducts } from "@/components/home/home-featured-products";
 import { HomeHero } from "@/components/home/home-hero";
+import { resolveHomeHeroPreview } from "@/lib/home/hero-preview";
 import { HomeContentGrid } from "@/components/home/home-content-sections";
 import { HomeAtelier, HomeBenefits, HomeProcess } from "@/components/home/home-story";
 import { PageContainer } from "@/components/layout/page-container";
@@ -20,7 +21,7 @@ import { CATEGORY_INDEX_PATH, OCCASION_INDEX_PATH } from "@/lib/category-url";
 
 export async function generateMetadata() {
   const siteMediaMap = await getSiteMediaMap();
-  const heroImage = resolveSiteMediaFromMap(siteMediaMap, "home.hero");
+  const heroImage = resolveHomeHeroPreview(resolveSiteMediaFromMap(siteMediaMap, "home.hero"));
 
   return buildHomePageMetadata({ src: heroImage.src, alt: heroImage.alt });
 }
@@ -171,7 +172,7 @@ function HomeSectionFallback() {
 
 export default async function HomePage() {
   const [content, siteMediaMap] = await Promise.all([getSiteContent(), getSiteMediaMap()]);
-  const heroImage = resolveSiteMediaFromMap(siteMediaMap, "home.hero");
+  const heroImage = resolveHomeHeroPreview(resolveSiteMediaFromMap(siteMediaMap, "home.hero"));
   const atelierImage = resolveSiteMediaFromMap(siteMediaMap, "home.atelier");
   return <div>
     <HomeHero content={content} heroImage={heroImage} />

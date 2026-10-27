@@ -1,0 +1,77 @@
+.hero {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-areas: "copy" "scene";
+  overflow: hidden;
+  background: #faf8f4;
+  border-bottom: 1px solid var(--color-boutique-line, #e5ded5);
+}
+
+.scene { position: relative; grid-area: scene; width: 100%; height: calc(50vw + 64px); }
+.photo { position: absolute; inset: auto 0 0; aspect-ratio: 2 / 1; mask-image: linear-gradient(to bottom, transparent, #000 48px); }
+.scene::after { display: none; position: absolute; inset: 0 0 auto; height: 40px; content: ""; background: linear-gradient(#faf8f4, transparent); pointer-events: none; }
+.image { object-fit: cover; object-position: right center; }
+.inner { display: contents; }
+.copy { grid-area: copy; min-width: 0; padding: 24px 20px 16px; }
+.eyebrow { display: flex; align-items: flex-start; gap: 8px; color: #607251; font-size: 11px; font-weight: 600; line-height: 1.6; }
+.eyebrow svg { flex-shrink: 0; margin-top: 1px; }
+.title { margin-top: 14px; color: #2c2b26; font-family: var(--font-playfair), Georgia, serif; font-size: 30px; font-weight: 400; line-height: 1.12; letter-spacing: 0; overflow-wrap: break-word; text-wrap: balance; }
+.title span, .title em { display: block; }
+.title em { margin-top: 4px; color: #536747; font-weight: 400; }
+.description { margin-top: 16px; max-width: 34rem; color: #5b5a53; font-size: 14px; line-height: 1.65; }
+.actions { position: relative; z-index: 1; grid-area: scene; align-self: start; justify-self: start; display: flex; flex-direction: column; gap: 10px; max-width: calc(100% - 40px); margin: 0 20px; }
+.primary, .secondary { display: inline-flex; min-height: 46px; align-items: center; justify-content: center; gap: 10px; border: 1px solid #607251; border-radius: 6px; padding: 11px 16px; font-size: 13px; font-weight: 600; line-height: 1.4; transition: background-color 160ms, color 160ms, border-color 160ms; }
+.primary { color: #fff; background: #536747; }
+.primary:hover { background: #36452e; border-color: #36452e; }
+.secondary { color: #405138; background: #fffdf9; }
+.secondary:hover { background: #e8eddf; }
+.primary:focus-visible, .secondary:focus-visible { outline: 2px solid #405138; outline-offset: 4px; }
+.primary svg, .secondary svg { flex-shrink: 0; }
+
+@media (min-width: 640px) {
+  .copy { padding: 32px 32px 20px; }
+  .actions { flex-direction: row; flex-wrap: wrap; margin-inline: 32px; }
+  .title { font-size: 42px; }
+  .description { font-size: 16px; }
+  .eyebrow { font-size: 12px; }
+  .primary, .secondary { font-size: 14px; padding-inline: 20px; }
+}
+
+@media (min-width: 768px) {
+  .hero { display: block; min-height: 480px; }
+  .scene { position: absolute; inset: auto 0 0 auto; height: auto; width: 100%; aspect-ratio: 2 / 1; margin-top: 0; mask-image: linear-gradient(90deg, transparent, #000 40%); }
+  .photo { inset: 0; aspect-ratio: auto; mask-image: none; }
+  .scene::after { display: block; }
+  .inner { position: relative; z-index: 1; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; width: 100%; max-width: 1440px; min-height: inherit; margin: auto; padding: 32px; }
+  .copy { width: 38%; max-width: 540px; padding: 0; }
+  .actions { width: 38%; max-width: 540px; align-self: auto; margin: 22px 0 0; }
+  .title { font-size: 30px; }
+  .description { font-size: 14px; }
+}
+
+@media (min-width: 1024px) {
+  .hero { min-height: min(640px, 50vw, calc(100svh - 176px)); }
+  .scene { width: auto; height: 100%; }
+  .scene::after { display: none; }
+  .inner { padding: 36px 40px; }
+  .copy { width: 38%; max-width: 540px; }
+  .title { font-size: 40px; }
+  .description { font-size: 15px; }
+}
+
+@media (min-width: 1280px) {
+  .inner { padding-inline: 56px; }
+  .copy { width: 40%; }
+  .actions { width: 40%; }
+  .title { font-size: 50px; }
+  .description { font-size: 16px; }
+}
+
+@media (min-width: 1536px) {
+  .title { font-size: 56px; }
+}
+
+@media (min-width: 1600px) {
+  .scene { right: max(0px, calc((100% - 1600px) / 2)); mask-image: linear-gradient(90deg, transparent, #000 40%, #000 94%, transparent); }
+}
