@@ -69,6 +69,7 @@ const releaseTestGroups = [
       "tests/product-save-form.test.ts",
       "tests/product-wish-templates.test.ts",
       "tests/product-publish-validation.test.ts",
+      "tests/product-json-import-v2-select.test.ts",
       "tests/product-publication.test.ts",
       "tests/product-preview.test.ts",
     ],

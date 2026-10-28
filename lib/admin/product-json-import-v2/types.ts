@@ -1,5 +1,5 @@
 import type { ProductMutationInput } from "@/lib/admin/product-rpc";
-import type { ParsedPersonalizationField } from "@/lib/admin/types";
+import type { ParsedPersonalizationField, ParsedOptionGroup } from "@/lib/admin/types";
 import type { ProductFulfillmentType } from "@/lib/product-fulfillment";
 import type { ProductQuantityPriceTier } from "@/lib/product-quantity-pricing";
 import type { ProductVisibility } from "@/lib/product-visibility";
@@ -140,6 +140,7 @@ export type NormalizedProductImportV2 = {
   categorySlugs: string[];
   primaryCategorySlug: string;
   personalizationFields: ParsedPersonalizationField[];
+  optionGroups: ParsedOptionGroup[];
   quantityPriceTiers: ProductQuantityPriceTier[];
   images: ImageImportV2[];
 };
@@ -156,6 +157,7 @@ export type ProductImportPreview = {
   status: ProductImportPreviewStatus;
   errors: ProductJsonImportIssue[];
   warnings: ProductJsonImportIssue[];
+  optionGroups?: ParsedOptionGroup[];
 };
 
 export type ProductJsonImportSyncValidationResult = {
@@ -225,7 +227,7 @@ export type ProductImportMutationPayload = {
   primaryCategorySlug: string;
   mutationInput: Omit<
     ProductMutationInput,
-    "categoryIds" | "primaryCategoryId" | "colorFields" | "optionGroups" | "wishTemplateIds"
+    "categoryIds" | "primaryCategoryId" | "colorFields" | "wishTemplateIds"
   >;
   postCreate: ProductImportPostCreateFields;
 };

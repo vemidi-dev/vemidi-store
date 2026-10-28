@@ -1,6 +1,7 @@
 import type { ProductImportPreview } from "@/lib/admin/product-json-import-v2/types";
 
 import { adminTableClass, adminTableHeadClass, adminTableRowClass } from "@/components/admin/styles";
+import { formatPriceDelta } from "@/lib/product-option-pricing";
 
 const statusLabels = {
   ready: "Готов",
@@ -61,6 +62,12 @@ export function ProductJsonImportPreviewTable({
                 <div className="max-w-[12rem] truncate font-medium text-boutique-ink sm:max-w-none">
                   {preview.name}
                 </div>
+                {(preview.optionGroups ?? []).map(group => (
+                  <div key={group.key} className="mt-2 text-xs leading-relaxed text-boutique-muted">
+                    <p className="font-semibold text-boutique-ink">{group.name}{group.isRequired ? " *" : ""}</p>
+                    {group.values.map(value => <p key={value.key}>{value.label}: {formatPriceDelta(value.priceDelta) ?? "без доплащане"}</p>)}
+                  </div>
+                ))}
                 <div className="mt-1 text-xs text-boutique-muted sm:hidden">
                   {formatPrice(preview.price)} · {preview.imageCount} снимки
                 </div>

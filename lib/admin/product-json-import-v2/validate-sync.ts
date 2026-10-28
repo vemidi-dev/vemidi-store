@@ -23,6 +23,7 @@ import type {
   ProductJsonImportSyncValidationResult,
 } from "@/lib/admin/product-json-import-v2/types";
 import { validateProductSlug } from "@/lib/product-slug";
+import { splitSelectPersonalizationFields } from "./select-fields";
 import { validateQuantityPriceTierRanges } from "@/lib/product-quantity-pricing";
 
 function issue(
@@ -293,11 +294,11 @@ function validateRawRequiredFields(
   if (Array.isArray(raw.personalization_fields)) {
     for (const [index, field] of raw.personalization_fields.entries()) {
       if (field && typeof field === "object" &&
-          !["text", "textarea", "date", "file"].includes(field.field_type)) {
+          !["text", "textarea", "date", "file", "select"].includes(field.field_type)) {
         const label = asTrimmedString(field.label) || `#${index + 1}`;
         errors.push(issue(
           "UNSUPPORTED_PERSONALIZATION_FIELD_TYPE",
-          `Полето за персонализация „${label}“ е с неподдържан тип „${String(field.field_type)}“. Поддържат се text, textarea, date и file (JPEG/PNG снимка).`,
+          `Полето за персонализация „${label}“ е с неподдържан тип „${String(field.field_type)}“. Поддържат се text, textarea, date, file (JPEG/PNG снимка) и select (избор).`,
           "error",
           slug,
         ));
@@ -365,7 +366,7 @@ export function validateProductJsonImportSync(
       slugHint,
     );
 
-    const errors = [...rawErrors];
+    const errors = [...rawErrors, ...splitSelectPersonalizationFields(raw.personalization_fields, asTrimmedString(raw.slug).toLowerCase() || slugHint).errors];
     const warnings = [...normalizeWarnings];
 
     if (!product && errors.length === 0) {
@@ -432,6 +433,7 @@ export function validateProductJsonImportSync(
     previews.push({
       slug: previewSlug,
       name: product?.name ?? (asTrimmedString(raw.name) || previewSlug),
+      optionGroups: product?.optionGroups ?? [],
       price: product?.price ?? (typeof raw.price === "number" ? raw.price : 0),
       categorySlugs: product?.categorySlugs ?? [],
       primaryCategorySlug: product?.primaryCategorySlug ?? "",

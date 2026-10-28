@@ -74,7 +74,7 @@ function toMutationInput(importable: ImportableProduct): ProductMutationInput {
     categoryIds: importable.categoryIds,
     primaryCategoryId: importable.primaryCategoryId,
     colorFields: [],
-    optionGroups: [],
+    optionGroups: importable.payload.mutationInput.optionGroups,
     wishTemplateIds: [],
   };
 }

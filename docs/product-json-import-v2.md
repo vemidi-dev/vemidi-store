@@ -21,7 +21,7 @@
 | Публикуване | Винаги `status: "draft"`. Publish остава ръчен admin step. |
 | Update на съществуващ продукт | v2 е **create-only** (по slug uniqueness). |
 | Създаване на категории | Slug-овете трябва да съществуват в `categories`. |
-| Option groups / variant values | Не се импортират (`product_option_groups`, `product_option_values`). |
+| Option groups / variant values | Произволни групи не се импортират. От 2026-10-27 полета `select` се преобразуват в native групи с един избор. |
 | Color fields | Не се импортират. |
 | Wish templates / FAQ / upsell / landing pages | Не се импортират. |
 | Promotions / coupons | Не се създават. |
@@ -112,7 +112,7 @@
 |-----------|--------------------------------------|-------|
 | `label` | `label` | required per row |
 | `field_key` | `field_key` | `/^[a-z][a-z0-9_]{0,63}$/`, unique per product |
-| `field_type` | `field_type` | `text` \| `textarea` \| `date` |
+| `field_type` | `field_type` | `text` \| `textarea` \| `date` \| `file`; `select` се записва като продуктова опция (виж допълнението по-долу). |
 | `placeholder` | `placeholder` | optional |
 | `max_length` | `max_length` | int 1–1000; за `date` → 10 |
 | `price_delta` | `price_delta` | number ≥ 0 |

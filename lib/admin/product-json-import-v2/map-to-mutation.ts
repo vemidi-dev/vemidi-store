@@ -1,4 +1,5 @@
 import { normalizeProductCardBadge } from "@/lib/product-card";
+import { splitSelectPersonalizationFields } from "./select-fields";
 import { normalizeFulfillmentType, parseStockQuantity } from "@/lib/product-fulfillment";
 import { normalizeProductVisibility } from "@/lib/product-visibility";
 import {
@@ -216,7 +217,8 @@ export function normalizeProductImportV2(
   const categorySlugs = parseCategorySlugs(raw.categories);
   const primaryCategorySlug = asTrimmedString(raw.primary_category).toLowerCase();
   const images = parseImages(raw.images);
-  const personalizationFieldsRaw = parsePersonalizationFields(raw.personalization_fields);
+  const selections = splitSelectPersonalizationFields(raw.personalization_fields, slug || slugHint);
+  const personalizationFieldsRaw = parsePersonalizationFields(selections.fields);
 
   let subtitle = asOptionalTrimmedString(raw.subtitle);
   const shortDescription = asOptionalTrimmedString(raw.short_description);
@@ -269,7 +271,7 @@ export function normalizeProductImportV2(
     !categorySlugs ||
     !primaryCategorySlug ||
     !images ||
-    personalizationFieldsRaw === null
+    personalizationFieldsRaw === null || selections.errors.length > 0
   ) {
     return { product: null, warnings };
   }
@@ -351,6 +353,7 @@ export function normalizeProductImportV2(
     categorySlugs,
     primaryCategorySlug,
     personalizationFields,
+    optionGroups: selections.groups,
     quantityPriceTiers,
     images: images.map((image) => ({
       ...image,
@@ -387,6 +390,7 @@ export function mapNormalizedProductImportToMutation(
       stockQuantity: product.stockQuantity,
       cardBadge: product.cardBadge,
       personalizationFields: product.personalizationFields,
+      optionGroups: product.optionGroups,
       metaTitle: product.metaTitle,
       metaDescription: product.metaDescription,
       ogTitle: product.ogTitle,
