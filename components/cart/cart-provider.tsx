@@ -27,6 +27,7 @@ import {
   prepareCartLineInput,
 } from "@/lib/cart/prepare-cart-line";
 import { removeCartLineWithLinkedUpsells } from "@/lib/cart/remove-cart-line";
+import { refreshCartPricing } from "@/lib/cart/refresh-cart-pricing";
 import { updateCartLineQuantityWithLinkedUpsells } from "@/lib/cart/update-cart-line-quantity";
 import {
   getCartTotals,
@@ -112,6 +113,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [addedToast, setAddedToast] = useState<CartAddedToastState | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const linesRef = useRef<CartLine[]>([]);
+  const pricingProductIds = [...new Set(lines.filter(line => !line.upsell).map(line => line.productId))].sort().join(",");
 
   useEffect(() => {
     const storedLines = readStoredLines();
@@ -123,6 +125,33 @@ export function CartProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     linesRef.current = lines;
   }, [lines]);
+
+  useEffect(() => {
+    if (!ready || !pricingProductIds) return;
+    const controller = new AbortController();
+    const refresh = async () => {
+      try {
+        const response = await fetch("/api/cart-pricing", {
+          method: "POST", headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({productIds: pricingProductIds.split(",")}),
+          signal: controller.signal,
+        });
+        if (!response.ok) return;
+        const result = await response.json();
+        if (!controller.signal.aborted && Array.isArray(result.prices)) {
+          setLines(current => refreshCartPricing(current, result.prices));
+        }
+      } catch {
+        // Offline carts remain usable; checkout validates authoritative prices.
+      }
+    };
+    void refresh();
+    window.addEventListener("focus", refresh);
+    return () => {
+      controller.abort();
+      window.removeEventListener("focus", refresh);
+    };
+  }, [ready, pricingProductIds]);
 
   useEffect(() => {
     if (!ready) {

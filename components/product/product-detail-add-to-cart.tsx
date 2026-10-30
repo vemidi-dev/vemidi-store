@@ -40,6 +40,7 @@ import { formatPriceDelta } from "@/lib/product-option-pricing";
 import { shouldUseMaterialOptionCards } from "@/lib/product-option-layout";
 import {
   hasQuantityPriceTiers,
+  resolveCartLineUnitPrice,
   resolveQuantityTierDisplayUnitPrice,
   resolveQuantityUnitPrice,
 } from "@/lib/product-quantity-pricing";
@@ -535,16 +536,24 @@ export function ProductDetailAddToCart({
     ? preparedVariants.length > 0
     : canPrepareVariant;
   const selectedQuantity = showQuantitySelector ? quantity : 1;
+  const quantityAlreadyInCart = lines
+    .filter(line => line.productId === product.id && !line.upsell)
+    .reduce((total, line) => total + line.quantity, 0);
   const quantityBasePrice = resolveQuantityUnitPrice(
     product.price,
     product.quantityPriceTiers,
-    selectedQuantity,
+    selectedQuantity + preparedQuantityTotal + quantityAlreadyInCart,
   );
   const optionDelta = optionGroups.length
     ? Math.max(0, estimatedUnitPrice - product.price - personalizationDelta)
     : 0;
   const displayedUnitPrice = quantityBasePrice + optionDelta + personalizationDelta;
   const displayedLinePrice = displayedUnitPrice * selectedQuantity;
+  // Cart preparation infers surcharges relative to this row's own quantity.
+  // Keep that snapshot independent of the product-wide display tier.
+  const standaloneUnitPrice = resolveCartLineUnitPrice(
+    product.price, product.quantityPriceTiers, selectedQuantity, optionDelta, personalizationDelta,
+  );
   const showQuantityPriceTiers =
     showQuantitySelector && hasQuantityPriceTiers(product.quantityPriceTiers);
   const personalizationSectionOrder = showQuantityPriceTiers
@@ -561,6 +570,7 @@ export function ProductDetailAddToCart({
     product.price,
     product.quantityPriceTiers,
     preparedVariants,
+    quantityAlreadyInCart,
   );
   const getPreparedVariantUnitPrice = (
     variant: PreparedProductVariant,
@@ -576,6 +586,7 @@ export function ProductDetailAddToCart({
     product.price,
     product.quantityPriceTiers,
     preparedVariants,
+    quantityAlreadyInCart,
   );
 
   useEffect(() => {
@@ -731,7 +742,7 @@ export function ProductDetailAddToCart({
     const variant: PreparedProductVariant = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
       quantity: selectedQuantity,
-      unitPrice: displayedUnitPrice,
+      unitPrice: standaloneUnitPrice,
       optionDelta,
       personalizationDelta,
       personalization: personalization || undefined,
@@ -830,7 +841,7 @@ export function ProductDetailAddToCart({
       personalizationFields,
       attribution,
       optionSelections.length ? optionSelections : undefined,
-      { unitPrice: displayedUnitPrice },
+      { unitPrice: standaloneUnitPrice },
     );
     upsellOffers
       .filter((offer) => selectedUpsellIds.has(offer.id) && offer.product.orderable)
@@ -964,6 +975,7 @@ export function ProductDetailAddToCart({
           </h2>
           <p className="mt-1 text-xs text-boutique-muted">
             Цените се обновяват според избрания размер, материал и персонализация.
+            {" "}Отстъпката за количество важи за общия брой от всички варианти на този продукт.
           </p>
           <div className="mt-2 grid gap-1.5 text-sm text-boutique-muted">
             {product.quantityPriceTiers?.map((tier) => {
@@ -972,6 +984,13 @@ export function ProductDetailAddToCart({
                 optionDelta,
                 personalizationDelta,
               );
+              const tierOriginalPrice = tier.compareAtUnitPrice === undefined
+                ? null
+                : resolveQuantityTierDisplayUnitPrice(
+                    tier.compareAtUnitPrice,
+                    optionDelta,
+                    personalizationDelta,
+                  );
 
               return (
                 <div
@@ -983,9 +1002,19 @@ export function ProductDetailAddToCart({
                       ? `от ${tier.minQuantity} бр.`
                       : `${tier.minQuantity}-${tier.maxQuantity} бр.`}
                   </span>
-                  <strong className="text-boutique-ink">
-                    {formatEur(tierDisplayPrice)} / бр.
-                  </strong>
+                  <span className="flex flex-wrap items-baseline justify-end gap-x-2 gap-y-0.5 text-right">
+                    {tierOriginalPrice !== null && tierOriginalPrice > tierDisplayPrice ? (
+                      <del className="text-xs text-boutique-muted decoration-1">
+                        <span className="sr-only">Стара цена: </span>
+                        {formatEur(tierOriginalPrice)}
+                      </del>
+                    ) : null}
+                    <strong className={tierOriginalPrice !== null && tierOriginalPrice > tierDisplayPrice
+                      ? "text-boutique-accent" : "text-boutique-ink"}>
+                      <span className="sr-only">Цена: </span>
+                      {formatEur(tierDisplayPrice)} / бр.
+                    </strong>
+                  </span>
                 </div>
               );
             })}
@@ -1263,7 +1292,7 @@ export function ProductDetailAddToCart({
             </strong>
             {quantityDiscountPerItem > 0 ? (
               <span className="rounded-full bg-boutique-sage/10 px-3 py-1 text-xs font-semibold text-boutique-sage-deep">
-                -{formatEur(quantityDiscountPerItem)} отстъпка
+                -{formatEur(quantityDiscountPerItem)} за количество / бр.
               </span>
             ) : null}
           </div>

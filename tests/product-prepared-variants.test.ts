@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
-  getPreparedVariantPricingGroupKey,
   resolvePreparedVariantUnitPrice,
   resolvePreparedVariantsUnitPrices,
   resolvePreparedVariantsTotalPrice,
@@ -37,18 +36,18 @@ test("selected variants summary shares quantity tier for same material across co
   assert.equal(Math.round(total * 100) / 100, 22.4);
 });
 
-test("selected variants summary keeps separate tiers for different materials", () => {
+test("selected variants share the product tier and retain different material surcharges", () => {
   const lineA = { quantity: 5, unitPrice: 3.35, optionSelections: albasiaOptionSelections };
   const lineB = { quantity: 2, unitPrice: 3.7, optionSelections: birchOptionSelections };
   const unitPrices = resolvePreparedVariantsUnitPrices(3.35, tiers, [lineA, lineB]);
 
-  assert.deepEqual(unitPrices, [3.35, 3.7]);
-  assert.equal(Math.round(lineA.quantity * unitPrices[0]! * 100) / 100, 16.75);
-  assert.equal(Math.round(lineB.quantity * unitPrices[1]! * 100) / 100, 7.4);
-  assert.equal(resolvePreparedVariantsTotalPrice(3.35, tiers, [lineA, lineB]), 24.15);
+  assert.deepEqual(unitPrices, [3.2, 3.55]);
+  assert.equal(Math.round(lineA.quantity * unitPrices[0]! * 100) / 100, 16);
+  assert.equal(Math.round(lineB.quantity * unitPrices[1]! * 100) / 100, 7.1);
+  assert.equal(resolvePreparedVariantsTotalPrice(3.35, tiers, [lineA, lineB]), 23.1);
 });
 
-test("prepared variants pricing group key ignores color and separates different options", () => {
+test("prepared variants aggregate all options without losing their own surcharges", () => {
   const albasiaLilac = {
     quantity: 2,
     unitPrice: 3.35,
@@ -65,14 +64,8 @@ test("prepared variants pricing group key ignores color and separates different 
     optionSelections: birchOptionSelections,
   };
 
-  const albasiaLilacKey = getPreparedVariantPricingGroupKey(albasiaLilac);
-  const albasiaRedKey = getPreparedVariantPricingGroupKey(albasiaRed);
-  const birchLilacKey = getPreparedVariantPricingGroupKey(birchLilac);
-
-  assert.equal(albasiaLilacKey, albasiaRedKey);
-  assert.notEqual(albasiaLilacKey, birchLilacKey);
-  assert.ok(albasiaLilacKey.includes("material-group:albasia"));
-  assert.ok(!albasiaLilacKey.includes("lilac"));
+  assert.deepEqual(resolvePreparedVariantsUnitPrices(3.35, tiers,
+    [albasiaLilac, albasiaRed, birchLilac]), [3.2, 3.2, 3.55]);
 });
 
 test("single prepared variant keeps its own tier when no grouping applies", () => {

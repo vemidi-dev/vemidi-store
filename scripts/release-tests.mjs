@@ -33,6 +33,7 @@ const releaseTestGroups = [
     label: "Pricing, cart & quantity tiers",
     files: [
       "tests/cart-quantity-price-tiers.test.ts",
+      "tests/product-promotion-quantity-tiers.test.ts",
       "tests/product-prepared-variants.test.ts",
       "tests/cart-storage.test.ts",
       "tests/cart-line-summary.test.ts",

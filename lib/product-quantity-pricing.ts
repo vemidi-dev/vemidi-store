@@ -2,6 +2,8 @@ export type ProductQuantityPriceTier = {
   minQuantity: number;
   maxQuantity: number | null;
   unitPrice: number;
+  /** Original unit price for display while a campaign reduces this tier. */
+  compareAtUnitPrice?: number;
 };
 
 export type QuantityPriceTierValidationResult =

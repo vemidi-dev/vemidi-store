@@ -346,7 +346,7 @@ test("B) cart quantity update keeps optionDelta and recalculates unit/line total
   assert.equal(getCartTotals(updated).subtotal, 3.55 * 6);
 });
 
-test("C) multiple material variants keep own deltas and separate tier groups", () => {
+test("C) multiple material variants keep own deltas and share product quantity", () => {
   const birch = prepareCartLineInput({
     product: materialProduct,
     quantity: 1,
@@ -384,9 +384,9 @@ test("C) multiple material variants keep own deltas and separate tier groups", (
   assert.equal(oakAfter?.quantity, 1);
   assert.equal(birchAfter?.optionDelta, 0.35);
   assert.equal(oakAfter?.optionDelta, 1.15);
-  // Each material has its own tier group — birch qty 5 stays on tier 1-5, oak stays at qty 1
-  assert.equal(birchAfter?.price, 3.7);
-  assert.equal(oakAfter?.price, 4.5);
+  // Five birch plus one oak reach the shared 6–10 tier.
+  assert.equal(birchAfter?.price, 3.55);
+  assert.equal(oakAfter?.price, 4.35);
 });
 
 test("D) legacy personalized product keeps price + personalization delta without tiers", () => {
@@ -462,7 +462,7 @@ test("material variant price from option selections matches displayed 3.70 witho
   assert.equal(prepared.line.optionDelta, 0.35);
 });
 
-test("manual regression: Flora basket — different materials do not share quantity tier", () => {
+test("manual regression: Flora basket — different materials share quantity tier", () => {
   const albasia = prepareCartLineInput({
     product: floraProduct,
     quantity: 5,
@@ -488,24 +488,22 @@ test("manual regression: Flora basket — different materials do not share quant
   const birchKey = getCartLineQuantityTierGroupKey(birchLine);
   assert.ok(albasiaKey);
   assert.ok(birchKey);
-  assert.notEqual(albasiaKey, birchKey);
-  assert.notEqual(albasiaKey, `${floraProduct.id}::p:0`);
+  assert.equal(albasiaKey, birchKey);
+  assert.equal(albasiaKey, floraProduct.id);
 
   const groupTotals = sumQuantityTierGroupTotals(lines);
-  assert.equal(groupTotals.get(albasiaKey!), 5);
-  assert.equal(groupTotals.get(birchKey!), 2);
+  assert.equal(groupTotals.get(albasiaKey!), 7);
+  assert.equal(groupTotals.get(birchKey!), 7);
 
-  assert.equal(albasiaLine.price, 3.35);
+  assert.equal(albasiaLine.price, 3.2);
   assert.equal(albasiaLine.quantity, 5);
-  assert.equal(lineTotal(albasiaLine), 16.75);
-  assert.equal(birchLine.price, 3.7);
+  assert.equal(lineTotal(albasiaLine), 16);
+  assert.equal(birchLine.price, 3.55);
   assert.equal(birchLine.quantity, 2);
-  assert.equal(lineTotal(birchLine), 7.4);
-  assert.equal(getCartTotals(lines).subtotal, 24.15);
+  assert.equal(lineTotal(birchLine), 7.1);
+  assert.equal(Math.round(getCartTotals(lines).subtotal * 100) / 100, 23.1);
 
-  // Wrong product-wide grouping would apply tier 6–10 (3.20 base) to both lines.
-  assert.notEqual(albasiaLine.price, 3.2);
-  assert.notEqual(birchLine.price, 3.55);
+
 });
 
 test("manual regression: Flora basket — same material different colors share quantity tier", () => {
@@ -547,7 +545,7 @@ test("manual regression: Flora basket — same material different colors share q
   assert.equal(getCartTotals(lines).subtotal, 22.4);
 });
 
-test("quantity tier group key groups by product + options, not color or productId alone", () => {
+test("quantity tier group key groups by product regardless of options or color", () => {
   const albasiaLilac = prepareCartLineInput({
     product: floraProduct,
     quantity: 1,
@@ -575,15 +573,15 @@ test("quantity tier group key groups by product + options, not color or productI
   const birchLilacKey = getCartLineQuantityTierGroupKey(birchLilac.line);
 
   assert.equal(albasiaLilacKey, albasiaRedKey);
-  assert.notEqual(albasiaLilacKey, birchLilacKey);
+  assert.equal(albasiaLilacKey, birchLilacKey);
   assert.ok(albasiaLilacKey?.includes(floraProduct.id));
-  assert.ok(albasiaLilacKey?.includes("material-group:albasia"));
-  assert.ok(birchLilacKey?.includes("material-group:birch"));
+  assert.equal(albasiaLilacKey, floraProduct.id);
+  assert.equal(birchLilacKey, floraProduct.id);
   assert.ok(!albasiaLilacKey?.includes("lilac"));
   assert.ok(!albasiaLilacKey?.includes("red"));
 });
 
-test("F) different materials do not share quantity tier (Flora basket)", () => {
+test("F) different materials share quantity tier (Flora basket)", () => {
   const albasia = prepareCartLineInput({
     product: materialProduct,
     quantity: 5,
@@ -627,11 +625,11 @@ test("F) different materials do not share quantity tier (Flora basket)", () => {
   assert.ok(albasiaLine);
   assert.ok(birchLine);
 
-  assert.equal(albasiaLine.price, 3.35);
+  assert.equal(albasiaLine.price, 3.2);
   assert.equal(albasiaLine.quantity, 5);
-  assert.equal(birchLine.price, 3.7);
+  assert.equal(birchLine.price, 3.55);
   assert.equal(birchLine.quantity, 2);
-  assert.equal(getCartTotals(lines).subtotal, 16.75 + 7.4);
+  assert.equal(getCartTotals(lines).subtotal, 16 + 7.1);
 });
 
 test("G) same material different colors share quantity tier", () => {
@@ -681,7 +679,7 @@ test("G) same material different colors share quantity tier", () => {
   assert.equal(getCartTotals(lines).subtotal, 3.2 * 5 + 3.2 * 2);
 });
 
-test("H) different material deltas create separate pricing groups on add", () => {
+test("H) different material deltas use the shared 11+ tier on add", () => {
   const albasia = prepareCartLineInput({
     product: materialProduct,
     quantity: 6,
@@ -701,7 +699,7 @@ test("H) different material deltas create separate pricing groups on add", () =>
   assert.ok(albasiaLine);
   assert.ok(birchLine);
 
-  assert.equal(albasiaLine.price, 3.2);
-  assert.equal(birchLine.price, 3.55);
-  assert.equal(getCartTotals(lines).subtotal, 3.2 * 6 + 3.55 * 6);
+  assert.equal(albasiaLine.price, 3);
+  assert.equal(birchLine.price, 3.35);
+  assert.equal(getCartTotals(lines).subtotal, 3 * 6 + 3.35 * 6);
 });

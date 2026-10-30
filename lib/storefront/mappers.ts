@@ -8,6 +8,7 @@ import {
 } from "@/lib/product-visibility";
 import { normalizeProductCardBadge } from "@/lib/product-card";
 import {
+  calculateEffectivePrice,
   resolveProductPricing,
   type ProductPromotionRow,
 } from "@/lib/product-pricing";
@@ -151,7 +152,22 @@ export function toProduct(
     allowQuantitySelector: Boolean(row.show_quantity_selector),
     // Missing column / null → eligible (legacy rows and pre-migration carts).
     promoCodeEligible: row.promo_code_eligible !== false,
-    quantityPriceTiers: normalizeQuantityPriceTiers(row.quantity_price_tiers),
+    // Tier prices are absolute unit prices, so they must carry the promotion
+    // too; otherwise selecting a quantity replaces the discounted base price.
+    quantityPriceTiers: normalizeQuantityPriceTiers(row.quantity_price_tiers).map((tier) => {
+      const unitPrice = pricing.promotion
+        ? calculateEffectivePrice(
+            tier.unitPrice,
+            pricing.promotion.discountType,
+            pricing.promotion.discountValue,
+          )
+        : tier.unitPrice;
+      return {
+        ...tier,
+        unitPrice,
+        ...(unitPrice < tier.unitPrice ? { compareAtUnitPrice: tier.unitPrice } : {}),
+      };
+    }),
     fulfillmentType: row.fulfillment_type ?? "made_to_order",
     stockQuantity: row.stock_quantity ?? null,
     showReadyProductCta: Boolean(row.show_ready_product_cta),

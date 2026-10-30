@@ -1,7 +1,6 @@
 import type { CartLine } from "@/lib/cart-types";
-import { serializeOptionSelectionsForCartLine } from "@/lib/cart-line-id";
 
-/** Quantity tiers apply per purchasable variant — material/size/options, not color. */
+/** All regular variants of one product share the quantity tier. */
 export function getCartLineQuantityTierGroupKey(
   line: Pick<
     CartLine,
@@ -12,15 +11,7 @@ export function getCartLineQuantityTierGroupKey(
     return null;
   }
 
-  const personalizationDelta = line.personalizationDelta ?? 0;
-  const optionsKey = serializeOptionSelectionsForCartLine(line.optionSelections);
-
-  if (optionsKey) {
-    return `${line.productId}::${optionsKey}::p:${personalizationDelta}`;
-  }
-
-  const optionDelta = line.optionDelta ?? 0;
-  return `${line.productId}::d:${optionDelta}::p:${personalizationDelta}`;
+  return line.productId;
 }
 
 export function sumQuantityTierGroupTotals(lines: CartLine[]): Map<string, number> {
